@@ -1,5 +1,5 @@
 {
-  "name": "observatorio-ne-painel",
+  "name": "numeros-publicos-painel",
   "version": "0.1.0",
   "private": true,
   "description": "Painel estático do Observatório NE. Lê o snapshot JSON gerado pelo motor Python.",

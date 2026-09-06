@@ -11,7 +11,7 @@
 # instalar nada. Layout plano é o único que atende.
 
 [project]
-name = "observatorio-ne"
+name = "numeros-publicos"
 version = "0.1.0"
 description = "Dados abertos dos 1.794 municípios do Nordeste, do IBGE, com procedência."
 readme = "README.md"
@@ -25,7 +25,7 @@ keywords = ["open-data", "ibge", "brazil", "northeast", "municipalities"]
 dependencies = []
 
 [project.urls]
-Repository = "https://github.com/peterwkdev-creator/observatorio-ne"
+Repository = "https://github.com/peterwkdev-creator/numeros-publicos"
 
 # Ferramentas de lint/tipo são OPCIONAIS: nada aqui é necessário para rodar nem
 # para testar. A configuração fica versionada para que, quem as usar, use com os

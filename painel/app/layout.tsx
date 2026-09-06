@@ -89,7 +89,7 @@ export default function RootLayout({
             <a href="/ajuda/">Ajuda</a>
             <a href="/ajuda/#erro">Achei um número errado</a>
             <a
-              href="https://github.com/peterwkdev-creator/observatorio-ne"
+              href="https://github.com/peterwkdev-creator/numeros-publicos"
               rel="noopener"
             >
               Código-fonte

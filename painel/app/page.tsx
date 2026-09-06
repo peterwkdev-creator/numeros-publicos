@@ -428,10 +428,10 @@ export default async function Pagina() {
           </a>
           . O código-fonte completo, incluindo o motor de ingestão, está em{" "}
           <a
-            href="https://github.com/peterwkdev-creator/observatorio-ne"
+            href="https://github.com/peterwkdev-creator/numeros-publicos"
             rel="noopener"
           >
-            github.com/peterwkdev-creator/observatorio-ne
+            github.com/peterwkdev-creator/numeros-publicos
           </a>
           . Quem modificar e oferecer este serviço pela rede precisa
           disponibilizar o código correspondente — é a seção 13 da AGPL, e é o

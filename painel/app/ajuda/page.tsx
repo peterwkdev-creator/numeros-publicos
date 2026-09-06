@@ -542,7 +542,7 @@ export default async function PaginaAjuda() {
             <strong>O número aqui está diferente do que a fonte publica.</strong>{" "}
             Aí o erro é nosso, e queremos saber. Abra uma questão no{" "}
             <a
-              href="https://github.com/peterwkdev-creator/observatorio-ne/issues"
+              href="https://github.com/peterwkdev-creator/numeros-publicos/issues"
               rel="noopener"
             >
               repositório do projeto
@@ -598,7 +598,7 @@ export default async function PaginaAjuda() {
         <p>
           Ainda com dúvida? Abra uma questão no{" "}
           <a
-            href="https://github.com/peterwkdev-creator/observatorio-ne/issues"
+            href="https://github.com/peterwkdev-creator/numeros-publicos/issues"
             rel="noopener"
           >
             repositório

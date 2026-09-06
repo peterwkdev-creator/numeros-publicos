@@ -5,7 +5,7 @@
  *
  * O IBGE publica os dois: o absoluto e a taxa. O motor Python ingere **só o
  * absoluto**, porque `conferir` soma os municípios e compara com o total que a
- * fonte publica — e percentual não se soma. Ver `especs/observatorio-ne.md`.
+ * fonte publica — e percentual não se soma. Ver `especs/numeros-publicos.md`.
  *
  * A consequência boa chega aqui: com o par na mão, a página pode dizer
  * **"94.063 dos 97.991 domicílios"** em vez de só "96%". O número absoluto é o

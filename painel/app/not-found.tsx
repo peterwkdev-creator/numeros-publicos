@@ -88,7 +88,7 @@ export default async function NaoEncontrado() {
           Se você chegou por um link de dentro do site, ele está quebrado e
           queremos saber: abra uma questão no{" "}
           <a
-            href="https://github.com/peterwkdev-creator/observatorio-ne/issues"
+            href="https://github.com/peterwkdev-creator/numeros-publicos/issues"
             rel="noopener"
           >
             repositório

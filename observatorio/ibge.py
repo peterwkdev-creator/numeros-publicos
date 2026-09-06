@@ -70,7 +70,7 @@ def transporte_http(timeout: float = 30.0) -> Transporte:
                 # qualquer forma, e assim a descompressão abaixo é regra, não
                 # remendo para um caso que "às vezes acontece".
                 "Accept-Encoding": "gzip",
-                "User-Agent": "observatorio-ne/0.1 (dados abertos; uso pessoal)",
+                "User-Agent": "numeros-publicos/0.1 (dados abertos; uso pessoal)",
             },
         )
         try:

@@ -91,7 +91,7 @@ function aneis(geom) {
 }
 
 const r = await fetch(URL_MALHA, {
-  headers: { "User-Agent": "observatorio-ne/1.0 (+numerospublicos.com.br)" },
+  headers: { "User-Agent": "numeros-publicos/1.0 (+numerospublicos.com.br)" },
 });
 if (!r.ok) throw new Error(`IBGE devolveu HTTP ${r.status} para a malha`);
 const bruto = Buffer.from(await r.arrayBuffer());

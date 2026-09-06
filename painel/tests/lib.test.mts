@@ -25,6 +25,7 @@ import {
   PRESTA_COMO_ESTADO, ROTULO_FAIXA,
 } from "../lib/fiscal.ts";
 import { posicaoEntre, posicaoNoEstado } from "../lib/posicao.ts";
+import { faixaDoValor, percentuaisPorUf } from "../lib/mapa.ts";
 import {
   medianasDe, medidasDe, PARES_CENSO, rotuloDownload, taxasDoPais,
 } from "../lib/censo.ts";
@@ -657,4 +658,50 @@ test("indicador sem classificação mantém o nome da fonte", () => {
   // manter, que divergiria da fonte no dia em que o IBGE renomeasse a variável.
   assert.equal(rotuloDownload("pib-municipal", "Produto Interno Bruto"),
                "Produto Interno Bruto");
+});
+
+// --------------------------------------------------------------------- mapa
+
+test("faixaDoValor reparte 0 a 100 em cinco faixas, e a ausência fica fora", () => {
+  assert.equal(faixaDoValor(0), 0);
+  assert.equal(faixaDoValor(19.9), 0);
+  assert.equal(faixaDoValor(20), 1);
+  assert.equal(faixaDoValor(99.9), 4);
+  assert.equal(faixaDoValor(100), 4, "100% tem de cair na última, não fora dela");
+  assert.equal(faixaDoValor(null), null);
+  assert.equal(faixaDoValor(NaN), null);
+});
+
+test("UF sem uma das pontas fica sem faixa, e não em 0%", () => {
+  // Cinza dizendo "sem dado" e azul-claro dizendo "quase nada" são afirmações
+  // opostas sobre um estado. Confundi-las é o defeito que este site existe
+  // para não cometer.
+  const r = percentuaisPorUf(
+    [{ sigla: "AA", totais: { n: 5, d: 10 } },
+     { sigla: "BB", totais: { n: null, d: 10 } },
+     { sigla: "CC", totais: { n: 5, d: 0 } }],
+    "n", "d");
+  assert.equal(r["AA"], 50);
+  assert.equal(r["BB"], null);
+  assert.equal(r["CC"], null, "denominador zero não é 0%, é ausência");
+});
+
+test("toda camada do mapa tem regra de cor no CSS", () => {
+  // A troca de indicador é CSS puro, e as chaves vivem em dois arquivos. Uma
+  // chave nova em `page.tsx` sem a regra correspondente deixaria o mapa inteiro
+  // na cor padrão -- sem erro, sem aviso, e com aparência de funcionar.
+  const pagina = fs.readFileSync(
+    new URL("../app/page.tsx", import.meta.url), "utf-8");
+  const css = fs.readFileSync(
+    new URL("../app/componentes/mapa-uf.module.css", import.meta.url), "utf-8");
+  const bloco = pagina.slice(pagina.indexOf("const camadasDoMapa"),
+                             pagina.indexOf("<MapaUf"));
+  const chaves = [...bloco.matchAll(/chave:\s*"([a-z-]+)"/g)].map((m) => m[1]);
+  assert.ok(chaves.length >= 2, `esperava camadas, achei ${chaves.length}`);
+  for (const c of chaves) {
+    assert.ok(css.includes(`input[value="${c}"]:checked`),
+      `camada "${c}" não tem regra de cor em mapa-uf.module.css`);
+    assert.ok(css.includes(`[data-${c}="4"]`),
+      `camada "${c}" não tem as cinco faixas no CSS`);
+  }
 });

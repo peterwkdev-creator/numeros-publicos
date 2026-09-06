@@ -1,0 +1,101 @@
+/* Rosca de composição do gasto. Fica ao lado da tabela de barras — ver o
+   cabeçalho de `rosca-funcoes.tsx` para por que as duas coexistem. */
+
+.bloco {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.rosca {
+  width: 100%;
+  max-width: 15rem;
+  height: auto;
+}
+
+.fatia {
+  stroke: var(--fundo);
+  stroke-width: 1.5;
+  /* Em alto contraste forçado o `fill` é descartado e a rosca sumiria inteira,
+     sem deixar rastro — mesma razão da barra e do mapa. */
+  forced-color-adjust: none;
+}
+
+.totalRotulo,
+.totalValor {
+  text-anchor: middle;
+  pointer-events: none;
+  fill: var(--tinta-suave);
+}
+
+.totalRotulo {
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.totalValor {
+  font-size: 21px;
+  font-weight: 700;
+  fill: var(--tinta);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- a rampa ---------------------------------------------------------------
+   Um matiz só, escuro para claro na ordem das fatias. A cor separa vizinhas;
+   quem identifica cada função é a tabela ao lado. Paleta categórica reprovaria
+   na auditoria de daltonismo, e não compraria nada em troca. */
+:global(:root) {
+  --rosca-0: #0f4f79;
+  --rosca-1: #1a6a9e;
+  --rosca-2: #2a84bd;
+  --rosca-3: #4b9dd0;
+  --rosca-4: #6fb3dd;
+  --rosca-5: #94c7e8;
+  --rosca-6: #b6d9f0;
+  --rosca-7: #d3e7f7;
+  --rosca-8: #cbd5dd;
+}
+
+@media (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme="light"])) {
+    --rosca-0: #8fc6e8;
+    --rosca-1: #6fb0d8;
+    --rosca-2: #559ac6;
+    --rosca-3: #4084b1;
+    --rosca-4: #316e97;
+    --rosca-5: #26597c;
+    --rosca-6: #1d4661;
+    --rosca-7: #173648;
+    --rosca-8: #3a4650;
+  }
+}
+
+/* A folha de impressão sobrescreve TODA cor definida só no bloco escuro:
+   `prefers-color-scheme` continua reportando a preferência do sistema ao
+   imprimir, e sem isto a rosca sai no papel com as cores do tema escuro. */
+@media print {
+  :global(:root) {
+    --rosca-0: #1f3b52;
+    --rosca-1: #35566f;
+    --rosca-2: #4d6f8a;
+    --rosca-3: #6888a2;
+    --rosca-4: #86a2b8;
+    --rosca-5: #a5bccd;
+    --rosca-6: #c4d4e0;
+    --rosca-7: #e0e9f0;
+    --rosca-8: #d8dde1;
+  }
+  .fatia { stroke: #fff; }
+}
+
+.fatia[data-ordem="0"] { fill: var(--rosca-0); }
+.fatia[data-ordem="1"] { fill: var(--rosca-1); }
+.fatia[data-ordem="2"] { fill: var(--rosca-2); }
+.fatia[data-ordem="3"] { fill: var(--rosca-3); }
+.fatia[data-ordem="4"] { fill: var(--rosca-4); }
+.fatia[data-ordem="5"] { fill: var(--rosca-5); }
+.fatia[data-ordem="6"] { fill: var(--rosca-6); }
+.fatia[data-ordem="7"] { fill: var(--rosca-7); }
+.fatia[data-ordem="8"] { fill: var(--rosca-8); }

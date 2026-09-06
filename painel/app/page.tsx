@@ -6,7 +6,10 @@ import {
 import { slugUf } from "@/lib/estado";
 import { faixasEmLinha } from "@/lib/fiscal";
 import { funcoesDoPais, panoramaEstados } from "@/lib/nacional";
+import MapaUf from "./componentes/mapa-uf";
+import { legendaCom, percentuaisPorUf, type CamadaMapa } from "@/lib/mapa";
 import FuncoesBarras from "./componentes/funcoes-barras";
+import RoscaFuncoes from "./componentes/rosca-funcoes";
 import {
   coberturaTemporal, FONTES, idCatalogo, palavrasChave, VARIAVEIS,
 } from "@/lib/jsonld";
@@ -47,6 +50,37 @@ export default async function Pagina() {
   // que os agrupasse. `hasPart` faz esse papel.
   const pais = funcoesDoPais(fiscal);
   const estados = panoramaEstados(fiscal);
+
+  /**
+   * As camadas do mapa. **As chaves aqui são as mesmas do CSS de `mapa-uf`**,
+   * e um teste cobra que as duas listas não divirjam: uma chave sem regra
+   * deixaria o mapa inteiro na cor padrão, sem nada quebrar nem acusar.
+   *
+   * A terceira existe para provar uma afirmação que o site faz e não conseguia
+   * mostrar — que a taxa de entrega **não é regional**. Numa tabela de 27
+   * linhas isso se argumenta; num mapa, se vê.
+   */
+  const camadasDoMapa: CamadaMapa[] = (() => {
+    const esgoto = percentuaisPorUf(snapshot.ufs, "esgoto-rede", "domicilios-total");
+    const alfabet = percentuaisPorUf(
+      snapshot.ufs, "alfabetizados-15-mais", "pessoas-15-mais");
+    const entrega: Record<string, number | null> = {};
+    for (const e of estados) entrega[e.uf] = e.municipios > 0 ? e.taxa : null;
+    return [
+      { chave: "esgoto", rotulo: "Esgoto ligado à rede", valores: esgoto,
+        legenda: legendaCom(
+          "Domicílios com esgotamento por rede geral, pluvial ou fossa ligada " +
+          "à rede, no Censo 2022.", esgoto) },
+      { chave: "alfabetizacao", rotulo: "Alfabetização", valores: alfabet,
+        legenda: legendaCom(
+          "Pessoas de 15 anos ou mais alfabetizadas, no Censo 2022.", alfabet) },
+      { chave: "entrega", rotulo: "Entrega do relatório fiscal", valores: entrega,
+        legenda: legendaCom(
+          "Municípios que entregaram o Relatório de Gestão Fiscal ao SICONFI. " +
+          "Repare que estados vizinhos ficam em extremos opostos: isto não é " +
+          "um padrão regional.", entrega) },
+    ];
+  })();
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -129,6 +163,10 @@ export default async function Pagina() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+      {/* Herói e aviso lado a lado em tela larga. Antes o aviso ficava abaixo,
+          e o herói — limitado a 60ch, que é o certo para leitura — deixava
+          ~500px de altura vazios à direita. Empilha em tela estreita. */}
+      <div className={s.topo}>
       <header className={s.cabecalho}>
         <span className={s.selo}>Dados abertos · IBGE e Tesouro Nacional</span>
         <h1 className={s.titulo}>Números Públicos</h1>
@@ -148,6 +186,7 @@ export default async function Pagina() {
         relação com qualquer processo de contratação. Começou pelo Nordeste,
         sobre um termo de referência público, e hoje cobre o país inteiro.
       </p>
+      </div>
 
       <section className={s.cartoes} aria-label="Totais da região">
         {capa.indicadores.map((ind) => (
@@ -171,9 +210,16 @@ export default async function Pagina() {
             </p>
             <p className={s.cartaoFonte}>
               IBGE, agregado {ind.agregado}, variável {ind.variavel}.{" "}
+              {/* O rótulo DIZ o que abre. Antes era "Ver a consulta na fonte",
+                  que promete uma página e entrega a resposta crua da API —
+                  um despejo de JSON na cara de quem só queria ver de onde o
+                  número veio. A procedência continua a um clique, e agora
+                  quem clica sabe no que está clicando. Para quem quer o dado
+                  utilizável, o caminho é "Baixar dados", no cabeçalho. */}
               {ind.origem ? (
-                <a href={ind.origem} rel="nofollow noopener">
-                  Ver a consulta na fonte
+                <a href={ind.origem} rel="nofollow noopener"
+                   className={s.linkTecnico}>
+                  consulta na API <span className={s.formato}>JSON</span>
                 </a>
               ) : null}
             </p>
@@ -198,11 +244,20 @@ export default async function Pagina() {
             relatório.
           </p>
 
-          <FuncoesBarras
-            fatias={pais.fatias}
-            total={pais.total}
-            municipio={`${br(pais.municipios)} municípios do Brasil`}
-          />
+          {/* Rosca e tabela lado a lado, e cada uma faz o que a outra não faz:
+              a rosca mostra que duas funções levam metade; a tabela compara a
+              5ª com a 6ª e é o que o leitor de tela lê. De quebra ocupam a
+              largura que esta seção desperdiçava. Em tela estreita empilham. */}
+          <div className={s.duasVistas}>
+            <RoscaFuncoes fatias={pais.fatias} total={pais.total} />
+            <div className={s.aoLado}>
+              <FuncoesBarras
+                fatias={pais.fatias}
+                total={pais.total}
+                municipio={`${br(pais.municipios)} municípios do Brasil`}
+              />
+            </div>
+          </div>
 
           {/* A ressalva vai junto do número, não num rodapé. Chamar isto de
               "gasto dos municípios brasileiros" erra por quase metade, e a
@@ -227,6 +282,8 @@ export default async function Pagina() {
           que se sabe que a coleta está <strong>completa</strong>, e não apenas
           que um número está certo.
         </p>
+        <MapaUf camadas={camadasDoMapa} />
+
         <div className={s.rolagem}>
           <table className={s.tabela}>
             <caption>

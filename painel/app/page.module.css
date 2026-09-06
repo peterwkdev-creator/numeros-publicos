@@ -12,8 +12,16 @@
 
 /* ---------------------------------------------------------------- cabeçalho */
 
-.cabecalho {
+.topo {
+  display: grid;
+  gap: var(--e-6);
   margin-bottom: var(--e-12);
+}
+
+/* 60ch continua sendo o teto da linha: a coluna larga acomoda o herói, não o
+   estica. Linha longa demais é o jeito mais fácil de piorar a leitura
+   achando que se está usando melhor a tela. */
+.cabecalho {
   max-width: 60ch;
 }
 
@@ -190,6 +198,7 @@
 }
 
 .aviso {
+  align-self: start;
   background: var(--acento-suave);
   border: 1px solid var(--borda);
   border-left: 3px solid var(--acento);
@@ -222,4 +231,56 @@
   background: var(--fundo);
   padding-top: var(--e-4) !important;
   border-bottom: 1px solid var(--borda-forte) !important;
+}
+
+/* O link que abre a resposta crua da API. A etiqueta "JSON" existe para que
+   ninguém clique achando que vai para uma página legível — e para que quem
+   QUER a resposta crua a reconheça de longe. */
+.linkTecnico {
+  white-space: nowrap;
+}
+
+.formato {
+  display: inline-block;
+  margin-left: 0.25rem;
+  padding: 0.05rem 0.3rem;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  font-size: 0.72em;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-decoration: none;
+  vertical-align: 0.05em;
+}
+
+/* Rosca + tabela de barras. Empilha em tela estreita, onde 15rem de rosca ao
+   lado de uma tabela de três colunas não caberia sem espremer as duas. */
+.duasVistas {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.aoLado { width: 100%; min-width: 0; }
+
+@media (min-width: 56rem) {
+  .duasVistas {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 2rem;
+  }
+  /* `min-width: 0` no irmão flexível: sem isso a tabela se recusa a encolher
+     abaixo do conteúdo e empurra a rosca para fora do container. */
+  .aoLado { flex: 1 1 auto; }
+}
+
+@media (min-width: 64rem) {
+  .topo {
+    grid-template-columns: minmax(0, 3fr) minmax(17rem, 2fr);
+    align-items: start;
+    gap: var(--e-8);
+  }
+  .cabecalho { margin-bottom: 0; }
+  .aviso { margin-bottom: 0; margin-top: var(--e-8); }
 }

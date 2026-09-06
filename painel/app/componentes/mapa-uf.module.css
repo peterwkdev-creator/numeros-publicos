@@ -204,3 +204,25 @@
 .passoSem { background: var(--mapa-sem); margin-left: 0.6rem; }
 
 .extremo { font-size: 0.76rem; color: var(--tinta-fraca); white-space: nowrap; }
+
+/* --- a UF em destaque ------------------------------------------------------
+   **Vai no FIM do arquivo, e isso não é organização: é correção.** `.uf` e
+   `.destacada` têm a mesma especificidade (0-1-0), então quem vence é quem vem
+   depois. Com `.destacada` antes de `.uf`, o contorno grosso simplesmente não
+   aparecia — e o mapa continuava correto em tudo o mais, que é o que torna
+   esse tipo de defeito fácil de dar por bom no olho.
+
+   Medido no navegador: os dois caminhos saíam com `stroke-width: 3px` e a
+   mesma cor. O componente renderizava a classe; a folha a descartava. */
+.destacada {
+  stroke: var(--tinta);
+  stroke-width: 5;
+  /* O `stroke` do SVG é dividido com o vizinho: metade para dentro, metade
+     para fora. `paint-order: stroke` pinta o contorno antes do preenchimento,
+     para o traço não comer a cor da faixa que ele deveria destacar. */
+  paint-order: stroke;
+}
+
+@media print {
+  .destacada { stroke: #000; stroke-width: 5; }
+}

@@ -34,9 +34,24 @@ import estilos from "./mapa-uf.module.css";
  * cor não se lê em voz alta.
  */
 
-export default function MapaUf({ camadas }: { camadas: CamadaMapa[] }) {
+export default function MapaUf({
+  camadas,
+  destaque,
+}: {
+  camadas: CamadaMapa[];
+  /**
+   * Sigla a contornar. Na página do estado ela responde "onde eu estou nisto?",
+   * que é a pergunta que um mapa de 27 formas parecidas deixa em aberto.
+   */
+  destaque?: string;
+}) {
   if (!camadas.length) return null;
-  const siglas = Object.keys(malha.caminhos).sort();
+  // O destacado vai POR ÚLTIMO: o SVG pinta na ordem do documento, e o
+  // contorno grosso de um estado desenhado no meio fica coberto pelos vizinhos
+  // desenhados depois — some justamente metade do destaque, do lado que faz
+  // fronteira, que é quase todo ele.
+  const siglas = Object.keys(malha.caminhos).sort()
+    .sort((a, b) => Number(a === destaque) - Number(b === destaque));
 
   return (
     <figure className={estilos.bloco}>
@@ -67,8 +82,9 @@ export default function MapaUf({ camadas }: { camadas: CamadaMapa[] }) {
         className={estilos.mapa}
         role="img"
         aria-label={
-          "Mapa dos 27 estados do Brasil, colorido pelo indicador selecionado. " +
-          "Os valores de cada estado estão na tabela abaixo."
+          "Mapa dos 27 estados do Brasil, colorido pelo indicador selecionado" +
+          (destaque ? `, com ${destaque} em destaque` : "") +
+          ". Os valores de cada estado estão na tabela abaixo."
         }
       >
         {siglas.map((sigla) => {
@@ -81,7 +97,7 @@ export default function MapaUf({ camadas }: { camadas: CamadaMapa[] }) {
             <path
               key={sigla}
               d={(malha.caminhos as Record<string, string>)[sigla]}
-              className={estilos.uf}
+              className={`${estilos.uf} ${sigla === destaque ? estilos.destacada : ""}`}
               {...dados}
             >
               {/* Só o nome: o valor muda com o indicador escolhido, e um título

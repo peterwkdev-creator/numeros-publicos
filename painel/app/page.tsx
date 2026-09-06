@@ -7,7 +7,7 @@ import { slugUf } from "@/lib/estado";
 import { faixasEmLinha } from "@/lib/fiscal";
 import { funcoesDoPais, panoramaEstados } from "@/lib/nacional";
 import MapaUf from "./componentes/mapa-uf";
-import { legendaCom, percentuaisPorUf, type CamadaMapa } from "@/lib/mapa";
+import { camadasPadrao } from "@/lib/mapa";
 import FuncoesBarras from "./componentes/funcoes-barras";
 import RoscaFuncoes from "./componentes/rosca-funcoes";
 import {
@@ -51,36 +51,7 @@ export default async function Pagina() {
   const pais = funcoesDoPais(fiscal);
   const estados = panoramaEstados(fiscal);
 
-  /**
-   * As camadas do mapa. **As chaves aqui são as mesmas do CSS de `mapa-uf`**,
-   * e um teste cobra que as duas listas não divirjam: uma chave sem regra
-   * deixaria o mapa inteiro na cor padrão, sem nada quebrar nem acusar.
-   *
-   * A terceira existe para provar uma afirmação que o site faz e não conseguia
-   * mostrar — que a taxa de entrega **não é regional**. Numa tabela de 27
-   * linhas isso se argumenta; num mapa, se vê.
-   */
-  const camadasDoMapa: CamadaMapa[] = (() => {
-    const esgoto = percentuaisPorUf(snapshot.ufs, "esgoto-rede", "domicilios-total");
-    const alfabet = percentuaisPorUf(
-      snapshot.ufs, "alfabetizados-15-mais", "pessoas-15-mais");
-    const entrega: Record<string, number | null> = {};
-    for (const e of estados) entrega[e.uf] = e.municipios > 0 ? e.taxa : null;
-    return [
-      { chave: "esgoto", rotulo: "Esgoto ligado à rede", valores: esgoto,
-        legenda: legendaCom(
-          "Domicílios com esgotamento por rede geral, pluvial ou fossa ligada " +
-          "à rede, no Censo 2022.", esgoto) },
-      { chave: "alfabetizacao", rotulo: "Alfabetização", valores: alfabet,
-        legenda: legendaCom(
-          "Pessoas de 15 anos ou mais alfabetizadas, no Censo 2022.", alfabet) },
-      { chave: "entrega", rotulo: "Entrega do relatório fiscal", valores: entrega,
-        legenda: legendaCom(
-          "Municípios que entregaram o Relatório de Gestão Fiscal ao SICONFI. " +
-          "Repare que estados vizinhos ficam em extremos opostos: isto não é " +
-          "um padrão regional.", entrega) },
-    ];
-  })();
+  const camadasDoMapa = camadasPadrao(snapshot.ufs, estados);
 
   const jsonLd = {
     "@context": "https://schema.org",

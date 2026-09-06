@@ -68,3 +68,52 @@ export function legendaCom(
   const mediana = v.length % 2 ? v[meio]! : (v[meio - 1]! + v[meio]!) / 2;
   return `${descricao} Mediana entre os estados: ${br(mediana, 1)}%.`;
 }
+
+
+/**
+ * As três camadas padrão do mapa, iguais na capa e na página do estado.
+ *
+ * **Existe para as duas não divergirem.** Antes a capa montava as camadas
+ * inline; a página do estado montaria as suas, e no dia em que uma ganhasse um
+ * indicador a outra ficaria para trás sem nada quebrar — as duas continuariam
+ * desenhando um mapa correto, só que de coisas diferentes, com a mesma
+ * aparência de estarem certas.
+ *
+ * As chaves aqui são as mesmas do CSS de `mapa-uf`, e um teste cobra isso.
+ */
+export function camadasPadrao(
+  ufs: { sigla: string; totais: Record<string, number | null> }[],
+  estados: { uf: string; municipios: number; taxa: number }[],
+): CamadaMapa[] {
+  const esgoto = percentuaisPorUf(ufs, "esgoto-rede", "domicilios-total");
+  const alfabet = percentuaisPorUf(ufs, "alfabetizados-15-mais", "pessoas-15-mais");
+  const entrega: Record<string, number | null> = {};
+  for (const e of estados) entrega[e.uf] = e.municipios > 0 ? e.taxa : null;
+
+  return [
+    {
+      chave: "esgoto",
+      rotulo: "Esgoto ligado à rede",
+      valores: esgoto,
+      legenda: legendaCom(
+        "Domicílios com esgotamento por rede geral, pluvial ou fossa ligada " +
+        "à rede, no Censo 2022.", esgoto),
+    },
+    {
+      chave: "alfabetizacao",
+      rotulo: "Alfabetização",
+      valores: alfabet,
+      legenda: legendaCom(
+        "Pessoas de 15 anos ou mais alfabetizadas, no Censo 2022.", alfabet),
+    },
+    {
+      chave: "entrega",
+      rotulo: "Entrega do relatório fiscal",
+      valores: entrega,
+      legenda: legendaCom(
+        "Municípios que entregaram o Relatório de Gestão Fiscal ao SICONFI. " +
+        "Repare que estados vizinhos ficam em extremos opostos: isto não é " +
+        "um padrão regional.", entrega),
+    },
+  ];
+}

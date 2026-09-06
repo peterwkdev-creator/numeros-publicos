@@ -12,6 +12,8 @@ import { resumirEstado, slugUf } from "../../../lib/estado";
 import { ROTULO_FAIXA } from "../../../lib/fiscal";
 import { medianaUltimaEdicao } from "../../../lib/ideb";
 import { panoramaEstados, posicaoNaLista } from "../../../lib/nacional";
+import { camadasPadrao } from "../../../lib/mapa";
+import MapaUf from "../../componentes/mapa-uf";
 import {
   FONTES, VARIAVEIS, catalogoDe, coberturaTemporal, palavrasChave,
 } from "../../../lib/jsonld";
@@ -372,6 +374,23 @@ export default async function PaginaEstado(
           </p>
         </article>
         )}
+      </section>
+
+      {/* O mesmo mapa da capa, com a UF contornada. Ele responde a pergunta
+          que a página do município levanta e não fecha — "e o meu estado, como
+          está?" — sem custar coleta nova nem componente novo. As camadas vêm de
+          `camadasPadrao` para que capa e estado não divirjam. */}
+      <section className={estilos.texto} aria-labelledby="no-pais">
+        <h2 id="no-pais">{r.uf.nome} no país</h2>
+        <p>
+          Os 27 estados no mesmo indicador, com {r.uf.sigla} em destaque. Os
+          valores de cada um estão na{" "}
+          <Link href="/" prefetch={false}>tabela da capa</Link>.
+        </p>
+        <MapaUf
+          camadas={camadasPadrao(snapshot.ufs, panorama)}
+          destaque={r.uf.sigla}
+        />
       </section>
 
       <section className={estilos.texto}>

@@ -690,12 +690,11 @@ test("toda camada do mapa tem regra de cor no CSS", () => {
   // A troca de indicador é CSS puro, e as chaves vivem em dois arquivos. Uma
   // chave nova em `page.tsx` sem a regra correspondente deixaria o mapa inteiro
   // na cor padrão -- sem erro, sem aviso, e com aparência de funcionar.
-  const pagina = fs.readFileSync(
-    new URL("../app/page.tsx", import.meta.url), "utf-8");
+  const lib = fs.readFileSync(
+    new URL("../lib/mapa.ts", import.meta.url), "utf-8");
   const css = fs.readFileSync(
     new URL("../app/componentes/mapa-uf.module.css", import.meta.url), "utf-8");
-  const bloco = pagina.slice(pagina.indexOf("const camadasDoMapa"),
-                             pagina.indexOf("<MapaUf"));
+  const bloco = lib.slice(lib.indexOf("export function camadasPadrao"));
   const chaves = [...bloco.matchAll(/chave:\s*"([a-z-]+)"/g)].map((m) => m[1]);
   assert.ok(chaves.length >= 2, `esperava camadas, achei ${chaves.length}`);
   for (const c of chaves) {

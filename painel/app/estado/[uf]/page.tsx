@@ -22,6 +22,7 @@ import {
 } from "../../../lib/jsonld";
 import { lerFiscal, lerIdeb, lerSnapshot, SITE } from "../../../lib/servidor";
 import estilos from "./estado.module.css";
+import { atualDeFuncoes } from "../../../lib/fiscal";
 
 /**
  * Uma página por estado — nove delas.
@@ -203,7 +204,7 @@ export default async function PaginaEstado(
   const pibReais = milReaisParaReais(r.uf.totais["pib-municipal"] ?? null);
   const quadrimestre = `${fiscal.periodo}º quadrimestre de ${fiscal.exercicio}`;
   const bimestre = fiscal.funcoes
-    ? `${fiscal.funcoes.periodo}º bimestre de ${fiscal.funcoes.exercicio}`
+    ? `${fiscal.funcoes.periodo}º bimestre de ${atualDeFuncoes(fiscal.funcoes)?.exercicio ?? "?"}`
     : "";
 
   const jsonLd = {

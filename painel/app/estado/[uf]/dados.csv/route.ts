@@ -3,6 +3,7 @@ import { cabecalhosCsv, paraCsv } from "../../../../lib/csv";
 import { resumirEstado, slugUf } from "../../../../lib/estado";
 import { funcoesDe } from "../../../../lib/fiscal";
 import { lerFiscal, lerSnapshot } from "../../../../lib/servidor";
+import { atualDeFuncoes } from "@/lib/fiscal";
 
 /**
  * Os municípios de um estado em CSV.
@@ -66,7 +67,7 @@ export async function GET(
       fn?.total ?? null,
       acha(fn, "Educação"),
       acha(fn, "Saúde"),
-      fiscal.funcoes?.exercicio ?? null,
+      fiscal.funcoes ? atualDeFuncoes(fiscal.funcoes)?.exercicio ?? null : null,
       fiscal.funcoes?.periodo ?? null,
     ];
   });

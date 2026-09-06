@@ -119,40 +119,66 @@ export type SnapshotFiscal = {
  * R$ 137 mi da leitura ingênua. Aqui já chega filtrado; não somar de novo.
  */
 export type Funcoes = {
-  exercicio: number;
   /** **Bimestre** (1..6). O RREO não usa a escala quadrimestral do RGF. */
   periodo: number;
   fonte: string;
-  coletadoEm: string | null;
-  cobertura: { consultados: number; publicaram: number; naoFecham: number };
   rotulos: string[];
   colunasMunicipio: string[];
-  /** `{ "2927408": [totalDeclarado, [[indice, valor], ...]] }`, em reais inteiros. */
-  porMunicipio: Record<string, EntradaFuncoes>;
   /**
-   * O **mesmo bimestre do ano anterior**. `null` quando não foi coletado.
+   * A série, do mais recente para o mais antigo, sempre no MESMO bimestre.
    *
-   * Nunca o período anterior, e a diferença foi medida, não suposta. O RREO é
-   * acumulado no ano: o 6º bimestre **contém** o 4º — mediana da razão b4/b6 de
-   * **0,629** em 1.414 municípios, ou seja 63% do valor do 6º *é* o do 4º. A
-   * fatia de cada função mal se mexe entre eles: deslocamento mediano de
-   * **0,96 pp**. Uma frase de tendência ali seria ruído vestido de descoberta.
+   * ## Por que o mesmo bimestre, e nunca o período anterior
+   *
+   * Medido, não suposto. O RREO é acumulado no ano: o 6º bimestre **contém** o
+   * 4º — mediana da razão b4/b6 de **0,629** em 1.414 municípios, ou seja 63%
+   * do valor do 6º *é* o do 4º. A fatia de cada função mal se mexe entre eles:
+   * deslocamento mediano de **0,96 pp**. Uma frase de tendência ali seria
+   * ruído vestido de descoberta.
    *
    * Entre o mesmo bimestre de dois anos as acumulações são disjuntas, e o
    * deslocamento mediano sobe para **1,67 pp** — 42% das comparações movem 2
    * pontos ou mais, 25% movem 3 ou mais.
+   *
+   * ## Por que uma lista, e não "atual" mais "anterior"
+   *
+   * Com três exercícios ou mais, aquele formato exigiria um terceiro campo ou
+   * repetiria o mesmo ano em dois lugares do arquivo — e dado repetido é dado
+   * que diverge. Quem quer só a foto usa `exercicios[0]`, e a ordem é o que
+   * torna isso verdade sem cada chamador reordenar por conta.
    */
-  anterior: FuncoesAnterior | null;
+  exercicios: ExercicioFuncoes[];
 };
 
-export type FuncoesAnterior = {
+/** Um exercício da série, com a sua própria cobertura. */
+export type ExercicioFuncoes = {
   exercicio: number;
-  periodo: number;
   coletadoEm: string | null;
+  /**
+   * A cobertura é POR EXERCÍCIO, e não do bloco: um ano varrido pela metade
+   * não pode herdar a cobertura do ano completo, senão a página afirma sobre
+   * 5.570 municípios o que mediu em 200.
+   */
   cobertura: { consultados: number; publicaram: number; naoFecham: number };
-  /** Compartilha o array `rotulos` do bloco pai. */
+  /** `{ "2927408": [totalDeclarado, [[indice, valor], ...]] }`, em reais inteiros. */
   porMunicipio: Record<string, EntradaFuncoes>;
 };
+
+/**
+ * O exercício em destaque: o mais recente da série.
+ *
+ * Existe para a convenção "o primeiro é o atual" morar num lugar só. Doze
+ * chamadores reimplementando `exercicios[0]` é doze lugares para alguém trocar
+ * por `exercicios[1]` num refatoramento e a página passar a exibir o ano
+ * passado como se fosse este — sem nada quebrar.
+ */
+export function atualDeFuncoes(f: Funcoes): ExercicioFuncoes | null {
+  return f.exercicios[0] ?? null;
+}
+
+/** O exercício de comparação: o anterior na série, ou `null` se não houver. */
+export function anteriorDeFuncoes(f: Funcoes): ExercicioFuncoes | null {
+  return f.exercicios[1] ?? null;
+}
 
 export type EntradaFuncoes = [
   total: number | null,
@@ -237,10 +263,12 @@ export function compararFuncoes(
   codigo: number,
 ): Comparacao | null {
   const bloco = s.funcoes;
-  const antes = bloco?.anterior;
-  if (!bloco || !antes) return null;
+  if (!bloco) return null;
+  const atualEx = atualDeFuncoes(bloco);
+  const antes = anteriorDeFuncoes(bloco);
+  if (!atualEx || !antes) return null;
 
-  const a = bloco.porMunicipio[String(codigo)];
+  const a = atualEx.porMunicipio[String(codigo)];
   const b = antes.porMunicipio[String(codigo)];
   if (!a || !b) return null;
 
@@ -276,7 +304,7 @@ export function compararFuncoes(
   deslocamentos.sort((x, y) => Math.abs(y.pontos) - Math.abs(x.pontos));
 
   return {
-    exercicioAtual: bloco.exercicio,
+    exercicioAtual: atualEx.exercicio,
     exercicioAnterior: antes.exercicio,
     periodo: bloco.periodo,
     crescimento,
@@ -296,7 +324,9 @@ export function funcoesDe(
 ): { total: number | null; fatias: FatiaFuncao[] } | null {
   const bloco = s.funcoes;
   if (!bloco) return null;
-  const entrada = bloco.porMunicipio[String(codigo)];
+  const atualEx = atualDeFuncoes(bloco);
+  if (!atualEx) return null;
+  const entrada = atualEx.porMunicipio[String(codigo)];
   if (!entrada) return null;
   const [total, valores] = entrada;
   const fatias = valores
@@ -310,6 +340,81 @@ export function funcoesDe(
     }))
     .sort((a, b) => b.valor - a.valor);
   return { total, fatias };
+}
+
+/** Um exercício da série de funções, já em fatias comparáveis. */
+export type PontoFuncoes = {
+  exercicio: number;
+  /** O total declarado no ano, em reais. `null` quando não declarado. */
+  total: number | null;
+  /**
+   * As fatias, **na mesma ordem e com o mesmo conjunto em todos os anos**.
+   * `percentual` é `null` quando o total não permite calcular.
+   */
+  fatias: { nome: string; valor: number; percentual: number | null }[];
+};
+
+/**
+ * A série de despesa por função de um município, do mais antigo ao mais recente.
+ *
+ * ## O conjunto de funções é o MESMO em todos os anos, e isso decide tudo
+ *
+ * Se cada ano trouxesse as suas oito maiores, a terceira barra significaria
+ * "Urbanismo" num ano e "Previdência" no outro — e as barras empilhadas
+ * pareceriam comparáveis sem ser. O conjunto vem dos oito primeiros `rotulos`,
+ * que o exportador já ordena pelo peso no exercício mais recente, e tudo o
+ * mais cai em "outras" **em cada ano**.
+ *
+ * ## Do mais ANTIGO para o mais recente
+ *
+ * Ao contrário de `exercicios`, que vem do mais recente porque quem quer a
+ * foto usa o primeiro. Uma série se lê da esquerda para a direita no tempo, e
+ * inverter aqui é o que evita cada componente reordenar por conta.
+ */
+export function serieFuncoesDe(
+  s: SnapshotFiscal,
+  codigo: number,
+  nomeadas = 8,
+): PontoFuncoes[] {
+  const bloco = s.funcoes;
+  if (!bloco) return [];
+  const chave = String(codigo);
+
+  const cabeca = bloco.rotulos.slice(0, nomeadas);
+  const quantasSobram = Math.max(0, bloco.rotulos.length - nomeadas);
+  const rotuloCauda = `outras ${quantasSobram} ${
+    quantasSobram === 1 ? "função" : "funções"}`;
+
+  const pontos: PontoFuncoes[] = [];
+  for (const e of [...bloco.exercicios].reverse()) {
+    const entrada = e.porMunicipio[chave];
+    // Ano sem entrega vira BURACO, e não um ponto de zero: o município não
+    // gastou zero, ele não declarou. É a mesma distinção da faixa
+    // `nao-consultado`, agora dentro de uma série.
+    if (!entrada) continue;
+    const [total, valores] = entrada;
+    const porIndice = new Map(valores);
+    let cauda = 0;
+    for (const [i, v] of valores) if (i >= nomeadas) cauda += v;
+
+    const fatias = cabeca.map((nome, i) => {
+      const valor = porIndice.get(i) ?? 0;
+      return {
+        nome,
+        valor,
+        percentual: total && total > 0 ? (valor * 100) / total : null,
+      };
+    });
+    if (quantasSobram > 0) {
+      fatias.push({
+        nome: rotuloCauda,
+        valor: cauda,
+        percentual: total && total > 0 ? (cauda * 100) / total : null,
+      });
+    }
+    pontos.push({ exercicio: e.exercicio, total, fatias });
+  }
+  return pontos;
 }
 
 /** Um ponto da série: exercício, quadrimestre, publicou, percentual. */

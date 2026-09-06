@@ -6,6 +6,7 @@ import { FUNCOES_DA_PORTARIA, LIMITE_PLAUSIVEL } from "../../lib/fiscal";
 import { conjuntoDoSite, siteDe } from "../../lib/jsonld";
 import { lerFiscal, lerIdeb, lerSnapshot, SITE } from "../../lib/servidor";
 import estilos from "./ajuda.module.css";
+import { anteriorDeFuncoes, atualDeFuncoes } from "../../lib/fiscal";
 
 /**
  * A página de ajuda — o que fazer quando o número não se explica sozinho.
@@ -265,7 +266,8 @@ export default async function PaginaAjuda() {
         {f && (
           <p>
             Os valores publicados aqui são do {f.periodo}º bimestre de{" "}
-            {f.exercicio}, e <strong>acumulam o ano inteiro</strong> até ali —
+            {atualDeFuncoes(f)?.exercicio}, e{" "}
+            <strong>acumulam o ano inteiro</strong> até ali —
             não são o gasto daqueles dois meses.
           </p>
         )}
@@ -284,7 +286,10 @@ export default async function PaginaAjuda() {
         <p>
           Entre o mesmo bimestre de dois anos diferentes, os períodos não se
           sobrepõem, e a mudança é real. É por isso que a página compara{" "}
-          {f?.anterior ? `${f.anterior.exercicio}/${f.anterior.periodo} com ${f.exercicio}/${f.periodo}` : "o mesmo bimestre de dois anos"}.
+          {f && anteriorDeFuncoes(f)
+            ? `${anteriorDeFuncoes(f)!.exercicio}/${f.periodo} com ` +
+              `${atualDeFuncoes(f)!.exercicio}/${f.periodo}`
+            : "o mesmo bimestre de dois anos"}.
         </p>
         <p>
           E a página só chama de mudança um deslocamento de{" "}
@@ -407,8 +412,16 @@ export default async function PaginaAjuda() {
           {f && (
             <li>
               <strong>Despesa por função:</strong> SICONFI/Tesouro Nacional,
-              RREO Anexo 02, {f.periodo}º bimestre de {f.exercicio}
-              {f.coletadoEm ? `, coletado em ${f.coletadoEm.slice(0, 10)}` : ""}.
+              RREO Anexo 02, {f.periodo}º bimestre de{" "}
+              {/* A serie inteira, e nao so o ano em destaque: a procedencia
+                  tem de dizer o intervalo que o dado cobre. */}
+              {f.exercicios.length > 1
+                ? `${f.exercicios[f.exercicios.length - 1]!.exercicio} a ` +
+                  `${f.exercicios[0]!.exercicio}`
+                : f.exercicios[0]?.exercicio}
+              {atualDeFuncoes(f)?.coletadoEm
+                ? `, coletado em ${atualDeFuncoes(f)!.coletadoEm!.slice(0, 10)}`
+                : ""}.
             </li>
           )}
         </ul>

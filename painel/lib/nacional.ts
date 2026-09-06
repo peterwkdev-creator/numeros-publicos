@@ -1,5 +1,5 @@
 import {
-  faixaDe, type FatiaFuncao, type SnapshotFiscal,
+  atualDeFuncoes, faixaDe, type FatiaFuncao, type SnapshotFiscal,
 } from "./fiscal";
 
 /**
@@ -174,12 +174,14 @@ export type PanoramaFuncoes = {
 export function funcoesDoPais(fiscal: SnapshotFiscal): PanoramaFuncoes | null {
   const bloco = fiscal.funcoes;
   if (!bloco) return null;
+  const atual = atualDeFuncoes(bloco);
+  if (!atual) return null;
 
   const soma = new Map<number, number>();
   let total = 0;
   let municipios = 0;
 
-  for (const entrada of Object.values(bloco.porMunicipio)) {
+  for (const entrada of Object.values(atual.porMunicipio)) {
     const [declarado, valores] = entrada;
     municipios += 1;
     total += declarado ?? 0;
@@ -201,7 +203,7 @@ export function funcoesDoPais(fiscal: SnapshotFiscal): PanoramaFuncoes | null {
 
   return {
     total, fatias, municipios,
-    exercicio: bloco.exercicio,
+    exercicio: atual.exercicio,
     periodo: bloco.periodo,
   };
 }

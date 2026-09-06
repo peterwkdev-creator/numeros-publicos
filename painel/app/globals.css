@@ -55,6 +55,24 @@
   --acento-suave: #e8f1f7;
   --positivo: #1a6b4f;
   --sombra: 0 1px 2px rgb(18 33 46 / 0.05), 0 1px 3px rgb(18 33 46 / 0.06);
+
+  /* --- rampa de composição -------------------------------------------------
+     Um matiz só, escuro para claro na ordem das fatias. Usada pela rosca do
+     gasto e pela série de funções: a cor separa vizinhas, e quem identifica
+     cada função é a legenda ao lado. Paleta categórica reprovaria na auditoria
+     de daltonismo e não compraria nada em troca.
+
+     Mora AQUI, e não no módulo da rosca, porque módulo CSS só carrega quando o
+     componente renderiza — e a série existe em páginas onde a rosca não. */
+  --rosca-0: #0f4f79;
+  --rosca-1: #1a6a9e;
+  --rosca-2: #2a84bd;
+  --rosca-3: #4b9dd0;
+  --rosca-4: #6fb3dd;
+  --rosca-5: #94c7e8;
+  --rosca-6: #b6d9f0;
+  --rosca-7: #d3e7f7;
+  --rosca-8: #cbd5dd;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -70,6 +88,15 @@
     --acento-suave: #16293a;
     --positivo: #5fc79e;
     --sombra: none;
+    --rosca-0: #8fc6e8;
+    --rosca-1: #6fb0d8;
+    --rosca-2: #559ac6;
+    --rosca-3: #4084b1;
+    --rosca-4: #316e97;
+    --rosca-5: #26597c;
+    --rosca-6: #1d4661;
+    --rosca-7: #173648;
+    --rosca-8: #3a4650;
   }
 }
 
@@ -292,6 +319,15 @@ p, li {
     --acento: #000;
     --acento-suave: #f0f0f0;
     --sombra: none;
+    --rosca-0: #1f3b52;
+    --rosca-1: #35566f;
+    --rosca-2: #4d6f8a;
+    --rosca-3: #6888a2;
+    --rosca-4: #86a2b8;
+    --rosca-5: #a5bccd;
+    --rosca-6: #c4d4e0;
+    --rosca-7: #e0e9f0;
+    --rosca-8: #d8dde1;
   }
 
   body {

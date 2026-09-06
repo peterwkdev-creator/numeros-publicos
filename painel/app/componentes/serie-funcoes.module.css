@@ -1,0 +1,74 @@
+/* Série da composição do gasto. Reaproveita a rampa da rosca de propósito: as
+   duas mostram a mesma repartição, e cores diferentes para o mesmo dado fariam
+   o leitor procurar um significado que não existe. */
+
+.bloco {
+  margin: 0 0 1.5rem;
+  padding: 0;
+}
+
+.grafico {
+  display: block;
+  width: 100%;
+  max-width: 30rem;
+  height: auto;
+}
+
+.ano {
+  font-size: 11px;
+  font-weight: 600;
+  fill: var(--tinta-suave);
+  font-variant-numeric: tabular-nums;
+}
+
+.fatia {
+  stroke: var(--fundo);
+  stroke-width: 1;
+  /* Em alto contraste forçado o `fill` é descartado e as barras sumiriam sem
+     deixar rastro — mesma razão da rosca, da barra e do mapa. */
+  forced-color-adjust: none;
+}
+
+.legenda {
+  margin-top: 0.6rem;
+  font-size: 0.82rem;
+  color: var(--tinta-suave);
+}
+
+.chaves {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chave {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  line-height: 1.3;
+}
+
+.amostra {
+  display: inline-block;
+  width: 0.8rem;
+  height: 0.8rem;
+  border-radius: 2px;
+  flex: 0 0 auto;
+  forced-color-adjust: none;
+}
+
+/* A rampa vem de `rosca-funcoes.module.css`, que define `--rosca-0..8` em
+   `:root` para os três modos — claro, escuro e impressão. Repeti-la aqui
+   criaria uma segunda verdade que divergiria no dia em que uma fosse ajustada. */
+.fatia[data-ordem="0"], .amostra[data-ordem="0"] { fill: var(--rosca-0); background: var(--rosca-0); }
+.fatia[data-ordem="1"], .amostra[data-ordem="1"] { fill: var(--rosca-1); background: var(--rosca-1); }
+.fatia[data-ordem="2"], .amostra[data-ordem="2"] { fill: var(--rosca-2); background: var(--rosca-2); }
+.fatia[data-ordem="3"], .amostra[data-ordem="3"] { fill: var(--rosca-3); background: var(--rosca-3); }
+.fatia[data-ordem="4"], .amostra[data-ordem="4"] { fill: var(--rosca-4); background: var(--rosca-4); }
+.fatia[data-ordem="5"], .amostra[data-ordem="5"] { fill: var(--rosca-5); background: var(--rosca-5); }
+.fatia[data-ordem="6"], .amostra[data-ordem="6"] { fill: var(--rosca-6); background: var(--rosca-6); }
+.fatia[data-ordem="7"], .amostra[data-ordem="7"] { fill: var(--rosca-7); background: var(--rosca-7); }
+.fatia[data-ordem="8"], .amostra[data-ordem="8"] { fill: var(--rosca-8); background: var(--rosca-8); }

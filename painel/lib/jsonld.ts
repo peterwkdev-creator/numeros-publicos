@@ -111,8 +111,9 @@ export function coberturaTemporal(
   ideb: SnapshotIdeb,
 ): string {
   const anos: number[] = [fiscal.exercicio];
-  if (fiscal.funcoes) anos.push(fiscal.funcoes.exercicio);
-  if (fiscal.funcoes?.anterior) anos.push(fiscal.funcoes.anterior.exercicio);
+  // TODOS os exercícios da série, e não só os dois primeiros: a cobertura
+  // temporal do conjunto é o intervalo que ele de fato abrange.
+  for (const e of fiscal.funcoes?.exercicios ?? []) anos.push(e.exercicio);
   anos.push(...ideb.edicoes);
   for (const i of snapshot.indicadores) {
     const ano = Number(i.periodo);

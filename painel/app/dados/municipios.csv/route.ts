@@ -2,6 +2,7 @@ import { expandir } from "../../../lib/dados";
 import { cabecalhosCsv, paraCsv } from "../../../lib/csv";
 import { funcoesDe, indexarFiscal } from "../../../lib/fiscal";
 import { lerFiscal, lerSnapshot } from "../../../lib/servidor";
+import { atualDeFuncoes } from "@/lib/fiscal";
 
 /**
  * A base inteira num arquivo: 1.794 municípios, uma linha cada.
@@ -65,7 +66,7 @@ export async function GET() {
       fn?.total ?? null,
       acha(fn, "Educação"),
       acha(fn, "Saúde"),
-      fiscal.funcoes?.exercicio ?? null,
+      fiscal.funcoes ? atualDeFuncoes(fiscal.funcoes)?.exercicio ?? null : null,
       fiscal.funcoes?.periodo ?? null,
     ];
   });

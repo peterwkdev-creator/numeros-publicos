@@ -22,6 +22,8 @@ import IdebSvg from "../../componentes/ideb-svg";
 import Termo from "../../componentes/termo";
 import SerieSvg from "./serie-svg";
 import estilos from "./municipio.module.css";
+import { atualDeFuncoes, serieFuncoesDe } from "../../../lib/fiscal";
+import SerieFuncoes from "../../componentes/serie-funcoes";
 
 /**
  * Uma página por município — 5.571 delas, geradas no build.
@@ -170,6 +172,7 @@ export default async function PaginaMunicipio(
   // para chegar sempre aos mesmos seis números. Ver `medianasCache`.
   const medidas = medidasDe(m.valores);
   const medianas = medianasCache(snapshot.municipios, snapshot.colunas);
+  const serieFuncoes = serieFuncoesDe(fiscal, m.codigo);
   const taxasPais = taxasCache(snapshot.municipios, snapshot.colunas);
 
   // `?? null` porque o acesso indexado num Record pode devolver `undefined`
@@ -222,7 +225,7 @@ export default async function PaginaMunicipio(
   // data, então quem tem um pode perfeitamente não ter o outro.
   const funcoes = funcoesDe(fiscal, m.codigo);
   const bimestre = fiscal.funcoes
-    ? `${fiscal.funcoes.periodo}º bimestre de ${fiscal.funcoes.exercicio}`
+    ? `${fiscal.funcoes.periodo}º bimestre de ${atualDeFuncoes(fiscal.funcoes)?.exercicio ?? "?"}`
     : "";
   const maior = funcoes?.fatias[0] ?? null;
 
@@ -791,12 +794,63 @@ export default async function PaginaMunicipio(
             </ul>
           )}
 
+          {/* A serie so aparece com tres anos ou mais: com dois, ela seria a
+              mesma comparacao ja dita acima, desenhada. */}
+          {serieFuncoes.length >= 3 && (
+            <>
+              <h3 className={estilos.subtitulo}>
+                A composição ao longo dos anos
+              </h3>
+              <p>
+                Cada barra soma <strong>100%</strong> — o que muda é a
+                proporção, não o tamanho. É de propósito: reais de{" "}
+                {serieFuncoes[0]!.exercicio} e de{" "}
+                {serieFuncoes[serieFuncoes.length - 1]!.exercicio} não são a
+                mesma coisa, e uma barra proporcional ao total mostraria
+                inflação onde se procura prioridade.
+              </p>
+              <SerieFuncoes pontos={serieFuncoes} />
+              <div className={estilos.rolagem}>
+                <table className={estilos.serie}>
+                  <caption className={estilos.legenda}>
+                    Total declarado por {m.nome} em cada {comparacao.periodo}º
+                    bimestre, em valores nominais
+                  </caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Ano</th>
+                      <th scope="col" className={estilos.num}>
+                        Total declarado
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {serieFuncoes.map((p) => (
+                      <tr key={p.exercicio}>
+                        <th scope="row">{p.exercicio}</th>
+                        <td className={`${estilos.num} tabular`}>
+                          {p.total === null ? "—" : `R$ ${br(p.total)}`}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+
           <p className={estilos.ressalva}>
             A comparação é entre o <strong>mesmo bimestre</strong> de dois anos,
             e não entre bimestres do mesmo ano — o RREO é acumulado, então o 6º
             bimestre já contém o 4º e comparar os dois mediria quase nada. Os
             valores são <strong>nominais</strong>: parte do crescimento é
             inflação, e este painel não deflaciona nada.{" "}
+            {serieFuncoes.length >= 3 && (
+              <>
+                É também por isso que a série acima é em porcentagem:{" "}
+                <strong>proporção não infla</strong>.{" "}
+              </>
+            )}
             <Link href="/ajuda/#comparacao">Por quê?</Link>
           </p>
         </section>

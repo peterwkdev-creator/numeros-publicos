@@ -63,36 +63,24 @@ export async function GET(
   // exatamente o que o formato longo compra. Um CSV largo precisaria de 28
   // colunas a mais no cabeçalho, e o cabeçalho é o que quebra a planilha de
   // quem já baixou o arquivo antes.
-  const funcoes = funcoesDe(fiscal, m.codigo);
-  const periodoFuncoes = fiscal.funcoes
-    ? `${fiscal.funcoes.exercicio}/${fiscal.funcoes.periodo}`
-    : "";
-  for (const f of funcoes?.fatias ?? []) {
-    linhas.push([...comum, `Despesa liquidada — ${f.nome}`, periodoFuncoes,
-      f.valor, "R$", "SICONFI", fiscal.funcoes?.coletadoEm ?? ""]);
-  }
-  if (funcoes?.total !== null && funcoes?.total !== undefined) {
-    linhas.push([...comum, "Despesa liquidada — total declarado",
-      periodoFuncoes, funcoes.total, "R$", "SICONFI",
-      fiscal.funcoes?.coletadoEm ?? ""]);
-  }
-
-  // O mesmo bimestre do ano anterior, quando coletado. Em formato longo isto
-  // são apenas linhas com outro `periodo` -- nenhuma coluna muda, e quem já
-  // baixou o arquivo antes continua abrindo do mesmo jeito.
-  const antes = fiscal.funcoes?.anterior;
-  const entradaAntes = antes?.porMunicipio[String(m.codigo)];
-  if (antes && entradaAntes) {
-    const [totalAntes, valoresAntes] = entradaAntes;
-    const periodoAntes = `${antes.exercicio}/${antes.periodo}`;
-    for (const [i, valor] of valoresAntes) {
+  // A SÉRIE inteira, um exercício por vez. Em formato longo cada ano são
+  // apenas linhas com outro `periodo` — nenhuma coluna muda, e quem já baixou
+  // o arquivo antes continua abrindo do mesmo jeito. É exatamente o que o
+  // formato longo compra: um CSV largo precisaria de 28 colunas por ano.
+  const bloco = fiscal.funcoes;
+  for (const e of bloco?.exercicios ?? []) {
+    const entrada = e.porMunicipio[String(m.codigo)];
+    if (!entrada) continue;
+    const [total, valores] = entrada;
+    const quando = `${e.exercicio}/${bloco!.periodo}`;
+    for (const [i, valor] of valores) {
       linhas.push([...comum,
-        `Despesa liquidada — ${fiscal.funcoes?.rotulos[i] ?? `Função ${i}`}`,
-        periodoAntes, valor, "R$", "SICONFI", antes.coletadoEm ?? ""]);
+        `Despesa liquidada — ${bloco!.rotulos[i] ?? `Função ${i}`}`,
+        quando, valor, "R$", "SICONFI", e.coletadoEm ?? ""]);
     }
-    if (totalAntes !== null) {
+    if (total !== null) {
       linhas.push([...comum, "Despesa liquidada — total declarado",
-        periodoAntes, totalAntes, "R$", "SICONFI", antes.coletadoEm ?? ""]);
+        quando, total, "R$", "SICONFI", e.coletadoEm ?? ""]);
     }
   }
 

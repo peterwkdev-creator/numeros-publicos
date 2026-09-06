@@ -114,8 +114,13 @@ export async function GET() {
       [fiscal.fonte,
        `Despesa com pessoal, ${fiscal.periodo}º quadrimestre de ${fiscal.exercicio}`,
        fiscal.coletadoEm?.slice(0, 10) ?? "—"],
-      ...(f ? [[f.fonte, `Despesa por função, ${f.periodo}º bimestre de ${f.exercicio}`,
-                f.coletadoEm?.slice(0, 10) ?? "—"]] : []),
+      // A serie inteira, uma linha por exercicio: a procedencia tem de dizer
+      // de QUANDO e cada numero, e um so ano esconderia os outros quatro.
+      ...(f ? f.exercicios.map((e) => [
+        f.fonte,
+        `Despesa por função, ${f.periodo}º bimestre de ${e.exercicio}`,
+        e.coletadoEm?.slice(0, 10) ?? "—",
+      ]) : []),
       [ideb.fonte, `IDEB da rede municipal, edições ${ideb.edicoes[0]} a ${ideb.edicoes[ideb.edicoes.length - 1]}`,
        ideb.coletadoEm?.slice(0, 10) ?? "—"],
       [],

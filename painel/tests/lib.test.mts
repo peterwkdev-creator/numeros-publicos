@@ -22,7 +22,7 @@ import {
 } from "../lib/nacional.ts";
 import {
   faixaDe, faixasEmLinha, FAIXA_DA_LETRA, LETRA_FAIXA,
-  PRESTA_COMO_ESTADO, ROTULO_FAIXA,
+  PRESTA_COMO_ESTADO, ROTULO_FAIXA, serieFuncoesDe,
 } from "../lib/fiscal.ts";
 import { posicaoEntre, posicaoNoEstado } from "../lib/posicao.ts";
 import { emContracao } from "../lib/estado.ts";
@@ -326,14 +326,17 @@ test("o país soma valores absolutos, não médias de percentual", () => {
     limites: LIMITES,
     municipios: [],
     funcoes: {
-      exercicio: 2024, periodo: 6,
+      periodo: 6,
       rotulos: ["Educação", "Saúde"],
-      porMunicipio: {
-        // um grande: 900 em Educação, 100 em Saúde
-        "1": [1000, [[0, 900], [1, 100]]],
-        // um pequeno com a proporção INVERSA: 1 e 9
-        "2": [10, [[0, 1], [1, 9]]],
-      },
+      exercicios: [{
+        exercicio: 2024,
+        porMunicipio: {
+          // um grande: 900 em Educação, 100 em Saúde
+          "1": [1000, [[0, 900], [1, 100]]],
+          // um pequeno com a proporção INVERSA: 1 e 9
+          "2": [10, [[0, 1], [1, 9]]],
+        },
+      }],
     },
   } as never;
   const p = funcoesDoPais(fiscal)!;
@@ -349,9 +352,12 @@ test("rótulo faltante não imprime 'undefined' na página", () => {
   const fiscal = {
     limites: LIMITES, municipios: [],
     funcoes: {
-      exercicio: 2024, periodo: 6,
+      periodo: 6,
       rotulos: ["Educação"],
-      porMunicipio: { "1": [100, [[0, 60], [7, 40]]] },
+      exercicios: [{
+        exercicio: 2024,
+        porMunicipio: { "1": [100, [[0, 60], [7, 40]]] },
+      }],
     },
   } as never;
   const p = funcoesDoPais(fiscal)!;
@@ -828,4 +834,74 @@ test("todo indicador da capa tem rótulo curto", () => {
     assert.notEqual(rotuloCurto(c, "NOME LONGO DA VARIÁVEL"), "NOME LONGO DA VARIÁVEL",
       `indicador da capa sem rótulo curto: ${c}`);
   }
+});
+
+// ------------------------------------------------------- série de funções
+
+/** Três exercícios, com o município 1 declarando em todos menos 2022. */
+function fiscalComSerie(): never {
+  return {
+    limites: LIMITES,
+    municipios: [],
+    funcoes: {
+      periodo: 6,
+      rotulos: ["Educação", "Saúde", "Urbanismo", "Cultura"],
+      exercicios: [
+        { exercicio: 2024, porMunicipio: { "1": [100, [[0, 50], [1, 30], [3, 20]]] } },
+        { exercicio: 2023, porMunicipio: { "1": [200, [[0, 80], [1, 80], [2, 40]]] } },
+        { exercicio: 2022, porMunicipio: {} },
+      ],
+    },
+  } as never;
+}
+
+test("a série vai do mais ANTIGO para o mais recente", () => {
+  // `exercicios` vem do mais recente porque quem quer a foto usa o primeiro.
+  // Uma série se lê da esquerda para a direita no tempo, e inverter aqui é o
+  // que evita cada componente reordenar por conta.
+  const s = serieFuncoesDe(fiscalComSerie(), 1);
+  assert.deepEqual(s.map((p) => p.exercicio), [2023, 2024]);
+});
+
+test("ano sem entrega vira BURACO, e não um ponto de zero", () => {
+  // O município não gastou zero em 2022: ele não declarou. Um ponto de zero
+  // desenharia uma queda que ninguém reportou.
+  const s = serieFuncoesDe(fiscalComSerie(), 1);
+  assert.equal(s.length, 2, "2022 não foi declarado e não pode virar ponto");
+  assert.ok(!s.some((p) => p.exercicio === 2022));
+});
+
+test("o conjunto de funções é o MESMO em todos os anos", () => {
+  // Se cada ano trouxesse as suas maiores, a terceira barra significaria
+  // "Urbanismo" num ano e "Cultura" no outro -- e as barras empilhadas
+  // pareceriam comparáveis sem ser.
+  const s = serieFuncoesDe(fiscalComSerie(), 1, 2);
+  const nomes = s.map((p) => p.fatias.map((f) => f.nome));
+  assert.deepEqual(nomes[0], nomes[1]);
+  assert.deepEqual(nomes[0], ["Educação", "Saúde", "outras 2 funções"]);
+});
+
+test("função ausente num ano vale zero, e a soma continua fechando", () => {
+  // Urbanismo existe em 2023 e some em 2024. A fatia tem de aparecer com zero
+  // -- omiti-la faria a barra daquele ano ter menos segmentos que a vizinha.
+  const s = serieFuncoesDe(fiscalComSerie(), 1, 4);
+  for (const p of s) {
+    assert.equal(p.fatias.length, 4);
+    assert.equal(p.fatias.reduce((a, f) => a + f.valor, 0), p.total);
+  }
+  const em2024 = s.find((p) => p.exercicio === 2024)!;
+  assert.equal(em2024.fatias.find((f) => f.nome === "Urbanismo")!.valor, 0);
+});
+
+test("a cauda soma tudo o que não está entre as nomeadas", () => {
+  const s = serieFuncoesDe(fiscalComSerie(), 1, 1);
+  const em2023 = s.find((p) => p.exercicio === 2023)!;
+  assert.equal(em2023.fatias[0]!.nome, "Educação");
+  assert.equal(em2023.fatias[0]!.valor, 80);
+  assert.equal(em2023.fatias[1]!.nome, "outras 3 funções");
+  assert.equal(em2023.fatias[1]!.valor, 120);
+});
+
+test("município sem nenhuma entrega devolve série vazia", () => {
+  assert.deepEqual(serieFuncoesDe(fiscalComSerie(), 999), []);
 });

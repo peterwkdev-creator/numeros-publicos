@@ -29,6 +29,7 @@ import { emContracao } from "../lib/estado.ts";
 import { faixaDoValor, percentuaisPorUf } from "../lib/mapa.ts";
 import {
   medianasDe, medidasDe, PARES_CENSO, rotuloDownload, taxasDoPais,
+  medidasDoPais,
 } from "../lib/censo.ts";
 import { xlsx } from "../lib/xlsx.ts";
 
@@ -731,7 +732,28 @@ test("toda contração da página de estado é derivável", () => {
   }
 });
 
-test("as duas páginas comparam contra coisas DIFERENTES, e dizem qual", () => {
+test("os totais do país pareiam as pontas, como taxasDoPais", () => {
+  // A capa usa os totais somados por UF; as medianas e taxas vêm dos
+  // municípios. Se as duas agregações discordassem, a página mostraria dois
+  // números do mesmo fato -- e nenhum teste pegaria, porque cada um está certo
+  // no seu caminho.
+  const snapshot = JSON.parse(
+    fs.readFileSync(new URL("../dados/snapshot.json", import.meta.url), "utf-8"),
+  );
+  const porUf = medidasDoPais(snapshot.municipios, snapshot.colunas);
+  const porMunicipio = taxasDoPais(snapshot.municipios, snapshot.colunas);
+  for (const m of porUf) {
+    if (m.percentual === null) continue;
+    const outro = porMunicipio[m.chave];
+    assert.ok(outro !== null && outro !== undefined,
+      `${m.chave} sem taxa pelos municípios`);
+    assert.ok(Math.abs(m.percentual - outro!) < 0.01,
+      `${m.chave}: ${m.percentual.toFixed(3)}% em medidasDoPais contra ` +
+      `${outro!.toFixed(3)}% em taxasDoPais`);
+  }
+});
+
+test("as três páginas comparam contra coisas DIFERENTES, e dizem qual", () => {
   // O risco que o componente compartilhado cria: a coluna de comparação é do
   // chamador, e trocá-la seria erro grave e invisível. No esgoto, a mediana dos
   // municípios é 32,6% e a taxa do país é 64,7% -- as duas corretas, e a página
@@ -748,14 +770,31 @@ test("as duas páginas comparam contra coisas DIFERENTES, e dizem qual", () => {
     assert.ok(m, "TabelaCenso sem rótulo de comparação");
     return m![1];
   };
+  const capa = ler("../app/page.tsx");
   const rMuni = rotuloDe(muni);
   const rEst = rotuloDe(est);
+  const rCapa = rotuloDe(capa);
 
   assert.match(rMuni, /[Mm]ediana/,
     `no município a comparação é a mediana dos municípios, achei "${rMuni}"`);
   assert.match(rEst, /Brasil/,
     `no estado a comparação é a taxa do país, achei "${rEst}"`);
-  assert.notEqual(rMuni, rEst, "as duas páginas não podem comparar com o mesmo");
+  // Na capa a coluna "Aqui" JÁ é o Brasil, então a vizinha tem de ser a
+  // mediana -- comparar o país com o país não diria nada.
+  assert.match(rCapa, /[Mm]ediana/,
+    `na capa a comparação é a mediana dos municípios, achei "${rCapa}"`);
+  assert.notEqual(rMuni, rEst, "município e estado não podem comparar com o mesmo");
+
+  // E a coluna do VALOR: "Aqui" serve ao município e ao estado, e mente na capa.
+  const valorDe = (src: string) => {
+    const i = src.indexOf("<TabelaCenso");
+    const m = src.slice(i, i + 500).match(/rotuloValor="([^"]+)"/);
+    return m ? m[1] : "Aqui";
+  };
+  assert.equal(valorDe(muni), "Aqui");
+  assert.equal(valorDe(est), "Aqui");
+  assert.match(valorDe(capa), /Brasil/,
+    `na capa a coluna do valor é o país, achei "${valorDe(capa)}"`);
 });
 
 test("a página do município mantém a ressalva que separa mediana de taxa", () => {

@@ -9,6 +9,10 @@ import { faixasEmLinha } from "@/lib/fiscal";
 import { funcoesDoPais, panoramaEstados } from "@/lib/nacional";
 import MapaUf from "./componentes/mapa-uf";
 import { camadasPadrao } from "@/lib/mapa";
+import {
+  medianasCache, medidasDoPaisCache,
+} from "@/lib/censo";
+import TabelaCenso from "./componentes/tabela-censo";
 import FuncoesBarras from "./componentes/funcoes-barras";
 import RoscaFuncoes from "./componentes/rosca-funcoes";
 import {
@@ -53,6 +57,13 @@ export default async function Pagina() {
   const estados = panoramaEstados(fiscal);
 
   const camadasDoMapa = camadasPadrao(snapshot.ufs, estados);
+
+  // O Censo do país inteiro, ao lado da mediana dos municípios. É a única
+  // página onde essas duas colunas convivem, e é de propósito: a distância
+  // entre elas É o achado. No esgoto são 64,7% dos domicílios contra 32,6% nos
+  // municípios — os dois corretos, e o primeiro puxado pelas cidades grandes.
+  const medidasPais = medidasDoPaisCache(snapshot.municipios, snapshot.colunas);
+  const medianasMunicipais = medianasCache(snapshot.municipios, snapshot.colunas);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -240,6 +251,37 @@ export default async function Pagina() {
             relatório — {br((pais.municipios * 100) / capa.linhas.length, 0)}% dos{" "}
             {br(capa.linhas.length)}. Os outros não aparecem aqui porque não há
             número deles, e somar zero por eles seria inventar um.
+          </p>
+        </section>
+      )}
+
+      {medidasPais.some((x) => x.percentual !== null) && (
+        <section className={s.secao} aria-labelledby="como-se-vive">
+          <h2 className={s.secaoTitulo} id="como-se-vive">
+            Como se vive no Brasil
+          </h2>
+          <p className={s.secaoNota}>
+            Do <strong>Censo de 2022</strong>, somando os{" "}
+            {br(capa.linhas.length)} municípios. As duas colunas respondem
+            perguntas diferentes: a primeira é a proporção no país, a segunda é
+            o município do meio.
+          </p>
+          <TabelaCenso
+            medidas={medidasPais}
+            comparacao={{
+              rotulo: "Mediana dos municípios",
+              valores: medianasMunicipais,
+            }}
+            rotuloValor="No Brasil"
+            legenda="Brasil no Censo 2022, com a mediana dos municípios ao lado"
+          />
+          <p className={s.secaoNota}>
+            <strong>A distância entre as duas colunas é o achado.</strong> No
+            esgoto, a proporção do país é mais que o dobro da mediana municipal:
+            as cidades grandes concentram população e rede, então a maioria das
+            casas tem ligação enquanto a maioria dos municípios não chega perto
+            disso. Quem citar um dos números como se fosse o outro erra por
+            muito. Fonte: IBGE, Censo Demográfico 2022.
           </p>
         </section>
       )}

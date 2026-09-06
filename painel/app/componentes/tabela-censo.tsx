@@ -27,8 +27,15 @@ export default function TabelaCenso({
   medidas,
   comparacao,
   legenda,
+  rotuloValor = "Aqui",
 }: {
   medidas: MedidaCenso[];
+  /**
+   * O cabeçalho da coluna do valor. "Aqui" serve ao município e ao estado, e
+   * mente na capa — lá o "aqui" é o país inteiro, e o leitor precisa ler
+   * "No Brasil" para saber sobre o que é a coluna.
+   */
+  rotuloValor?: string;
   comparacao: {
     /** O cabeçalho da terceira coluna. Diz CONTRA O QUÊ se compara. */
     rotulo: string;
@@ -44,7 +51,7 @@ export default function TabelaCenso({
         <thead>
           <tr>
             <th scope="col">Indicador</th>
-            <th scope="col" className={estilos.num}>Aqui</th>
+            <th scope="col" className={estilos.num}>{rotuloValor}</th>
             <th scope="col" className={estilos.num}>{comparacao.rotulo}</th>
           </tr>
         </thead>

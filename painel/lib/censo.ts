@@ -286,6 +286,68 @@ export function taxasCache(
   return calculado;
 }
 
+/**
+ * As medidas do PAÍS, um par de cada vez, com as duas pontas pareadas.
+ *
+ * ## Duas coisas que o teste ensinou, nesta ordem
+ *
+ * **1. Somar as UFs quebra o pareamento.** Por UF o esgoto dava 64,69% e por
+ * município 64,72%: o numerador batia, e o denominador diferia em **32.128
+ * domicílios** — as casas de 26 municípios que têm domicílios e **não têm dado
+ * de esgoto**. Somá-las no denominador equivale a afirmar que não têm rede.
+ * Não sabemos se têm, e essa é a distinção que o projeto inteiro mantém.
+ *
+ * **2. Um mapa `código → total` não comporta denominador compartilhado.**
+ * `domicilios-total` é o denominador de água, esgoto e lixo, e cada par exclui
+ * municípios diferentes: pareado, o denominador da água é 72.442.192 e o do
+ * esgoto 72.424.240. Num mapa plano o último par sobrescreve os outros, e a
+ * página publica a proporção da água sobre o denominador do lixo — número bem
+ * formado e errado.
+ *
+ * Por isso a função devolve as **medidas**, e não os totais: cada par carrega o
+ * seu próprio denominador, que é a única forma de os três coexistirem.
+ */
+export function medidasDoPais(
+  linhas: (number | string | null)[][],
+  colunas: string[],
+): MedidaCenso[] {
+  return PARES_CENSO.map((par) => {
+    const iN = colunas.indexOf(par.numerador);
+    const iD = colunas.indexOf(par.denominador);
+    let parte: number | null = null;
+    let total: number | null = null;
+    if (iN >= 0 && iD >= 0) {
+      for (const l of linhas) {
+        const a = l[iN];
+        const b = l[iD];
+        if (typeof a === "number" && typeof b === "number") {
+          parte = (parte ?? 0) + a;
+          total = (total ?? 0) + b;
+        }
+      }
+    }
+    const percentual =
+      parte === null || total === null || total === 0
+        ? null
+        : (parte * 100) / total;
+    return { ...par, parte, total, percentual };
+  });
+}
+
+const cachePais = new WeakMap<object, MedidaCenso[]>();
+
+/** `medidasDoPais` memorizado — mesma razão de `medianasCache`. */
+export function medidasDoPaisCache(
+  linhas: (number | string | null)[][],
+  colunas: string[],
+): MedidaCenso[] {
+  const guardado = cachePais.get(linhas);
+  if (guardado) return guardado;
+  const calculado = medidasDoPais(linhas, colunas);
+  cachePais.set(linhas, calculado);
+  return calculado;
+}
+
 /** A mediana de uma lista. Vazia devolve `null`, nunca zero. */
 export function mediana(valores: number[]): number | null {
   if (!valores.length) return null;

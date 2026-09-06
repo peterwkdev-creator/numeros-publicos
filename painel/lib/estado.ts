@@ -202,3 +202,31 @@ export function vizinhosDe(
   }
   return saida;
 }
+
+
+/**
+ * De `"do Rio Grande do Sul"` para `"no Rio Grande do Sul"`.
+ *
+ * ## Por que derivar, e não escrever uma segunda tabela
+ *
+ * A tabela `CONTRACAO` já resolve "de/do/da" para as 27 UFs, e ela existe
+ * porque a regra ingênua (`de ${nome}`) erra em Alagoas, Goiás, Sergipe,
+ * Roraima e no Distrito Federal. Uma segunda tabela para "em/no/na" seria uma
+ * segunda verdade a manter, que divergiria da primeira no dia em que alguém
+ * corrigisse só uma delas.
+ *
+ * A derivação é exata porque as três preposições se correspondem uma a uma:
+ * `de → em`, `do → no`, `da → na`. Não há caso em português onde isso falhe
+ * para nome de estado.
+ *
+ * Mordeu antes: a concordância do Distrito Federal quebrou três vezes nesta
+ * base, sempre num texto diferente, até virar função com teste.
+ */
+export function emContracao(de: string): string {
+  if (de.startsWith("do ")) return `no ${de.slice(3)}`;
+  if (de.startsWith("da ")) return `na ${de.slice(3)}`;
+  if (de.startsWith("de ")) return `em ${de.slice(3)}`;
+  // Entrada fora do formato: devolver como veio é melhor que inventar uma
+  // preposição — o texto fica estranho e visível, em vez de errado e discreto.
+  return de;
+}

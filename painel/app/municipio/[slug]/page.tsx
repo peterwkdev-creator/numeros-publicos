@@ -14,6 +14,7 @@ import {
 } from "../../../lib/fiscal";
 import { contarMetas, medianaGeral, trajetoriaDe } from "../../../lib/ideb";
 import { medianasCache, medidasDe, taxasCache } from "../../../lib/censo";
+import TabelaCenso from "../../componentes/tabela-censo";
 import { lerFiscal, lerIdeb, lerSnapshot, SITE } from "../../../lib/servidor";
 import FuncoesBarras from "../../componentes/funcoes-barras";
 import DistribuicaoSvg from "../../componentes/distribuicao-svg";
@@ -1033,56 +1034,15 @@ export default async function PaginaMunicipio(
             que permite conferir na fonte, e a porcentagem sozinha esconde o
             tamanho do lugar.
           </p>
-          <div className={estilos.rolagem}>
-            <table className={estilos.serie}>
-              <caption className={estilos.legenda}>
-                {m.nome} ({m.uf}) no Censo 2022, com a mediana dos{" "}
-                {br(snapshot.municipios.length)} municípios do país ao lado
-              </caption>
-              <thead>
-                <tr>
-                  <th scope="col">Indicador</th>
-                  <th scope="col" className={estilos.num}>Aqui</th>
-                  <th scope="col" className={estilos.num}>
-                    Mediana dos municípios
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {medidas.map((x) => {
-                  const med = medianas[x.chave] ?? null;
-                  return (
-                    <tr key={x.chave}>
-                      <th scope="row">
-                        {x.rotulo}
-                        <span className={estilos.criterio}>
-                          {x.contagem} que {x.criterio}
-                        </span>
-                      </th>
-                      <td
-                        className={`${estilos.num} tabular ${
-                          x.percentual === null ? estilos.semDado : ""
-                        }`}
-                      >
-                        {x.percentual === null ? "—" : `${br(x.percentual, 1)}%`}
-                        <span className={estilos.criterio}>
-                          {/* A ausencia diz o que e: "sem dado na fonte", e
-                              nunca um zero. Sao 8 municipios sem agua e 25 sem
-                              esgoto, e "nao sabemos" nao e "nenhum". */}
-                          {x.parte === null || x.total === null
-                            ? "sem dado na fonte"
-                            : `${br(x.parte)} de ${br(x.total)}`}
-                        </span>
-                      </td>
-                      <td className={`${estilos.num} tabular`}>
-                        {med === null ? "—" : `${br(med, 1)}%`}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <TabelaCenso
+            medidas={medidas}
+            comparacao={{
+              rotulo: "Mediana dos municípios",
+              valores: medianas,
+            }}
+            legenda={`${m.nome} (${m.uf}) no Censo 2022, com a mediana dos ` +
+                     `${br(snapshot.municipios.length)} municípios do país`}
+          />
           <p className={estilos.ressalva}>
             <strong>A mediana ao lado é dos municípios, não do país.</strong> São
             coisas diferentes, e o esgoto mostra por quê: metade dos municípios

@@ -1,0 +1,70 @@
+/* A tabela do Censo 2022, compartilhada pela página do município e pela do
+   estado. Ver o cabeçalho de `tabela-censo.tsx` para por que é componente. */
+
+.rolagem {
+  overflow-x: auto;
+}
+
+.tabela {
+  border-collapse: collapse;
+  font-size: var(--texto-sm);
+  min-width: 18rem;
+  margin-bottom: var(--e-4);
+  /* Sem isto as colunas de número dançam e comparar linha a linha, que é a
+     única coisa que se faz nesta tabela, vira esforço. */
+  font-variant-numeric: tabular-nums;
+}
+
+.tabela th,
+.tabela td {
+  padding: var(--e-2) var(--e-4);
+  border-bottom: 1px solid var(--borda);
+  text-align: left;
+  vertical-align: top;
+}
+
+.tabela thead th {
+  font-size: var(--texto-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--tinta-fraca);
+  border-bottom: 1px solid var(--borda-forte);
+}
+
+.tabela tbody th {
+  font-weight: 600;
+  color: var(--tinta-suave);
+}
+
+.num {
+  text-align: right;
+}
+
+.legenda {
+  caption-side: top;
+  text-align: left;
+  padding-bottom: var(--e-2);
+  font-size: var(--texto-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--tinta-fraca);
+}
+
+/* O critério da fonte e o absoluto, embaixo do número que eles qualificam.
+   Ficam na mesma célula de propósito: "96%" sem "94.063 de 97.991" e sem dizer
+   o que conta como esgoto é um número que ninguém consegue conferir — e
+   conferir é a única coisa que este site pede que façam com ele. */
+.criterio {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.78rem;
+  font-weight: 400;
+  line-height: 1.3;
+  color: var(--tinta-fraca);
+}
+
+/* A célula sem dado ganha marca de borda, e não só o travessão: num telefone
+   o travessão sozinho se confunde com hífen de quebra. */
+.semDado {
+  border-left: 3px solid var(--borda-forte);
+}

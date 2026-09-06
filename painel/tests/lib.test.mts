@@ -25,6 +25,7 @@ import {
   PRESTA_COMO_ESTADO, ROTULO_FAIXA,
 } from "../lib/fiscal.ts";
 import { posicaoEntre, posicaoNoEstado } from "../lib/posicao.ts";
+import { emContracao } from "../lib/estado.ts";
 import { faixaDoValor, percentuaisPorUf } from "../lib/mapa.ts";
 import {
   medianasDe, medidasDe, PARES_CENSO, rotuloDownload, taxasDoPais,
@@ -703,4 +704,66 @@ test("toda camada do mapa tem regra de cor no CSS", () => {
     assert.ok(css.includes(`[data-${c}="4"]`),
       `camada "${c}" não tem as cinco faixas no CSS`);
   }
+});
+
+test("emContracao cobre as três preposições, e as 27 UFs", () => {
+  assert.equal(emContracao("do Rio Grande do Sul"), "no Rio Grande do Sul");
+  assert.equal(emContracao("da Bahia"), "na Bahia");
+  assert.equal(emContracao("de Alagoas"), "em Alagoas");
+  assert.equal(emContracao("do Distrito Federal"), "no Distrito Federal");
+  // Entrada fora do formato volta como veio: texto estranho e visível é melhor
+  // que preposição inventada, que passa despercebida.
+  assert.equal(emContracao("Sergipe"), "Sergipe");
+});
+
+test("toda contração da página de estado é derivável", () => {
+  // Sentinela: se alguém acrescentar uma UF com contração fora de de/do/da, a
+  // frase "Como se vive ..." sai sem preposição e ninguém percebe -- ela
+  // continua sendo uma frase.
+  const pagina = fs.readFileSync(
+    new URL("../app/estado/[uf]/page.tsx", import.meta.url), "utf-8");
+  const bloco = pagina.slice(pagina.indexOf("const CONTRACAO"),
+                             pagina.indexOf("function crase"));
+  const valores = [...bloco.matchAll(/"((?:de|do|da) [^"]+)"/g)].map((m) => m[1]);
+  assert.equal(valores.length, 27, `esperava 27 contrações, achei ${valores.length}`);
+  for (const v of valores) {
+    assert.notEqual(emContracao(v), v, `contração não derivável: "${v}"`);
+  }
+});
+
+test("as duas páginas comparam contra coisas DIFERENTES, e dizem qual", () => {
+  // O risco que o componente compartilhado cria: a coluna de comparação é do
+  // chamador, e trocá-la seria erro grave e invisível. No esgoto, a mediana dos
+  // municípios é 32,6% e a taxa do país é 64,7% -- as duas corretas, e a página
+  // continuaria bem formada com qualquer uma no lugar da outra.
+  const ler = (rel: string) =>
+    fs.readFileSync(new URL(rel, import.meta.url), "utf-8");
+  const muni = ler("../app/municipio/[slug]/page.tsx");
+  const est = ler("../app/estado/[uf]/page.tsx");
+
+  const rotuloDe = (src: string) => {
+    const i = src.indexOf("<TabelaCenso");
+    assert.notEqual(i, -1, "TabelaCenso não é usada nesta página");
+    const m = src.slice(i, i + 500).match(/rotulo:\s*"([^"]+)"/);
+    assert.ok(m, "TabelaCenso sem rótulo de comparação");
+    return m![1];
+  };
+  const rMuni = rotuloDe(muni);
+  const rEst = rotuloDe(est);
+
+  assert.match(rMuni, /[Mm]ediana/,
+    `no município a comparação é a mediana dos municípios, achei "${rMuni}"`);
+  assert.match(rEst, /Brasil/,
+    `no estado a comparação é a taxa do país, achei "${rEst}"`);
+  assert.notEqual(rMuni, rEst, "as duas páginas não podem comparar com o mesmo");
+});
+
+test("a página do município mantém a ressalva que separa mediana de taxa", () => {
+  // Enquanto a coluna vizinha for a MEDIANA dos municípios, a página precisa
+  // dizer que ela não é a taxa do país -- senão o leitor conclui que 32,6% dos
+  // domicílios brasileiros têm esgoto, e são 64,7%.
+  const muni = fs.readFileSync(
+    new URL("../app/municipio/[slug]/page.tsx", import.meta.url), "utf-8");
+  assert.ok(muni.includes("A mediana ao lado é dos municípios, não do país"),
+    "a ressalva sumiu da página do município");
 });

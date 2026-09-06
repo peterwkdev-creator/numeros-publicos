@@ -12,8 +12,11 @@ import { resumirEstado, slugUf } from "../../../lib/estado";
 import { ROTULO_FAIXA } from "../../../lib/fiscal";
 import { medianaUltimaEdicao } from "../../../lib/ideb";
 import { panoramaEstados, posicaoNaLista } from "../../../lib/nacional";
+import { emContracao } from "../../../lib/estado";
 import { camadasPadrao } from "../../../lib/mapa";
+import { medidasDe, taxasCache } from "../../../lib/censo";
 import MapaUf from "../../componentes/mapa-uf";
+import TabelaCenso from "../../componentes/tabela-censo";
 import {
   FONTES, VARIAVEIS, catalogoDe, coberturaTemporal, palavrasChave,
 } from "../../../lib/jsonld";
@@ -189,6 +192,13 @@ export default async function PaginaEstado(
     (m) => !idebFinais.municipios[String(m.codigo)]).length;
 
   const de = CONTRACAO[r.uf.sigla] ?? `de ${r.uf.nome}`;
+
+  // O Censo somado no estado, contra a mesma conta no pais. As duas sao
+  // taxa ponderada (soma sobre soma), entao comparam diretamente -- ao
+  // contrario da pagina do municipio, onde a coluna vizinha e a MEDIANA
+  // dos municipios e precisa da ressalva que separa as duas coisas.
+  const medidasCenso = medidasDe(r.uf.totais);
+  const taxasPais = taxasCache(snapshot.municipios, snapshot.colunas);
   const pop = r.uf.totais["populacao-censo-2022"] ?? null;
   const pibReais = milReaisParaReais(r.uf.totais["pib-municipal"] ?? null);
   const quadrimestre = `${fiscal.periodo}º quadrimestre de ${fiscal.exercicio}`;
@@ -392,6 +402,33 @@ export default async function PaginaEstado(
           destaque={r.uf.sigla}
         />
       </section>
+
+      {medidasCenso.some((x) => x.percentual !== null) && (
+        <section className={estilos.texto}>
+          <h2>Como se vive {emContracao(de)}</h2>
+          <p>
+            Do <strong>Censo de 2022</strong>, somando os municípios do estado.
+            A coluna do Brasil é a <strong>mesma conta no país inteiro</strong> —
+            as duas são proporção de domicílios ou de pessoas, então comparam
+            diretamente.
+          </p>
+          <TabelaCenso
+            medidas={medidasCenso}
+            comparacao={{ rotulo: "No Brasil", valores: taxasPais }}
+            legenda={`${r.uf.nome} no Censo 2022, com o Brasil ao lado`}
+          />
+          <p className={estilos.ressalva}>
+            {/* A distincao que a pagina do municipio precisa fazer (mediana de
+                municipios contra taxa do pais) NAO se aplica aqui: as duas
+                colunas sao taxa ponderada, e comparam direto. Dizer o contrario
+                so para repetir a ressalva de la seria ruido. */}
+            Estes números somam os municípios do estado — não são média das
+            proporções municipais, que daria a uma cidade de 3 mil habitantes o
+            mesmo peso da capital. Fonte: IBGE, Censo Demográfico 2022, pelas
+            APIs públicas de agregados.
+          </p>
+        </section>
+      )}
 
       <section className={estilos.texto}>
         <h2>

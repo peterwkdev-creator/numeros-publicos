@@ -87,6 +87,26 @@ export default function MapaUf({
           ". Os valores de cada estado estão na tabela abaixo."
         }
       >
+        {/* A hachura de "sem dado".
+            Medido em 06/09/2026: numa rampa de cinco tons de um matiz so, nao
+            existe cor que fique a 3:1 do fundo E distinguivel da faixa
+            vizinha -- as faixas adjacentes ficam em 1,04:1, que e o normal de
+            um coropleto. Entao "nao sabemos" tem de se distinguir por algo que
+            NAO seja luminosidade, e a hachura diagonal e a convencao
+            cartografica exatamente por isso: funciona em qualquer vizinhanca,
+            em daltonismo, em alto contraste e no papel. */}
+        <defs>
+          <pattern
+            id="mapa-sem-dado"
+            width="9"
+            height="9"
+            patternUnits="userSpaceOnUse"
+            patternTransform="rotate(45)"
+          >
+            <rect width="9" height="9" className={estilos.hachuraFundo} />
+            <line x1="0" y1="0" x2="0" y2="9" className={estilos.hachuraRisco} />
+          </pattern>
+        </defs>
         {siglas.map((sigla) => {
           const dados: Record<string, string> = {};
           for (const c of camadas) {

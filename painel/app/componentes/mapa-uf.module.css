@@ -105,7 +105,7 @@
   --mapa-2: #6ea9d4;
   --mapa-3: #3b82b8;
   --mapa-4: #14537f;
-  --mapa-sem: #d7dde3;
+  --mapa-sem: var(--fundo);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -115,7 +115,7 @@
     --mapa-2: #2a6f9c;
     --mapa-3: #4b96c4;
     --mapa-4: #8cc4e6;
-    --mapa-sem: #2b3742;
+    --mapa-sem: var(--fundo);
   }
 }
 
@@ -129,7 +129,7 @@
     --mapa-2: #94aec5;
     --mapa-3: #5b81a3;
     --mapa-4: #24486b;
-    --mapa-sem: #e8e8e8;
+    --mapa-sem: #fff;
   }
   .uf { stroke: #fff; stroke-width: 2; }
   .opcoes { display: none; }
@@ -164,9 +164,36 @@
 .bloco:has(input[value="alfabetizacao"]:checked) .uf[data-alfabetizacao="4"],
 .bloco:has(input[value="entrega"]:checked) .uf[data-entrega="4"] { fill: var(--mapa-4); }
 
+/* "Sem dado" = fundo da pagina + contorno TRACEJADO.
+   Medido em 06/09/2026: o cinza anterior tinha 1,12:1 de contraste com a faixa
+   de 0-20% no tema claro e 1,05:1 no escuro -- 1:1 seria cor identica, e o
+   minimo para distincao grafica e 3:1. Na pratica eram a mesma cor, e o
+   Distrito Federal (que presta contas como estado, nao como municipio) saia
+   indistinguivel de um estado que quase nao entrega.
+
+   Branco puro resolveria no claro e MENTIRIA no escuro: la a rampa vai de
+   escuro para claro, entao branco leria como o valor maximo -- o oposto de
+   "nao sabemos". O fundo da pagina e o unico valor que fica fora da rampa nos
+   dois temas.
+
+   E o tracejado e o que carrega o significado sem depender de cor nenhuma:
+   funciona em daltonismo, em alto contraste forcado e no papel. */
 .bloco:has(input[value="esgoto"]:checked) .uf[data-esgoto="sem"],
 .bloco:has(input[value="alfabetizacao"]:checked) .uf[data-alfabetizacao="sem"],
-.bloco:has(input[value="entrega"]:checked) .uf[data-entrega="sem"] { fill: var(--mapa-sem); }
+.bloco:has(input[value="entrega"]:checked) .uf[data-entrega="sem"] {
+  fill: url(#mapa-sem-dado);
+  stroke: var(--tinta-fraca);
+  stroke-width: 2;
+  stroke-dasharray: none;
+}
+
+/* As duas metades da hachura. Precisam ser classe e nao atributo: `fill` como
+   atributo do SVG nao resolve `var()`, e sairia literal. */
+.hachuraFundo { fill: var(--mapa-sem); }
+.hachuraRisco {
+  stroke: var(--tinta-fraca);
+  stroke-width: 3;
+}
 
 /* Só a legenda do indicador escolhido aparece. */
 .textoEscala { display: none; }
@@ -201,7 +228,23 @@
 .passo[data-faixa="2"] { background: var(--mapa-2); }
 .passo[data-faixa="3"] { background: var(--mapa-3); }
 .passo[data-faixa="4"] { background: var(--mapa-4); }
-.passoSem { background: var(--mapa-sem); margin-left: 0.6rem; }
+/* A amostra da legenda repete o tracejado, senao ela vira um retangulo da cor
+   do fundo e some -- e a legenda deixaria de explicar justamente o caso que
+   mais precisa de explicacao. */
+/* A amostra da legenda repete a hachura, senao ela vira um retangulo da cor do
+   fundo e some -- e a legenda deixaria de explicar justamente o caso que mais
+   precisa de explicacao. */
+.passoSem {
+  margin-left: 0.6rem;
+  border: 1px solid var(--tinta-fraca);
+  box-sizing: border-box;
+  background:
+    repeating-linear-gradient(
+      45deg,
+      var(--mapa-sem) 0 2px,
+      var(--tinta-fraca) 2px 4px
+    );
+}
 
 .extremo { font-size: 0.76rem; color: var(--tinta-fraca); white-space: nowrap; }
 

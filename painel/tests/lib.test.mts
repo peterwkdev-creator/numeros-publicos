@@ -25,6 +25,9 @@ import {
   PRESTA_COMO_ESTADO, ROTULO_FAIXA,
 } from "../lib/fiscal.ts";
 import { posicaoEntre, posicaoNoEstado } from "../lib/posicao.ts";
+import {
+  medianasDe, medidasDe, PARES_CENSO, rotuloDownload, taxasDoPais,
+} from "../lib/censo.ts";
 import { xlsx } from "../lib/xlsx.ts";
 
 // ------------------------------------------------------------------ posicao
@@ -515,4 +518,143 @@ test("os indicadores da capa continuam sendo três", () => {
   // cartões e 13 colunas numéricas, e mandaria +149 KB comprimidos nas props
   // de toda visita. Se esta lista crescer, que seja por decisão.
   assert.equal(INDICADORES_DA_CAPA.length, 3);
+});
+
+// -------------------------------------------------------------------- censo
+
+test("medidasDe calcula o percentual do par, e o absoluto sobrevive", () => {
+  // Volta Redonda/RJ, valores reais do Censo 2022.
+  const m = medidasDe({
+    "esgoto-rede": 94063, "domicilios-total": 97991,
+  }).find((x) => x.chave === "esgoto")!;
+  assert.equal(m.parte, 94063);
+  assert.equal(m.total, 97991);
+  assert.ok(Math.abs(m.percentual! - 95.99) < 0.01);
+});
+
+test("ausência de dado vira null, NUNCA zero", () => {
+  // 8 municípios não têm dado de água e 25 não têm de esgoto. Um município sem
+  // dado de esgoto não tem 0% de esgoto: tem 0 de informação. Confundir os dois
+  // é como um painel passa a mentir sem ninguém notar.
+  for (const valores of [
+    { "esgoto-rede": null, "domicilios-total": 100 },
+    { "esgoto-rede": 50, "domicilios-total": null },
+    {},
+  ]) {
+    const m = medidasDe(valores).find((x) => x.chave === "esgoto")!;
+    assert.equal(m.percentual, null);
+  }
+});
+
+test("denominador zero não vira divisão por zero nem 0%", () => {
+  const m = medidasDe({ "esgoto-rede": 0, "domicilios-total": 0 })
+    .find((x) => x.chave === "esgoto")!;
+  assert.equal(m.percentual, null);
+});
+
+test("zero de verdade continua sendo zero", () => {
+  // Costa Marques/RO tem 0,0% de esgoto, e isso É um fato, não uma ausência.
+  const m = medidasDe({ "esgoto-rede": 0, "domicilios-total": 1500 })
+    .find((x) => x.chave === "esgoto")!;
+  assert.equal(m.percentual, 0);
+  assert.notEqual(m.percentual, null);
+});
+
+test("medianasDe ignora quem não tem as duas pontas", () => {
+  const colunas = ["codigo", "esgoto-rede", "domicilios-total"];
+  const linhas = [
+    [1, 50, 100],     // 50%
+    [2, 10, 100],     // 10%
+    [3, 90, 100],     // 90%
+    [4, null, 100],   // sem numerador: fora
+    [5, 30, null],    // sem denominador: fora
+    [6, 5, 0],        // denominador zero: fora
+  ];
+  assert.equal(medianasDe(linhas, colunas)["esgoto"], 50);
+});
+
+test("mediana de município NÃO é a taxa do país", () => {
+  // Dois municípios pequenos sem esgoto e um grande com esgoto: a mediana dos
+  // municípios é 0% e a taxa do conjunto é 90%. Os dois são corretos e dizem
+  // coisas opostas -- é o caso real do esgoto (26,9% contra 64,7%), e a razão
+  // de a página nunca poder chamar um de outro.
+  const colunas = ["codigo", "esgoto-rede", "domicilios-total"];
+  const linhas = [[1, 0, 10], [2, 0, 10], [3, 900, 1000]];
+  assert.equal(medianasDe(linhas, colunas)["esgoto"], 0);
+  const totalParte = 0 + 0 + 900;
+  const totalTudo = 10 + 10 + 1000;
+  assert.ok(Math.abs((totalParte * 100) / totalTudo - 88.2) < 0.1);
+});
+
+test("todo par aponta para indicador que existe no snapshot", () => {
+  // Sentinela: um indicador renomeado no motor Python faria a página exibir
+  // travessão em toda linha, sem nada quebrar -- e sem nada acusar.
+  const snapshot = JSON.parse(
+    fs.readFileSync(new URL("../dados/snapshot.json", import.meta.url), "utf-8"),
+  );
+  for (const par of PARES_CENSO) {
+    assert.ok(snapshot.colunas.includes(par.numerador),
+      `numerador ausente no snapshot: ${par.numerador}`);
+    assert.ok(snapshot.colunas.includes(par.denominador),
+      `denominador ausente no snapshot: ${par.denominador}`);
+  }
+});
+
+test("taxa do país NÃO é a mediana dos municípios", () => {
+  // O caso real do esgoto, em miniatura: dois municípios pequenos sem rede e um
+  // grande com rede. A mediana municipal é 0% e a taxa do país 88%. Confundi-los
+  // troca "a maioria dos municípios não tem" por "a maioria das casas tem".
+  const colunas = ["codigo", "esgoto-rede", "domicilios-total"];
+  const linhas = [[1, 0, 10], [2, 0, 10], [3, 900, 1000]];
+  assert.equal(medianasDe(linhas, colunas)["esgoto"], 0);
+  assert.ok(Math.abs(taxasDoPais(linhas, colunas)["esgoto"]! - 88.24) < 0.01);
+});
+
+test("taxa do país ignora quem tem só uma das pontas", () => {
+  // Somar um numerador cujo denominador falta inflaria a taxa em silêncio --
+  // e o resultado passaria de 100%, que é plausível o bastante para ninguém
+  // olhar duas vezes.
+  const colunas = ["codigo", "esgoto-rede", "domicilios-total"];
+  const linhas = [[1, 50, 100], [2, 900, null]];
+  assert.equal(taxasDoPais(linhas, colunas)["esgoto"], 50);
+});
+
+test("a página não crava percentual do Censo em texto", () => {
+  // O defeito que este teste impede: a primeira versão da ressalva escreveu
+  // "26,9%" à mão -- número medido numa categoria de esgoto que nem era a
+  // exibida -- enquanto a tabela ao lado mostrava 32,6%. Nenhum teste pegava,
+  // porque continua sendo uma frase bem formada.
+  const pagina = fs.readFileSync(
+    new URL("../app/municipio/[slug]/page.tsx", import.meta.url), "utf-8");
+  const secao = pagina.slice(pagina.indexOf("Como se vive em"));
+  const cravados = [...secao.matchAll(/<strong>\s*\d+[.,]\d+%/g)].map((m) => m[0]);
+  assert.deepEqual(cravados, [],
+    `percentual escrito à mão na seção do Censo: ${cravados.join(", ")}`);
+});
+
+test("todo indicador do snapshot tem rótulo ÚNICO no download", () => {
+  // O defeito que este teste impede, achado em 05/09/2026 lendo o CSV baixado:
+  // o nome vem da VARIÁVEL do IBGE, e com classificação quatro indicadores
+  // compartilham a mesma. O arquivo saía com quatro linhas "Domicílios
+  // particulares permanentes ocupados" -- 97.180, 97.991, 94.063 e 97.672 --
+  // e nada dizendo qual era água, total, esgoto ou lixo.
+  //
+  // Na tela nunca apareceu, porque a página nomeia cada linha. O arquivo viaja
+  // SEM a página, e é ele que alguém republica.
+  const snapshot = JSON.parse(
+    fs.readFileSync(new URL("../dados/snapshot.json", import.meta.url), "utf-8"),
+  );
+  const rotulos = snapshot.indicadores.map(
+    (i: { codigo: string; nome: string }) => rotuloDownload(i.codigo, i.nome));
+  const repetidos = rotulos.filter(
+    (r: string, i: number) => rotulos.indexOf(r) !== i);
+  assert.deepEqual([...new Set(repetidos)], [],
+    `rótulo repetido no download: ${[...new Set(repetidos)].join(" | ")}`);
+});
+
+test("indicador sem classificação mantém o nome da fonte", () => {
+  // Repetir PIB e população na lista de rótulos criaria uma segunda verdade a
+  // manter, que divergiria da fonte no dia em que o IBGE renomeasse a variável.
+  assert.equal(rotuloDownload("pib-municipal", "Produto Interno Bruto"),
+               "Produto Interno Bruto");
 });

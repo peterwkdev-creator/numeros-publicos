@@ -1,7 +1,8 @@
 import Link from "next/link";
 
 import {
-  br, dataLegivel, INDICADORES_DA_CAPA, projetar, valorDoIndicador,
+  br, dataLegivel, INDICADORES_DA_CAPA, projetar, rotuloCurto,
+  unidadeDaColuna, valorDoIndicador,
 } from "@/lib/dados";
 import { slugUf } from "@/lib/estado";
 import { faixasEmLinha } from "@/lib/fiscal";
@@ -278,8 +279,9 @@ export default async function Pagina() {
                   <span className={s.ausente}>(%)</span>
                 </th>
                 {capa.indicadores.map((i) => (
-<th key={i.codigo} scope="col" className={s.numero}>
-                    {i.nome}{" "}
+<th key={i.codigo} scope="col" className={s.numero}
+                      title={i.nome}>
+                    {rotuloCurto(i.codigo, i.nome)}{" "}
                     <span className={s.ausente}>
                       ({i.periodo}
                       {/* A unidade estava só no cartão. Na tabela os números
@@ -287,7 +289,9 @@ export default async function Pagina() {
                           coluna alinhada, e "R$ 2,72 tri" ao lado de
                           "R$ 857,59 bi" é pior de comparar que dois inteiros
                           --, mas então a unidade tem de estar dita aqui. */}
-                      {i.unidade ? `, ${i.unidade.toLowerCase()}` : ""})
+                      {unidadeDaColuna(i.codigo)
+                        ? `, ${unidadeDaColuna(i.codigo)}`
+                        : ""})
                     </span>
                   </th>
                 ))}

@@ -307,7 +307,111 @@ for (const caminho of caminhos) {
                  .map((r) => `${r["@type"] ?? "?"} ${r["@id"]}`);
     })();
 
+    /**
+     * Ausência num gráfico tem de se distinguir da ESCALA, e não só da vizinha.
+     *
+     * Achado em 06/09/2026 por um relato de uso, e **não por esta auditoria**:
+     * a cor de "sem dado" do mapa tinha 1,12:1 de contraste com a faixa de
+     * 0-20% no tema claro e 1,05:1 no escuro. Praticamente a mesma cor. E o
+     * Distrito Federal cai nessa categoria, então o mapa dizia sobre ele o
+     * mesmo que dizia sobre um estado que quase não entrega relatório.
+     *
+     * **A regra ingênua reprovaria desenho correto.** Degraus vizinhos de uma
+     * rampa sequencial ficam mesmo em 1,2-1,4:1 — é assim que se lê um
+     * gradiente, e exigir 3:1 entre eles quebraria o coropleto.
+     *
+     * O que separa o caso legítimo do defeito é o SIGNIFICADO: "sem dado" não
+     * está na escala. Ele tem de se distinguir de **todos** os degraus, e o
+     * jeito de conseguir isso sem brigar com a rampa é por padrão (hachura),
+     * não por luminosidade.
+     *
+     * O critério: todo elemento marcado como ausência (`data-*="sem"` ou classe
+     * com `semDado`/`sem-dado`) precisa de preenchimento em `url(#…)` — um
+     * padrão — ou de 3:1 contra todo outro preenchimento do mesmo gráfico.
+     */
+    const ausenciaIndistinta = (() => {
+      const achados = [];
+      const lum = (c) => {
+        const m = c.match(/\d+(\.\d+)?/g);
+        if (!m || m.length < 3) return null;
+        const f = (v) => {
+          const x = Number(v) / 255;
+          return x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4;
+        };
+        return 0.2126 * f(m[0]) + 0.7152 * f(m[1]) + 0.0722 * f(m[2]);
+      };
+      const razao = (a, b) => {
+        const la = lum(a);
+        const lb = lum(b);
+        if (la === null || lb === null) return null;
+        const hi = Math.max(la, lb);
+        const lo = Math.min(la, lb);
+        return (hi + 0.05) / (lo + 0.05);
+      };
+      /**
+       * **Só a camada ATIVA conta.** Um mapa que troca de indicador marca cada
+       * forma com a faixa de *todas* as camadas, e um estado sem dado numa
+       * delas é legitimamente pintado nas outras. A primeira versão deste
+       * critério ignorava isso e acusou o desenho correto — falso positivo em
+       * auditoria é pior que critério nenhum, porque ensina a ignorá-la.
+       *
+       * É a mesma lição do sentinela do combobox, um passo adiante: lá a
+       * auditoria não via o estado que importa; aqui ela via o estado errado.
+       */
+      const conferir = (svg, camada) => {
+        const ehAusencia = (el) => {
+          const cls = el.getAttribute("class") ?? "";
+          if (/semDado|sem-dado/.test(cls)) return true;
+          return camada ? el.getAttribute(`data-${camada}`) === "sem" : false;
+        };
+        const formas = [...svg.querySelectorAll("path, rect, circle, polygon")]
+          .filter((e) => !e.closest("pattern") && !e.closest("defs"));
+        const ausentes = formas.filter(ehAusencia);
+        if (!ausentes.length) return;
+        const outros = [...new Set(
+          formas.filter((e) => !ehAusencia(e))
+                .map((e) => getComputedStyle(e).fill))];
+
+        for (const a of ausentes) {
+          const fa = getComputedStyle(a).fill;
+          // Preenchimento por padrão já distingue por textura: aprovado.
+          if (fa.includes("url(")) continue;
+          const pior = outros
+            .map((o) => razao(fa, o))
+            .filter((x) => x !== null)
+            .reduce((m, x) => Math.min(m, x), Infinity);
+          if (pior < 3) {
+            achados.push(
+              `ausência a ${pior.toFixed(2)}:1 do resto da escala` +
+              (camada ? ` (camada "${camada}")` : ""));
+          }
+        }
+      };
+
+      for (const svg of document.querySelectorAll("svg")) {
+        // O grupo de radio que troca a camada, se houver. Os inputs sao
+        // nao-controlados, entao mexer em `.checked` muda o `:checked` que o
+        // CSS le -- e cada camada e conferida de verdade, e nao so a inicial.
+        const bloco = svg.closest("figure") ?? svg.parentElement;
+        const radios = bloco
+          ? [...bloco.querySelectorAll('input[type="radio"]')]
+          : [];
+        if (!radios.length) { conferir(svg, null); continue; }
+
+        const antes = radios.find((r) => r.checked);
+        for (const r of radios) {
+          r.checked = true;
+          // Força o recálculo antes de ler o computado.
+          void svg.getBoundingClientRect();
+          conferir(svg, r.value);
+        }
+        if (antes) antes.checked = true;
+      }
+      return [...new Set(achados)];
+    })();
+
     return {
+      ausenciaIndistinta,
       referenciasOrfas,
       duplicados: Object.entries(ids).filter(([, n]) => n > 1),
       aninhados: [...document.querySelectorAll("a a")].map((a) => a.textContent.trim().slice(0, 24)),
@@ -377,6 +481,10 @@ for (const caminho of caminhos) {
   flag(!r.tipos.length && !r.noindex, "sem JSON-LD");
   flag(r.datasetsRuins.length,
     `Dataset sem campo obrigatório: ${JSON.stringify(r.datasetsRuins)}`);
+  flag(r.ausenciaIndistinta.length,
+    "\"sem dado\" num gráfico não se distingue da escala (precisa de padrão, "
+    + "ou de 3:1 contra todos os preenchimentos): "
+    + JSON.stringify(r.ausenciaIndistinta));
   flag(r.referenciasOrfas.length,
     "referência JSON-LD a nó não declarado nesta página, sem name/url: "
     + JSON.stringify(r.referenciasOrfas));

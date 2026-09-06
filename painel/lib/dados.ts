@@ -121,6 +121,46 @@ export const INDICADORES_DA_CAPA = [
 ] as const;
 
 /**
+ * Como cada indicador da capa se apresenta num cabeçalho de coluna.
+ *
+ * ## Por que rótulo curto
+ *
+ * O nome vem da variável do IBGE, e "Produto Interno Bruto a preços correntes"
+ * como cabeçalho ocupa ~450px. Medido em 06/09/2026: a tabela de estados tinha
+ * **1.610px de conteúdo numa caixa de 1.150** — a última coluna ficava
+ * escondida atrás de uma rolagem que muita gente não descobre. O nome completo
+ * não se perde: vai no `title` da coluna.
+ *
+ * ## Por que a unidade é DECLARADA, e não inferida
+ *
+ * "Pessoas" depois de "População" não acrescenta nada e custava 60px por
+ * coluna; "mil reais" depois de "PIB" é essencial, porque sem ela se erra por
+ * mil. A primeira versão tentou inferir isso comparando as palavras — e estava
+ * simplesmente errada: "população" **não contém** "pessoa", e a regra devolvia
+ * o oposto do pretendido. O teste pegou na primeira execução.
+ *
+ * A relação entre rótulo e unidade é semântica, e regra esperta que infere
+ * errado é pior que tabela explícita: ela falha em silêncio e com confiança.
+ */
+export const COLUNA_DA_CAPA: Record<
+  string, { rotulo: string; unidade?: string }
+> = {
+  "pib-municipal": { rotulo: "PIB", unidade: "mil reais" },
+  "populacao-censo-2022": { rotulo: "População" },
+  "populacao-estimada": { rotulo: "População estimada" },
+};
+
+/** O rótulo curto, ou o nome da fonte quando não houver um. */
+export function rotuloCurto(codigo: string, nome: string): string {
+  return COLUNA_DA_CAPA[codigo]?.rotulo ?? nome;
+}
+
+/** A unidade a mostrar no cabeçalho, ou vazio quando ela não informa. */
+export function unidadeDaColuna(codigo: string): string {
+  return COLUNA_DA_CAPA[codigo]?.unidade ?? "";
+}
+
+/**
  * Recorta o snapshot nos indicadores pedidos, preservando a ordem das linhas.
  *
  * **Levanta se um código não existir**, em vez de omitir a coluna. Omitir em

@@ -261,9 +261,18 @@
   font-size: var(--texto-sm);
 }
 
+/* Linha compacta, e a conta que decidiu: sao 497 municipios na pagina do Rio
+   Grande do Sul, e a 48px por linha essa tabela sozinha ocupava 23.985px de uma
+   pagina de 29.714 -- 81% dela. A altura menor devolve ~7.000px sem tirar
+   nenhum link, que e o que importa: sao eles que fazem as paginas de municipio
+   serem descobertas.
+
+   `--e-1` na vertical mantem a linha acima de 24px, que e o piso do criterio
+   2.5.8 do WCAG para alvo de toque. Abaixo disso a economia sairia do bolso de
+   quem toca a tela. */
 .lista th,
 .lista td {
-  padding: var(--e-2) var(--e-3);
+  padding: var(--e-1) var(--e-3);
   border-bottom: 1px solid var(--borda);
   text-align: left;
 }

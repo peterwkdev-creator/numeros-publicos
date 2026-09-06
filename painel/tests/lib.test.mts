@@ -15,7 +15,7 @@ import { inflateRawSync } from "node:zlib";
 
 import {
   concorda, descricaoDe, fracaoDe, INDICADORES_DA_CAPA, projetar,
-  type Snapshot,
+  COLUNA_DA_CAPA, rotuloCurto, unidadeDaColuna, type Snapshot,
 } from "../lib/dados.ts";
 import {
   funcoesDoPais, mediana, panoramaEstados, posicaoNaLista,
@@ -766,4 +766,27 @@ test("a página do município mantém a ressalva que separa mediana de taxa", ()
     new URL("../app/municipio/[slug]/page.tsx", import.meta.url), "utf-8");
   assert.ok(muni.includes("A mediana ao lado é dos municípios, não do país"),
     "a ressalva sumiu da página do município");
+});
+
+test("a unidade aparece onde informa, e some onde é ruído", () => {
+  // "Pessoas" depois de "População" custava 60px por coluna e não dizia nada --
+  // e foi o que fez a tabela de estados esconder a última coluna atrás da
+  // rolagem. "Mil reais" depois de "PIB" é o oposto: sem ela, erra-se por mil.
+  //
+  // A primeira versão INFERIA isso comparando as palavras, e estava errada:
+  // "população" não contém "pessoa". Declarar é o que funciona.
+  assert.equal(unidadeDaColuna("populacao-censo-2022"), "");
+  assert.equal(unidadeDaColuna("populacao-estimada"), "");
+  assert.equal(unidadeDaColuna("pib-municipal"), "mil reais");
+  assert.equal(unidadeDaColuna("indicador-que-nao-existe"), "");
+});
+
+test("todo indicador da capa tem rótulo curto", () => {
+  // Sentinela: um indicador novo na capa sem rótulo curto cai no nome da
+  // variável do IBGE e a tabela volta a transbordar -- sem erro e sem aviso.
+  for (const c of INDICADORES_DA_CAPA) {
+    assert.ok(COLUNA_DA_CAPA[c], `indicador da capa sem entrada de coluna: ${c}`);
+    assert.notEqual(rotuloCurto(c, "NOME LONGO DA VARIÁVEL"), "NOME LONGO DA VARIÁVEL",
+      `indicador da capa sem rótulo curto: ${c}`);
+  }
 });

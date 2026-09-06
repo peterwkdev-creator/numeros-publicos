@@ -3,6 +3,7 @@ import { funcoesDe, indexarFiscal, ROTULO_FAIXA } from "../../../lib/fiscal";
 import { trajetoriaDe } from "../../../lib/ideb";
 import { lerFiscal, lerIdeb, lerSnapshot, SITE } from "../../../lib/servidor";
 import { cabecalhosXlsx, xlsx, type Aba } from "../../../lib/xlsx";
+import { rotuloDownload } from "../../../lib/censo";
 
 /**
  * A base inteira como planilha do Excel.
@@ -38,7 +39,10 @@ export async function GET() {
 
   const cabecalho = [
     "Código IBGE", "Município", "UF",
-    ...ind.map((i) => i.nome),
+    // `rotuloDownload` e nao `i.nome`: quatro indicadores do Censo compartilham
+    // a variavel "Domicilios particulares permanentes ocupados", e a planilha
+    // sairia com quatro colunas de cabecalho identico, lado a lado.
+    ...ind.map((i) => rotuloDownload(i.codigo, i.nome)),
     "Pessoal / RCL ajustada (%)", "Limite prudencial (%)", "Situação",
     "Despesa liquidada total (R$)", "Educação (R$)", "Saúde (R$)",
     "IDEB anos iniciais", "IDEB anos finais",

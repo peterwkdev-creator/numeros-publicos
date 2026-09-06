@@ -3,6 +3,7 @@ import { cabecalhosCsv, paraCsv } from "../../../../lib/csv";
 import { funcoesDe, slugDe } from "../../../../lib/fiscal";
 import { trajetoriaDe } from "../../../../lib/ideb";
 import { lerFiscal, lerIdeb, lerSnapshot } from "../../../../lib/servidor";
+import { rotuloDownload } from "../../../../lib/censo";
 
 /**
  * O dado de um município em CSV, para quem quiser conferir ou reusar.
@@ -42,7 +43,12 @@ export async function GET(
   const comum = [m.codigo, m.nome, m.uf];
 
   for (const ind of snapshot.indicadores) {
-    linhas.push([...comum, ind.nome, ind.periodo ?? "", m.valores[ind.codigo] ?? null,
+    // `rotuloDownload` e nao `ind.nome`: o nome vem da VARIAVEL do IBGE, e com
+    // classificacao quatro indicadores compartilham a mesma. O CSV saia com
+    // quatro linhas "Domicilios particulares permanentes ocupados" e valores
+    // diferentes -- indistinguiveis num arquivo que viaja sem a pagina.
+    linhas.push([...comum, rotuloDownload(ind.codigo, ind.nome),
+                 ind.periodo ?? "", m.valores[ind.codigo] ?? null,
       ind.unidade, "IBGE", ind.coletadoEm ?? ""]);
   }
   // A série JÁ contém o período em destaque. Emitir os dois duplicaria a

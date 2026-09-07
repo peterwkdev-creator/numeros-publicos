@@ -9,7 +9,7 @@ import {
   FONTES, VARIAVEIS, catalogoDe, coberturaTemporal, identificadorIbge, palavrasChave,
 } from "../../../lib/jsonld";
 import {
-  compararFuncoes, DESLOCAMENTO_MINIMO, FUNCOES_DA_PORTARIA, funcoesDe,
+  compararFuncoes, DESLOCAMENTO_MINIMO, FUNCOES_DA_PORTARIA, funcoesRecentesDe,
   indexarFiscal, ROTULO_FAIXA, rotuloPeriodo, slugDe, variacao,
 } from "../../../lib/fiscal";
 import { contarMetas, medianaGeral, trajetoriaDe } from "../../../lib/ideb";
@@ -88,7 +88,7 @@ export async function generateMetadata(
 
   const pop = m.valores["populacao-censo-2022"] ?? null;
   const pessoal = m.fiscal?.percentual ?? null;
-  const maiorFuncao = funcoesDe(fiscal, m.codigo)?.fatias[0] ?? null;
+  const maiorFuncao = funcoesRecentesDe(fiscal, m.codigo)?.fatias[0] ?? null;
   const ultimoIdeb = trajetoriaDe(ideb, m.codigo)?.ultimo.observado ?? null;
   // A descrição carrega os NÚMEROS, não adjetivos. É o que aparece no
   // resultado da busca, e número é o que faz alguém clicar num painel de dado.
@@ -223,10 +223,23 @@ export default async function PaginaMunicipio(
   // A outra pergunta: para onde vai o dinheiro. `null` quando o município não
   // entregou o RREO -- que é um relatório diferente do RGF, entregue em outra
   // data, então quem tem um pode perfeitamente não ter o outro.
-  const funcoes = funcoesDe(fiscal, m.codigo);
-  const bimestre = fiscal.funcoes
-    ? `${fiscal.funcoes.periodo}º bimestre de ${atualDeFuncoes(fiscal.funcoes)?.exercicio ?? "?"}`
+  const funcoes = funcoesRecentesDe(fiscal, m.codigo);
+  // O ano vem de `funcoes`, NÃO de `atualDeFuncoes`. São coisas diferentes
+  // quando o município não entregou o exercício mais novo, e a diferença é o
+  // defeito que esta seção tinha: o rótulo dizia 2024 ou a seção sumia, e
+  // nenhum dos dois descrevia um dado de 2021.
+  const bimestre = fiscal.funcoes && funcoes
+    ? `${fiscal.funcoes.periodo}º bimestre de ${funcoes.exercicio}`
     : "";
+  // O exercício mais novo da COLETA, só para saber se este município está
+  // atrasado em relação a ela — e, estando, dizer isso em vez de calar.
+  const exercicioColetado = fiscal.funcoes
+    ? atualDeFuncoes(fiscal.funcoes)?.exercicio ?? null
+    : null;
+  const atrasado =
+    funcoes !== null &&
+    exercicioColetado !== null &&
+    funcoes.exercicio !== exercicioColetado;
   const maior = funcoes?.fatias[0] ?? null;
 
   // As duas etapas ficam SEPARADAS de propósito. Anos iniciais e anos finais
@@ -723,6 +736,17 @@ export default async function PaginaMunicipio(
             tabela abaixo responde no que o dinheiro foi gasto. Um não prevê o
             outro.
           </p>
+          {atrasado && (
+            <p className={estilos.ressalva}>
+              <strong>
+                {m.nome} não entregou o RREO de {exercicioColetado}.
+              </strong>{" "}
+              Os números acima são de <strong>{funcoes.exercicio}</strong>, o
+              exercício mais recente que o município declarou — e é por isso que
+              não coincidem com o ano dos demais municípios. Não entregar não é
+              não gastar: é não ter prestado contas daquele ano.
+            </p>
+          )}
           <div className={estilos.rolagem}>
             <FuncoesBarras
               fatias={funcoes.fatias}
@@ -749,33 +773,43 @@ export default async function PaginaMunicipio(
         </section>
       )}
 
-      {comparacao && (
+      {/* A série NÃO depende mais da comparação. Ela dependia, e o efeito era
+          silencioso: quem tem 2020, 2021 e 2022 mas não tem o par mais recente
+          da coleta perdia os três anos que já estavam em mãos. São gates
+          diferentes — um exige dois anos consecutivos, o outro exige três
+          pontos quaisquer — e amarrá-los fazia o mais exigente mandar nos
+          dois. */}
+      {(comparacao || serieFuncoes.length >= 3) && (
         <section className={estilos.texto}>
-          <h2>O que mudou de {comparacao.exercicioAnterior} para{" "}
-            {comparacao.exercicioAtual}</h2>
-          <p>
-            Entre o {comparacao.periodo}º bimestre de{" "}
-            {comparacao.exercicioAnterior} e o mesmo bimestre de{" "}
-            {comparacao.exercicioAtual}, o gasto total de {m.nome}{" "}
-            {comparacao.crescimento >= 1 ? "cresceu" : "caiu"}{" "}
-            <strong>
-              {br(Math.abs(comparacao.crescimento - 1) * 100, 1)}%
-            </strong>{" "}
-            em valores nominais.{" "}
-            {mudancas.length === 0 ? (
-              <>
-                A <strong>composição</strong> do gasto, porém, ficou
-                praticamente igual: nenhuma função mudou de fatia em mais de{" "}
-                {br(DESLOCAMENTO_MINIMO, 1)} ponto percentual.
-              </>
-            ) : (
-              <>
-                E a <strong>composição</strong> mudou: abaixo, as funções cujo
-                peso no orçamento se deslocou mais de{" "}
-                {br(DESLOCAMENTO_MINIMO, 1)} ponto percentual.
-              </>
-            )}
-          </p>
+          {comparacao && (
+            <>
+              <h2>O que mudou de {comparacao.exercicioAnterior} para{" "}
+                {comparacao.exercicioAtual}</h2>
+              <p>
+                Entre o {comparacao.periodo}º bimestre de{" "}
+                {comparacao.exercicioAnterior} e o mesmo bimestre de{" "}
+                {comparacao.exercicioAtual}, o gasto total de {m.nome}{" "}
+                {comparacao.crescimento >= 1 ? "cresceu" : "caiu"}{" "}
+                <strong>
+                  {br(Math.abs(comparacao.crescimento - 1) * 100, 1)}%
+                </strong>{" "}
+                em valores nominais.{" "}
+                {mudancas.length === 0 ? (
+                  <>
+                    A <strong>composição</strong> do gasto, porém, ficou
+                    praticamente igual: nenhuma função mudou de fatia em mais de{" "}
+                    {br(DESLOCAMENTO_MINIMO, 1)} ponto percentual.
+                  </>
+                ) : (
+                  <>
+                    E a <strong>composição</strong> mudou: abaixo, as funções cujo
+                    peso no orçamento se deslocou mais de{" "}
+                    {br(DESLOCAMENTO_MINIMO, 1)} ponto percentual.
+                  </>
+                )}
+              </p>
+            </>
+          )}
 
           {mudancas.length > 0 && (
             <ul className={estilos.mudancas}>
@@ -795,12 +829,20 @@ export default async function PaginaMunicipio(
           )}
 
           {/* A serie so aparece com tres anos ou mais: com dois, ela seria a
-              mesma comparacao ja dita acima, desenhada. */}
+              mesma comparacao ja dita acima, desenhada.
+
+              O titulo sobe para h2 quando nao ha comparacao acima -- senao a
+              pagina teria um h3 sem h2, que e um salto de nivel para quem
+              navega por titulos no leitor de tela. */}
           {serieFuncoes.length >= 3 && (
             <>
-              <h3 className={estilos.subtitulo}>
-                A composição ao longo dos anos
-              </h3>
+              {comparacao ? (
+                <h3 className={estilos.subtitulo}>
+                  A composição ao longo dos anos
+                </h3>
+              ) : (
+                <h2>A composição ao longo dos anos</h2>
+              )}
               <p>
                 Cada barra soma <strong>100%</strong> — o que muda é a
                 proporção, não o tamanho. É de propósito: reais de{" "}
@@ -813,8 +855,8 @@ export default async function PaginaMunicipio(
               <div className={estilos.rolagem}>
                 <table className={estilos.serie}>
                   <caption className={estilos.legenda}>
-                    Total declarado por {m.nome} em cada {comparacao.periodo}º
-                    bimestre, em valores nominais
+                    Total declarado por {m.nome} em cada{" "}
+                    {fiscal.funcoes?.periodo}º bimestre, em valores nominais
                   </caption>
                   <thead>
                     <tr>
@@ -840,10 +882,15 @@ export default async function PaginaMunicipio(
           )}
 
           <p className={estilos.ressalva}>
-            A comparação é entre o <strong>mesmo bimestre</strong> de dois anos,
-            e não entre bimestres do mesmo ano — o RREO é acumulado, então o 6º
-            bimestre já contém o 4º e comparar os dois mediria quase nada. Os
-            valores são <strong>nominais</strong>: parte do crescimento é
+            {comparacao && (
+              <>
+                A comparação é entre o <strong>mesmo bimestre</strong> de dois
+                anos, e não entre bimestres do mesmo ano — o RREO é acumulado,
+                então o 6º bimestre já contém o 4º e comparar os dois mediria
+                quase nada.{" "}
+              </>
+            )}
+            Os valores são <strong>nominais</strong>: parte do crescimento é
             inflação, e este painel não deflaciona nada.{" "}
             {serieFuncoes.length >= 3 && (
               <>

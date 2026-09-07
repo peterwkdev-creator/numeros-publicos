@@ -180,6 +180,70 @@ export function anteriorDeFuncoes(f: Funcoes): ExercicioFuncoes | null {
   return f.exercicios[1] ?? null;
 }
 
+/**
+ * O exercício mais recente **que ESTE município tem** — que não é o do bloco.
+ *
+ * ## Por que existe
+ *
+ * `atualDeFuncoes` devolve o exercício mais novo da coleta, e a página o usava
+ * para todo mundo. Quem não entregou aquele ano caía em `null` e **perdia a
+ * seção inteira**, com até quatro outros anos dentro: medido em 06/09/2026,
+ * **568 municípios** nessa situação, 1.076 município-anos coletados e nunca
+ * exibidos.
+ *
+ * O dano maior não era o gráfico ausente, era o que sobrava no lugar: quem
+ * prestou contas de 2020 a 2023 e falhou em 2024 ficava **idêntico** a quem
+ * nunca prestou contas. É a mesma distinção que `serieFuncoesDe` já respeita
+ * ao tratar ano sem entrega como buraco, aplicada um nível acima.
+ *
+ * Quem chama isto **tem de imprimir o ano** — ver `funcoesDe`, que o devolve
+ * junto justamente para que o rótulo não possa divergir do dado.
+ */
+export function exercicioDeFuncoes(
+  f: Funcoes,
+  codigo: number,
+): ExercicioFuncoes | null {
+  const chave = String(codigo);
+  // `exercicios` vem do mais recente para o mais antigo, então o primeiro que
+  // tiver entrada é o mais novo deste município.
+  for (const e of f.exercicios) if (e.porMunicipio[chave]) return e;
+  return null;
+}
+
+/**
+ * O par mais recente de anos **consecutivos** que este município declarou.
+ *
+ * ## Por que consecutivos, e não simplesmente "os dois mais recentes que ele tem"
+ *
+ * Porque a faixa de plausibilidade acima (`CRESCIMENTO_MINIMO`/`MAXIMO`,
+ * 0,5–3,0) foi **medida de um ano para o outro**: mediana 1,193, p95 1,43. De
+ * 2020 para 2024 a mediana esperada já é ~2,0 e o p95 passa de 4 — a mesma
+ * régua reprovaria município normal como "declaração quebrada", e a recusa
+ * pareceria zelo.
+ *
+ * Reaproveitar limiar calibrado para outra distância é o tipo de erro que não
+ * quebra nada: produz uma ausência plausível. Então o salto de ano cancela a
+ * comparação — e **só a comparação**: a série continua desenhando os buracos,
+ * que é onde eles se leem bem.
+ */
+export function parDeFuncoes(
+  f: Funcoes,
+  codigo: number,
+): { atual: ExercicioFuncoes; anterior: ExercicioFuncoes } | null {
+  const chave = String(codigo);
+  // Por ano, e não por índice: a densidade da lista é uma propriedade da
+  // coleta, não uma garantia do tipo. Um exercício que falte no bloco faria
+  // `exercicios[i+1]` ser o retrasado, e a página diria "de 2022 para 2024"
+  // chamando isso de um ano.
+  const porAno = new Map(f.exercicios.map((e) => [e.exercicio, e]));
+  for (const e of f.exercicios) {
+    if (!e.porMunicipio[chave]) continue;
+    const antes = porAno.get(e.exercicio - 1);
+    if (antes?.porMunicipio[chave]) return { atual: e, anterior: antes };
+  }
+  return null;
+}
+
 export type EntradaFuncoes = [
   total: number | null,
   valores: [indice: number, valor: number][],
@@ -264,13 +328,12 @@ export function compararFuncoes(
 ): Comparacao | null {
   const bloco = s.funcoes;
   if (!bloco) return null;
-  const atualEx = atualDeFuncoes(bloco);
-  const antes = anteriorDeFuncoes(bloco);
-  if (!atualEx || !antes) return null;
+  const par = parDeFuncoes(bloco, codigo);
+  if (!par) return null;
+  const { atual: atualEx, anterior: antes } = par;
 
-  const a = atualEx.porMunicipio[String(codigo)];
-  const b = antes.porMunicipio[String(codigo)];
-  if (!a || !b) return null;
+  const a = atualEx.porMunicipio[String(codigo)]!;
+  const b = antes.porMunicipio[String(codigo)]!;
 
   const [totalAtual, valoresAtual] = a;
   const [totalAntes, valoresAntes] = b;
@@ -315,16 +378,62 @@ export function compararFuncoes(
 /**
  * As funções de um município, da maior para a menor, com a fatia de cada uma.
  *
- * `null` quando o município não entregou o RREO — e "não entregou" nunca pode
- * virar uma lista vazia que o leitor confunda com "não gastou nada".
+ * `null` só quando o município não entregou o RREO em **nenhum** exercício
+ * coletado — e "não entregou" nunca pode virar uma lista vazia que o leitor
+ * confunda com "não gastou nada".
+ *
+ * **O `exercicio` volta no resultado, e não é decoração.** Estas fatias podem
+ * ser de 2021 enquanto a coleta vai até 2024; quem imprime o número tem de
+ * imprimir o ano dele. Devolvê-los juntos é o que impede o rótulo de divergir
+ * do dado — a alternativa, o chamador buscar o ano por fora, é a divergência
+ * esperando a primeira distração.
+ *
+ * ## Duas funções, e não um parâmetro
+ *
+ * `funcoesDe` fica no exercício da COLETA — é o que somas e exportações
+ * precisam. `funcoesRecentesDe` recua até o ano que este município tem, e é o
+ * que a página dele usa.
+ *
+ * Foram separadas depois de quase virarem uma só: mudar `funcoesDe` por baixo
+ * teria trocado, em silêncio, o significado de três chamadores. `somarFuncoes`
+ * (`lib/estado.ts`) somaria o orçamento de 2021 de um município com o de 2024
+ * do vizinho e chamaria o resultado de "total do estado"; o CSV e o XLSX
+ * publicariam colunas de anos diferentes na mesma linha, **num arquivo que
+ * viaja sem a explicação da página**. Nada disso quebraria: daria número.
+ *
+ * Nome diferente para comportamento diferente é o que faz o chamador escolher
+ * em vez de herdar.
  */
 export function funcoesDe(
   s: SnapshotFiscal,
   codigo: number,
-): { total: number | null; fatias: FatiaFuncao[] } | null {
+): { exercicio: number; total: number | null; fatias: FatiaFuncao[] } | null {
   const bloco = s.funcoes;
   if (!bloco) return null;
-  const atualEx = atualDeFuncoes(bloco);
+  return montarFuncoes(bloco, codigo, atualDeFuncoes(bloco));
+}
+
+/**
+ * Como `funcoesDe`, mas recuando até o exercício mais recente **deste
+ * município** — ver `exercicioDeFuncoes` para os 568 que isto destrava.
+ *
+ * Só a página do município usa. Quem agrega ou exporta continua em `funcoesDe`,
+ * porque ali misturar anos produz número errado em vez de seção ausente.
+ */
+export function funcoesRecentesDe(
+  s: SnapshotFiscal,
+  codigo: number,
+): { exercicio: number; total: number | null; fatias: FatiaFuncao[] } | null {
+  const bloco = s.funcoes;
+  if (!bloco) return null;
+  return montarFuncoes(bloco, codigo, exercicioDeFuncoes(bloco, codigo));
+}
+
+function montarFuncoes(
+  bloco: Funcoes,
+  codigo: number,
+  atualEx: ExercicioFuncoes | null,
+): { exercicio: number; total: number | null; fatias: FatiaFuncao[] } | null {
   if (!atualEx) return null;
   const entrada = atualEx.porMunicipio[String(codigo)];
   if (!entrada) return null;
@@ -339,7 +448,7 @@ export function funcoesDe(
       percentual: total && total > 0 ? (valor * 100) / total : null,
     }))
     .sort((a, b) => b.valor - a.valor);
-  return { total, fatias };
+  return { exercicio: atualEx.exercicio, total, fatias };
 }
 
 /** Um exercício da série de funções, já em fatias comparáveis. */

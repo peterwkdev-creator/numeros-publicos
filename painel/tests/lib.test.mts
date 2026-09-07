@@ -21,7 +21,8 @@ import {
   funcoesDoPais, mediana, panoramaEstados, posicaoNaLista,
 } from "../lib/nacional.ts";
 import {
-  faixaDe, faixasEmLinha, FAIXA_DA_LETRA, LETRA_FAIXA,
+  compararFuncoes, faixaDe, faixasEmLinha, FAIXA_DA_LETRA, funcoesDe,
+  funcoesRecentesDe, LETRA_FAIXA, parDeFuncoes,
   PRESTA_COMO_ESTADO, ROTULO_FAIXA, serieFuncoesDe,
 } from "../lib/fiscal.ts";
 import { posicaoEntre, posicaoNoEstado } from "../lib/posicao.ts";
@@ -904,4 +905,83 @@ test("a cauda soma tudo o que não está entre as nomeadas", () => {
 
 test("município sem nenhuma entrega devolve série vazia", () => {
   assert.deepEqual(serieFuncoesDe(fiscalComSerie(), 999), []);
+});
+
+/**
+ * Um bloco com três municípios em situações diferentes de entrega.
+ *
+ * `1` entregou os dois anos mais novos da coleta — o caso comum.
+ * `2` parou em 2022, e tem 2022/2021/2020 seguidos.
+ * `3` só tem 2022 e 2020: dois pontos com um SALTO no meio.
+ */
+function fiscalDesencontrado(): never {
+  const f = (t: number) => [t, [[0, t * 0.6], [1, t * 0.4]]];
+  return {
+    limites: LIMITES,
+    municipios: [],
+    funcoes: {
+      periodo: 6,
+      rotulos: ["Educação", "Saúde"],
+      exercicios: [
+        { exercicio: 2024, porMunicipio: { "1": f(240) } },
+        { exercicio: 2023, porMunicipio: { "1": f(200) } },
+        { exercicio: 2022, porMunicipio: { "2": f(120), "3": f(130) } },
+        { exercicio: 2021, porMunicipio: { "2": f(100) } },
+        { exercicio: 2020, porMunicipio: { "2": f(90), "3": f(60) } },
+      ],
+    },
+  } as never;
+}
+
+test("quem não entregou o ano mais novo mantém a seção, com o ano que tem", () => {
+  // O defeito que isto fecha: 568 municípios perdiam a seção inteira -- e até
+  // quatro anos dentro dela -- por não terem entrada no exercício da coleta.
+  const r = funcoesRecentesDe(fiscalDesencontrado(), 2);
+  assert.ok(r, "o município tem 2022, 2021 e 2020: a seção não pode sumir");
+  assert.equal(r.exercicio, 2022, "recua até o mais recente QUE ELE TEM");
+  assert.equal(r.total, 120);
+});
+
+test("o ano volta junto com as fatias, para o rótulo não poder divergir", () => {
+  // Se o chamador tivesse de buscar o ano por fora, a página diria 2024 sobre
+  // um dado de 2022 -- que é exatamente o que ela dizia antes.
+  const s = fiscalDesencontrado();
+  assert.equal(funcoesRecentesDe(s, 1)!.exercicio, 2024);
+  assert.equal(funcoesRecentesDe(s, 2)!.exercicio, 2022);
+});
+
+test("funcoesDe NÃO recua — é o que impede somar 2022 com 2024", () => {
+  // `somarFuncoes` no `lib/estado.ts` soma os totais dos municípios de um
+  // estado. Se esta função recuasse, ela somaria o orçamento de 2022 de um com
+  // o de 2024 do vizinho e chamaria o resultado de "total do estado". Não
+  // quebraria nada: daria número. O CSV e o XLSX têm o mesmo problema, num
+  // arquivo que viaja sem a explicação da página.
+  const s = fiscalDesencontrado();
+  assert.equal(funcoesDe(s, 2), null, "sem 2024, o agregado não recebe nada");
+  assert.equal(funcoesDe(s, 1)!.exercicio, 2024);
+});
+
+test("a comparação exige anos CONSECUTIVOS, e o salto a cancela", () => {
+  // A faixa de plausibilidade (0,5-3,0) foi medida de um ano para o outro:
+  // mediana 1,193. De 2020 para 2022 a mediana esperada já é ~1,42, e mais
+  // longe a régua reprovaria município normal como declaração quebrada.
+  const s = fiscalDesencontrado();
+  assert.equal(parDeFuncoes(s.funcoes!, 3), null, "2022 e 2020 não são um par");
+  assert.equal(compararFuncoes(s, 3), null);
+});
+
+test("a comparação acha o par consecutivo mais recente que o município tem", () => {
+  const par = parDeFuncoes(fiscalDesencontrado().funcoes!, 2);
+  assert.equal(par?.atual.exercicio, 2022);
+  assert.equal(par?.anterior.exercicio, 2021, "e não 2020, que é o par antigo");
+  const c = compararFuncoes(fiscalDesencontrado(), 2);
+  assert.equal(c?.exercicioAtual, 2022);
+  assert.equal(c?.exercicioAnterior, 2021);
+});
+
+test("o salto cancela a comparação, mas NÃO a série", () => {
+  // São gates diferentes: a comparação exige dois anos seguidos, a série exige
+  // três pontos quaisquer. Amarrá-los fazia o mais exigente mandar nos dois.
+  const s = serieFuncoesDe(fiscalDesencontrado(), 3);
+  assert.deepEqual(s.map((p) => p.exercicio), [2020, 2022]);
 });

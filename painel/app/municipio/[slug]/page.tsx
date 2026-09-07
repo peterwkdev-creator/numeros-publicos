@@ -719,7 +719,20 @@ export default async function PaginaMunicipio(
 
       {funcoes && funcoes.fatias.length > 0 && (
         <section className={estilos.texto}>
-          <h2>Para onde vai o dinheiro</h2>
+          {/* O título carrega a PERGUNTA, e não só a promessa.
+              Medido em 07/09/2026: "quanto a prefeitura de X gasta com
+              educação" é a única consulta desta família que ninguém responde
+              bem -- o portal da própria prefeitura lista pagamentos avulsos e
+              o jornal local dá a manchete, mas a fatia do orçamento não tem
+              dono. É a cunha do site.
+              E a página não a dizia: o título prometia ("para onde vai o
+              dinheiro") e o texto respondia com precisão ("liquidou R$ 1,43
+              bilhão... a maior fatia foi saúde"), mas em nenhum lugar estava
+              a forma verbal que a pessoa digita.
+              A frase de sempre fica; ganha a pergunta ao lado. Encher de
+              palavra-chave estragaria a voz, que é o ativo -- e o concorrente
+              medido no mesmo dia perde justamente por não ter voz nenhuma. */}
+          <h2>Para onde vai o dinheiro: quanto {m.nome} gasta com cada área</h2>
           <p>
             No {bimestre}, {m.nome} liquidou{" "}
             <strong>{escala(funcoes.total).curto}</strong> de despesa

@@ -1,6 +1,5 @@
 import {
-  atualDeFuncoes, faixaDe, type FatiaFuncao, type SnapshotFiscal,
-} from "./fiscal";
+  atualDeFuncoes, faixaDe, type FatiaFuncao, type SnapshotFiscal, slugDe } from "./fiscal";
 
 /**
  * O panorama dos 27 estados — o que só a varredura nacional tornou possível.
@@ -205,5 +204,105 @@ export function funcoesDoPais(fiscal: SnapshotFiscal): PanoramaFuncoes | null {
     total, fatias, municipios,
     exercicio: atual.exercicio,
     periodo: bloco.periodo,
+  };
+}
+
+/** Um município no ranking nacional de gasto com pessoal. */
+export type LinhaRanking = {
+  codigo: number;
+  nome: string;
+  uf: string;
+  slug: string;
+  percentual: number;
+  populacao: number | null;
+};
+
+export type RankingPessoal = {
+  /** Municípios do universo, já sem quem presta contas como estado. */
+  universo: number;
+  publicaram: number;
+  naoEntregaram: number;
+  comoEstado: number;
+  /** Acima do teto legal, do maior para o menor. Sem os implausíveis. */
+  acimaDoTeto: LinhaRanking[];
+  /** Entre o prudencial e o teto — alerta, não infração. */
+  naFaixaPrudencial: number;
+  /**
+   * Declarações fora da faixa 0–100%, listadas à parte e NUNCA ranqueadas.
+   *
+   * Elas não são escondidas: omiti-las faria a página afirmar que o dado não
+   * existe, quando ele existe e está quebrado. Mas ranqueá-las publicaria
+   * "Guaratinga gastou 371% da receita com pessoal" como fato — uma acusação
+   * a um município real, produzida por um formulário preenchido errado.
+   */
+  implausiveis: LinhaRanking[];
+  mediana: number | null;
+};
+
+/**
+ * O ranking nacional do gasto com pessoal, com as três recusas que o resto do
+ * site já pratica — e que aqui pesam mais, porque uma lista ordenada é lida
+ * como acusação.
+ *
+ * 1. **O denominador é quem ENTREGOU**, e o número de quem não entregou vai
+ *    junto. "361 de 5.570" faria parecer que 5.209 estão bem; a verdade é que
+ *    sobre 2.326 não se sabe nada.
+ * 2. **Quem presta contas como estado sai das duas contas** — o Distrito
+ *    Federal entrega o RGF na esfera estadual porque não é município. Contá-lo
+ *    como faltoso é a acusação que a faixa `como-estado` existe para impedir.
+ * 3. **Declaração implausível não é ranqueada.** Ver `implausiveis`.
+ *
+ * Existe porque a consulta de cabeça ("ranking municípios gasto com pessoal
+ * LRF") pertence hoje a Tribunais de Contas, **um por estado** — medido em
+ * 07/09/2026. Não havia versão nacional, gratuita e com uma URL limpa.
+ */
+export function rankingPessoal(fiscal: SnapshotFiscal): RankingPessoal {
+  const acima: LinhaRanking[] = [];
+  const fora: LinhaRanking[] = [];
+  const plausiveis: number[] = [];
+  let universo = 0, publicaram = 0, comoEstado = 0, prudencial = 0;
+
+  for (const [codigo, nome, uf, populacao, publicou, percentual, limitePrudencial]
+    of fiscal.municipios) {
+    const faixa = faixaDe(
+      percentual as number | null,
+      limitePrudencial as number | null,
+      fiscal.limites,
+      publicou as boolean | null,
+      codigo as number,
+    );
+    if (faixa === "como-estado") { comoEstado += 1; continue; }
+    universo += 1;
+    if (!publicou || typeof percentual !== "number") continue;
+    publicaram += 1;
+
+    const linha: LinhaRanking = {
+      codigo: codigo as number,
+      nome: nome as string,
+      uf: uf as string,
+      slug: slugDe(nome as string, uf as string),
+      percentual,
+      populacao: (populacao as number | null) ?? null,
+    };
+    if (faixa === "implausivel") { fora.push(linha); continue; }
+    plausiveis.push(percentual);
+    if (percentual > fiscal.limites.legal) acima.push(linha);
+    else if (percentual > fiscal.limites.prudencial) prudencial += 1;
+  }
+
+  // Empate desfeito pelo nome: sem isso, dois builds do mesmo dado geram
+  // páginas diferentes. Mesma razão do índice de busca.
+  const ordenar = (a: LinhaRanking, b: LinhaRanking) =>
+    b.percentual - a.percentual || a.nome.localeCompare(b.nome, "pt-BR");
+
+  return {
+    universo,
+    publicaram,
+    naoEntregaram: universo - publicaram,
+    comoEstado,
+    acimaDoTeto: acima.sort(ordenar),
+    naFaixaPrudencial: prudencial,
+    implausiveis: fora.sort(ordenar),
+    mediana: plausiveis.length >= MINIMO_MEDIANA ? mediana(plausiveis) : null,
   };
 }

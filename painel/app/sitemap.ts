@@ -63,6 +63,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "monthly",
       priority: 0.8,
     },
+    {
+      // A UNICA pagina do site que disputa consulta de CABECA. As 5.571 de
+      // municipio disputam cauda longa, onde a Wikipedia ja responde no
+      // snippet; "ranking municipios gasto com pessoal LRF" nao tem dono
+      // nacional -- so Tribunais de Contas, um por estado. Medido em 07/09.
+      //
+      // Prioridade 0.9, igual a de estado: e uma pagina so, e o dado dela muda
+      // a cada coleta.
+      url: `${SITE}/ranking/gasto-com-pessoal/`,
+      lastModified: atualizado,
+      changeFrequency: "weekly",
+      priority: 0.9,
+    },
   ];
 
   // Prioridade acima da do municipio: sao 9 paginas que concentram o link

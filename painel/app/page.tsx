@@ -269,6 +269,16 @@ export default async function Pagina() {
             {br(capa.linhas.length)}. Os outros não aparecem aqui porque não há
             número deles, e somar zero por eles seria inventar um.
           </p>
+          {/* O unico link da capa para a pagina de ranking. Ela precisa de
+              caminho a partir da home, ou repete o defeito medido no
+              concorrente em 07/09: paginas de cidade atras de uma busca em JS,
+              sem link de lugar nenhum, invisiveis para o rastreador. */}
+          <p className={s.secaoNota}>
+            <Link href="/ranking/gasto-com-pessoal/" prefetch={false}>
+              Quais municípios estão acima do limite de gasto com pessoal
+            </Link>{" "}
+            — a lista nacional, com a fonte e a ressalva de quem não entregou.
+          </p>
         </section>
       )}
 

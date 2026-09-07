@@ -1,0 +1,50 @@
+/* A pagina de ranking reusa a linguagem visual da pagina de estado: mesma
+   largura de leitura, mesma tabela rolavel, mesmas cores de faixa. Nao ha
+   componente compartilhado porque CSS Module e por rota, e duplicar ~60 linhas
+   custa menos que uma abstracao que teria de servir a duas paginas diferentes. */
+.pagina { max-width: 60rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+.trilha { font-size: .875rem; color: var(--tinta-fraca); margin-bottom: 1rem; }
+.trilha a { color: var(--tinta-fraca); }
+.titulo { font-size: 1.9rem; line-height: 1.15; margin: 0 0 .5rem; }
+.chamada { font-size: 1.05rem; color: var(--tinta-fraca); margin: 0 0 1.5rem; max-width: 46rem; }
+.texto { max-width: 46rem; margin-bottom: 2.5rem; }
+.texto p { margin: 0 0 1rem; }
+
+/* Os quatro numeros que enquadram a lista. O de "nao entregaram" tem o mesmo
+   peso visual dos outros DE PROPOSITO: ele e a ressalva que impede a leitura
+   de que todo o resto esta bem. */
+.grade { display: grid; gap: .75rem; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); margin-bottom: 2rem; }
+.cartao { border: 1px solid var(--borda); border-radius: .5rem; padding: .9rem 1rem; }
+.rotulo { font-size: .8rem; color: var(--tinta-fraca); display: block; margin-bottom: .2rem; }
+.valor { font-size: 1.5rem; font-weight: 600; }
+
+.rolagem { overflow-x: auto; margin-bottom: 1rem; }
+.lista { width: 100%; border-collapse: collapse; font-size: .95rem; }
+.lista caption { text-align: left; font-size: .8rem; color: var(--tinta-fraca); padding-bottom: .5rem; }
+.lista th, .lista td { padding: .5rem .6rem; border-bottom: 1px solid var(--borda); text-align: left; }
+.lista th[scope="col"] { font-size: .78rem; text-transform: uppercase; letter-spacing: .03em; color: var(--tinta-fraca); }
+.num { text-align: right; }
+.posicao { color: var(--tinta-fraca); width: 3rem; }
+
+/* As MESMAS cores da pagina de estado, e nao aproximacoes: `acima-legal` e
+   `implausivel` ja passaram pela auditoria de contraste nos tres modos, e
+   escolher um tom parecido aqui seria refazer aquele trabalho por conta. */
+.acima { color: #9a3412; font-weight: 600; }
+.implausivel { color: #6d5a8a; }
+@media (prefers-color-scheme: dark) {
+  .acima { color: #fca582; }
+  .implausivel { color: #c9b6e8; }
+}
+
+/* A folha de impressao sobrescreve as duas, porque `prefers-color-scheme`
+   continua reportando a preferencia do SISTEMA ao imprimir -- laranja claro
+   sobre papel branco da 2,2:1. E o defeito que ja apareceu duas vezes nesta
+   base, e a auditoria cobre `print` como um modo igual aos outros. */
+@media print {
+  .acima { color: #9a3412; }
+  .implausivel { color: #6d5a8a; }
+}
+.ressalva { font-size: .875rem; color: var(--tinta-fraca); max-width: 46rem; }
+.ressalva strong { color: var(--tinta); }
+
+@media print { .rolagem { overflow-x: visible; } }

@@ -18,7 +18,7 @@ import {
   COLUNA_DA_CAPA, rotuloCurto, unidadeDaColuna, type Snapshot,
 } from "../lib/dados.ts";
 import {
-  funcoesDoPais, mediana, panoramaEstados, posicaoNaLista,
+  funcoesDoPais, mediana, panoramaEstados, posicaoNaLista, rankingPessoal,
 } from "../lib/nacional.ts";
 import {
   compararFuncoes, faixaDe, faixasEmLinha, FAIXA_DA_LETRA, funcoesDe,
@@ -1021,4 +1021,69 @@ test("a url do cartão é absoluta e termina em barra", () => {
   // cartão apontando para o 308 em vez da página.
   const c = cartaoSocial("t", "d", "/municipio/bonito-pa/");
   assert.match(String(c.openGraph.url), /^https:\/\/.+\/municipio\/bonito-pa\/$/);
+});
+
+// ─── O ranking nacional de gasto com pessoal ───────────────────────────────
+//
+// Uma lista ordenada é lida como acusação, então as três recusas que o resto
+// do site já pratica pesam mais aqui.
+function fiscalParaRanking(): never {
+  const m = (codigo: number, nome: string, uf: string, publicou: boolean,
+             percentual: number | null) =>
+    [codigo, nome, uf, 10000, publicou, percentual, 51.3, 0, 0];
+  return {
+    limites: { prudencial: 51.3, legal: 54.0 },
+    municipios: [
+      m(1, "Acima Um", "BA", true, 62.0),
+      m(2, "Acima Dois", "BA", true, 58.0),
+      m(3, "Quebrado", "BA", true, 371.02),   // erro de preenchimento
+      m(4, "Prudencial", "BA", true, 52.0),
+      m(5, "Tranquilo", "BA", true, 40.0),
+      m(6, "Nao Entregou", "BA", false, null),
+      m(5300108, "Brasília", "DF", false, null),  // presta contas como estado
+    ],
+  } as never;
+}
+
+test("declaração implausível NÃO é ranqueada, e também não some", () => {
+  // Ranqueá-la publicaria "gastou 371% da receita com pessoal" como fato --
+  // acusação a um município real, produzida por formulário preenchido errado.
+  // Omiti-la faria a página afirmar que o dado não existe, quando ele existe
+  // e está quebrado.
+  const r = rankingPessoal(fiscalParaRanking());
+  assert.deepEqual(r.acimaDoTeto.map((x) => x.nome), ["Acima Um", "Acima Dois"]);
+  assert.deepEqual(r.implausiveis.map((x) => x.nome), ["Quebrado"]);
+});
+
+test("o denominador é quem ENTREGOU, e o resto vai dito", () => {
+  // "2 de 5" faria parecer que 3 estão bem. A verdade é que sobre 1 não se
+  // sabe nada -- a mesma distinção que a faixa `nao-consultado` mantém.
+  const r = rankingPessoal(fiscalParaRanking());
+  assert.equal(r.universo, 6, "o DF sai do universo: não é município");
+  assert.equal(r.publicaram, 5);
+  assert.equal(r.naoEntregaram, 1);
+  assert.equal(r.comoEstado, 1);
+});
+
+test("quem presta contas como estado sai das DUAS contas", () => {
+  // Contá-lo como faltoso é a acusação que a faixa `como-estado` impede.
+  const r = rankingPessoal(fiscalParaRanking());
+  assert.ok(!r.acimaDoTeto.some((x) => x.uf === "DF"));
+  assert.ok(!r.implausiveis.some((x) => x.uf === "DF"));
+  assert.equal(r.universo + r.comoEstado, 7);
+});
+
+test("a faixa prudencial é alerta, e não entra na lista de infração", () => {
+  const r = rankingPessoal(fiscalParaRanking());
+  assert.equal(r.naFaixaPrudencial, 1);
+  assert.ok(!r.acimaDoTeto.some((x) => x.nome === "Prudencial"));
+});
+
+test("o empate se desfaz pelo nome, senão dois builds divergem", () => {
+  const s = fiscalParaRanking();
+  (s as { municipios: unknown[] }).municipios.push(
+    [9, "Aaa Empate", "BA", 10000, true, 58.0, 51.3, 0, 0]);
+  const r = rankingPessoal(s);
+  assert.deepEqual(r.acimaDoTeto.map((x) => x.nome),
+    ["Acima Um", "Aaa Empate", "Acima Dois"]);
 });

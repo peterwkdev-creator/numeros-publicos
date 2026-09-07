@@ -742,9 +742,10 @@ export default async function PaginaMunicipio(
                 {m.nome} não entregou o RREO de {exercicioColetado}.
               </strong>{" "}
               Os números acima são de <strong>{funcoes.exercicio}</strong>, o
-              exercício mais recente que o município declarou — e é por isso que
-              não coincidem com o ano dos demais municípios. Não entregar não é
-              não gastar: é não ter prestado contas daquele ano.
+              exercício mais recente que o município declarou — por isso esta
+              seção mostra um ano diferente do que aparece na maioria das outras
+              páginas. Não entregar não é não gastar: é não ter prestado contas
+              daquele ano.
             </p>
           )}
           <div className={estilos.rolagem}>

@@ -985,3 +985,40 @@ test("o salto cancela a comparação, mas NÃO a série", () => {
   const s = serieFuncoesDe(fiscalDesencontrado(), 3);
   assert.deepEqual(s.map((p) => p.exercicio), [2020, 2022]);
 });
+
+// ─── O cartão de compartilhamento ──────────────────────────────────────────
+//
+// Achado em 07/09/2026 varrendo o `out/`: as páginas de município tinham
+// `og:title` certo e **`twitter:title` genérico** — "Números Públicos", o da
+// capa. E nenhuma tinha imagem. Nada disso aparece no site, na auditoria ou no
+// HTML lido de passagem: só ao colar o link em algum lugar.
+const { cartaoSocial } = await import("../lib/servidor.ts");
+
+test("o cartão diz a MESMA coisa nos dois vocabulários", () => {
+  // O X prefere `twitter:` quando existe, e existia — herdado do layout. O
+  // resultado era o cartão da CAPA em 5.598 páginas de município e estado:
+  // não um cartão faltando, um cartão ERRADO.
+  const c = cartaoSocial("São Luís (MA) — dados abertos", "1.037.775 hab", "/municipio/sao-luis-ma/");
+  assert.equal(c.twitter.title, c.openGraph.title);
+  assert.equal(c.twitter.description, c.openGraph.description);
+  assert.match(String(c.openGraph.title), /São Luís/);
+});
+
+test("o cartão leva imagem nos dois — era o que sumia ao sobrescrever openGraph", () => {
+  // `generateMetadata` devolvendo `openGraph` SUBSTITUI o objeto do layout, e a
+  // imagem da convenção de arquivo viajava dentro dele.
+  const c = cartaoSocial("t", "d", "/x/");
+  const og = c.openGraph.images as { url: string }[];
+  assert.equal(og.length, 1);
+  assert.match(og[0]!.url, /opengraph-image\.png$/);
+  assert.equal((c.twitter.images as string[]).length, 1);
+  assert.equal(c.twitter.card, "summary_large_image");
+});
+
+test("a url do cartão é absoluta e termina em barra", () => {
+  // `og:url` relativo não resolve na maioria dos leitores de cartão, e a barra
+  // final é o que o `trailingSlash: true` publica — divergir aqui produziria um
+  // cartão apontando para o 308 em vez da página.
+  const c = cartaoSocial("t", "d", "/municipio/bonito-pa/");
+  assert.match(String(c.openGraph.url), /^https:\/\/.+\/municipio\/bonito-pa\/$/);
+});

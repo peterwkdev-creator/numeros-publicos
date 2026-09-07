@@ -20,7 +20,7 @@ import TabelaCenso from "../../componentes/tabela-censo";
 import {
   FONTES, VARIAVEIS, catalogoDe, coberturaTemporal, palavrasChave,
 } from "../../../lib/jsonld";
-import { lerFiscal, lerIdeb, lerSnapshot, SITE } from "../../../lib/servidor";
+import { lerFiscal, lerIdeb, lerSnapshot, SITE, cartaoSocial } from "../../../lib/servidor";
 import estilos from "./estado.module.css";
 import { atualDeFuncoes } from "../../../lib/fiscal";
 
@@ -94,15 +94,13 @@ export async function generateMetadata(
       "Dados oficiais, com a fonte.",
     ),
     alternates: { canonical: `${SITE}/estado/${slugUf(r.uf.sigla)}/` },
-    openGraph: {
-      title: `${r.uf.nome} — dados abertos`,
-      description: r.uf.municipios === 1
+    ...cartaoSocial(
+      `${r.uf.nome} — dados abertos`,
+      r.uf.municipios === 1
         ? `${r.uf.nome}, com procedência.`
         : `Os ${r.uf.municipios} municípios ${crase(r.uf.nome)}, com procedência.`,
-      url: `${SITE}/estado/${slugUf(r.uf.sigla)}/`,
-      locale: "pt_BR",
-      type: "article",
-    },
+      `/estado/${slugUf(r.uf.sigla)}/`,
+    ),
   };
 }
 

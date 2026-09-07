@@ -15,7 +15,7 @@ import {
 import { contarMetas, medianaGeral, trajetoriaDe } from "../../../lib/ideb";
 import { medianasCache, medidasDe, taxasCache } from "../../../lib/censo";
 import TabelaCenso from "../../componentes/tabela-censo";
-import { lerFiscal, lerIdeb, lerSnapshot, SITE } from "../../../lib/servidor";
+import { cartaoSocial, lerFiscal, lerIdeb, lerSnapshot, SITE } from "../../../lib/servidor";
 import FuncoesBarras from "../../componentes/funcoes-barras";
 import DistribuicaoSvg from "../../componentes/distribuicao-svg";
 import IdebSvg from "../../componentes/ideb-svg";
@@ -118,13 +118,11 @@ export async function generateMetadata(
     title: tituloDe(m.nome, m.uf),
     description: descricao,
     alternates: { canonical: `${SITE}/municipio/${m.slug}/` },
-    openGraph: {
-      title: `${m.nome} (${m.uf}) — dados abertos`,
-      description: partes.join(" · ") || `Dados abertos de ${m.nome}/${m.uf}.`,
-      url: `${SITE}/municipio/${m.slug}/`,
-      locale: "pt_BR",
-      type: "article",
-    },
+    ...cartaoSocial(
+      `${m.nome} (${m.uf}) — dados abertos`,
+      partes.join(" · ") || `Dados abertos de ${m.nome}/${m.uf}.`,
+      `/municipio/${m.slug}/`,
+    ),
   };
 }
 

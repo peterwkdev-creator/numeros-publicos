@@ -3,7 +3,7 @@ import type { MetadataRoute } from "next";
 import { expandir } from "../lib/dados";
 import { slugUf } from "../lib/estado";
 import { slugDe } from "../lib/fiscal";
-import { lerSnapshot, SITE } from "../lib/servidor";
+import { lerFiscal, lerSnapshot, SITE } from "../lib/servidor";
 
 // Com `output: "export"`, sitemap e robots sao route handlers e o Next exige
 // que sejam declarados estaticos -- sem isto o build morre com
@@ -24,7 +24,28 @@ export const dynamic = "force-static";
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const snapshot = await lerSnapshot();
-  const atualizado = new Date(snapshot.geradoEm);
+  const fiscal = await lerFiscal();
+
+  // ── `lastModified` é o MAIS RECENTE das fontes, não o do snapshot do IBGE ──
+  //
+  // Medido em 07/09/2026: o snapshot dizia `2026-09-05T02:45:41` e o fiscal,
+  // `2026-09-07T00:03:08`. A série de cinco anos de despesa por função tinha
+  // acabado de mudar **as 5.571 páginas de município** — e o sitemap anunciava
+  // aos buscadores que nada mudava desde o dia 5, justamente no dia em que mais
+  // mudou.
+  //
+  // `lastmod` é sinal de priorização de rastreamento, e um sinal que subestima
+  // a mudança é pior que nenhum: ensina o rastreador a voltar mais tarde. A
+  // metade fiscal da página vem de outro arquivo, com outra data de geração, e
+  // esquecê-la é o mesmo erro do `coletadoEm` da capa — só que ao contrário,
+  // declarando dado mais VELHO do que se tem.
+  //
+  // O `Math.max` sobre os dois evita a próxima ocorrência: fonte nova entra
+  // aqui, e não num lugar que alguém precise lembrar de atualizar.
+  const atualizado = new Date(Math.max(
+    new Date(snapshot.geradoEm).getTime(),
+    fiscal.geradoEm ? new Date(fiscal.geradoEm).getTime() : 0,
+  ));
 
   const inicio: MetadataRoute.Sitemap = [
     {

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 
 import {
@@ -21,6 +22,22 @@ import {
 import { lerFiscal, lerIdeb, lerSnapshot, SITE } from "@/lib/servidor";
 import { Municipios } from "./municipios";
 import s from "./page.module.css";
+
+/**
+ * A capa era a ÚNICA página do site sem `canonical`.
+ *
+ * As 5.571 de município e as 27 de estado sempre tiveram — cada uma declara a
+ * sua em `generateMetadata`. A capa não declara metadados próprios: herda os do
+ * layout, e lá não há `alternates`. Faltou justamente na página que mais recebe
+ * link de fora, e que é alcançável por mais formas que qualquer outra (raiz e
+ * `www`, com e sem barra, e com o que quer que venha grudado numa campanha).
+ *
+ * É a marca desta classe de defeito: o caso geral foi resolvido com cuidado, e
+ * o caso único ficou de fora porque não passou pelo mesmo lugar do código.
+ */
+export const metadata: Metadata = {
+  alternates: { canonical: `${SITE}/` },
+};
 
 /**
  * Server Component: lê o snapshot do disco **no build** e devolve HTML pronto.

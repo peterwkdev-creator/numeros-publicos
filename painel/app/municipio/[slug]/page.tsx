@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 
 import { br, descricaoDe, escala, expandir, milReaisParaReais } from "../../../lib/dados";
 import { slugUf, vizinhosDe } from "../../../lib/estado";
+import { rankingCache } from "../../../lib/nacional";
 import { posicaoEntre, posicaoNoEstado } from "../../../lib/posicao";
 import {
   FONTES, VARIAVEIS, catalogoDe, coberturaTemporal, identificadorIbge, palavrasChave,
@@ -257,6 +258,10 @@ export default async function PaginaMunicipio(
   // A mudança de composição entre o mesmo bimestre de dois anos. `null` quando
   // falta um dos anos ou quando o crescimento do total sai da faixa comparável
   // -- ali um dos dois relatórios está quebrado.
+  // Dois números do ranking nacional, pelo cache: sem ele seriam 31 milhões
+  // de operações no build para produzir sempre os mesmos dois.
+  const nacional = rankingCache(fiscal);
+
   const comparacao = compararFuncoes(fiscal, m.codigo);
   const mudancas = (comparacao?.deslocamentos ?? [])
     .filter((d) => Math.abs(d.pontos) >= DESLOCAMENTO_MINIMO)
@@ -628,6 +633,30 @@ export default async function PaginaMunicipio(
               conjunto={de(uf?.nome ?? m.uf)}
             />
           </div>
+
+          {/* O contexto NACIONAL, e só para quem passou do teto.
+              Mesma contenção da frase "não é um caso isolado" na página de
+              quem não entregou: ela entra onde é sobre aquele fato específico,
+              e não em toda página. A seção acima situa no estado; um município
+              acima do limite é o único caso em que o país acrescenta algo — e
+              é também o único em que o leitor tem razão de querer a lista.
+
+              O link de volta faltava: medido em 07/09/2026, a página de
+              ranking era alcançável só da capa, e nenhum dos 335 municípios
+              que estão nela sabia disso. */}
+          {f?.faixa === "acima-legal" && nacional.acimaDoTeto.length > 1 && (
+            <p>
+              No país, {m.nome} é um dos{" "}
+              <strong>{br(nacional.acimaDoTeto.length)}</strong> municípios que
+              declararam gasto com pessoal acima do teto, entre os{" "}
+              <strong>{br(nacional.publicaram)}</strong> que entregaram o
+              relatório.{" "}
+              <Link href="/ranking/gasto-com-pessoal/" prefetch={false}>
+                Ver a lista nacional
+              </Link>
+              .
+            </p>
+          )}
 
           <p className={estilos.ressalva}>
             Entram na comparação apenas os que <strong>entregaram</strong> o

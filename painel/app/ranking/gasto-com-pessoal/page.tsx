@@ -119,9 +119,16 @@ export default async function Pagina() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <p className={estilos.trilha}>
-        <Link href="/" prefetch={false}>Números Públicos</Link> › Ranking
-      </p>
+      {/* A MESMA marcação das outras páginas, e não um `<p>` com `›` literal.
+          A primeira versão era texto corrido: sem landmark de navegação, sem
+          `aria-current`, e com o `›` sendo anunciado pelo leitor de tela como
+          caractere. A auditoria não pega isso -- ela mede contraste, foco,
+          alvo e hierarquia de títulos, não semântica de trilha. */}
+      <nav className={estilos.trilha} aria-label="Você está em">
+        <Link href="/" prefetch={false}>Números Públicos</Link>
+        <span aria-hidden="true"> › </span>
+        <span aria-current="page">Gasto com pessoal</span>
+      </nav>
 
       <h1 className={estilos.titulo}>
         Municípios acima do limite de gasto com pessoal

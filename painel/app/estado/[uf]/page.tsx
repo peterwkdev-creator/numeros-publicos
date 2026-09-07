@@ -455,6 +455,21 @@ export default async function PaginaEstado(
             </li>
           ))}
         </ul>
+        {/* O caminho para a lista NACIONAL, e só quando este estado tem
+            alguém nela. Medido em 07/09/2026: a página de ranking era
+            alcançável apenas da capa, e as 27 páginas de estado -- que têm
+            "Acima do limite legal" como título -- não levavam a ela.
+
+            Condicionado porque num estado sem ninguém acima do teto o link
+            prometeria uma lista que não fala daquele estado. */}
+        {r.porFaixa["acima-legal"] > 0 && (
+          <p className={estilos.ressalva}>
+            <Link href="/ranking/gasto-com-pessoal/" prefetch={false}>
+              Quais municípios do país estão acima do limite
+            </Link>{" "}
+            — a lista nacional, na mesma coleta.
+          </p>
+        )}
         {/* Só quando há o que excluir. Com zero implausíveis a frase virava
             "exclui os 0 fora da faixa", que anuncia uma correção que não
             aconteceu e faz o leitor procurar um problema inexistente. */}

@@ -319,3 +319,27 @@ export function rankingPessoal(fiscal: SnapshotFiscal): RankingPessoal {
     mediana: plausiveis.length >= MINIMO_MEDIANA ? mediana(plausiveis) : null,
   };
 }
+
+/**
+ * `rankingPessoal` com cache pela identidade do snapshot.
+ *
+ * **Sem isto o build não fecha.** A página do município precisa de dois números
+ * do ranking nacional, e `generateStaticParams` gera 5.571 páginas: recalcular
+ * varreria os 5.570 municípios em cada uma — 31 milhões de operações para
+ * produzir dois números sempre iguais. É a mesma conta que `medianasCache`
+ * resolveu no `lib/censo.ts`, com o mesmo desenho.
+ *
+ * A chave é a **identidade do objeto**, e não uma chave fixa: `lerFiscal` já
+ * mantém o snapshot em cache, então todas as páginas recebem o mesmo. Se um dia
+ * duas fontes diferentes forem passadas, cada uma ganha sua entrada em vez de
+ * receber a da outra em silêncio — o erro que um cache de chave fixa cometeria.
+ */
+const cacheRanking = new WeakMap<object, RankingPessoal>();
+
+export function rankingCache(fiscal: SnapshotFiscal): RankingPessoal {
+  const guardado = cacheRanking.get(fiscal);
+  if (guardado) return guardado;
+  const calculado = rankingPessoal(fiscal);
+  cacheRanking.set(fiscal, calculado);
+  return calculado;
+}

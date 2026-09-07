@@ -286,8 +286,21 @@ export function rankingPessoal(fiscal: SnapshotFiscal): RankingPessoal {
     };
     if (faixa === "implausivel") { fora.push(linha); continue; }
     plausiveis.push(percentual);
-    if (percentual > fiscal.limites.legal) acima.push(linha);
-    else if (percentual > fiscal.limites.prudencial) prudencial += 1;
+    // O veredito vem de `faixaDe`, e NÃO de recomparar os limites aqui.
+    //
+    // Medido em 07/09/2026, revisando: 16 municípios declaram um limite
+    // prudencial PRÓPRIO (57% ou 59,05%, contra o global de 51,3%), e em dois
+    // deles isso muda a faixa — Eldorado do Carajás/PA com 53,35% e Pindorama
+    // do Tocantins/TO com 51,43%. Recomparando com o limite global, esta
+    // página os contaria em alerta enquanto **a página do próprio município
+    // diz que estão abaixo**. Duas páginas do mesmo site se contradizendo, e
+    // nada quebraria.
+    //
+    // A regra geral: quando já existe função que classifica, ramificar no
+    // resultado dela. Reimplementar o limiar é criar uma segunda verdade que
+    // diverge no primeiro caso de borda.
+    if (faixa === "acima-legal") acima.push(linha);
+    else if (faixa === "acima-prudencial") prudencial += 1;
   }
 
   // Empate desfeito pelo nome: sem isso, dois builds do mesmo dado geram

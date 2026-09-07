@@ -142,8 +142,11 @@ export default async function Pagina() {
           </span>
         </div>
         <div className={estilos.cartao}>
+          {/* NÃO crava "entre 51,3% e 54%": 16 municípios declaram limite
+              prudencial próprio (57% ou 59,05%), e o rótulo exato seria falso
+              para eles. O texto abaixo explica a faixa em palavras. */}
           <span className={estilos.rotulo}>
-            Entre {br(prudencial, 1)}% e {br(legal, 0)}%
+            Entre o prudencial e o teto
           </span>
           <span className={`${estilos.valor} tabular`}>
             {br(r.naFaixaPrudencial)}
@@ -168,7 +171,8 @@ export default async function Pagina() {
         <p>
           Dos <strong>{br(r.universo)}</strong> municípios brasileiros,{" "}
           <strong>{br(r.publicaram)}</strong> entregaram o Relatório de Gestão
-          Fiscal do último período apurado. Destes,{" "}
+          Fiscal do {fiscal.periodo}º quadrimestre de {fiscal.exercicio}.
+          Destes,{" "}
           <strong className={estilos.acima}>
             {br(r.acimaDoTeto.length)}
           </strong>{" "}
@@ -199,7 +203,10 @@ export default async function Pagina() {
         <table className={estilos.lista}>
           <caption>
             Municípios com gasto com pessoal acima de {br(legal, 0)}% da receita
-            corrente líquida, do maior para o menor. Fonte: {fiscal.fonte}.
+            corrente líquida, do maior para o menor. Dado do{" "}
+            <strong>{fiscal.periodo}º quadrimestre de {fiscal.exercicio}</strong>.
+            Fonte: {fiscal.fonte}, coleta de{" "}
+            {fiscal.coletadoEm?.slice(0, 10) ?? "data não registrada"}.
           </caption>
           <thead>
             <tr>

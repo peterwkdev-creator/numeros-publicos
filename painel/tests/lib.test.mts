@@ -1079,6 +1079,21 @@ test("a faixa prudencial é alerta, e não entra na lista de infração", () => 
   assert.ok(!r.acimaDoTeto.some((x) => x.nome === "Prudencial"));
 });
 
+test("o limite prudencial PRÓPRIO do município manda, e não o global", () => {
+  // Achado revisando, em 07/09/2026: 16 municípios declaram limite prudencial
+  // proprio (57% ou 59,05%, contra 51,3% global) e em DOIS deles isso muda a
+  // faixa. Recomparando com o global, o ranking os contaria em alerta enquanto
+  // a página do próprio município diz que estão abaixo -- duas páginas do
+  // mesmo site se contradizendo, sem nada quebrar.
+  const s = fiscalParaRanking();
+  (s as { municipios: unknown[] }).municipios.push(
+    // 53% passa do prudencial GLOBAL (51,3) e não do próprio (57).
+    [11, "Limite Proprio", "PA", 10000, true, 53.0, 57.0, 0, 0]);
+  const r = rankingPessoal(s);
+  assert.equal(r.naFaixaPrudencial, 1, "só o 'Prudencial' de 52% conta");
+  assert.ok(!r.acimaDoTeto.some((x) => x.nome === "Limite Proprio"));
+});
+
 test("o empate se desfaz pelo nome, senão dois builds divergem", () => {
   const s = fiscalParaRanking();
   (s as { municipios: unknown[] }).municipios.push(

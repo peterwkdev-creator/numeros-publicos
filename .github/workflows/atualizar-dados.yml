@@ -38,18 +38,35 @@ jobs:
       - name: Testes
         run: python -m unittest discover -s tests -t .
 
+      # `--regiao BR` EXPLÍCITO, e não herdado do padrão.
+      #
+      # Em 07/09/2026 este passo rodou sem a bandeira. O padrão ainda era `NE`,
+      # sobra da época em que o site era regional: reingeriu 1.794 municípios
+      # por cima de 5.571, commitou, e a Vercel publicou um site que devolvia
+      # 404 em 3.777 páginas de município e 18 de estado.
+      #
+      # O padrão virou `BR` no mesmo dia, então esta linha é redundante hoje —
+      # e é justamente por isso que ela fica. Processo automático não deve
+      # depender de um padrão que alguém pode reabrir: quem digita à mão vê o
+      # efeito na hora, o cron vê na segunda-feira seguinte.
       - name: Ingerir municípios e indicadores
         run: |
-          python -m observatorio ingerir-municipios --pausa 2
-          python -m observatorio ingerir-indicador populacao-censo-2022 --pausa 2
-          python -m observatorio ingerir-indicador populacao-estimada --pausa 2
-          python -m observatorio ingerir-indicador pib-municipal --pausa 2
+          python -m observatorio ingerir-municipios --regiao BR --pausa 2
+          python -m observatorio ingerir-indicador populacao-censo-2022 --regiao BR --pausa 2
+          python -m observatorio ingerir-indicador populacao-estimada --regiao BR --pausa 2
+          python -m observatorio ingerir-indicador pib-municipal --regiao BR --pausa 2
 
       # Integridade contra a própria fonte. Sai com código 1 se a soma dos
       # municípios divergir do agregado regional do IBGE — e aí o workflow
       # falha ANTES de publicar número errado.
-      - name: Conferir contra o agregado regional do IBGE
-        run: python -m observatorio conferir
+      # Também com a bandeira, e aqui ela é o ponto: em 07/09 este passo PASSOU
+      # sobre a regressão. Herdando o mesmo padrão `NE`, somou o Nordeste e
+      # comparou com o total do Nordeste. Bateu.
+      #
+      # **Verificação que herda o parâmetro daquilo que deveria verificar não
+      # verifica nada** — ela confirma a premissa em vez de testá-la.
+      - name: Conferir contra o agregado NACIONAL do IBGE
+        run: python -m observatorio conferir --regiao BR
 
       - name: Exportar o snapshot
         run: python -m observatorio exportar

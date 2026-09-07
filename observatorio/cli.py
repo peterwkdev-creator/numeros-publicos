@@ -54,10 +54,31 @@ RECORTES = {
     "BR": (UFS_BRASIL, None),
 }
 
+#: O padrão é **BR desde 07/09/2026**, e a troca custou o site inteiro por
+#: algumas horas.
+#:
+#: A expansão nacional de 03/09 foi feita passando `--regiao BR` à mão. O padrão
+#: continuou `NE`, e ninguém notou porque ninguém mais digitava o comando — até
+#: a segunda-feira seguinte, quando o cron semanal do workflow o digitou. Ele
+#: chama `ingerir-*` e `exportar` **sem bandeira**, reingeriu 1.794 municípios
+#: por cima de 5.571, commitou e a Vercel publicou. O site passou a devolver 404
+#: em 3.777 páginas de município e 18 de estado, várias já indexadas.
+#:
+#: E o `conferir`, que existe para falhar ANTES de publicar número errado,
+#: **liberou**: com o mesmo padrão, ele somou o Nordeste e comparou com o total
+#: do Nordeste. Bateu. Uma verificação que herda o parâmetro do que ela deveria
+#: verificar não verifica nada.
+#:
+#: A lição que fica é a do recorte como bandeira, levada até o fim: **o padrão
+#: de uma bandeira é uma decisão, e ele envelhece.** Quem passa a bandeira à mão
+#: não percebe o padrão apodrecer; quem percebe é o processo automático, no pior
+#: momento possível.
+PADRAO_RECORTE = "BR"
+
 
 def recorte_de(args) -> tuple[dict[int, str], int | None]:
     """As UFs e o nível de conferência do recorte pedido."""
-    return RECORTES[getattr(args, "regiao", "NE")]
+    return RECORTES[getattr(args, "regiao", PADRAO_RECORTE)]
 
 
 def br(valor: float | None, casas: int = 0) -> str:
@@ -146,7 +167,7 @@ def ingerir_municipios(args, transporte=None, dormir=None) -> int:
     todas, _ = recorte_de(args)
     ufs = [args.uf] if args.uf else list(todas)
     print(f"Ingerindo municípios de {len(ufs)} UF(s) "
-          f"[{getattr(args, 'regiao', 'NE')}], pausa {args.pausa}s.")
+          f"[{getattr(args, 'regiao', PADRAO_RECORTE)}], pausa {args.pausa}s.")
 
     lidos = novos = inalterados = 0
     erro = None
@@ -301,6 +322,39 @@ def exportar(args) -> int:
 
     destino = _P(args.saida)
     destino.parent.mkdir(parents=True, exist_ok=True)
+
+    # ── A trava do ENCOLHIMENTO ────────────────────────────────────────────
+    #
+    # Escrita em 07/09/2026, depois de um snapshot de 1.794 municípios cair por
+    # cima de um de 5.571 e ir ao ar. Nada acusou: o arquivo era JSON válido,
+    # completo e internamente coerente; a página de 404 dizia "a lista dos 1.794
+    # municípios" com toda a convicção. **Um retrato menor não é um retrato
+    # quebrado — e é por isso que nenhuma verificação de forma o pega.**
+    #
+    # O `conferir` não pegou porque herdava a mesma bandeira: somou o Nordeste,
+    # comparou com o total do Nordeste, e concordou.
+    #
+    # Cobertura não encolhe sozinha. Se encolheu, ou a fonte mudou (e aí é
+    # notícia, não rotina) ou o comando foi chamado errado — e nos dois casos o
+    # certo é parar. `--permitir-encolher` existe para o dia em que encolher for
+    # a intenção, e obriga a dizê-lo.
+    antes = 0
+    if destino.exists():
+        try:
+            antes = len(json.loads(destino.read_text(encoding="utf-8"))["municipios"])
+        except (ValueError, KeyError, OSError) as e:
+            # Não engolir: um snapshot ilegível é informação, não ausência de
+            # informação. Sem cobertura anterior conhecida, a trava não arma.
+            print(f"  [!] snapshot anterior ilegível ({e}); a trava não arma")
+    agora = len(dados["municipios"])
+    if antes and agora < antes and not getattr(args, "permitir_encolher", False):
+        raise SystemExit("\n".join((
+            f"RECUSADO: a cobertura encolheria de {antes} para {agora} municípios.",
+            "  Se foi engano, quase sempre é a bandeira: a ingestão rodou com",
+            f"  --regiao {getattr(args, 'regiao', PADRAO_RECORTE)}?",
+            "  Se encolher é a intenção, repita com --permitir-encolher.",
+        )))
+
     # `separators` sem espaço: o arquivo é baixado por quem visita o painel.
     texto = json.dumps(dados, ensure_ascii=False, separators=(",", ":"))
     destino.write_text(texto, encoding="utf-8")
@@ -351,8 +405,8 @@ def construir_parser() -> argparse.ArgumentParser:
 
     i = sub.add_parser("ingerir-municipios",
                        help="busca os municípios no IBGE e grava")
-    i.add_argument("--regiao", default="NE", choices=sorted(RECORTES),
-                   help="NE (padrão) ou BR; o recorte é bandeira, não código")
+    i.add_argument("--regiao", default=PADRAO_RECORTE, choices=sorted(RECORTES),
+                   help="BR (padrão) ou NE; o recorte é bandeira, não código")
     i.add_argument("--uf", type=int, choices=sorted(UFS_BRASIL),
                    help="só esta UF (código IBGE); padrão é as nove")
     i.add_argument("--pausa", type=float,
@@ -368,7 +422,7 @@ def construir_parser() -> argparse.ArgumentParser:
     ii = sub.add_parser("ingerir-indicador",
                         help="busca um indicador no IBGE e grava")
     ii.add_argument("indicador", choices=sorted(INDICADORES))
-    ii.add_argument("--regiao", default="NE", choices=sorted(RECORTES))
+    ii.add_argument("--regiao", default=PADRAO_RECORTE, choices=sorted(RECORTES))
     ii.add_argument("--uf", type=int, choices=sorted(UFS_BRASIL))
     ii.add_argument("--pausa", type=float,
                     default=float(os.environ.get("OBS_PAUSA", PAUSA_PADRAO)))
@@ -384,10 +438,13 @@ def construir_parser() -> argparse.ArgumentParser:
         "conferir",
         help="soma dos municípios × total regional do IBGE (integridade)")
     cf.set_defaults(func=conferir)
-    cf.add_argument("--regiao", default="NE", choices=sorted(RECORTES),
+    cf.add_argument("--regiao", default=PADRAO_RECORTE, choices=sorted(RECORTES),
                     help="define o nível do total oficial: N2 da região ou N1 do Brasil")
 
     e = sub.add_parser("exportar", help="gera o JSON que o painel consome")
+    e.add_argument("--permitir-encolher", action="store_true",
+                   help="deixa o snapshot cobrir MENOS municípios que o anterior; "
+                        "sem isto, encolher é recusado")
     e.add_argument("--saida", default="painel/dados/snapshot.json")
     e.set_defaults(func=exportar)
 

@@ -23,7 +23,7 @@ import {
 import {
   compararFuncoes, faixaDe, faixasEmLinha, FAIXA_DA_LETRA, funcoesDe,
   funcoesRecentesDe, LETRA_FAIXA, parDeFuncoes,
-  PRESTA_COMO_ESTADO, ROTULO_FAIXA, serieFuncoesDe,
+  pontoPlausivel, PRESTA_COMO_ESTADO, ROTULO_FAIXA, serieFuncoesDe,
 } from "../lib/fiscal.ts";
 import { posicaoEntre, posicaoNoEstado } from "../lib/posicao.ts";
 import { emContracao } from "../lib/estado.ts";
@@ -1101,4 +1101,20 @@ test("o empate se desfaz pelo nome, senão dois builds divergem", () => {
   const r = rankingPessoal(s);
   assert.deepEqual(r.acimaDoTeto.map((x) => x.nome),
     ["Acima Um", "Aaa Empate", "Acima Dois"]);
+});
+
+test("ponto SEM percentual não é plausível — `null >= 0` é true em JS", () => {
+  // O tipo diz `number` e o JSON em tempo de execução pode trazer `null`: o
+  // TypeScript garante o contrato do código, não o do arquivo. Sem o `typeof`,
+  // um ponto nulo passaria e seria desenhado como ZERO -- "não declarou"
+  // virando "não gastou", que é a distinção que este projeto inteiro mantém.
+  //
+  // Hoje o `exportar` filtra `WHERE percentual IS NOT NULL`, então nenhum nulo
+  // chega aqui. A guarda protege o dia em que alguém mexer naquele WHERE sem
+  // saber que este gráfico depende dele.
+  assert.equal(pontoPlausivel([2021, 1, true, null as unknown as number]), false);
+  assert.equal(pontoPlausivel([2021, 1, true, undefined as unknown as number]), false);
+  assert.equal(pontoPlausivel([2021, 1, true, 0]), true, "zero declarado é dado");
+  assert.equal(pontoPlausivel([2021, 1, true, 54.8]), true);
+  assert.equal(pontoPlausivel([2021, 1, true, 371.02]), false);
 });

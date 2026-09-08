@@ -539,9 +539,26 @@ export function rotuloPeriodo(exercicio: number, periodo: number): string {
   return `${exercicio}/${periodo}`;
 }
 
-/** Um ponto está na faixa que descreve uma prefeitura de verdade? */
+/**
+ * Um ponto está na faixa que descreve uma prefeitura de verdade?
+ *
+ * **O `typeof` não é decoração, e o tipo não protege aqui.** `PontoSerie[3]`
+ * está declarado `number`, mas o valor vem de JSON lido em tempo de execução —
+ * o TypeScript garante o contrato do código, não o do arquivo. E em JavaScript
+ * **`null >= 0` é `true`**: um ponto sem percentual passaria como plausível e
+ * seria desenhado como **zero**, que é a leitura oposta da verdadeira ("não
+ * declarou" virando "não gastou").
+ *
+ * Achado em 08/09/2026, revisando o dado coletado. A coleta de 2021/1 trouxe
+ * **91 municípios com despesa e sem RCL** — a fonte não publica a linha, o que
+ * foi conferido contra o SICONFI com controle. Eles não chegam aqui porque o
+ * `exportar` filtra `WHERE percentual IS NOT NULL`, e é isso que torna a
+ * guarda barata: ela protege o dia em que alguém mexer naquele `WHERE` sem
+ * saber que este gráfico depende dele.
+ */
 export function pontoPlausivel(p: PontoSerie): boolean {
-  return p[3] >= MINIMO_PLAUSIVEL && p[3] <= LIMITE_PLAUSIVEL;
+  return typeof p[3] === "number"
+    && p[3] >= MINIMO_PLAUSIVEL && p[3] <= LIMITE_PLAUSIVEL;
 }
 
 /**

@@ -29,6 +29,9 @@ import {
 } from "../lib/fiscal.ts";
 import { posicaoEntre, posicaoNoEstado } from "../lib/posicao.ts";
 import { emContracao } from "../lib/estado.ts";
+import {
+  atualizadoEm, caminhosDosFilhos, escaparXml, indiceDeSitemaps,
+} from "../lib/sitemap.ts";
 import { faixaDoValor, percentuaisPorUf } from "../lib/mapa.ts";
 import {
   medianasDe, medidasDe, PARES_CENSO, rotuloDownload, taxasDoPais,
@@ -1297,4 +1300,50 @@ test("o cache devolve o MESMO objeto, pela identidade do snapshot", () => {
   const f = fiscalParaMedianaSaude();
   assert.equal(medianasSaudeCache(f), medianasSaudeCache(f));
   assert.notEqual(medianasSaudeCache(f), medianasSaudeCache(fiscalParaMedianaSaude()));
+});
+
+// ── O índice de sitemaps ────────────────────────────────────────────────────
+
+test("o índice lista o geral e um arquivo por UF, nessa ordem", () => {
+  assert.deepEqual(caminhosDosFilhos(["AC", "MA"]), [
+    "/geral/sitemap.xml",
+    "/municipio/sitemap/AC.xml",
+    "/municipio/sitemap/MA.xml",
+  ]);
+});
+
+test("o índice é um sitemapindex, e não um urlset", () => {
+  // A diferença não é cosmética: um `<urlset>` com 28 URLs de sitemap pediria
+  // ao buscador para INDEXAR os arquivos de sitemap como se fossem páginas.
+  const xml = indiceDeSitemaps("https://x.br", ["/a.xml"], new Date(0));
+  assert.match(xml, /<sitemapindex/);
+  assert.doesNotMatch(xml, /<urlset/);
+  assert.match(xml, /<loc>https:\/\/x\.br\/a\.xml<\/loc>/);
+  assert.match(xml, /<lastmod>1970-01-01T00:00:00\.000Z<\/lastmod>/);
+});
+
+test("o XML escapa o que precisa, antes de precisar", () => {
+  // Os slugs deste site não têm `&` hoje. No dia em que tiverem, um arquivo
+  // não escapado fica inválido INTEIRO -- não só aquela linha.
+  assert.equal(escaparXml("a&b<c>d\"e'f"), "a&amp;b&lt;c&gt;d&quot;e&apos;f");
+  assert.match(indiceDeSitemaps("https://x.br", ["/a&b.xml"], new Date(0)),
+    /a&amp;b\.xml/);
+});
+
+test("a data do sitemap é a MAIS RECENTE das duas fontes", () => {
+  // Medido em 07/09/2026: o fiscal estava dois dias à frente do snapshot, e o
+  // sitemap anunciava que nada mudava desde o dia 5 -- no dia em que as 5.571
+  // páginas de município mudaram. Sinal que subestima a mudança é pior que
+  // sinal nenhum: ensina o rastreador a voltar mais tarde.
+  const s = { geradoEm: "2026-09-05T02:45:41Z" } as never;
+  const f = { geradoEm: "2026-09-07T00:03:08Z" } as never;
+  assert.equal(atualizadoEm(s, f).toISOString(), "2026-09-07T00:03:08.000Z");
+  assert.equal(atualizadoEm(f, s).toISOString(), "2026-09-07T00:03:08.000Z",
+    "a ordem dos argumentos não pode mudar a resposta");
+});
+
+test("fonte sem data não zera a data do sitemap", () => {
+  const s = { geradoEm: "2026-09-05T02:45:41Z" } as never;
+  assert.equal(atualizadoEm(s, { geradoEm: null } as never).toISOString(),
+    "2026-09-05T02:45:41.000Z");
 });

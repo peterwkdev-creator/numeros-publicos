@@ -65,7 +65,18 @@ function impressaoDosDados() {
   return h.digest("hex").slice(0, 16);
 }
 
-/** As URLs do sitemap gerado. Fonte única: se não está lá, não existe. */
+/**
+ * As URLs do sitemap gerado. Fonte única: se não está lá, não existe.
+ *
+ * **Desde 09/09/2026 `/sitemap.xml` é um ÍNDICE**, e este leitor segue os
+ * filhos. Antes ele fazia um regex de `<loc>` no arquivo e pronto — e com o
+ * índice aquele mesmo regex devolveria **28 arquivos de sitemap em vez de 5.601
+ * páginas**, sem erro nenhum, anunciando ao buscador as URLs erradas.
+ *
+ * A guarda contra isso não é o `sitemapindex` no texto: é exigir que o
+ * resultado final tenha ordem de grandeza de site, e não de índice. Um índice
+ * lido como lista de páginas passaria em qualquer verificação de forma.
+ */
 function urlsDoSitemap() {
   const xml = path.join(PAINEL, "out", "sitemap.xml");
   if (!existsSync(xml)) {
@@ -74,8 +85,26 @@ function urlsDoSitemap() {
       "que o build ainda não publicou pediria ao buscador para rastrear 404.",
     );
   }
-  const texto = readFileSync(xml, "utf-8");
-  return [...texto.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
+  const locs = (texto) =>
+    [...texto.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
+
+  const raiz = readFileSync(xml, "utf-8");
+  if (!raiz.includes("<sitemapindex")) return locs(raiz);
+
+  const urls = [];
+  for (const filho of locs(raiz)) {
+    // O índice traz URL absoluta; o arquivo mora no `out/` pelo caminho dela.
+    const caminho = path.join(PAINEL, "out", new URL(filho).pathname);
+    if (!existsSync(caminho)) {
+      throw new Error(
+        `o índice aponta para ${filho} e o arquivo não existe em out/. ` +
+        "Enviar URLs de um sitemap que o build não produziu pediria ao " +
+        "buscador para rastrear 404.",
+      );
+    }
+    urls.push(...locs(readFileSync(caminho, "utf-8")));
+  }
+  return urls;
 }
 
 async function enviar(urls) {

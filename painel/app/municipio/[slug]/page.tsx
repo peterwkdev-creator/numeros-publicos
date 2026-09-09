@@ -7,7 +7,8 @@ import { slugUf, vizinhosDe } from "../../../lib/estado";
 import { medianasSaudeCache, rankingCache } from "../../../lib/nacional";
 import { posicaoEntre, posicaoNoEstado } from "../../../lib/posicao";
 import {
-  FONTES, VARIAVEIS, catalogoDe, coberturaTemporal, identificadorIbge, palavrasChave,
+  FONTES, trilha, VARIAVEIS, catalogoDe, coberturaTemporal, identificadorIbge,
+  palavrasChave,
 } from "../../../lib/jsonld";
 import {
   compararFuncoes, DESLOCAMENTO_MINIMO, FUNCOES_DA_PORTARIA, funcoesRecentesDe,
@@ -359,6 +360,22 @@ export default async function PaginaMunicipio(
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      {/* A trilha, num bloco separado de proposito: o no acima ja funciona e a
+          auditoria o confere; acrescentar um `@graph` mexeria na forma dele
+          para ganhar nada. O Google aceita varios blocos por pagina. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            ...trilha(SITE, [
+              { nome: "Números Públicos", caminho: "/" },
+              { nome: uf?.nome ?? m.uf, caminho: `/estado/${slugUf(m.uf)}/` },
+              { nome: m.nome, caminho: `/municipio/${m.slug}/` },
+            ]),
+          }),
+        }}
       />
 
       <nav className={estilos.trilha} aria-label="Você está em">

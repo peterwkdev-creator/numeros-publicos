@@ -18,7 +18,7 @@ import { medidasDe, taxasCache } from "../../../lib/censo";
 import MapaUf from "../../componentes/mapa-uf";
 import TabelaCenso from "../../componentes/tabela-censo";
 import {
-  FONTES, VARIAVEIS, catalogoDe, coberturaTemporal, palavrasChave,
+  FONTES, trilha, VARIAVEIS, catalogoDe, coberturaTemporal, palavrasChave,
 } from "../../../lib/jsonld";
 import { lerFiscal, lerIdeb, lerSnapshot, SITE, cartaoSocial } from "../../../lib/servidor";
 import estilos from "./estado.module.css";
@@ -251,6 +251,21 @@ export default async function PaginaEstado(
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      {/* A trilha, num bloco separado de proposito: o `Dataset` acima ja
+          funciona e a auditoria o confere: acrescentar um `@graph` mexeria na
+          forma dele para ganhar nada. O Google aceita varios blocos. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            ...trilha(SITE, [
+              { nome: "Números Públicos", caminho: "/" },
+              { nome: r.uf.nome, caminho: `/estado/${slugUf(r.uf.sigla)}/` },
+            ]),
+          }),
+        }}
       />
 
       <nav className={estilos.trilha} aria-label="Você está em">

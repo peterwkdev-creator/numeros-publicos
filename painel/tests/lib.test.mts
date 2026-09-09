@@ -29,6 +29,7 @@ import {
 } from "../lib/fiscal.ts";
 import { posicaoEntre, posicaoNoEstado } from "../lib/posicao.ts";
 import { emContracao } from "../lib/estado.ts";
+import { trilha } from "../lib/jsonld.ts";
 import {
   atualizadoEm, caminhosDosFilhos, escaparXml, indiceDeSitemaps,
 } from "../lib/sitemap.ts";
@@ -1346,4 +1347,33 @@ test("fonte sem data não zera a data do sitemap", () => {
   const s = { geradoEm: "2026-09-05T02:45:41Z" } as never;
   assert.equal(atualizadoEm(s, { geradoEm: null } as never).toISOString(),
     "2026-09-05T02:45:41.000Z");
+});
+
+// ── A trilha em JSON-LD ─────────────────────────────────────────────────────
+
+test("a trilha numera de 1 e leva o item em TODOS os níveis", () => {
+  // O último `item` pode ser omitido segundo o Google. Incluí-lo não é ambíguo
+  // em lugar nenhum, e um campo a menos por economia é o tipo de decisão que
+  // ninguém lembra de revisar depois.
+  const t = trilha("https://x.br", [
+    { nome: "Números Públicos", caminho: "/" },
+    { nome: "Maranhão", caminho: "/estado/ma/" },
+    { nome: "Imperatriz", caminho: "/municipio/imperatriz-ma/" },
+  ]);
+  assert.equal(t["@type"], "BreadcrumbList");
+  assert.deepEqual(t.itemListElement.map((i) => i.position), [1, 2, 3]);
+  assert.deepEqual(t.itemListElement.map((i) => i.name),
+    ["Números Públicos", "Maranhão", "Imperatriz"]);
+  assert.equal(t.itemListElement[2]!.item, "https://x.br/municipio/imperatriz-ma/");
+  assert.equal(t.itemListElement.every((i) => typeof i.item === "string"), true);
+});
+
+test("a trilha de dois níveis não inventa um terceiro", () => {
+  // A página de estado e a de ranking têm dois níveis. Uma trilha marcada com
+  // mais níveis do que a página exibe é o defeito que a auditoria cobra.
+  const t = trilha("https://x.br", [
+    { nome: "Números Públicos", caminho: "/" },
+    { nome: "Gasto com pessoal", caminho: "/ranking/gasto-com-pessoal/" },
+  ]);
+  assert.equal(t.itemListElement.length, 2);
 });

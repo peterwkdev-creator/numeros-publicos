@@ -201,3 +201,35 @@ export const FONTES = [
     url: "https://www.gov.br/inep/pt-br/areas-de-atuacao/pesquisas-estatisticas-e-indicadores/ideb",
   },
 ] as const;
+
+/**
+ * A trilha de navegação como `BreadcrumbList`.
+ *
+ * **Descreve o que a página JÁ MOSTRA**, e essa é a condição para existir: o
+ * `<nav aria-label="Você está em">` está nas quatro páginas desde 07/09/2026, e
+ * esta marcação apenas o torna legível para o buscador. Marcar trilha que a
+ * página não exibe seria inventar sinal — e a auditoria cobra a igualdade entre
+ * as duas, nome a nome.
+ *
+ * O efeito é pequeno e **não será mensurável** com os 4 cliques que o site tem:
+ * a linha da URL no resultado vira trilha em vez do endereço cru. Está aqui
+ * porque é barato e verdadeiro, não porque move o ponteiro.
+ *
+ * O `item` vai em TODOS os níveis, inclusive o último. A documentação do Google
+ * permite omiti-lo no último; incluí-lo não é ambíguo em lugar nenhum, e um
+ * campo a menos por economia é o tipo de decisão que ninguém lembra de revisar.
+ */
+export function trilha(
+  site: string,
+  passos: { nome: string; caminho: string }[],
+) {
+  return {
+    "@type": "BreadcrumbList",
+    itemListElement: passos.map((p, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: p.nome,
+      item: `${site}${p.caminho}`,
+    })),
+  };
+}

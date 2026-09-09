@@ -5,7 +5,7 @@ import { br } from "../../../lib/dados";
 import { rankingPessoal } from "../../../lib/nacional";
 import { LIMITE_PLAUSIVEL } from "../../../lib/fiscal";
 import {
-  catalogoDe, coberturaTemporal, FONTES, palavrasChave,
+  catalogoDe, coberturaTemporal, FONTES, palavrasChave, trilha,
 } from "../../../lib/jsonld";
 import { cartaoSocial, lerFiscal, lerIdeb, lerSnapshot, SITE } from "../../../lib/servidor";
 import estilos from "./ranking.module.css";
@@ -118,6 +118,21 @@ export default async function Pagina() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      {/* A trilha, num bloco separado de proposito: o no acima ja funciona e a
+          auditoria o confere; acrescentar um `@graph` mexeria na forma dele
+          para ganhar nada. O Google aceita varios blocos por pagina. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            ...trilha(SITE, [
+              { nome: "Números Públicos", caminho: "/" },
+              { nome: "Gasto com pessoal", caminho: "/ranking/gasto-com-pessoal/" },
+            ]),
+          }),
+        }}
       />
       {/* A MESMA marcação das outras páginas, e não um `<p>` com `›` literal.
           A primeira versão era texto corrido: sem landmark de navegação, sem

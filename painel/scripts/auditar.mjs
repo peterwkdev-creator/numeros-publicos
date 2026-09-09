@@ -308,6 +308,53 @@ for (const caminho of caminhos) {
     })();
 
     /**
+     * A trilha MARCADA tem de ser a trilha EXIBIDA, nome a nome.
+     *
+     * O `BreadcrumbList` entrou em 09/09/2026 com uma condicao: marcar o que a
+     * pagina ja mostra. O `<nav aria-label="Você está em">` existe desde 07/09,
+     * e a marcacao so o torna legivel para o buscador.
+     *
+     * O risco de uma marcacao assim nao e quebrar: e **divergir**. Renomear um
+     * nivel na tela, ou trocar a ordem, deixa o JSON-LD descrevendo uma
+     * navegacao que nao existe -- e o buscador exibe a trilha ERRADA no
+     * resultado, com a autoridade de dado estruturado. Nada na pagina denuncia,
+     * porque as duas coisas continuam bem formadas separadamente.
+     *
+     * Compara os nomes em ordem. Reprova se um existir sem o outro tambem.
+     */
+    const trilhaDivergente = (() => {
+      const nav = document.querySelector('nav[aria-label="Você está em"]');
+      let marcada = null;
+      for (const s of document.querySelectorAll('script[type="application/ld+json"]')) {
+        let d;
+        try { d = JSON.parse(s.textContent); } catch { continue; }
+        const achar = (n) => {
+          if (!n || typeof n !== "object") return null;
+          if (n["@type"] === "BreadcrumbList") return n;
+          for (const v of Object.values(n)) {
+            const r = achar(v);
+            if (r) return r;
+          }
+          return null;
+        };
+        const b = achar(d);
+        if (b) { marcada = (b.itemListElement ?? []).map((i) => String(i.name)); break; }
+      }
+      if (!nav && !marcada) return null;
+      if (!nav) return `marcada sem trilha na tela: ${JSON.stringify(marcada)}`;
+      if (!marcada) return "a pagina tem trilha e nao a marca";
+      // Na tela a trilha e uma sequencia de links e spans separados por ›.
+      const exibida = [...nav.children]
+        .filter((e) => e.getAttribute("aria-hidden") !== "true")
+        .map((e) => e.textContent.trim())
+        .filter(Boolean);
+      const iguais = exibida.length === marcada.length
+        && exibida.every((t, i) => t === marcada[i]);
+      return iguais ? null
+        : `trilha divergente — tela ${JSON.stringify(exibida)} contra marcada ${JSON.stringify(marcada)}`;
+    })();
+
+    /**
      * Ausência num gráfico tem de se distinguir da ESCALA, e não só da vizinha.
      *
      * Achado em 06/09/2026 por um relato de uso, e **não por esta auditoria**:
@@ -414,6 +461,7 @@ for (const caminho of caminhos) {
       ausenciaIndistinta,
       referenciasOrfas,
       duplicados: Object.entries(ids).filter(([, n]) => n > 1),
+      trilhaDivergente,
       aninhados: [...document.querySelectorAll("a a")].map((a) => a.textContent.trim().slice(0, 24)),
       descQuebrados: [...document.querySelectorAll("[aria-describedby]")]
         .map((e) => e.getAttribute("aria-describedby"))
@@ -458,6 +506,7 @@ for (const caminho of caminhos) {
 
   const problemas = [];
   const flag = (cond, msg) => { if (cond) problemas.push(msg); };
+  flag(r.trilhaDivergente, r.trilhaDivergente);
   flag(r.duplicados.length, `id duplicado: ${JSON.stringify(r.duplicados)}`);
   flag(r.aninhados.length, `âncora dentro de âncora: ${JSON.stringify(r.aninhados)}`);
   flag(r.descQuebrados.length, `aria-describedby órfão: ${r.descQuebrados}`);

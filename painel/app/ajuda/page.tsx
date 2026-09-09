@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { br, expandir } from "../../lib/dados";
 import { FUNCOES_DA_PORTARIA, LIMITE_PLAUSIVEL } from "../../lib/fiscal";
-import { conjuntoDoSite, siteDe } from "../../lib/jsonld";
+import { conjuntoDoSite, siteDe, trilha } from "../../lib/jsonld";
 import { lerFiscal, lerIdeb, lerSnapshot, SITE } from "../../lib/servidor";
 import estilos from "./ajuda.module.css";
 import { anteriorDeFuncoes, atualDeFuncoes } from "../../lib/fiscal";
@@ -108,6 +108,21 @@ export default async function PaginaAjuda() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      {/* A trilha, num bloco separado de proposito: o no acima ja funciona e a
+          auditoria o confere; acrescentar um `@graph` mexeria na forma dele
+          para ganhar nada. O Google aceita varios blocos por pagina. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            ...trilha(SITE, [
+              { nome: "Números Públicos", caminho: "/" },
+              { nome: "Ajuda", caminho: "/ajuda/" },
+            ]),
+          }),
+        }}
       />
       <nav className={estilos.trilha} aria-label="Você está em">
         <Link href="/" prefetch={false}>Números Públicos</Link>

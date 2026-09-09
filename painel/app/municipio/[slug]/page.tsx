@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 
 import { br, descricaoDe, escala, expandir, milReaisParaReais } from "../../../lib/dados";
 import { slugUf, vizinhosDe } from "../../../lib/estado";
-import { rankingCache } from "../../../lib/nacional";
+import { medianasSaudeCache, rankingCache } from "../../../lib/nacional";
 import { posicaoEntre, posicaoNoEstado } from "../../../lib/posicao";
 import {
   FONTES, VARIAVEIS, catalogoDe, coberturaTemporal, identificadorIbge, palavrasChave,
@@ -227,14 +227,26 @@ export default async function PaginaMunicipio(
   // o DF não tem série municipal, e o outro é município novo demais.
   const pontosSaude = saudeDe(fiscal, m.codigo);
   const saude = pontosSaude && fiscal.saude
-    ? {
-        pontos: pontosSaude.pontos,
-        primeiro: pontosSaude.pontos[0]!,
-        ultimo: pontosSaude.pontos[pontosSaude.pontos.length - 1]!,
-        rotulo: fiscal.saude.rotulo,
-        fonte: fiscal.saude.fonte,
-        coletadoEm: fiscal.saude.coletadoEm,
-      }
+    ? (() => {
+        const ultimo = pontosSaude.pontos[pontosSaude.pontos.length - 1]!;
+        // A mediana do estado NO MESMO ANO do último ponto deste município.
+        // Municípios param de entregar em anos diferentes, e comparar 2025 de
+        // um com uma mediana de 26 anos misturados erraria por quase dez
+        // pontos -- a mediana nacional subiu de 12,62% para 21,42% no período.
+        const i = fiscal.saude!.anos.indexOf(ultimo[0]);
+        const medianaUf = i >= 0
+          ? (medianasSaudeCache(fiscal)[m.uf]?.[i] ?? null)
+          : null;
+        return {
+          pontos: pontosSaude.pontos,
+          primeiro: pontosSaude.pontos[0]!,
+          ultimo,
+          medianaUf,
+          rotulo: fiscal.saude!.rotulo,
+          fonte: fiscal.saude!.fonte,
+          coletadoEm: fiscal.saude!.coletadoEm,
+        };
+      })()
     : null;
 
   // A outra pergunta: para onde vai o dinheiro. `null` quando o município não
@@ -823,6 +835,35 @@ export default async function PaginaMunicipio(
             A Emenda Constitucional 29, de 2000, começou exigindo 7% e escalonou
             até os 15% de hoje, então os primeiros anos da série{" "}
             <strong>não se comparam a essa régua</strong>.
+            {/* O terceiro número, e o que dá sentido aos outros dois: 25,14%
+                sozinho não diz se é muito ou pouco. É o que a pesquisa da
+                fonte apontou como o valor dela -- comparação, não denúncia.
+                A mediana é do MESMO ano, não da série inteira. */}
+            {saude.medianaUf !== null && uf && (
+              <>
+                {" "}
+                A mediana {de(uf.nome)} no mesmo ano foi{" "}
+                <strong className="tabular">{br(saude.medianaUf, 2)}%</strong>,
+                então {m.nome} aplica{" "}
+                <strong>
+                  {Math.abs(saude.ultimo[1] - saude.medianaUf) < 0.005
+                    ? "praticamente o mesmo que a metade dos municípios do estado"
+                    : saude.ultimo[1] > saude.medianaUf
+                      ? `mais que a metade dos municípios do estado`
+                      : `menos que a metade dos municípios do estado`}
+                </strong>
+                {Math.abs(saude.ultimo[1] - saude.medianaUf) >= 0.005 && (
+                  <>
+                    {" "}— uma diferença de{" "}
+                    <span className="tabular">
+                      {br(Math.abs(saude.ultimo[1] - saude.medianaUf), 2)}
+                    </span>{" "}
+                    ponto{Math.abs(saude.ultimo[1] - saude.medianaUf) >= 2 ? "s" : ""}
+                  </>
+                )}
+                .
+              </>
+            )}
           </p>
           <div className={estilos.grafico}>
             <SaudeSvg pontos={saude.pontos} municipio={m.nome} />

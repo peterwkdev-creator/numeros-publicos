@@ -18,7 +18,8 @@ import {
   COLUNA_DA_CAPA, rotuloCurto, unidadeDaColuna, type Snapshot,
 } from "../lib/dados.ts";
 import {
-  funcoesDoPais, mediana, panoramaEstados, posicaoNaLista, rankingPessoal,
+  funcoesDoPais, mediana, medianasSaude, medianasSaudeCache, panoramaEstados,
+  posicaoNaLista, rankingPessoal,
 } from "../lib/nacional.ts";
 import {
   compararFuncoes, faixaDe, faixasEmLinha, FAIXA_DA_LETRA, funcoesDe,
@@ -1237,4 +1238,63 @@ test("o piso viaja junto e é null onde não há régua nacional", () => {
   // Sem esse null, o painel compararia aqueles anos contra 15%.
   const b = (fiscalComSaude() as unknown as { saude: { pisoPorAno: (number | null)[] } }).saude;
   assert.deepEqual(b.pisoPorAno, [7, null, null, null, 15]);
+});
+
+// ── A mediana estadual de saúde: por ANO, e sem contar ausência como zero ────
+
+function fiscalParaMedianaSaude(): never {
+  const m = (codigo: number, uf: string) =>
+    [codigo, "M" + codigo, uf, 1000, true, 40, 51.3, 0, 0];
+  return {
+    municipios: [m(1, "MA"), m(2, "MA"), m(3, "MA"), m(9, "SP")],
+    saude: {
+      indicador: "x", rotulo: "r", fonte: "f", coletadoEm: null,
+      anos: [2020, 2021],
+      pisoPorAno: [15, 15],
+      porMunicipio: {
+        "1": [10, 30],
+        "2": [20, 40],
+        // Sem 2020: entra só na mediana de 2021.
+        "3": [null, 50],
+        "9": [99, 99],
+        // Código que não está em `municipios` -- não pode entrar em UF nenhuma.
+        "777": [1, 1],
+      },
+      cobertura: [],
+    },
+  } as never;
+}
+
+test("a mediana de saúde é por ANO, não da série inteira", () => {
+  // Misturar os anos erraria por muito: a mediana nacional subiu de 12,62% em
+  // 2000 para 21,42% em 2025, então a régua errada erra por quase dez pontos.
+  const r = medianasSaude(fiscalParaMedianaSaude());
+  assert.deepEqual(r["MA"], [15, 40], "2020: mediana de [10,20]; 2021: de [30,40,50]");
+  assert.deepEqual(r["SP"], [99, 99]);
+});
+
+test("município sem valor no ano fica FORA daquela mediana, e não vale zero", () => {
+  // Contá-lo como zero puxaria a mediana do estado para baixo e diria que o
+  // município aplica mais que os vizinhos por um motivo que não existe.
+  const r = medianasSaude(fiscalParaMedianaSaude());
+  assert.equal(r["MA"]![0], 15, "sem o 3, a mediana de 2020 é de [10,20]");
+  assert.notEqual(r["MA"]![0], 10, "com zero entrando, seria a mediana de [0,10,20]");
+});
+
+test("código que não está na lista de municípios não entra em UF nenhuma", () => {
+  const r = medianasSaude(fiscalParaMedianaSaude());
+  const todos = Object.values(r).flat();
+  assert.equal(todos.includes(1), false, "o 777 não pode aparecer em lugar nenhum");
+});
+
+test("sem bloco de saúde, a mediana é objeto vazio e não explode", () => {
+  assert.deepEqual(medianasSaude({ saude: null, municipios: [] } as never), {});
+});
+
+test("o cache devolve o MESMO objeto, pela identidade do snapshot", () => {
+  // Sem ele seriam 5.571 varreduras de 143.754 valores para chegar sempre ao
+  // mesmo resultado -- a conta que `medianasCache` já pagou para o Censo.
+  const f = fiscalParaMedianaSaude();
+  assert.equal(medianasSaudeCache(f), medianasSaudeCache(f));
+  assert.notEqual(medianasSaudeCache(f), medianasSaudeCache(fiscalParaMedianaSaude()));
 });

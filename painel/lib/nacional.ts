@@ -343,3 +343,66 @@ export function rankingCache(fiscal: SnapshotFiscal): RankingPessoal {
   cacheRanking.set(fiscal, calculado);
   return calculado;
 }
+
+// ── A mediana estadual de aplicação em saúde ────────────────────────────────
+
+/** Por sigla de UF, a mediana de cada ano — **alinhada a `saude.anos`**. */
+export type MedianasSaude = Record<string, (number | null)[]>;
+
+/**
+ * A mediana de aplicação em saúde de cada estado, ano a ano.
+ *
+ * **Existe porque um percentual sozinho não diz nada.** A pesquisa da fonte, em
+ * 07/09/2026, concluiu que o valor do SIOPS é *nível e trajetória* — "seu
+ * município aplica X%; a mediana do estado é Y; em 2000 era Z". A página passou
+ * a mostrar X e Z antes de ter Y, e sem Y os outros dois não respondem se
+ * 25,14% é muito ou pouco.
+ *
+ * **Mediana por ANO, e não uma só para a série.** Comparar o valor de 2025 de
+ * um município com uma mediana que mistura 26 anos misturaria a trajetória do
+ * estado inteiro na régua — e a mediana nacional subiu de 12,62% para 21,42%
+ * no período, então a régua errada erraria por quase dez pontos.
+ *
+ * Municípios sem valor naquele ano ficam de fora do cálculo daquele ano, e não
+ * entram como zero: a mediana responde "de quem sabemos, quanto aplica".
+ */
+export function medianasSaude(fiscal: SnapshotFiscal): MedianasSaude {
+  const bloco = fiscal.saude;
+  if (!bloco) return {};
+  const ufDe = new Map<string, string>();
+  for (const l of fiscal.municipios) ufDe.set(String(l[0]), String(l[2]));
+
+  // Um balde por UF e por ano, preenchido numa passada só sobre os 5.568.
+  const baldes: Record<string, number[][]> = {};
+  for (const [codigo, valores] of Object.entries(bloco.porMunicipio)) {
+    const uf = ufDe.get(codigo);
+    if (uf === undefined) continue;
+    const porAno = (baldes[uf] ??= bloco.anos.map(() => []));
+    valores.forEach((v, i) => {
+      if (typeof v === "number") porAno[i]!.push(v);
+    });
+  }
+
+  const saida: MedianasSaude = {};
+  for (const [uf, porAno] of Object.entries(baldes)) {
+    saida[uf] = porAno.map((vs) => mediana(vs));
+  }
+  return saida;
+}
+
+const cacheSaude = new WeakMap<object, MedianasSaude>();
+
+/**
+ * O mesmo, pela identidade do snapshot.
+ *
+ * Sem o cache seriam 5.571 varreduras de 143.754 valores — a mesma conta que
+ * `medianasCache` já resolveu para o Censo, e pelo mesmo motivo: o resultado é
+ * idêntico em todas as páginas.
+ */
+export function medianasSaudeCache(fiscal: SnapshotFiscal): MedianasSaude {
+  const guardado = cacheSaude.get(fiscal);
+  if (guardado) return guardado;
+  const calculado = medianasSaude(fiscal);
+  cacheSaude.set(fiscal, calculado);
+  return calculado;
+}

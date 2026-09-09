@@ -116,8 +116,12 @@ body {
   margin: 0;
   background: var(--fundo);
   color: var(--tinta);
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
+  /* Atkinson Hyperlegible Next, auto-hospedada pelo `next/font` -- ver o
+     porquê em `app/layout.tsx`. A pilha de sistema fica de reserva real, e não
+     de enfeite: `font-display: swap` mostra ela enquanto a face carrega, e é
+     ela que aparece se a face falhar. */
+  font-family: var(--fonte-texto), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   font-size: var(--texto-base);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;

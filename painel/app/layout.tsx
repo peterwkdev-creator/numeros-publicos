@@ -1,6 +1,32 @@
 import type { Metadata } from "next";
+import { Atkinson_Hyperlegible_Next } from "next/font/google";
 import "./globals.css";
 import BuscaCabecalho from "./componentes/busca-cabecalho";
+
+// Escolhida por MOTIVO TEMÁTICO, não por gosto: o Braille Institute a desenhou
+// para que caracteres não possam ser confundidos entre si, e os numerais são
+// deliberadamente diferenciados. Num site cuja finalidade inteira é que um
+// número seja lido corretamente, isso é o argumento.
+//
+// E resolve o único sinal genérico que a medição de 08/09 achou no desenho:
+// a pilha de fonte de sistema era a única coisa herdada em vez de decidida.
+//
+// `subsets: ["latin"]` basta para o português: o `unicode-range` do subconjunto
+// latin é U+0000-00FF, que cobre ã, õ, ç, â, ê e ô. Conferido contra o CSS que
+// o Google serve, não suposto -- `latin-ext` seria peso sem uso.
+//
+// **Os dígitos são proporcionais por padrão nesta família** (ao contrário de
+// IBM Plex e Source Sans, que já nascem tabulares). Ela TEM `tnum`, e é a
+// classe `.tabular` do globals.css que o liga -- sem ela, número em tabela
+// dança de largura entre as linhas.
+const fonte = Atkinson_Hyperlegible_Next({
+  subsets: ["latin"],
+  weight: ["400", "600"],
+  display: "swap",
+  // Auto-hospedada pelo next/font: nenhuma requisição ao Google em produção,
+  // e nada de `preconnect` para um terceiro.
+  variable: "--fonte-texto",
+});
 
 export const metadata: Metadata = {
   title: "Números Públicos — dados abertos dos municípios brasileiros",
@@ -35,7 +61,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" className={fonte.variable}>
       <body>
         {/* Primeiro elemento focável da página: quem navega por teclado não
             deveria passar por toda a navegação para chegar ao conteúdo. */}

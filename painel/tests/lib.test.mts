@@ -24,7 +24,7 @@ import {
   compararFuncoes, faixaDe, faixasEmLinha, FAIXA_DA_LETRA, funcoesDe,
   funcoesRecentesDe, LETRA_FAIXA, parDeFuncoes,
   contiguos, indiceQuadrimestre, interrupcoes, pontoPlausivel, PRESTA_COMO_ESTADO,
-  ROTULO_FAIXA, serieFuncoesDe, type PontoSerie,
+  ROTULO_FAIXA, saudeDe, serieFuncoesDe, type PontoSerie,
 } from "../lib/fiscal.ts";
 import { posicaoEntre, posicaoNoEstado } from "../lib/posicao.ts";
 import { emContracao } from "../lib/estado.ts";
@@ -1183,4 +1183,58 @@ test("interrupcoes: uma definicao so, para o grafico e para a prosa", () => {
   // E o contrário do teste acima, para ele não passar por vacuidade.
   assert.equal(interrupcoes([[2024, 1, true, 40]]), 0, "um ponto não interrompe");
   assert.equal(interrupcoes(undefined), 0);
+});
+
+// ── A aplicação em saúde (SIOPS): 26 anos, e a ordem que vira contrato ──────
+
+function fiscalComSaude(): never {
+  return {
+    saude: {
+      indicador: "3.2_%R.Próprios_em_Saúde-EC_29",
+      rotulo: "Recursos próprios aplicados em saúde",
+      fonte: "SIOPS/Ministério da Saúde — TabNet/DATASUS",
+      coletadoEm: "2026-09-09T00:00:00+00:00",
+      anos: [2000, 2001, 2002, 2003, 2004],
+      pisoPorAno: [7, null, null, null, 15],
+      porMunicipio: {
+        // Com um ano sem valor no meio -- as reticências do TabNet.
+        "1100254": [11.5, null, 13.2, 14.0, 16.1],
+        "9999999": [null, null, null, null, null],
+      },
+      cobertura: [{ uf: "RO", municipios: 52, valores: 1352 }],
+    },
+  } as never;
+}
+
+test("saudeDe casa cada valor com o SEU ano — a ordem é contrato", () => {
+  // Casada errado, cada município exibe o percentual do ano vizinho e a página
+  // continua bem formada. É a mesma classe do array de faixas da capa.
+  const r = saudeDe(fiscalComSaude(), 1100254);
+  assert.deepEqual(r?.pontos, [[2000, 11.5], [2002, 13.2], [2003, 14.0], [2004, 16.1]]);
+});
+
+test("ano sem valor sai da série, e não vira zero", () => {
+  // 2001 não está na lista: `null` do TabNet é ausência da fonte. Plotado como
+  // zero, diria que o município não aplicou nada em saúde naquele ano.
+  const r = saudeDe(fiscalComSaude(), 1100254);
+  assert.equal(r?.pontos.some(([ano]) => ano === 2001), false);
+  assert.equal(r?.pontos.some(([, v]) => v === 0), false);
+});
+
+test("município sem ponto nenhum devolve null, e não série vazia", () => {
+  // Brasília (sem série municipal no SIOPS) e Boa Esperança do Norte/MT
+  // (município novo demais) são os dois casos reais, e a seção inteira some.
+  assert.equal(saudeDe(fiscalComSaude(), 9999999), null);
+  assert.equal(saudeDe(fiscalComSaude(), 4242424), null, "código ausente do bloco");
+});
+
+test("sem bloco de saúde, saudeDe não explode", () => {
+  assert.equal(saudeDe({ saude: null } as never, 1100254), null);
+});
+
+test("o piso viaja junto e é null onde não há régua nacional", () => {
+  // Entre 2001 e 2003 a EC 29 mandava cada ente fechar a PRÓPRIA diferença.
+  // Sem esse null, o painel compararia aqueles anos contra 15%.
+  const b = (fiscalComSaude() as unknown as { saude: { pisoPorAno: (number | null)[] } }).saude;
+  assert.deepEqual(b.pisoPorAno, [7, null, null, null, 15]);
 });

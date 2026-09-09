@@ -54,6 +54,19 @@
   --acento: #0f5c8c;
   --acento-suave: #e8f1f7;
   --positivo: #1a6b4f;
+  /* As duas réguas dos gráficos de série: o teto legal e o limite prudencial.
+     Usadas desde 03/09/2026 como `var(--alerta)` e `var(--atencao)` e NUNCA
+     DEFINIDAS -- as linhas existiam no DOM com `stroke: none`, invisíveis, e
+     nenhuma auditoria as reprovava porque elemento invisível não tem contraste
+     para falhar. O docstring do gráfico prometia que o leitor "vê a régua junto
+     com a medida"; ele não via.
+     As cores são as MESMAS das faixas fiscais da tabela de estado (`.acima-legal`
+     e `.acima-prudencial`), para a régua do gráfico e o selo da tabela dizerem
+     a mesma coisa com a mesma cor. Contraste medido em 09/09/2026 contra o
+     `--fundo` de cada modo: 7,11:1 e 5,77:1 no claro, 9,59:1 e 10,54:1 no
+     escuro, 7,31:1 e 5,93:1 no papel. */
+  --alerta: #9a3412;
+  --atencao: #8a5a00;
   --sombra: 0 1px 2px rgb(18 33 46 / 0.05), 0 1px 3px rgb(18 33 46 / 0.06);
 
   /* --- rampa de composição -------------------------------------------------
@@ -87,6 +100,8 @@
     --acento: #6cb6e3;
     --acento-suave: #16293a;
     --positivo: #5fc79e;
+    --alerta: #fca582;
+    --atencao: #e8bd6a;
     --sombra: none;
     --rosca-0: #8fc6e8;
     --rosca-1: #6fb0d8;
@@ -322,6 +337,12 @@ p, li {
     --borda-forte: #888;
     --acento: #000;
     --acento-suave: #f0f0f0;
+    /* **Obrigatório, e não completude.** `prefers-color-scheme` continua
+       reportando a preferência do SISTEMA ao imprimir: sem estas duas linhas,
+       quem usa tema escuro imprimiria a régua em #fca582 sobre branco --
+       **1,94:1**, medido. Voltam aos valores do tema claro, 7,31:1 e 5,93:1. */
+    --alerta: #9a3412;
+    --atencao: #8a5a00;
     --sombra: none;
     --rosca-0: #1f3b52;
     --rosca-1: #35566f;

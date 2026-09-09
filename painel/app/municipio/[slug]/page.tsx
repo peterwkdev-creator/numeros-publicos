@@ -11,7 +11,8 @@ import {
 } from "../../../lib/jsonld";
 import {
   compararFuncoes, DESLOCAMENTO_MINIMO, FUNCOES_DA_PORTARIA, funcoesRecentesDe,
-  indexarFiscal, interrupcoes, ROTULO_FAIXA, rotuloPeriodo, slugDe, variacao,
+  indexarFiscal, interrupcoes, ROTULO_FAIXA, rotuloPeriodo, saudeDe, slugDe,
+  variacao,
 } from "../../../lib/fiscal";
 import { contarMetas, medianaGeral, trajetoriaDe } from "../../../lib/ideb";
 import { medianasCache, medidasDe, taxasCache } from "../../../lib/censo";
@@ -22,6 +23,7 @@ import DistribuicaoSvg from "../../componentes/distribuicao-svg";
 import IdebSvg from "../../componentes/ideb-svg";
 import Termo from "../../componentes/termo";
 import SerieSvg from "./serie-svg";
+import SaudeSvg from "./saude-svg";
 import estilos from "./municipio.module.css";
 import { atualDeFuncoes, serieFuncoesDe } from "../../../lib/fiscal";
 import SerieFuncoes from "../../componentes/serie-funcoes";
@@ -219,6 +221,21 @@ export default async function PaginaMunicipio(
   const serie = fiscal.serie[String(m.codigo)] ?? [];
   const delta = variacao(serie);
   const vazios = interrupcoes(serie);
+  // A aplicação em saúde (SIOPS). `saudeDe` já descarta os anos ausentes, e
+  // devolve `null` quando o município não tem ponto nenhum -- Brasília e Boa
+  // Esperança do Norte/MT são os dois casos, e os dois são fato da fonte:
+  // o DF não tem série municipal, e o outro é município novo demais.
+  const pontosSaude = saudeDe(fiscal, m.codigo);
+  const saude = pontosSaude && fiscal.saude
+    ? {
+        pontos: pontosSaude.pontos,
+        primeiro: pontosSaude.pontos[0]!,
+        ultimo: pontosSaude.pontos[pontosSaude.pontos.length - 1]!,
+        rotulo: fiscal.saude.rotulo,
+        fonte: fiscal.saude.fonte,
+        coletadoEm: fiscal.saude.coletadoEm,
+      }
+    : null;
 
   // A outra pergunta: para onde vai o dinheiro. `null` quando o município não
   // entregou o RREO -- que é um relatório diferente do RGF, entregue em outra
@@ -765,6 +782,54 @@ export default async function PaginaMunicipio(
             <strong>não entregou</strong> o relatório — não zero, e não
             estabilidade.{" "}
             <Link href="/ajuda/#travessao">Por que aparece “—”?</Link>
+          </p>
+        </section>
+      )}
+
+      {saude && (
+        <section className={estilos.texto}>
+          {/* A série mais longa do site: 26 exercícios, contra 15 quadrimestres
+              do gasto com pessoal e 6 exercícios da despesa por função.
+              O que esta fonte dá é NÍVEL e TRAJETÓRIA, não denúncia -- medido
+              em 08/09/2026: só 6 municípios do país ficaram abaixo do mínimo em
+              2025, e uma lista de seis nomes é anedota, não panorama. Em 2004,
+              primeiro ano em que os 15% valeram cheios, eram 737. */}
+          <h2>Quanto {m.nome} aplica em saúde, e como isso mudou em 26 anos</h2>
+          <p>
+            Em {saude.ultimo[0]}, {m.nome} aplicou{" "}
+            <strong className="tabular">{br(saude.ultimo[1], 2)}%</strong> da
+            receita própria de impostos em ações e serviços de saúde
+            {saude.primeiro[0] < saude.ultimo[0] && (
+              <>
+                {" "}— em {saude.primeiro[0]} eram{" "}
+                <span className="tabular">{br(saude.primeiro[1], 2)}%</span>
+              </>
+            )}
+            .{" "}
+            {/* O piso muda com o ano, e a frase precisa dizer qual. Comparar a
+                série inteira contra 15% acusaria o município de descumprir uma
+                regra que só passou a valer em 2004. */}
+            {saude.ultimo[1] >= 15 ? (
+              <>
+                Está <strong>acima do mínimo constitucional de 15%</strong>, que
+                vale desde 2004.
+              </>
+            ) : (
+              <>
+                Está <strong>abaixo do mínimo constitucional de 15%</strong>, que
+                vale desde 2004.
+              </>
+            )}{" "}
+            A Emenda Constitucional 29, de 2000, começou exigindo 7% e escalonou
+            até os 15% de hoje, então os primeiros anos da série{" "}
+            <strong>não se comparam a essa régua</strong>.
+          </p>
+          <div className={estilos.grafico}>
+            <SaudeSvg pontos={saude.pontos} municipio={m.nome} />
+          </div>
+          <p className={estilos.ressalva}>
+            {saude.rotulo}. Fonte: {saude.fonte}
+            {saude.coletadoEm ? `, coleta de ${saude.coletadoEm.slice(0, 10)}` : ""}.
           </p>
         </section>
       )}

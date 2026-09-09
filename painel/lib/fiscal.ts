@@ -94,7 +94,63 @@ export type SnapshotFiscal = {
   periodos: [exercicio: number, periodo: number][];
   /** A despesa por função. `null` enquanto a varredura não tiver rodado. */
   funcoes: Funcoes | null;
+  /** A aplicação em saúde. `null` enquanto o `ingerir-saude` não tiver rodado. */
+  saude: Saude | null;
 };
+
+/**
+ * A aplicação de recursos próprios em saúde, do SIOPS — **26 exercícios**.
+ *
+ * É a única série longa do site: o gasto com pessoal tem 15 quadrimestres e a
+ * despesa por função tem 6 exercícios; esta vai de **2000 a 2025**.
+ */
+export type Saude = {
+  indicador: string;
+  rotulo: string;
+  fonte: string;
+  coletadoEm: string | null;
+  anos: number[];
+  /**
+   * O piso legal de cada ano, **alinhado a `anos`**, com `null` onde não há um
+   * comparável.
+   *
+   * A EC 29/2000 fixou 7% para 2000 e mandou cada ente fechar a própria
+   * diferença até 15% em 2004 — então entre 2001 e 2003 o piso é individual e
+   * não existe régua nacional. Comparar a série inteira contra 15% acusaria
+   * 3.428 municípios de descumprir uma regra que ainda não valia para eles.
+   */
+  pisoPorAno: (number | null)[];
+  /**
+   * Por código do IBGE, um valor por ano **na ordem de `anos`**.
+   *
+   * A ordem é contrato: casada errado, cada município exibe o percentual do
+   * ano vizinho e a página continua bem formada. `null` é ausência da fonte —
+   * aqui não há a distinção "não perguntamos", porque uma requisição traz a UF
+   * inteira em todos os exercícios de uma vez.
+   */
+  porMunicipio: Record<string, (number | null)[]>;
+  cobertura: { uf: string; municipios: number; valores: number }[];
+};
+
+/** Os pontos `[ano, valor]` de um município, sem os anos ausentes. */
+export function saudeDe(
+  s: SnapshotFiscal,
+  codigo: number,
+): { anos: number[]; pontos: [ano: number, valor: number][] } | null {
+  const bloco = s.saude;
+  if (!bloco) return null;
+  const valores = bloco.porMunicipio[String(codigo)];
+  if (!valores) return null;
+  const pontos: [number, number][] = [];
+  bloco.anos.forEach((ano, i) => {
+    const v = valores[i];
+    // `typeof` e não `!= null`: o valor vem de JSON lido em tempo de execução,
+    // e o tipo garante o contrato do código, não o do arquivo. Mesma guarda de
+    // `pontoPlausivel`, pelo mesmo motivo.
+    if (typeof v === "number") pontos.push([ano, v]);
+  });
+  return pontos.length ? { anos: bloco.anos, pontos } : null;
+}
 
 /**
  * O que o município gasta por função orçamentária — as 28 da Portaria MOG

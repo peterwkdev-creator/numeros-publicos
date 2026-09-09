@@ -11,7 +11,7 @@ import {
 } from "../../../lib/jsonld";
 import {
   compararFuncoes, DESLOCAMENTO_MINIMO, FUNCOES_DA_PORTARIA, funcoesRecentesDe,
-  indexarFiscal, ROTULO_FAIXA, rotuloPeriodo, slugDe, variacao,
+  indexarFiscal, interrupcoes, ROTULO_FAIXA, rotuloPeriodo, slugDe, variacao,
 } from "../../../lib/fiscal";
 import { contarMetas, medianaGeral, trajetoriaDe } from "../../../lib/ideb";
 import { medianasCache, medidasDe, taxasCache } from "../../../lib/censo";
@@ -218,6 +218,7 @@ export default async function PaginaMunicipio(
   const quadrimestre = `${fiscal.periodo}º quadrimestre de ${fiscal.exercicio}`;
   const serie = fiscal.serie[String(m.codigo)] ?? [];
   const delta = variacao(serie);
+  const vazios = interrupcoes(serie);
 
   // A outra pergunta: para onde vai o dinheiro. `null` quando o município não
   // entregou o RREO -- que é um relatório diferente do RGF, entregue em outra
@@ -696,6 +697,28 @@ export default async function PaginaMunicipio(
               <>O comprometimento com pessoal ficou <strong>estável</strong>.</>
             )}{" "}
             Cada linha abaixo é um relatório entregue por {m.nome} ao SICONFI.
+            {/* Quando há buraco, dizê-lo em prosa. A frase acima já é precisa
+                -- "entre o primeiro e o último quadrimestre PUBLICADO" não
+                afirma continuidade --, mas Presidente Médici/RO tem 40 meses
+                sem entrega no meio, e uma precisão que o leitor não percebe
+                não o protege. A contagem vem da MESMA função do gráfico. */}
+            {vazios > 0 && (
+              <>
+                {" "}
+                {/* O `:` cola no `</strong>` de propósito: numa linha própria,
+                    o JSX colapsa a quebra num espaço e sairia "interrupção :".
+                    Conferir isso pede o HTML CRU -- um extrator que troca tag
+                    por espaço INVENTA o espaço e acusa um defeito que não
+                    existe. Foi o que quase aconteceu aqui, em 09/09/2026. */}
+                <strong>
+                  A série tem{" "}
+                  {vazios === 1
+                    ? "uma interrupção"
+                    : `${br(vazios, 0)} interrupções`}</strong>: {vazios === 1 ? "há um trecho" : "há trechos"} em que {m.nome}{" "}
+                não entregou relatório, e o gráfico deixa {vazios === 1 ? "o vão" : "os vãos"}{" "}
+                à vista em vez de ligar os pontos por cima.
+              </>
+            )}
           </p>
           <div className={estilos.grafico}>
             <SerieSvg

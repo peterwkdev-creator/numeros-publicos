@@ -539,6 +539,52 @@ export function rotuloPeriodo(exercicio: number, periodo: number): string {
   return `${exercicio}/${periodo}`;
 }
 
+/** Quadrimestres por exercício no RGF. Três, e não quatro: o nome engana. */
+export const QUADRIMESTRES_POR_ANO = 3;
+
+/**
+ * O índice de um período numa reta do TEMPO, contínua entre exercícios.
+ *
+ * Existe porque a posição de um ponto no array **não é** a posição dele no
+ * tempo. Dois pontos vizinhos na lista podem estar a um quadrimestre ou a dez
+ * — e um eixo espaçado por índice desenha os dois casos igual.
+ *
+ * Isso não incomodava enquanto a série tinha 6 pontos contíguos de 2023–2024.
+ * Com os 15 quadrimestres de 2020 a 2024, medido em 08/09/2026: **286 dos
+ * 3.814 municípios têm pontos não consecutivos**, 298 buracos ao todo, e o
+ * maior achataria **40 meses num único passo**.
+ *
+ * A diferença entre dois índices é o número de quadrimestres entre eles, então
+ * `=== 1` é o teste de contiguidade.
+ */
+export function indiceQuadrimestre(exercicio: number, periodo: number): number {
+  return exercicio * QUADRIMESTRES_POR_ANO + (periodo - 1);
+}
+
+/** Dois pontos são vizinhos NO TEMPO, e não só na lista? */
+export function contiguos(a: PontoSerie, b: PontoSerie): boolean {
+  return indiceQuadrimestre(b[0], b[1]) - indiceQuadrimestre(a[0], a[1]) === 1;
+}
+
+/**
+ * Quantas vezes a série é interrompida — quadrimestres sem relatório no meio.
+ *
+ * **Uma definição só, usada pelo gráfico E pela prosa.** Se cada um contasse
+ * do seu jeito, o traço poderia quebrar em dois lugares enquanto o texto
+ * falasse de um — e o leitor não teria como saber qual está certo.
+ *
+ * Conta sobre os pontos PLAUSÍVEIS, que são os que o gráfico desenha: um valor
+ * implausível descartado abre um buraco tão real quanto um não entregue.
+ */
+export function interrupcoes(pontos: PontoSerie[] | undefined): number {
+  const bons = (pontos ?? []).filter(pontoPlausivel);
+  let n = 0;
+  for (let i = 1; i < bons.length; i += 1) {
+    if (!contiguos(bons[i - 1]!, bons[i]!)) n += 1;
+  }
+  return n;
+}
+
 /**
  * Um ponto está na faixa que descreve uma prefeitura de verdade?
  *

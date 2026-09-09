@@ -23,7 +23,8 @@ import {
 import {
   compararFuncoes, faixaDe, faixasEmLinha, FAIXA_DA_LETRA, funcoesDe,
   funcoesRecentesDe, LETRA_FAIXA, parDeFuncoes,
-  pontoPlausivel, PRESTA_COMO_ESTADO, ROTULO_FAIXA, serieFuncoesDe,
+  contiguos, indiceQuadrimestre, interrupcoes, pontoPlausivel, PRESTA_COMO_ESTADO,
+  ROTULO_FAIXA, serieFuncoesDe, type PontoSerie,
 } from "../lib/fiscal.ts";
 import { posicaoEntre, posicaoNoEstado } from "../lib/posicao.ts";
 import { emContracao } from "../lib/estado.ts";
@@ -1117,4 +1118,69 @@ test("ponto SEM percentual não é plausível — `null >= 0` é true em JS", ()
   assert.equal(pontoPlausivel([2021, 1, true, 0]), true, "zero declarado é dado");
   assert.equal(pontoPlausivel([2021, 1, true, 54.8]), true);
   assert.equal(pontoPlausivel([2021, 1, true, 371.02]), false);
+});
+
+// ── O eixo do tempo, e a linha que se interrompe no buraco ──────────────────
+//
+// Escritos em 09/09/2026, depois que a varredura do RGF levou a série de 6
+// pontos para 15 e a conferência de uniformidade reprovou: 286 dos 3.814
+// municípios têm pontos não consecutivos, e o maior buraco desenhava 40 meses
+// como um passo só.
+
+test("o índice do quadrimestre é contínuo entre exercícios", () => {
+  // A virada de ano é onde um índice ingênuo quebra: 2020/3 e 2021/1 são
+  // vizinhos no tempo, e a diferença tem de ser 1 como qualquer outro par.
+  assert.equal(
+    indiceQuadrimestre(2021, 1) - indiceQuadrimestre(2020, 3), 1,
+    "2020/3 -> 2021/1 é um passo, não um salto de ano");
+  assert.equal(
+    indiceQuadrimestre(2024, 3) - indiceQuadrimestre(2020, 1), 14,
+    "os 15 pontos da série cobrem 14 passos");
+});
+
+test("contíguo é vizinhança NO TEMPO, não na lista", () => {
+  const a: PontoSerie = [2020, 1, true, 40];
+  assert.equal(contiguos(a, [2020, 2, true, 41]), true);
+  assert.equal(contiguos([2020, 3, true, 41], [2021, 1, true, 42]), true);
+  // Ipiranga do Norte e companhia: pularam 2020-2022 inteiros.
+  assert.equal(contiguos(a, [2023, 2, true, 44]), false);
+  // E o caso que o filtro de implausível cria sozinho: o ponto do meio sai da
+  // lista, os vizinhos ficam adjacentes NO ARRAY e não no tempo.
+  assert.equal(contiguos([2024, 1, true, 44], [2024, 3, true, 46]), false);
+});
+
+test("a distância no eixo é proporcional ao TEMPO, não à ordem", () => {
+  // Sem isto os dois pares abaixo ocupariam a mesma largura, e o gráfico
+  // diria que oito meses e um quadrimestre são a mesma coisa.
+  const curto = indiceQuadrimestre(2024, 2) - indiceQuadrimestre(2024, 1);
+  const longo = indiceQuadrimestre(2023, 1) - indiceQuadrimestre(2020, 1);
+  assert.equal(curto, 1);
+  assert.equal(longo, 9);
+  assert.notEqual(curto, longo);
+});
+
+test("interrupcoes: uma definicao so, para o grafico e para a prosa", () => {
+  const contigua: PontoSerie[] = [
+    [2024, 1, true, 40], [2024, 2, true, 41], [2024, 3, true, 42],
+  ];
+  assert.equal(interrupcoes(contigua), 0);
+
+  // Presidente Médici/RO, medido no snapshot de 09/09/2026: entregou os três
+  // quadrimestres de 2020 e os três de 2024, e nada entre eles.
+  const presidenteMedici: PontoSerie[] = [
+    [2020, 1, true, 43], [2020, 2, true, 44], [2020, 3, true, 45],
+    [2024, 1, true, 51], [2024, 2, true, 52], [2024, 3, true, 53],
+  ];
+  assert.equal(interrupcoes(presidenteMedici), 1);
+
+  // O ponto implausível descartado abre buraco tão real quanto o não entregue:
+  // sem contá-lo, o traço quebraria num lugar que o texto não menciona.
+  const comImplausivel: PontoSerie[] = [
+    [2024, 1, true, 40], [2024, 2, true, 371], [2024, 3, true, 42],
+  ];
+  assert.equal(interrupcoes(comImplausivel), 1);
+
+  // E o contrário do teste acima, para ele não passar por vacuidade.
+  assert.equal(interrupcoes([[2024, 1, true, 40]]), 0, "um ponto não interrompe");
+  assert.equal(interrupcoes(undefined), 0);
 });

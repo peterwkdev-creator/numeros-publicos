@@ -12,7 +12,7 @@ import m from "./municipios.module.css";
  * A tabela de municípios — o único componente de cliente do painel.
  *
  * Interatividade é a **única** razão de existir JavaScript aqui: buscar e
- * ordenar 1.794 linhas. Todo o resto da página é HTML gerado no build.
+ * ordenar 5.571 linhas. Todo o resto da página é HTML gerado no build.
  *
  * Os registros já vêm no payload da página, então filtrar é síncrono e local —
  * nenhuma requisição, nenhum estado de carregamento, nenhum spinner.
@@ -90,7 +90,7 @@ export function Municipios({
   const [mostrando, setMostrando] = useState(PAGINA);
 
   // `useDeferredValue` mantém o campo de busca responsivo enquanto a lista de
-  // 1.794 linhas é refiltrada: o que o usuário digita nunca engasga.
+  // 5.571 linhas é refiltrada: o que o usuário digita nunca engasga.
   const buscaAdiada = useDeferredValue(busca);
 
   const ufs = useMemo(

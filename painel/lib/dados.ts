@@ -54,7 +54,7 @@ export type Municipio = {
 /**
  * Expande as linhas compactas para objetos.
  *
- * O snapshot guarda listas para não repetir o nome de cada campo 1.794 vezes —
+ * O snapshot guarda listas para não repetir o nome de cada campo 5.571 vezes —
  * o arquivo que o visitante baixa seria três vezes maior sem informação nova.
  * A expansão acontece **no build**, então o custo é zero para quem visita.
  */

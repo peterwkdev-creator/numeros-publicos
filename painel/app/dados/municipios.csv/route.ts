@@ -5,7 +5,7 @@ import { lerFiscal, lerSnapshot } from "../../../lib/servidor";
 import { atualDeFuncoes } from "@/lib/fiscal";
 
 /**
- * A base inteira num arquivo: 1.794 municípios, uma linha cada.
+ * A base inteira num arquivo: 5.571 municípios, uma linha cada.
  *
  * O CSV por município serve a quem olha uma cidade; este serve a quem quer
  * comparar todas — jornalista, pesquisador, ou alguém conferindo se o painel
@@ -29,7 +29,7 @@ export async function GET() {
     // Da despesa por função entram só o total e as duas maiores. As 28 viriam
     // com ~20 colunas vazias por linha para a maioria dos municípios, e quem
     // quiser a decomposição inteira tem o CSV do município, que é longo e a
-    // traz completa. Aqui o que se quer é **comparar** 1.794 linhas.
+    // traz completa. Aqui o que se quer é **comparar** 5.571 linhas.
     "despesa_liquidada_total", "despesa_educacao", "despesa_saude",
     "despesa_exercicio", "despesa_periodo",
   ];

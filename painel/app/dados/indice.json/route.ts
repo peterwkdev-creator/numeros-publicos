@@ -59,9 +59,18 @@ export async function GET() {
   return new Response(JSON.stringify(indice), {
     headers: {
       "Content-Type": "application/json; charset=utf-8",
-      // Imutável dentro de um deploy: o conteúdo só muda quando o build muda,
-      // e cada build publica o arquivo de novo.
-      "Cache-Control": "public, max-age=3600",
+      // NÃO declarar `Cache-Control` aqui: com `output: "export"` este handler
+      // vira um ARQUIVO no build, e arquivo não carrega cabeçalho. Havia um
+      // `max-age=3600` nesta linha, com um comentário afirmando que o índice
+      // era imutável dentro do deploy — e a produção, medida em 10/09/2026,
+      // sempre respondeu `public, max-age=0, must-revalidate`, que é o padrão
+      // do host. Um cabeçalho que não chega a lugar nenhum é pior que nenhum:
+      // ele faz quem lê o código parar de procurar onde a decisão mora.
+      //
+      // O cache destes arquivos se decide em `vercel.json`, que é a camada que
+      // realmente os serve. Hoje só `/_next/static/` tem regra própria — o
+      // resto revalida a cada visita, que é o lado seguro para um arquivo de
+      // URL estável cujo conteúdo muda a cada build.
     },
   });
 }

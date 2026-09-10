@@ -14,7 +14,7 @@ export const dynamic = "force-static";
  *
  * Antes disto o site respondia **404** em `/robots.txt` e em `/sitemap.xml` —
  * medido em 03/09/2026. Não é fatal, mas é o primeiro lugar onde um rastreador
- * olha, e um 404 ali não dá nenhuma pista de que existem 1.794 páginas.
+ * olha, e um 404 ali não dá nenhuma pista de que existem 5.603 páginas.
  *
  * Tudo é liberado de propósito: é dado público, republicado sob AGPL-3.0, e
  * não há nada aqui que não deva ser indexado.

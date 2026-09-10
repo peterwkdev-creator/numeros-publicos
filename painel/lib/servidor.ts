@@ -68,7 +68,7 @@ export async function lerIdeb(
  * quando um IP muda exige manutencao manual, que e o oposto do objetivo.
  *
  * A variavel continua existindo porque cravar endereco no codigo significaria
- * reescrever 1.794 tags `canonical` na proxima mudanca.
+ * reescrever 5.571 tags `canonical` na proxima mudanca.
  */
 export const SITE =
   process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??

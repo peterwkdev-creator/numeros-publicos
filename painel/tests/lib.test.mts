@@ -19,7 +19,7 @@ import {
 } from "../lib/dados.ts";
 import {
   funcoesDoPais, mediana, medianasSaude, medianasSaudeCache, panoramaEstados,
-  posicaoNaLista, rankingPessoal,
+  posicaoNaLista, rankingCache, rankingPessoal,
 } from "../lib/nacional.ts";
 import {
   compararFuncoes, faixaDe, faixasEmLinha, FAIXA_DA_LETRA, funcoesDe,
@@ -1051,12 +1051,35 @@ function fiscalParaRanking(): never {
   } as never;
 }
 
+/**
+ * A identidade dos MESMOS códigos, como o IBGE os escreve.
+ *
+ * Existe separada de propósito: a divergência real está entre duas FONTES, e
+ * um fixture só não conseguiria expressá-la. O código é a ponte; o nome, não.
+ */
+function ibgeParaRanking(): never {
+  return {
+    colunas: ["codigo", "nome", "uf"],
+    municipios: [
+      [1, "Acima Um", "BA"],
+      [2, "Acima Dois", "BA"],
+      [3, "Quebrado", "BA"],
+      [4, "Prudencial", "BA"],
+      [5, "Tranquilo", "BA"],
+      [6, "Nao Entregou", "BA"],
+      [9, "Aaa Empate", "BA"],
+      [11, "Limite Proprio", "PA"],
+      [5300108, "Brasília", "DF"],
+    ],
+  } as never;
+}
+
 test("declaração implausível NÃO é ranqueada, e também não some", () => {
   // Ranqueá-la publicaria "gastou 371% da receita com pessoal" como fato --
   // acusação a um município real, produzida por formulário preenchido errado.
   // Omiti-la faria a página afirmar que o dado não existe, quando ele existe
   // e está quebrado.
-  const r = rankingPessoal(fiscalParaRanking());
+  const r = rankingPessoal(fiscalParaRanking(), ibgeParaRanking());
   assert.deepEqual(r.acimaDoTeto.map((x) => x.nome), ["Acima Um", "Acima Dois"]);
   assert.deepEqual(r.implausiveis.map((x) => x.nome), ["Quebrado"]);
 });
@@ -1064,7 +1087,7 @@ test("declaração implausível NÃO é ranqueada, e também não some", () => {
 test("o denominador é quem ENTREGOU, e o resto vai dito", () => {
   // "2 de 5" faria parecer que 3 estão bem. A verdade é que sobre 1 não se
   // sabe nada -- a mesma distinção que a faixa `nao-consultado` mantém.
-  const r = rankingPessoal(fiscalParaRanking());
+  const r = rankingPessoal(fiscalParaRanking(), ibgeParaRanking());
   assert.equal(r.universo, 6, "o DF sai do universo: não é município");
   assert.equal(r.publicaram, 5);
   assert.equal(r.naoEntregaram, 1);
@@ -1073,14 +1096,14 @@ test("o denominador é quem ENTREGOU, e o resto vai dito", () => {
 
 test("quem presta contas como estado sai das DUAS contas", () => {
   // Contá-lo como faltoso é a acusação que a faixa `como-estado` impede.
-  const r = rankingPessoal(fiscalParaRanking());
+  const r = rankingPessoal(fiscalParaRanking(), ibgeParaRanking());
   assert.ok(!r.acimaDoTeto.some((x) => x.uf === "DF"));
   assert.ok(!r.implausiveis.some((x) => x.uf === "DF"));
   assert.equal(r.universo + r.comoEstado, 7);
 });
 
 test("a faixa prudencial é alerta, e não entra na lista de infração", () => {
-  const r = rankingPessoal(fiscalParaRanking());
+  const r = rankingPessoal(fiscalParaRanking(), ibgeParaRanking());
   assert.equal(r.naFaixaPrudencial, 1);
   assert.ok(!r.acimaDoTeto.some((x) => x.nome === "Prudencial"));
 });
@@ -1095,16 +1118,90 @@ test("o limite prudencial PRÓPRIO do município manda, e não o global", () => 
   (s as { municipios: unknown[] }).municipios.push(
     // 53% passa do prudencial GLOBAL (51,3) e não do próprio (57).
     [11, "Limite Proprio", "PA", 10000, true, 53.0, 57.0, 0, 0]);
-  const r = rankingPessoal(s);
+  const r = rankingPessoal(s, ibgeParaRanking());
   assert.equal(r.naFaixaPrudencial, 1, "só o 'Prudencial' de 52% conta");
   assert.ok(!r.acimaDoTeto.some((x) => x.nome === "Limite Proprio"));
+});
+
+test("o ENDEREÇO vem do nome do IBGE, e não do nome do SICONFI", () => {
+  // O defeito, medido em 10/09/2026: o ranking montava o slug com o nome do
+  // SICONFI e as páginas nascem do nome do IBGE. As fontes discordam em 24
+  // municípios e o `slugDe` só esconde a discordância quando ela é de acento
+  // -- ele tira acento, não troca preposição. Dois links estavam mortos no ar
+  // e outros DEZ eram latentes, esperando uma reingestão para entrar na lista.
+  const f = fiscalParaRanking();
+  (f as { municipios: unknown[] }).municipios.push(
+    // O caso real: 2800100, Sergipe. IBGE diz "do", SICONFI diz "de".
+    [2800100, "Amparo de São Francisco", "SE", 2200, true, 60.0, 51.3, 0, 0]);
+  const ibge = ibgeParaRanking();
+  (ibge as { municipios: unknown[] }).municipios.push(
+    [2800100, "Amparo do São Francisco", "SE"]);
+
+  const linha = rankingPessoal(f, ibge)
+    .acimaDoTeto.find((x) => x.codigo === 2800100)!;
+  assert.equal(linha.slug, "amparo-do-sao-francisco-se",
+    "o endereço tem de ser o da página que o build realmente gerou");
+});
+
+test("o NOME exibido também é o do IBGE — senão o site se contradiz", () => {
+  // Metade do defeito era o link; a outra metade era o rótulo. O ranking
+  // exibiria "Boa Saúde" enquanto a página do próprio município diz "Januário
+  // Cicco" -- duas páginas do mesmo site afirmando coisas diferentes sobre o
+  // mesmo código, as duas bem formadas.
+  const f = fiscalParaRanking();
+  (f as { municipios: unknown[] }).municipios.push(
+    [2405306, "Boa Saúde", "RN", 8000, true, 61.0, 51.3, 0, 0]);
+  const ibge = ibgeParaRanking();
+  (ibge as { municipios: unknown[] }).municipios.push(
+    [2405306, "Januário Cicco", "RN"]);
+
+  const linha = rankingPessoal(f, ibge)
+    .acimaDoTeto.find((x) => x.codigo === 2405306)!;
+  assert.equal(linha.nome, "Januário Cicco");
+  assert.equal(linha.slug, "januario-cicco-rn");
+});
+
+test("sem identidade no IBGE, a linha vai SEM link em vez de apontar p/ 404", () => {
+  // Não acontece hoje (os 5.570 códigos do fiscal têm página), e é justamente
+  // por isso que precisa de teste: o ramo nunca exercitado é o que apodrece.
+  const f = fiscalParaRanking();
+  (f as { municipios: unknown[] }).municipios.push(
+    [9999999, "Município Fantasma", "XX", 100, true, 70.0, 51.3, 0, 0]);
+
+  const linha = rankingPessoal(f, ibgeParaRanking())
+    .acimaDoTeto.find((x) => x.codigo === 9999999)!;
+  assert.equal(linha.slug, null, "sem página, nenhum endereço é honesto");
+  assert.equal(linha.nome, "Município Fantasma",
+    "o nome do fiscal é o único que existe, e continua aparecendo");
+});
+
+test("o cache do ranking distingue as DUAS fontes, não só a fiscal", () => {
+  // A chave era só o snapshot fiscal. Com a identidade vinda de fora, guardar
+  // por uma fonte só devolveria, a uma identidade nova, o ranking montado com
+  // a anterior -- nomes e endereços do build passado, bem formados.
+  const f = fiscalParaRanking();
+  (f as { municipios: unknown[] }).municipios.push(
+    [2800100, "Amparo de São Francisco", "SE", 2200, true, 60.0, 51.3, 0, 0]);
+
+  const antiga = ibgeParaRanking();
+  (antiga as { municipios: unknown[] }).municipios.push(
+    [2800100, "Amparo de São Francisco", "SE"]);
+  const nova = ibgeParaRanking();
+  (nova as { municipios: unknown[] }).municipios.push(
+    [2800100, "Amparo do São Francisco", "SE"]);
+
+  const a = rankingCache(f, antiga).acimaDoTeto.find((x) => x.codigo === 2800100)!;
+  const b = rankingCache(f, nova).acimaDoTeto.find((x) => x.codigo === 2800100)!;
+  assert.equal(a.slug, "amparo-de-sao-francisco-se");
+  assert.equal(b.slug, "amparo-do-sao-francisco-se",
+    "a identidade nova não pode receber o resultado guardado da anterior");
 });
 
 test("o empate se desfaz pelo nome, senão dois builds divergem", () => {
   const s = fiscalParaRanking();
   (s as { municipios: unknown[] }).municipios.push(
     [9, "Aaa Empate", "BA", 10000, true, 58.0, 51.3, 0, 0]);
-  const r = rankingPessoal(s);
+  const r = rankingPessoal(s, ibgeParaRanking());
   assert.deepEqual(r.acimaDoTeto.map((x) => x.nome),
     ["Acima Um", "Aaa Empate", "Acima Dois"]);
 });

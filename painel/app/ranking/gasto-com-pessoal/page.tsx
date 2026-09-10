@@ -26,8 +26,8 @@ const CAMINHO = "/ranking/gasto-com-pessoal/";
  * espera autoridade externa.
  */
 export async function generateMetadata(): Promise<Metadata> {
-  const fiscal = await lerFiscal();
-  const r = rankingPessoal(fiscal);
+  const [fiscal, snapshot] = await Promise.all([lerFiscal(), lerSnapshot()]);
+  const r = rankingPessoal(fiscal, snapshot);
   const titulo = "Municípios acima do limite de gasto com pessoal";
   const descricao =
     `${br(r.acimaDoTeto.length)} municípios declararam gasto com pessoal ` +
@@ -49,7 +49,7 @@ export default async function Pagina() {
   const [fiscal, snapshot, ideb] = await Promise.all([
     lerFiscal(), lerSnapshot(), lerIdeb(),
   ]);
-  const r = rankingPessoal(fiscal);
+  const r = rankingPessoal(fiscal, snapshot);
   const legal = fiscal.limites.legal;
   const prudencial = fiscal.limites.prudencial;
 
@@ -102,7 +102,9 @@ export default async function Pagina() {
         "@type": "ListItem",
         position: i + 1,
         name: `${m.nome} (${m.uf})`,
-        url: `${SITE}/municipio/${m.slug}/`,
+        // Sem página, sem `url`. Uma URL morta em dado estruturado é pior que
+        // na tela: o buscador a consome com a autoridade de coisa declarada.
+        ...(m.slug ? { url: `${SITE}/municipio/${m.slug}/` } : {}),
         item: {
           "@type": "QuantitativeValue",
           name: "Despesa com pessoal sobre a receita corrente líquida",
@@ -244,9 +246,11 @@ export default async function Pagina() {
               <tr key={m.codigo}>
                 <td className={estilos.posicao}>{i + 1}</td>
                 <th scope="row">
-                  <Link href={`/municipio/${m.slug}/`} prefetch={false}>
-                    {m.nome}
-                  </Link>
+                  {m.slug === null ? m.nome : (
+                    <Link href={`/municipio/${m.slug}/`} prefetch={false}>
+                      {m.nome}
+                    </Link>
+                  )}
                 </th>
                 <td>{m.uf}</td>
                 <td className={`${estilos.num} ${estilos.acima} tabular`}>
@@ -279,9 +283,11 @@ export default async function Pagina() {
             {r.implausiveis.map((m, i) => (
               <span key={m.codigo}>
                 {i > 0 ? " · " : ""}
-                <Link href={`/municipio/${m.slug}/`} prefetch={false}>
-                  {m.nome} ({m.uf})
-                </Link>{" "}
+                {m.slug === null ? `${m.nome} (${m.uf})` : (
+                  <Link href={`/municipio/${m.slug}/`} prefetch={false}>
+                    {m.nome} ({m.uf})
+                  </Link>
+                )}{" "}
                 <span className={estilos.implausivel}>
                   {br(m.percentual, 2)}%
                 </span>

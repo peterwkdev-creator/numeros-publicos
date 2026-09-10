@@ -1,3 +1,4 @@
+import type { Snapshot } from "./dados";
 import {
   atualDeFuncoes, faixaDe, type FatiaFuncao, type SnapshotFiscal, slugDe } from "./fiscal";
 
@@ -212,7 +213,15 @@ export type LinhaRanking = {
   codigo: number;
   nome: string;
   uf: string;
-  slug: string;
+  /**
+   * O endereço da página do município, ou `null` quando ela não existe.
+   *
+   * `null` não acontece hoje — os 5.570 códigos do fiscal têm página. Ele
+   * existe porque a alternativa, montar o endereço assim mesmo, é o defeito
+   * que este campo passou a corrigir: um link para uma rota que o build não
+   * gerou sai da página **bem formado**, e só se descobre visitando.
+   */
+  slug: string | null;
   percentual: number;
   populacao: number | null;
 };
@@ -240,6 +249,46 @@ export type RankingPessoal = {
 };
 
 /**
+ * Nome e UF de cada município **como o IBGE os escreve**, por código.
+ *
+ * ## O defeito que isto corrige, medido em 10/09/2026
+ *
+ * O ranking montava o endereço com `slugDe(nome, uf)` a partir do nome do
+ * **SICONFI**; as páginas de município nascem do nome do **IBGE**. As duas
+ * fontes discordam em **24 municípios**, e em **12** a discordância sobrevive
+ * ao `slugDe` — que tira acento, mas não troca preposição:
+ *
+ *     IBGE     Amparo do São Francisco  ->  /municipio/amparo-do-sao-francisco-se/
+ *     SICONFI  Amparo de São Francisco  ->  /municipio/amparo-de-sao-francisco-se/  404
+ *
+ * Dois deles estavam no ar como link morto. Os outros dez eram **latentes**:
+ * entrariam na lista na primeira reingestão que os pusesse acima do teto.
+ *
+ * E o link era só metade. O ranking exibia *"Boa Saúde"* enquanto a página do
+ * próprio município diz *"Januário Cicco"* — **duas páginas do mesmo site se
+ * contradizendo**, que é exatamente o risco já anotado logo abaixo, sobre o
+ * limite prudencial. A causa é a mesma: reimplementar uma verdade que já tem
+ * dono em vez de perguntar a ele.
+ *
+ * ## Por que a junção é pelo CÓDIGO, e não pelo nome
+ *
+ * Código do IBGE é identificador; nome é rótulo, e rótulo varia por fonte,
+ * por grafia e por ano — "Boa Saúde" virou "Januário Cicco" por lei estadual.
+ * Casar por nome é casar pelo campo que muda. É a mesma regra que o
+ * `conferir_nomes` do SIOPS aplica do lado da ingestão: **casa pelo código,
+ * relata a divergência de nome, e não a corrige.**
+ */
+export function identidadePorCodigo(
+  s: Snapshot,
+): Map<number, { nome: string; uf: string }> {
+  const mapa = new Map<number, { nome: string; uf: string }>();
+  for (const [codigo, nome, uf] of s.municipios) {
+    mapa.set(codigo as number, { nome: nome as string, uf: uf as string });
+  }
+  return mapa;
+}
+
+/**
  * O ranking nacional do gasto com pessoal, com as três recusas que o resto do
  * site já pratica — e que aqui pesam mais, porque uma lista ordenada é lida
  * como acusação.
@@ -256,7 +305,13 @@ export type RankingPessoal = {
  * LRF") pertence hoje a Tribunais de Contas, **um por estado** — medido em
  * 07/09/2026. Não havia versão nacional, gratuita e com uma URL limpa.
  */
-export function rankingPessoal(fiscal: SnapshotFiscal): RankingPessoal {
+export function rankingPessoal(
+  fiscal: SnapshotFiscal,
+  identidade: Snapshot,
+): RankingPessoal {
+  // Quem manda no NOME e no ENDEREÇO é o IBGE, porque é do snapshot dele que
+  // as 5.571 páginas de município nascem. O fiscal manda no número, e só nele.
+  const nomes = identidadePorCodigo(identidade);
   const acima: LinhaRanking[] = [];
   const fora: LinhaRanking[] = [];
   const plausiveis: number[] = [];
@@ -276,11 +331,14 @@ export function rankingPessoal(fiscal: SnapshotFiscal): RankingPessoal {
     if (!publicou || typeof percentual !== "number") continue;
     publicaram += 1;
 
+    const oficial = nomes.get(codigo as number);
     const linha: LinhaRanking = {
       codigo: codigo as number,
-      nome: nome as string,
-      uf: uf as string,
-      slug: slugDe(nome as string, uf as string),
+      // Sem identidade no IBGE não há página, e também não há nome melhor: o
+      // do fiscal é o único que existe. Ele vai para a tela SEM link.
+      nome: oficial?.nome ?? (nome as string),
+      uf: oficial?.uf ?? (uf as string),
+      slug: oficial ? slugDe(oficial.nome, oficial.uf) : null,
       percentual,
       populacao: (populacao as number | null) ?? null,
     };
@@ -334,13 +392,25 @@ export function rankingPessoal(fiscal: SnapshotFiscal): RankingPessoal {
  * duas fontes diferentes forem passadas, cada uma ganha sua entrada em vez de
  * receber a da outra em silêncio — o erro que um cache de chave fixa cometeria.
  */
-const cacheRanking = new WeakMap<object, RankingPessoal>();
+const cacheRanking = new WeakMap<object, WeakMap<object, RankingPessoal>>();
 
-export function rankingCache(fiscal: SnapshotFiscal): RankingPessoal {
-  const guardado = cacheRanking.get(fiscal);
+export function rankingCache(
+  fiscal: SnapshotFiscal,
+  identidade: Snapshot,
+): RankingPessoal {
+  // Duas chaves aninhadas porque o resultado depende dos DOIS snapshots desde
+  // que a identidade passou a vir do IBGE. Guardar só pelo fiscal devolveria,
+  // a uma identidade nova, o ranking montado com a anterior — e ele viria com
+  // os nomes e os endereços errados, bem formado e silencioso.
+  let porIdentidade = cacheRanking.get(fiscal);
+  if (!porIdentidade) {
+    porIdentidade = new WeakMap<object, RankingPessoal>();
+    cacheRanking.set(fiscal, porIdentidade);
+  }
+  const guardado = porIdentidade.get(identidade);
   if (guardado) return guardado;
-  const calculado = rankingPessoal(fiscal);
-  cacheRanking.set(fiscal, calculado);
+  const calculado = rankingPessoal(fiscal, identidade);
+  porIdentidade.set(identidade, calculado);
   return calculado;
 }
 

@@ -291,7 +291,7 @@ export default async function PaginaMunicipio(
   // -- ali um dos dois relatórios está quebrado.
   // Dois números do ranking nacional, pelo cache: sem ele seriam 31 milhões
   // de operações no build para produzir sempre os mesmos dois.
-  const nacional = rankingCache(fiscal);
+  const nacional = rankingCache(fiscal, snapshot);
 
   const comparacao = compararFuncoes(fiscal, m.codigo);
   const mudancas = (comparacao?.deslocamentos ?? [])

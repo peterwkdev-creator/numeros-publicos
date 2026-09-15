@@ -124,8 +124,9 @@ class TestTravaDoEncolhimento(unittest.TestCase):
     def tearDown(self) -> None:
         self.tmp.cleanup()
 
-    def _exportar(self, quantos: int, permitir: bool = False) -> int:
-        """Chama `exportar` com um snapshot de `quantos` municípios."""
+    def _exportar(self, quantos: int, permitir: bool = False,
+                  indicadores: int = 13, ufs: int = 27) -> int:
+        """Chama `exportar` com um snapshot daquele tamanho, em cada dimensão."""
         from types import SimpleNamespace
         from unittest.mock import patch
 
@@ -135,8 +136,10 @@ class TestTravaDoEncolhimento(unittest.TestCase):
             "geradoEm": "2026-09-07T00:00:00",
             "fonte": "teste",
             "colunas": ["codigo"],
-            "indicadores": [],
-            "ufs": [],
+            "indicadores": [{"codigo": f"i{n}", "periodo": "2022",
+                             "unidade": "Pessoas", "totalRegiao": None}
+                            for n in range(indicadores)],
+            "ufs": [{"sigla": f"U{n}"} for n in range(ufs)],
             "municipios": [[i] for i in range(quantos)],
         }
 
@@ -177,6 +180,49 @@ class TestTravaDoEncolhimento(unittest.TestCase):
     def test_permitir_encolher_e_a_saida_deliberada(self) -> None:
         self._exportar(5571)
         self.assertEqual(self._exportar(1794, permitir=True), 0)
+
+    def test_encolher_em_INDICADORES_tambem_e_recusado(self) -> None:
+        """O que o cron fez em 14/09/2026, com a trava de 07/09 já no lugar.
+
+        A contagem de municípios ficou **idêntica** — 5.571 antes e depois —,
+        então a trava não armou. O que encolheu foi outra dimensão: de **13
+        indicadores para 3**, porque o runner faz checkout limpo, o banco é
+        `gitignore`d, e o workflow ingere só os três que ele nomeia. O
+        `conferir` passou, porque confere os três contra o agregado do IBGE e
+        os três estavam certos.
+
+        O commit saiu, a Vercel publicou, e a seção "Como se vive" — água,
+        esgoto, lixo, internet, alfabetização, instrução superior — sumiu das
+        5.571 páginas e das duas planilhas de download. A página seguiu bem
+        formada: existe uma guarda que omite a seção quando não há medida, e
+        ela foi escrita para **um** município sem dado no Censo.
+
+        A lição de 07/09 estava escrita e foi implementada em uma dimensão só.
+        """
+        self._exportar(5571, indicadores=13)
+        antes = self.destino.read_text(encoding="utf-8")
+        with self.assertRaises(SystemExit) as e:
+            self._exportar(5571, indicadores=3)
+        self.assertIn("13", str(e.exception))
+        self.assertIn("3", str(e.exception))
+        self.assertIn("indicadores", str(e.exception))
+        self.assertEqual(self.destino.read_text(encoding="utf-8"), antes,
+                         "recusar tem de deixar o snapshot bom no lugar")
+
+    def test_encolher_em_UFS_tambem_e_recusado(self) -> None:
+        # A terceira dimensão, pela mesma razão: perder um estado inteiro é
+        # exatamente tão silencioso quanto perder um indicador.
+        self._exportar(5571, ufs=27)
+        with self.assertRaises(SystemExit) as e:
+            self._exportar(5571, ufs=9)
+        self.assertIn("UFs", str(e.exception))
+
+    def test_crescer_numa_dimensao_e_encolher_noutra_e_RECUSADO(self) -> None:
+        # O caso que uma trava por dimensão única nunca pega: a soma "melhorou"
+        # e uma parte sumiu. Nenhum total agregado denunciaria.
+        self._exportar(1794, indicadores=13)
+        with self.assertRaises(SystemExit):
+            self._exportar(5571, indicadores=3)
 
 
 class TestPadraoDoRecorte(unittest.TestCase):

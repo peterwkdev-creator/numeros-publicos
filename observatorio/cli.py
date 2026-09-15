@@ -242,7 +242,57 @@ INDICADORES: dict[str, Serie] = {
 }
 
 
+TODOS = "todos"
+
+
 def ingerir_indicador(args, transporte=None, dormir=None) -> int:
+    """Um indicador, ou **todos** — e `todos` sai do registro, nunca de uma
+    lista escrita ao lado.
+
+    ## Por que isto existe
+
+    Escrito em 15/09/2026. O cron semanal nomeava **três** indicadores,
+    copiados à mão quando o site tinha três. Em 04 e 05/09 entraram mais dez,
+    do Censo 2022, e ninguém voltou ao workflow: ele seguiu correto na forma e
+    incompleto no alcance.
+
+    Em 14/09 isso foi ao ar. O runner faz checkout limpo, o banco está no
+    `.gitignore`, e o `exportar` retratou fielmente um banco que só tinha os
+    três — a seção "Como se vive" saiu das 5.571 páginas e as duas planilhas
+    de download perderam dez colunas.
+
+    **Lista copiada para dentro de processo automático envelhece sem avisar**,
+    porque quem a copiou não a executa e quem a executa não a lê. É a irmã da
+    lição de 07/09 sobre o padrão da bandeira: lá o automático herdava um valor
+    velho, aqui ele carrega uma cópia velha. `INDICADORES` é o único lugar onde
+    os treze existem; derivar dele não pode ficar para trás.
+    """
+    if args.indicador != TODOS:
+        return _ingerir_um(args, transporte, dormir)
+
+    from copy import copy
+    falhou = []
+    codigos = sorted(INDICADORES)
+    for n, codigo in enumerate(codigos, 1):
+        print(f"\n── {n}/{len(codigos)}  {codigo} " + "─" * 40)
+        um = copy(args)
+        um.indicador = codigo
+        if _ingerir_um(um, transporte, dormir) != 0:
+            falhou.append(codigo)
+
+    # Parar no primeiro erro deixaria o banco pela metade e o `exportar`
+    # seguinte publicaria um retrato encolhido — que é exatamente o defeito que
+    # este comando existe para não repetir. Vai até o fim e **sai com erro**,
+    # nomeando quem falhou.
+    print("\n" + "═" * 60)
+    if falhou:
+        print(f"{len(falhou)} de {len(codigos)} FALHARAM: {', '.join(falhou)}")
+        return 1
+    print(f"os {len(codigos)} indicadores do registro foram ingeridos")
+    return 0
+
+
+def _ingerir_um(args, transporte=None, dormir=None) -> int:
     extra = {} if dormir is None else {"dormir": dormir}
     s = INDICADORES[args.indicador]
     agregado, periodo, variavel = s.agregado, s.periodo, s.variavel
@@ -338,22 +388,58 @@ def exportar(args) -> int:
     # notícia, não rotina) ou o comando foi chamado errado — e nos dois casos o
     # certo é parar. `--permitir-encolher` existe para o dia em que encolher for
     # a intenção, e obriga a dizê-lo.
-    antes = 0
+    #
+    # ── E a cobertura tem MAIS DE UMA DIMENSÃO ─────────────────────────────
+    #
+    # A primeira versão desta trava lia só `municipios`, e em **14/09/2026** o
+    # mesmo cron passou por ela: a contagem de municípios ficou idêntica (5.571
+    # antes e depois) e o que encolheu foi outra dimensão — de **13 indicadores
+    # para 3**. O runner faz checkout limpo, o banco está no `.gitignore`, e o
+    # workflow ingere só os três que ele nomeia; o `exportar` então retratou
+    # fielmente um banco que só tinha aqueles três.
+    #
+    # O `conferir` liberou de novo, e desta vez sem herdar bandeira nenhuma:
+    # ele soma os indicadores que EXISTEM contra o agregado do IBGE, e os três
+    # estavam certos. **Verificação que só olha o que está presente não vê o
+    # que falta.**
+    #
+    # Foi ao ar: a seção "Como se vive" saiu das 5.571 páginas e as duas
+    # planilhas de download perderam dez colunas. A página continuou bem
+    # formada porque existe uma guarda que omite a seção quando não há medida
+    # — escrita para **um** município novo demais para o Censo, e que passou a
+    # cobrir o país inteiro sem nada acusar.
+    #
+    # Por isso a trava percorre as dimensões em vez de uma delas. Acrescentar
+    # uma lista aqui custa uma linha; descobrir a que faltava custou o Censo
+    # inteiro fora do ar por um dia.
+    DIMENSOES = (("municipios", "municípios"),
+                 ("indicadores", "indicadores"),
+                 ("ufs", "UFs"))
+
+    anterior: dict[str, int] = {}
     if destino.exists():
         try:
-            antes = len(json.loads(destino.read_text(encoding="utf-8"))["municipios"])
+            velho = json.loads(destino.read_text(encoding="utf-8"))
+            anterior = {c: len(velho[c]) for c, _ in DIMENSOES if c in velho}
         except (ValueError, KeyError, OSError) as e:
             # Não engolir: um snapshot ilegível é informação, não ausência de
             # informação. Sem cobertura anterior conhecida, a trava não arma.
             print(f"  [!] snapshot anterior ilegível ({e}); a trava não arma")
-    agora = len(dados["municipios"])
-    if antes and agora < antes and not getattr(args, "permitir_encolher", False):
-        raise SystemExit("\n".join((
-            f"RECUSADO: a cobertura encolheria de {antes} para {agora} municípios.",
-            "  Se foi engano, quase sempre é a bandeira: a ingestão rodou com",
-            f"  --regiao {getattr(args, 'regiao', PADRAO_RECORTE)}?",
+
+    encolheram = [(rotulo, anterior[chave], len(dados[chave]))
+                  for chave, rotulo in DIMENSOES
+                  if anterior.get(chave) and len(dados[chave]) < anterior[chave]]
+    if encolheram and not getattr(args, "permitir_encolher", False):
+        raise SystemExit("\n".join([
+            "RECUSADO: a cobertura encolheria.",
+            *(f"  {rotulo}: de {antes} para {agora}"
+              for rotulo, antes, agora in encolheram),
+            "  Se foi engano, quase sempre é o alcance da ingestão:",
+            f"  a ingestão rodou com --regiao {getattr(args, 'regiao', PADRAO_RECORTE)}?",
+            "  E o banco tinha TUDO o que o retrato anterior tinha? Checkout",
+            "  limpo começa com banco vazio, e o retrato sai do banco.",
             "  Se encolher é a intenção, repita com --permitir-encolher.",
-        )))
+        ]))
 
     # `separators` sem espaço: o arquivo é baixado por quem visita o painel.
     texto = json.dumps(dados, ensure_ascii=False, separators=(",", ":"))
@@ -421,7 +507,10 @@ def construir_parser() -> argparse.ArgumentParser:
 
     ii = sub.add_parser("ingerir-indicador",
                         help="busca um indicador no IBGE e grava")
-    ii.add_argument("indicador", choices=sorted(INDICADORES))
+    # `todos` entra nas escolhas para que o processo automático possa pedir o
+    # registro inteiro em vez de carregar uma cópia da lista. Ver a docstring
+    # de `ingerir_indicador`.
+    ii.add_argument("indicador", choices=[*sorted(INDICADORES), TODOS])
     ii.add_argument("--regiao", default=PADRAO_RECORTE, choices=sorted(RECORTES))
     ii.add_argument("--uf", type=int, choices=sorted(UFS_BRASIL))
     ii.add_argument("--pausa", type=float,

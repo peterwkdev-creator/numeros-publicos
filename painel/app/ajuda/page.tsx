@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { br, expandir } from "../../lib/dados";
+import { br, expandir, inteiroImpresso } from "../../lib/dados";
 import { FUNCOES_DA_PORTARIA, LIMITE_PLAUSIVEL } from "../../lib/fiscal";
 import { conjuntoDoSite, siteDe, trilha } from "../../lib/jsonld";
 import { lerFiscal, lerIdeb, lerSnapshot, SITE } from "../../lib/servidor";
@@ -258,7 +258,8 @@ export default async function PaginaAjuda() {
           <strong>{br(implausiveis)}</strong> declarações fora da faixa de 0 a
           100% entre as {br(declarados.length)} entregues, e juntas elas puxam
           a média nacional em <strong>{br(deslocamento, 2)} ponto</strong>
-          {deslocamento >= 2 ? "s" : ""} — de {br(medi(plausiveis), 2)}% para{" "}
+          {inteiroImpresso(deslocamento, 2) >= 2 ? "s" : ""} — de{" "}
+          {br(medi(plausiveis), 2)}% para{" "}
           {br(medi(declarados), 2)}%.
         </p>
       </section>

@@ -209,6 +209,31 @@ export function br(valor: number | null | undefined, casas = 0): string {
   });
 }
 
+/**
+ * A parte inteira do número **como `br` o imprime**, arredondamento incluído.
+ *
+ * ## Por que isto existe
+ *
+ * Achado em 15/09/2026, **no ar**: as páginas de Ulianópolis/PA e Patos/PB
+ * publicavam *"R$ 2,00 bilhão"*. O PIB das duas é R$ 1.999,x milhões — e
+ * `escala` decidia a palavra com `Math.floor` do valor **exato** (que dá 1)
+ * enquanto `br` imprimia o **arredondado** ("2,00"). A frase contradizia o
+ * número ao lado dela.
+ *
+ * É a mesma família de `fracaoDe`, que existe por três erros de concordância
+ * num dia só: **quando o número mostrado e o número que escolhe a palavra são
+ * calculados separados, eles divergem na borda** — e a borda não aparece em
+ * amostra, porque é um valor em mil.
+ *
+ * A parte inteira sai do TEXTO, e não de um segundo arredondamento: é o único
+ * jeito de ela ser, por construção, a que o leitor vê. `toFixed` e
+ * `Intl.NumberFormat` resolvem o empate por algoritmos diferentes, então
+ * "arredondar de novo, igual" é justamente a suposição que cria o problema.
+ */
+export function inteiroImpresso(valor: number, casas = 0): number {
+  return Math.abs(Number(br(valor, casas).split(",")[0]!.replace(/\./g, "")));
+}
+
 /** Data ISO em formato legível, com fuso de São Paulo. */
 export function dataLegivel(iso: string | null | undefined): string {
   if (!iso) return "—";
@@ -241,13 +266,6 @@ export function escala(reais: number | null | undefined): {
   const exato = `R$ ${br(reais, 2)}`;
   const abs = Math.abs(reais);
 
-  const nomear = (divisor: number, singular: string, plural: string) => {
-    const n = reais / divisor;
-    const casas = Math.abs(n) >= 100 ? 0 : 2;
-    const inteiro = Math.floor(Math.abs(n));
-    return `R$ ${br(n, casas)} ${inteiro >= 2 ? plural : singular}`;
-  };
-
   // **Só milhão para cima.** Abaixo disso a escala PIORA a leitura: "R$ 28.168"
   // é imediato e "R$ 28,17 mil" obriga a desfazer a conta. Escalar existe para
   // encurtar dígito demais, não para encurtar por encurtar.
@@ -257,10 +275,31 @@ export function escala(reais: number | null | undefined): {
   // no país, São Paulo publicava **"R$ 2.720 bilhões"** e o total do Brasil,
   // "R$ 9.012 bilhões". Tecnicamente certo, e exatamente o que esta função
   // existe para impedir: um número que o leitor tem de converter de cabeça.
-  if (abs >= 1e12) return { curto: nomear(1e12, "trilhão", "trilhões"), exato };
-  if (abs >= 1e9) return { curto: nomear(1e9, "bilhão", "bilhões"), exato };
-  if (abs >= 1e6) return { curto: nomear(1e6, "milhão", "milhões"), exato };
-  return { curto: `R$ ${br(reais, 0)}`, exato };
+  const ESCALAS: readonly (readonly [number, string, string])[] = [
+    [1e12, "trilhão", "trilhões"],
+    [1e9, "bilhão", "bilhões"],
+    [1e6, "milhão", "milhões"],
+  ];
+
+  // O texto de uma escala, e a parte inteira **que ele de fato imprime** —
+  // ver `inteiroImpresso`, que é onde esta regra está explicada.
+  const escrever = (divisor: number) => {
+    const n = reais / divisor;
+    const casas = Math.abs(n) >= 100 ? 0 : 2;
+    return { texto: br(n, casas), inteiro: inteiroImpresso(n, casas) };
+  };
+
+  let i = ESCALAS.findIndex(([divisor]) => abs >= divisor);
+  if (i < 0) return { curto: `R$ ${br(reais, 0)}`, exato };
+
+  // A escala é escolhida pelo valor exato, mas quem cruza a fronteira é o
+  // ARREDONDADO: 999,7 bilhões imprime "1.000", e "R$ 1.000 bilhões" é
+  // exatamente o número de cabeça que o trilhão foi acrescentado para evitar.
+  if (i > 0 && escrever(ESCALAS[i]![0]).inteiro >= 1000) i -= 1;
+
+  const [divisor, singular, plural] = ESCALAS[i]!;
+  const { texto, inteiro } = escrever(divisor);
+  return { curto: `R$ ${texto} ${inteiro >= 2 ? plural : singular}`, exato };
 }
 
 /**

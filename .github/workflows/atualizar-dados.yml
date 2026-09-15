@@ -24,7 +24,12 @@ concurrency:
 jobs:
   ingerir:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # 40 e não 20: com os treze indicadores do registro são ~13 × 27 = 351
+    # requisições a `--pausa 2`, mais as 27 dos municípios — perto de 13
+    # minutos só de espera deliberada. O teto antigo foi dimensionado para
+    # três indicadores e cortaria a coleta no meio, que é o modo de falhar
+    # que este arquivo inteiro existe para evitar.
+    timeout-minutes: 40
 
     steps:
       - uses: actions/checkout@v4
@@ -49,12 +54,28 @@ jobs:
       # e é justamente por isso que ela fica. Processo automático não deve
       # depender de um padrão que alguém pode reabrir: quem digita à mão vê o
       # efeito na hora, o cron vê na segunda-feira seguinte.
-      - name: Ingerir municípios e indicadores
+      #
+      # `todos` em vez dos três nomes, e isto é a correção de 15/09/2026.
+      #
+      # Este passo nomeava três indicadores, copiados à mão quando o site tinha
+      # três. Em 04 e 05/09 entraram mais dez, do Censo 2022, e ninguém voltou
+      # aqui. Em **14/09 o cron publicou um snapshot com 3 indicadores por cima
+      # de um com 13**: o runner faz checkout limpo, `observatorio.db` está no
+      # `.gitignore`, e o `exportar` retratou fielmente o banco que ESTE passo
+      # encheu. A seção "Como se vive" saiu das 5.571 páginas, e as planilhas
+      # de download perderam dez colunas.
+      #
+      # `conferir` liberou: ele soma os indicadores que EXISTEM contra o
+      # agregado do IBGE, e os três estavam certos. **Verificação que só olha
+      # o que está presente não vê o que falta.**
+      #
+      # Com `todos`, a lista sai do registro `INDICADORES` e não pode mais
+      # ficar para trás. É a mesma lição da bandeira acima, do outro lado:
+      # lá o automático herdava um padrão velho, aqui carregava uma cópia.
+      - name: Ingerir municípios e TODOS os indicadores do registro
         run: |
           python -m observatorio ingerir-municipios --regiao BR --pausa 2
-          python -m observatorio ingerir-indicador populacao-censo-2022 --regiao BR --pausa 2
-          python -m observatorio ingerir-indicador populacao-estimada --regiao BR --pausa 2
-          python -m observatorio ingerir-indicador pib-municipal --regiao BR --pausa 2
+          python -m observatorio ingerir-indicador todos --regiao BR --pausa 2
 
       # Integridade contra a própria fonte. Sai com código 1 se a soma dos
       # municípios divergir do agregado regional do IBGE — e aí o workflow

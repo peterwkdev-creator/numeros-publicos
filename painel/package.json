@@ -8,7 +8,6 @@
     "build": "next build && node scripts/enxugar.mjs",
     "build:completo": "next build",
     "start": "npx serve out -l 8791",
-    "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "test": "node --import ./tests/registrar.mjs --test tests/*.test.mts",
     "conferir-links": "node scripts/conferir-links.mjs",

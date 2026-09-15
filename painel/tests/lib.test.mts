@@ -14,7 +14,8 @@ import fs from "node:fs";
 import { inflateRawSync } from "node:zlib";
 
 import {
-  concorda, descricaoDe, fracaoDe, INDICADORES_DA_CAPA, projetar,
+  concorda, descricaoDe, escala, fracaoDe, INDICADORES_DA_CAPA,
+  inteiroImpresso, projetar,
   COLUNA_DA_CAPA, rotuloCurto, unidadeDaColuna, type Snapshot,
 } from "../lib/dados.ts";
 import {
@@ -454,6 +455,49 @@ test("um entre muitos usa \"de\", não \"dos\"", () => {
 test("o substantivo é parametrizável e pluraliza junto", () => {
   assert.equal(fracaoDe(3, 27, "estado"), "3 dos 27 estados");
   assert.equal(fracaoDe(1, 1, "estado"), "o único estado");
+});
+
+test("a parte inteira é lida do TEXTO, com o arredondamento já aplicado", () => {
+  // A regra sozinha, porque ela decide concordância em dois lugares: a escala
+  // monetária e a frase do deslocamento na página de ajuda.
+  assert.equal(inteiroImpresso(1.9995, 2), 2);   // `br` imprime "2,00"
+  assert.equal(inteiroImpresso(1.9, 2), 1);      // "1,90"
+  assert.equal(inteiroImpresso(999.7, 0), 1000); // "1.000" — o ponto é milhar
+  assert.equal(inteiroImpresso(-2.4, 2), 2);     // o sinal não conta
+  assert.equal(inteiroImpresso(0.4), 0);         // "0"
+});
+
+test("o plural de `escala` concorda com o número IMPRESSO", () => {
+  // Achado em 15/09/2026, **no ar**: as páginas de Ulianópolis/PA e Patos/PB
+  // publicavam "R$ 2,00 bilhão". O PIB das duas é R$ 1.999,x milhões — a
+  // função decidia o plural por `Math.floor` do número EXATO (1) e imprimia o
+  // ARREDONDADO ("2,00"). O texto contradizia a si mesmo.
+  //
+  // É a mesma família de `fracaoDe`, que existe por três erros de concordância
+  // no mesmo dia: quando o número mostrado e o número que decide a palavra são
+  // calculados separados, eles divergem na borda.
+  assert.equal(escala(1_999_500_000).curto, "R$ 2,00 bilhões");
+  assert.equal(escala(1_996_000_000).curto, "R$ 2,00 bilhões");
+  assert.equal(escala(1_999_000).curto, "R$ 2,00 milhões");
+
+  // E o caso comum não se mexe.
+  assert.equal(escala(1_500_000_000).curto, "R$ 1,50 bilhão");
+  assert.equal(escala(1_000_000_000).curto, "R$ 1,00 bilhão");
+  assert.equal(escala(2_000_000_000).curto, "R$ 2,00 bilhões");
+  assert.equal(escala(2_510_000_000).curto, "R$ 2,51 bilhões");
+});
+
+test("arredondar até 1.000 sobe de escala, em vez de imprimir a menor", () => {
+  // Mesma causa, outro sintoma: a escala é escolhida ANTES de arredondar, e
+  // 999,7 bilhões imprime "1.000". "R$ 1.000 bilhões" é exatamente o número
+  // que obriga a conta de cabeça que `escala` existe para evitar — e foi o
+  // motivo de o trilhão ter sido acrescentado em 03/09/2026.
+  assert.equal(escala(999_700_000_000).curto, "R$ 1,00 trilhão");
+  assert.equal(escala(999_700_000).curto, "R$ 1,00 bilhão");
+  assert.equal(escala(999_400_000_000).curto, "R$ 999 bilhões");
+
+  // Negativo cai nas mesmas bordas, e o sinal sobrevive.
+  assert.equal(escala(-1_999_500_000).curto, "R$ -2,00 bilhões");
 });
 
 // ------------------------------------------------------------- enxugar

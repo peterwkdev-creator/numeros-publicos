@@ -36,7 +36,10 @@ export async function GET(
   const cabecalho = [
     "codigo_ibge", "municipio", "uf",
     ...indicadores.map((i) => i.codigo),
-    "pessoal_pct_rcl", "pessoal_limite_prudencial", "pessoal_publicou",
+    // O par entra junto do percentual, como na base completa e pela mesma
+    // razão: o arquivo viaja sem a explicação da página.
+    "pessoal_pct_rcl", "pessoal_despesa", "pessoal_rcl_ajustada",
+    "pessoal_limite_prudencial", "pessoal_publicou",
     "pessoal_exercicio", "pessoal_periodo",
     "despesa_liquidada_total", "despesa_educacao", "despesa_saude",
     "despesa_exercicio", "despesa_periodo",
@@ -53,6 +56,8 @@ export async function GET(
       m.codigo, m.nome, m.uf,
       ...indicadores.map((i) => m.valores[i.codigo] ?? null),
       m.fiscal?.percentual ?? null,
+      m.fiscal?.despesa ?? null,
+      m.fiscal?.rclAjustada ?? null,
       m.fiscal?.limitePrudencial ?? null,
       // A mesma distinção da base completa: "não entregou", "não consultado" e
       // "presta contas como estado" não podem colapsar num campo vazio nem

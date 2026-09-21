@@ -1,6 +1,6 @@
 import { expandir } from "../../../../lib/dados";
 import { cabecalhosCsv, paraCsv } from "../../../../lib/csv";
-import { funcoesDe, slugDe } from "../../../../lib/fiscal";
+import { funcoesDe, indexarFiscal, slugDe } from "../../../../lib/fiscal";
 import { trajetoriaDe } from "../../../../lib/ideb";
 import { lerFiscal, lerIdeb, lerSnapshot } from "../../../../lib/servidor";
 import { rotuloDownload } from "../../../../lib/censo";
@@ -35,6 +35,7 @@ export async function GET(
   if (!m) return new Response("não encontrado", { status: 404 });
 
   const serie = fiscal.serie[String(m.codigo)] ?? [];
+  const f = indexarFiscal(fiscal).get(m.codigo);
 
   // Formato longo (uma observação por linha), não largo. É o que permite
   // acrescentar indicador ou período sem mudar o cabeçalho -- e o que qualquer
@@ -57,6 +58,25 @@ export async function GET(
   for (const [ex, pe, , pct] of serie) {
     linhas.push([...comum, "Despesa com pessoal (% da RCL ajustada)",
       `${ex}/${pe}`, pct, "%", "SICONFI", fiscal.coletadoEm ?? ""]);
+  }
+
+  // O PAR em reais que produz aquele percentual, e aqui ele custa ZERO coluna:
+  // no formato longo são duas linhas com outro rótulo. É exatamente o que este
+  // formato compra — o CSV largo precisou de duas colunas novas, e cabeçalho
+  // novo quebra a planilha de quem já baixou.
+  //
+  // Só o período em destaque: o snapshot carrega os absolutos para ele, e a
+  // série traz apenas o percentual. Inventar os outros seria publicar número
+  // que a coleta não tem.
+  if (f?.despesa != null) {
+    linhas.push([...comum, "Despesa com pessoal (R$)",
+      `${fiscal.exercicio}/${fiscal.periodo}`, f.despesa, "R$", "SICONFI",
+      fiscal.coletadoEm ?? ""]);
+  }
+  if (f?.rclAjustada != null) {
+    linhas.push([...comum, "Receita corrente líquida ajustada (R$)",
+      `${fiscal.exercicio}/${fiscal.periodo}`, f.rclAjustada, "R$", "SICONFI",
+      fiscal.coletadoEm ?? ""]);
   }
 
   // A despesa por função entra como linhas novas, e não como colunas: é

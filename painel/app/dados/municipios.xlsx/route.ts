@@ -43,7 +43,11 @@ export async function GET() {
     // a variavel "Domicilios particulares permanentes ocupados", e a planilha
     // sairia com quatro colunas de cabecalho identico, lado a lado.
     ...ind.map((i) => rotuloDownload(i.codigo, i.nome)),
-    "Pessoal / RCL ajustada (%)", "Limite prudencial (%)", "Situação",
+    // O par que produz o percentual entra ao lado dele. Numa planilha isso
+    // vale ainda mais que na tela: quem abre o arquivo ordena e compara, e
+    // "60,64%" não diz se a prefeitura move R$ 1,2 bilhão ou R$ 12 milhões.
+    "Pessoal / RCL ajustada (%)", "Despesa com pessoal (R$)",
+    "RCL ajustada (R$)", "Limite prudencial (%)", "Situação",
     "Despesa liquidada total (R$)", "Educação (R$)", "Saúde (R$)",
     "IDEB anos iniciais", "IDEB anos finais",
   ];
@@ -57,6 +61,10 @@ export async function GET() {
       m.codigo, m.nome, m.uf,
       ...ind.map((i) => m.valores[i.codigo] ?? null),
       f?.percentual ?? null,
+      // Vazio, nunca zero: são 91 os municípios com despesa e sem RCL, porque
+      // a fonte não publica a linha.
+      f?.despesa ?? null,
+      f?.rclAjustada ?? null,
       f?.limitePrudencial ?? null,
       // A situação vai por extenso, e não como código: quem abre a planilha
       // não tem a legenda ao lado, e "sem-dado" não se explica sozinho.
@@ -84,6 +92,12 @@ export async function GET() {
       ["Pessoal / RCL ajustada (%)",
        "O percentual da receita corrente líquida ajustada comprometido com pessoal, como o próprio município declarou. NÃO é recalculado aqui.",
        "%", "SICONFI — RGF Anexo 01"],
+      ["Despesa com pessoal (R$)",
+       "O numerador do percentual ao lado, em reais, como o município declarou. É a despesa com pessoal do Executivo no período.",
+       "R$", "SICONFI — RGF Anexo 01"],
+      ["RCL ajustada (R$)",
+       "O denominador do percentual, em reais: a arrecadação do município menos as transferências que ele é obrigado a repassar, com os ajustes da Lei de Responsabilidade Fiscal. É a ajustada, não a bruta.",
+       "R$", "SICONFI — RGF Anexo 01"],
       ["Limite prudencial (%)",
        "95% do teto legal. Passar dele já proíbe criar cargo, conceder aumento e contratar.",
        "%", "Lei de Responsabilidade Fiscal"],

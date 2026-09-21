@@ -24,7 +24,13 @@ export async function GET() {
   const cabecalho = [
     "codigo_ibge", "municipio", "uf",
     ...indicadores.map((i) => i.codigo),
-    "pessoal_pct_rcl", "pessoal_limite_prudencial", "pessoal_publicou",
+    // O PAR que produz o percentual entra ao lado dele, pela mesma regra do
+    // Censo: a proporção sozinha esconde o tamanho, e 60,64% não distingue uma
+    // prefeitura de R$ 1,2 bilhão de uma de R$ 12 milhões. Aqui pesa mais que
+    // na tela — **o arquivo viaja sem a explicação da página**, e é ele que
+    // alguém republica. Mesma lição do `pessoal_publicou` de Brasília.
+    "pessoal_pct_rcl", "pessoal_despesa", "pessoal_rcl_ajustada",
+    "pessoal_limite_prudencial", "pessoal_publicou",
     "pessoal_exercicio", "pessoal_periodo",
     // Da despesa por função entram só o total e as duas maiores. As 28 viriam
     // com ~20 colunas vazias por linha para a maioria dos municípios, e quem
@@ -49,6 +55,10 @@ export async function GET() {
       m.codigo, m.nome, m.uf,
       ...indicadores.map((i) => m.valores[i.codigo] ?? null),
       f?.percentual ?? null,
+      // Vazio quando a fonte não publica a linha — são 91 os municípios com
+      // despesa e sem RCL. Célula vazia e não zero, pela regra de sempre.
+      f?.despesa ?? null,
+      f?.rclAjustada ?? null,
       f?.limitePrudencial ?? null,
       // `publicou` distingue "não entregou" de "não consultado", e essa
       // diferença tem de sobreviver ao download. Vazio seria as duas coisas.

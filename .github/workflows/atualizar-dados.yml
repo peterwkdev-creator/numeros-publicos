@@ -4,6 +4,20 @@
 # a maior parte das execuções não vai produzir commit nenhum — e isso é o
 # comportamento certo, não uma falha. Commit vazio semanal seria atividade
 # fabricada, que é exatamente o que este projeto não faz.
+#
+# **E isto foi mentira até 21/09/2026.** Três execuções, três commits, três
+# deploys, sem um único valor mudar: o `git diff --quiet` lá embaixo compara o
+# ARQUIVO, e o arquivo sempre difere porque `geradoEm` e os treze `coletadoEm`
+# são carimbos de hora. Custava ~1 GB de Deployment Storage por semana, num
+# limite sem expiração que já bateu 100%.
+#
+# Quem cumpre a promessa agora é a **trava do carimbo**, dentro do `exportar`:
+# ele compara o dado ignorando os carimbos e **não reescreve o arquivo** quando
+# nada mudou. O `git diff` abaixo continua, e passou a funcionar como sempre
+# se anunciou — mas ele é a segunda linha, não a primeira.
+#
+# *Guarda de artefato mora onde o artefato é escrito.* Aqui ela vale também
+# para o `atualizar-painel.py` e para quem rodar o comando à mão.
 
 name: Atualizar dados do IBGE
 

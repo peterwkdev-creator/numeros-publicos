@@ -417,6 +417,7 @@ def exportar(args) -> int:
                  ("ufs", "UFs"))
 
     anterior: dict[str, int] = {}
+    velho: dict | None = None
     if destino.exists():
         try:
             velho = json.loads(destino.read_text(encoding="utf-8"))
@@ -425,6 +426,7 @@ def exportar(args) -> int:
             # Não engolir: um snapshot ilegível é informação, não ausência de
             # informação. Sem cobertura anterior conhecida, a trava não arma.
             print(f"  [!] snapshot anterior ilegível ({e}); a trava não arma")
+            velho = None
 
     encolheram = [(rotulo, anterior[chave], len(dados[chave]))
                   for chave, rotulo in DIMENSOES
@@ -440,6 +442,42 @@ def exportar(args) -> int:
             "  limpo começa com banco vazio, e o retrato sai do banco.",
             "  Se encolher é a intenção, repita com --permitir-encolher.",
         ]))
+
+    # ── A trava do CARIMBO ─────────────────────────────────────────────────
+    #
+    # Escrita em 21/09/2026, depois de o cron commitar TRÊS vezes seguidas sem
+    # um único valor mudar. O comentário no topo do workflow prometia o
+    # contrário, com todas as letras: *"a maior parte das execuções não vai
+    # produzir commit nenhum… commit vazio semanal seria atividade fabricada,
+    # que é exatamente o que este projeto não faz."*
+    #
+    # Ele nunca cumpriu. O guardião lá é `git diff --quiet` sobre este arquivo,
+    # e o arquivo **sempre** difere: `geradoEm` e os treze `coletadoEm` são
+    # carimbos de hora, refeitos a cada execução. Medido em 21/09, o diff
+    # inteiro eram os catorze carimbos — os 72.411 valores byte a byte iguais.
+    #
+    # O custo era **um deployment por semana**, num limite sem expiração que já
+    # bateu 100%: ~1 GB toda segunda-feira para republicar o mesmo dado.
+    #
+    # A trava vive aqui, e não no workflow, pela mesma razão da do encolhimento:
+    # **guarda de artefato mora onde o artefato é escrito**, não em quem chama.
+    # Assim ela vale para o cron, para o `atualizar-painel.py` e para quem
+    # digitar o comando à mão.
+    def _sem_carimbos(d):
+        """O retrato sem o que muda a cada execução — para comparar DADO com
+        DADO, e não relógio com relógio."""
+        x = dict(d)
+        x.pop("geradoEm", None)
+        x["indicadores"] = [{k: v for k, v in i.items() if k != "coletadoEm"}
+                            for i in x.get("indicadores", [])]
+        return x
+
+    if velho is not None and _sem_carimbos(velho) == _sem_carimbos(dados):
+        print(f"{destino} · NADA MUDOU no dado — arquivo intacto.")
+        print("  Só os carimbos de coleta seriam diferentes, e reescrevê-los "
+              "publica\n  um deploy que republica o mesmo dado. A coleta "
+              "aconteceu e está no log.")
+        return 0
 
     # `separators` sem espaço: o arquivo é baixado por quem visita o painel.
     texto = json.dumps(dados, ensure_ascii=False, separators=(",", ":"))

@@ -125,19 +125,25 @@ class TestTravaDoEncolhimento(unittest.TestCase):
         self.tmp.cleanup()
 
     def _exportar(self, quantos: int, permitir: bool = False,
-                  indicadores: int = 13, ufs: int = 27) -> int:
-        """Chama `exportar` com um snapshot daquele tamanho, em cada dimensão."""
+                  indicadores: int = 13, ufs: int = 27,
+                  carimbo: str = "2026-09-07T00:00:00") -> int:
+        """Chama `exportar` com um snapshot daquele tamanho, em cada dimensão.
+
+        `carimbo` é o que muda a cada execução do cron sem o dado mudar:
+        `geradoEm` e o `coletadoEm` de cada indicador.
+        """
         from types import SimpleNamespace
         from unittest.mock import patch
 
         from observatorio import cli
 
         falso = {
-            "geradoEm": "2026-09-07T00:00:00",
+            "geradoEm": carimbo,
             "fonte": "teste",
             "colunas": ["codigo"],
             "indicadores": [{"codigo": f"i{n}", "periodo": "2022",
-                             "unidade": "Pessoas", "totalRegiao": None}
+                             "unidade": "Pessoas", "totalRegiao": None,
+                             "coletadoEm": carimbo}
                             for n in range(indicadores)],
             "ufs": [{"sigla": f"U{n}"} for n in range(ufs)],
             "municipios": [[i] for i in range(quantos)],
@@ -216,6 +222,37 @@ class TestTravaDoEncolhimento(unittest.TestCase):
         with self.assertRaises(SystemExit) as e:
             self._exportar(5571, ufs=9)
         self.assertIn("UFs", str(e.exception))
+
+    def test_so_os_CARIMBOS_mudarem_nao_reescreve_o_arquivo(self) -> None:
+        """O que o cron fez em 07, 14 e 21/09/2026: três execuções, três commits.
+
+        O workflow diz commitar **apenas quando o dado muda**, e o comentário no
+        topo dele é explícito: *"a maior parte das execuções não vai produzir
+        commit nenhum... commit vazio semanal seria atividade fabricada, que é
+        exatamente o que este projeto não faz."*
+
+        Ele nunca cumpriu isso. O guardião é `git diff --quiet` sobre o arquivo,
+        e o arquivo **sempre** difere: `geradoEm` e os treze `coletadoEm` são
+        carimbos de hora, refeitos a cada execução. Medido em 21/09: o diff
+        inteiro eram os catorze carimbos, com os 72.411 valores byte a byte
+        idênticos.
+
+        O custo era um deployment por semana num limite sem expiração que já
+        bateu 100% — ~1 GB toda segunda, para republicar o mesmo dado.
+        """
+        self._exportar(5571, carimbo="2026-09-14T09:00:00")
+        antes = self.destino.read_text(encoding="utf-8")
+        self.assertEqual(self._exportar(5571, carimbo="2026-09-21T09:00:00"), 0)
+        self.assertEqual(self.destino.read_text(encoding="utf-8"), antes,
+                         "carimbo novo sobre dado igual não pode reescrever")
+
+    def test_dado_diferente_reescreve_mesmo_com_o_mesmo_carimbo(self) -> None:
+        # O outro lado, e é o que impede a trava de virar um mudo: quando o
+        # valor muda de verdade, o arquivo tem de ser reescrito.
+        self._exportar(5571, carimbo="2026-09-14T09:00:00")
+        antes = self.destino.read_text(encoding="utf-8")
+        self.assertEqual(self._exportar(5572, carimbo="2026-09-14T09:00:00"), 0)
+        self.assertNotEqual(self.destino.read_text(encoding="utf-8"), antes)
 
     def test_crescer_numa_dimensao_e_encolher_noutra_e_RECUSADO(self) -> None:
         # O caso que uma trava por dimensão única nunca pega: a soma "melhorou"

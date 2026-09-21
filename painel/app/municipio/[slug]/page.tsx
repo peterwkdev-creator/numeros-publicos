@@ -486,6 +486,28 @@ export default async function PaginaMunicipio(
               ROTULO_FAIXA[f?.faixa ?? "nao-consultado"]
             )}
           </p>
+          {/* O PAR que produz o percentual, pela mesma regra que o Censo já
+              aplica: *"o número absoluto é o que permite a alguém conferir, e a
+              proporção sozinha esconde o tamanho"* (`lib/censo.ts`).
+
+              A tabela do Censo diz "77.761 de 90.440". Esta, até 21/09/2026,
+              dizia só "60,64%" — e os dois valores que produzem esse número já
+              estavam no snapshot, exibidos em lugar nenhum. 60,64% não
+              distingue uma prefeitura de R$ 1,2 bilhão de uma de R$ 12
+              milhões, e é o absoluto que permite conferir contra o relatório
+              que o próprio município entregou ao SICONFI.
+
+              Os dois podem faltar independentemente do percentual: são **91 os
+              municípios com despesa e sem RCL** — a fonte não publica a linha
+              (ver `lib/fiscal.ts`). Sem o par, a frase simplesmente não sai. */}
+          {f?.despesa != null && f?.rclAjustada != null && (
+            <p
+              className={`${estilos.fonte} tabular`}
+              title={`${escala(f.despesa).exato} de ${escala(f.rclAjustada).exato}`}
+            >
+              {escala(f.despesa).curto} de {escala(f.rclAjustada).curto}
+            </p>
+          )}
           <p className={estilos.fonte}>
             da{" "}
             <Termo

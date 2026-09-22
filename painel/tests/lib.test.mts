@@ -1682,3 +1682,30 @@ test("os downloads NÃO usam o rótulo de tela", () => {
   assert.equal(r.fatias[0]!.nome, "Transferências correntes", "tela");
   assert.equal(r.transferida, 900, "a busca por conta usa o nome CRU da fonte");
 });
+
+test("declaração sem transferência NÃO é composição — o caso de Apiaí", () => {
+  // Apiaí/SP declarou R$ 5,06 mi sem transferência nenhuma, e a soma fechava.
+  // O site publicou "79,0% de impostos" sobre um município que recebe FPM como
+  // todos. Os números abaixo são os dele.
+  const s = fiscalComReceita();
+  (s as { receita: Receita }).receita.exercicios[0]!.porMunicipio["3502705"] =
+    [5062526, [[1, 4001229]], []];
+  const r = receitaDe(s, 3502705)!;
+  assert.ok(r, "o dado continua disponível: a declaração existe");
+  assert.equal(r.plausivel, false);
+  assert.equal(r.transferida, null);
+});
+
+test("transferência zero também é declaração incompleta", () => {
+  const s = fiscalComReceita();
+  (s as { receita: Receita }).receita.exercicios[0]!.porMunicipio["7"] =
+    [100, [[0, 0], [1, 100]], []];
+  assert.equal(receitaDe(s, 7)!.plausivel, false);
+});
+
+test("o município normal é plausível", () => {
+  // O controle: sem ele, os dois testes acima passariam com `plausivel`
+  // sempre falso — e a seção sumiria de 3.242 páginas sem nada reprovar.
+  assert.equal(receitaDe(fiscalComReceita(), 1)!.plausivel, true);
+  assert.equal(receitaDe(fiscalComReceita(), 2)!.plausivel, true);
+});

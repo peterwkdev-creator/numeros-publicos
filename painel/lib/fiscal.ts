@@ -981,6 +981,23 @@ export type ComposicaoReceita = {
   tributaria: number | null;
   /** O que vem da União, dos Estados e dos fundos. `null` se não veio. */
   transferida: number | null;
+  /**
+   * `false` quando a declaração **não pode** descrever a receita do município.
+   *
+   * O critério é um fato legal, não um limiar escolhido: o FPM é repasse
+   * constitucional (CF art. 159), e **nenhum município recebe transferência
+   * corrente zero**. Uma declaração sem ela está incompleta por construção.
+   *
+   * Achado em 22/09/2026 com Apiaí/SP no ar dizendo *"79,0% de impostos"*:
+   * R$ 5 mi declarados, R$ 204 por habitante, contra R$ 134 mi de RCL no RGF
+   * do mesmo município. **E a soma fechava** — a régua da fonte compara a
+   * declaração consigo mesma, e declaração incompleta e coerente passa.
+   *
+   * O critério estatístico (receita contra RCL) mora no motor Python
+   * (`fiscal conferir-receita`), porque ele diz que UM dos dois relatórios
+   * está errado sem dizer qual. Este aqui diz qual.
+   */
+  plausivel: boolean;
 };
 
 /** O exercício em destaque: o mais recente da coleta. Não recua. */
@@ -1065,6 +1082,7 @@ function montarReceita(
     return valores.find(([j]) => j === i)?.[1] ?? null;
   };
 
+  const transferida = achar(CONTA_TRANSFERIDA);
   return {
     exercicio: ex.exercicio,
     periodo: bloco.periodo,
@@ -1082,6 +1100,7 @@ function montarReceita(
       })
       .sort((a, b) => b.valor - a.valor),
     tributaria: achar(CONTA_TRIBUTARIA),
-    transferida: achar(CONTA_TRANSFERIDA),
+    transferida,
+    plausivel: transferida !== null && transferida > 0,
   };
 }

@@ -18,7 +18,7 @@
 
 import type { Municipio, Snapshot, UF } from "./dados";
 import {
-  faixaDe, funcoesDe, slugDe,
+  faixaDaLinha, funcoesDe, slugDe,
   type FatiaFuncao, type Faixa, type Fiscal, type SnapshotFiscal,
 } from "./fiscal";
 
@@ -92,12 +92,16 @@ export function resumirEstado(
   if (!uf) return null;
 
   const porCodigo = new Map(
-    fiscal.municipios.map(([codigo, , , , publicou, percentual,
-      limitePrudencial, despesa, rclAjustada]) => [codigo, {
-      publicou, percentual, limitePrudencial, despesa, rclAjustada,
-      faixa: faixaDe(percentual, limitePrudencial, fiscal.limites, publicou,
-                     codigo),
-    } satisfies Fiscal]),
+    fiscal.municipios.map((linha) => {
+      const [codigo, , , , publicou, percentual, limitePrudencial, despesa,
+        rclAjustada] = linha;
+      return [codigo, {
+        publicou, percentual, limitePrudencial, despesa, rclAjustada,
+        // `faixaDaLinha`, e não `faixaDe`: é ela que sabe quando o percentual
+        // foi calculado sobre uma RCL que a receita do município desmente.
+        faixa: faixaDaLinha(fiscal, linha),
+      } satisfies Fiscal] as const;
+    }),
   );
 
   const municipios = municipiosExpandidos

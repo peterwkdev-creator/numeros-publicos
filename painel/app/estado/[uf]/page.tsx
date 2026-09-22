@@ -312,7 +312,7 @@ export default async function PaginaEstado(
             <Termo
               ancora="pessoal"
               bloco
-              dica="O percentual da receita corrente líquida ajustada que cada município declarou comprometido com pessoal. A média exclui os implausíveis — fora da faixa de 0 a 100%."
+              dica="O percentual da receita corrente líquida ajustada que cada município declarou comprometido com pessoal. A média exclui os implausíveis — fora da faixa de 0 a 100%, ou calculados sobre uma receita corrente líquida que a declaração de receita do próprio município desmente."
             >
               gasto com pessoal
             </Termo>
@@ -491,14 +491,16 @@ export default async function PaginaEstado(
         {r.porFaixa.implausivel > 0 ? (
           <p className={estilos.ressalva}>
             A média acima <strong>exclui os {br(r.porFaixa.implausivel)}</strong>{" "}
-            fora da faixa de 0 a 100%. Um município que declara 371% da receita
+            implausíveis: percentuais fora da faixa de 0 a 100%, ou calculados
+            sobre uma receita corrente líquida que a declaração de receita do
+            próprio município desmente. Um município que declara 371% da receita
             em pessoal move a média de duzentos quase dois pontos — e média
             contaminada por erro de preenchimento é erro na página, não detalhe.
           </p>
         ) : r.baseMedia > 0 ? (
           <p className={estilos.ressalva}>
-            Nenhum município {de} declarou percentual fora da faixa de 0 a
-            100%, então a média acima usa {r.baseMedia === 1 ? "o único" : `todos os ${br(r.baseMedia)}`}{" "}
+            Nenhum município {de} declarou percentual implausível, então a
+            média acima usa {r.baseMedia === 1 ? "o único" : `todos os ${br(r.baseMedia)}`}{" "}
             que {r.baseMedia === 1 ? "entregou" : "entregaram"} o relatório.
           </p>
         ) : null}

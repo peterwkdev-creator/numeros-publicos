@@ -1,6 +1,6 @@
 import type { Snapshot } from "./dados";
 import {
-  atualDeFuncoes, faixaDe, type FatiaFuncao, type SnapshotFiscal, slugDe } from "./fiscal";
+  atualDeFuncoes, faixaDaLinha, type FatiaFuncao, type SnapshotFiscal, slugDe } from "./fiscal";
 
 /**
  * O panorama dos 27 estados — o que só a varredura nacional tornou possível.
@@ -76,19 +76,15 @@ export function mediana(valores: number[]): number | null {
 export function panoramaEstados(fiscal: SnapshotFiscal): PanoramaUf[] {
   const por = new Map<string, { total: number; pub: number; vals: number[] }>();
 
-  for (const [codigo, , uf, , publicou, percentual, limitePrudencial]
-    of fiscal.municipios) {
+  for (const registro of fiscal.municipios) {
+    const [, , uf, , publicou, percentual] = registro;
     const chave = String(uf);
     const linha = por.get(chave) ?? { total: 0, pub: 0, vals: [] };
     linha.total += 1;
 
-    const faixa = faixaDe(
-      percentual as number | null,
-      limitePrudencial as number | null,
-      fiscal.limites,
-      publicou as boolean | null,
-      codigo as number,
-    );
+    // `faixaDaLinha`: a mediana do estado não pode levar o percentual de quem
+    // o calculou sobre uma RCL que a própria receita desmente.
+    const faixa = faixaDaLinha(fiscal, registro);
     // Quem presta contas como estado sai das DUAS contas: não entregou como
     // município porque não é um, e contá-lo como faltoso é a acusação que a
     // faixa `como-estado` existe para impedir. Ver `PRESTA_COMO_ESTADO`.
@@ -317,15 +313,13 @@ export function rankingPessoal(
   const plausiveis: number[] = [];
   let universo = 0, publicaram = 0, comoEstado = 0, prudencial = 0;
 
-  for (const [codigo, nome, uf, populacao, publicou, percentual, limitePrudencial]
-    of fiscal.municipios) {
-    const faixa = faixaDe(
-      percentual as number | null,
-      limitePrudencial as number | null,
-      fiscal.limites,
-      publicou as boolean | null,
-      codigo as number,
-    );
+  for (const registro of fiscal.municipios) {
+    const [codigo, nome, uf, populacao, publicou, percentual] = registro;
+    // `faixaDaLinha`, e não `faixaDe`: em 22/09/2026 este ranking listava
+    // oito municípios "acima do limite legal" — seis entre os sete primeiros,
+    // inclusive o primeiro — com o percentual calculado sobre uma RCL que a
+    // receita do próprio município desmentia por um fator de 2 a 5.
+    const faixa = faixaDaLinha(fiscal, registro);
     if (faixa === "como-estado") { comoEstado += 1; continue; }
     universo += 1;
     if (!publicou || typeof percentual !== "number") continue;

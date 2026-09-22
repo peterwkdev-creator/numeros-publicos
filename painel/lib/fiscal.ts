@@ -771,18 +771,157 @@ export function faixaDe(
   return "abaixo";
 }
 
+/**
+ * Acima disto, a RCL que o município declarou no RGF não descreve o caixa dele.
+ *
+ * Medido em 22/09/2026 sobre 3.240 municípios que entregaram os dois
+ * relatórios de 2024: a receita corrente (RREO) dividida pela RCL **ajustada**
+ * (RGF) — o denominador do percentual — tem mediana **1,041**, p95 1,16 e
+ * p99 2,03. São duas declarações do mesmo caixa, e na prática batem. Acima de
+ * 2,0 a RCL é que está baixa demais, e o percentual de pessoal sai inflado.
+ *
+ * **O limite NÃO tem folga sobre o p99, e o argumento é outro:** todos os 34
+ * municípios acima de 2,0 foram examinados um a um. 26 já eram implausíveis
+ * pela faixa (mais de 100%); os 8 restantes têm a série quebrando no mesmo
+ * quadrimestre em que a razão estoura. A primeira versão deste comentário
+ * citava a distribuição contra a RCL **bruta** (1,000/1,13/1,93) — outra
+ * grandeza, e o erro do `numeros-publicos.md`: limiar calibrado carrega a
+ * distância junto.
+ *
+ * **Só este lado.** Abaixo de 0,5 o suspeito é o RREO (Apiaí/SP, Porto
+ * Calvo/AL), e aí o percentual de pessoal não fica sob suspeita nenhuma.
+ */
+export const RAZAO_RECEITA_RCL_MAXIMA = 2.0;
+
+/**
+ * A segunda cláusula: razão ALTA sozinha não basta; com o SALTO, basta.
+ *
+ * Achada no mesmo dia, lendo o ranking depois da primeira versão da regra: ela
+ * tirou oito municípios do topo e **promoveu ao 1º lugar Promissão/SP**, com
+ * razão 1,92 — a mesma patologia, logo abaixo do limite. O limite fora
+ * escolhido pela distribuição, não pelo que separa os casos.
+ *
+ * O que separa é o MECANISMO. Se a RCL foi declarada k vezes menor, a razão
+ * sobe para ~1,04·k **e** o percentual salta k vezes sobre a própria história
+ * do município. Nos quebrados os dois batem — Promissão: razão/1,04 = 1,85,
+ * salto 1,81; Rubinéia/SP: 1,51 e 1,61; Gália/SP: 1,44 e 1,52. Nos casos
+ * reais a razão sobe sem o salto — Pontalinda/SP: 1,38 e 1,04; Turmalina/SP:
+ * 1,36 e 0,97 —, e eles continuam acusados, como devem.
+ *
+ * 1,4 está bem além do p95 da razão (1,16); 1,3 é um salto de 30% num
+ * quadrimestre sobre a mediana dos últimos seis. Nenhum dos dois sozinho
+ * separaria os grupos; juntos, separaram todos os casos examinados.
+ */
+export const RAZAO_RECEITA_RCL_COM_SALTO = 1.4;
+export const SALTO_MINIMO = 1.3;
+
+/**
+ * Quanto o percentual do período em destaque passa da mediana dos últimos
+ * seis períodos plausíveis do próprio município. `null` com menos de três
+ * pontos: sem história, não há salto a medir — e ausência de régua não é
+ * reprovação.
+ */
+export function saltoSobreAHistoria(
+  s: SnapshotFiscal,
+  codigo: number,
+  percentual: number,
+): number | null {
+  const anteriores = (s.serie[String(codigo)] ?? [])
+    .filter(([ex, pe]) => !(ex === s.exercicio && pe === s.periodo))
+    .filter(pontoPlausivel)
+    .map(([, , , v]) => v)
+    .slice(-6);
+  if (anteriores.length < 3) return null;
+  const ord = [...anteriores].sort((a, b) => a - b);
+  const meio = Math.floor(ord.length / 2);
+  const med = ord.length % 2 ? ord[meio]! : (ord[meio - 1]! + ord[meio]!) / 2;
+  return med > 0 ? percentual / med : null;
+}
+
+/**
+ * `true` quando a receita corrente declarada pelo próprio município é mais que
+ * o dobro da RCL sobre a qual ele calculou o percentual de pessoal.
+ *
+ * Achado em 22/09/2026: **oito municípios** estavam no ranking de "acima do
+ * limite legal", seis deles entre as sete primeiras posições — inclusive o
+ * primeiro —, com 71% a 99% declarados. As séries contam a mesma história:
+ * Aparecida/SP ficou entre 44% e 52% por treze quadrimestres e saltou para
+ * 93%; Juruá/AM, de 33–44% para 84%. Folha não dobra num quadrimestre;
+ * declaração quebra.
+ *
+ * **O primeiro lugar quebrou por outro caminho**, e é por isso que a régua é a
+ * RCL ajustada: Planalto Alegre/SC tem receita corrente IGUAL à RCL bruta
+ * (razão 1,00), e uma RCL ajustada de 43% da bruta — no país, o ajuste deixa
+ * 98% em mediana e 89% no p1. Contra a bruta ele passaria; contra o
+ * denominador que o percentual de fato usa, não.
+ *
+ * Só compara o MESMO exercício: receita de um ano contra RCL de outro não diz
+ * nada sobre nenhum dos dois.
+ */
+export function rclDesmentida(
+  s: SnapshotFiscal,
+  codigo: number,
+  rclAjustada: number | null,
+  percentual: number | null,
+): boolean {
+  const razao = razaoReceitaRcl(s, codigo, rclAjustada);
+  if (razao === null) return false;
+  if (razao > RAZAO_RECEITA_RCL_MAXIMA) return true;
+  if (razao <= RAZAO_RECEITA_RCL_COM_SALTO || percentual === null) return false;
+  const salto = saltoSobreAHistoria(s, codigo, percentual);
+  return salto !== null && salto > SALTO_MINIMO;
+}
+
+/** Receita corrente (RREO) sobre a RCL ajustada (RGF), no mesmo exercício. */
+export function razaoReceitaRcl(
+  s: SnapshotFiscal,
+  codigo: number,
+  rclAjustada: number | null,
+): number | null {
+  // O exercício da COLETA, sem recuar — o mesmo recorte do percentual em
+  // destaque. Ver `receitaDe` e o par dela.
+  const ex = s.receita?.exercicios[0];
+  if (!ex || ex.exercicio !== s.exercicio) return null;
+  const total = ex.porMunicipio[String(codigo)]?.[0];
+  if (typeof total !== "number" || !rclAjustada || rclAjustada <= 0) return null;
+  return total / rclAjustada;
+}
+
+/**
+ * A faixa de uma linha do snapshot — **o único lugar** que a decide para o site.
+ *
+ * `faixaDe` classifica o percentual pelo que ele diz; esta acrescenta o que
+ * ele não pode dizer sozinho: se o denominador dele é desmentido por outra
+ * declaração do mesmo município. Ranking, panorama dos estados, página do
+ * município e capa chamam esta, e não aquela — uma regra repetida em quatro
+ * lugares é quatro chances de o próximo chamador esquecê-la e voltar a acusar.
+ *
+ * Só as faixas que LEEM o percentual mudam. "Não consultado", "sem dado" e
+ * "presta contas como estado" não dependem do número, e continuam como estão.
+ */
+export function faixaDaLinha(s: SnapshotFiscal, linha: LinhaFiscal): Faixa {
+  const [codigo, , , , publicou, percentual, limitePrudencial, , rclAjustada] = linha;
+  const f = faixaDe(percentual, limitePrudencial, s.limites, publicou, codigo);
+  const leuOPercentual =
+    f === "abaixo" || f === "acima-prudencial" || f === "acima-legal";
+  return leuOPercentual && rclDesmentida(s, codigo, rclAjustada, percentual)
+    ? "implausivel"
+    : f;
+}
+
 /** Índice por código IBGE, para juntar com o município do observatório. */
 export function indexarFiscal(s: SnapshotFiscal): Map<number, Fiscal> {
   const mapa = new Map<number, Fiscal>();
-  for (const [codigo, , , , publicou, percentual, limitePrudencial,
-    despesa, rclAjustada] of s.municipios) {
+  for (const linha of s.municipios) {
+    const [codigo, , , , publicou, percentual, limitePrudencial,
+      despesa, rclAjustada] = linha;
     mapa.set(codigo, {
       publicou,
       percentual,
       limitePrudencial,
       despesa,
       rclAjustada,
-      faixa: faixaDe(percentual, limitePrudencial, s.limites, publicou, codigo),
+      faixa: faixaDaLinha(s, linha),
     });
   }
   return mapa;

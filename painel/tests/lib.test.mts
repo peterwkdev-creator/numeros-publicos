@@ -23,7 +23,8 @@ import {
   posicaoNaLista, rankingCache, rankingPessoal,
 } from "../lib/nacional.ts";
 import {
-  compararFuncoes, faixaDe, faixasEmLinha, FAIXA_DA_LETRA, funcoesDe,
+  compararFuncoes, faixaDaLinha, faixaDe, faixasEmLinha, FAIXA_DA_LETRA, funcoesDe,
+  indexarFiscal, saltoSobreAHistoria, type LinhaFiscal,
   funcoesRecentesDe, LETRA_FAIXA, parDeFuncoes,
   contiguos, indiceQuadrimestre, interrupcoes, pontoPlausivel, PRESTA_COMO_ESTADO,
   receitaDe, receitaRecenteDe, rotuloReceita, ROTULO_FAIXA, saudeDe,
@@ -1708,4 +1709,151 @@ test("o município normal é plausível", () => {
   // sempre falso — e a seção sumiria de 3.242 páginas sem nada reprovar.
   assert.equal(receitaDe(fiscalComReceita(), 1)!.plausivel, true);
   assert.equal(receitaDe(fiscalComReceita(), 2)!.plausivel, true);
+});
+
+// ------------------------- percentual sobre RCL que a receita desmente
+
+/**
+ * O caso de 22/09/2026, com os números de Aparecida/SP: 92,78% declarados
+ * sobre R$ 99 mi de RCL, com R$ 202 mi de receita corrente declarada no RREO
+ * do mesmo ano. Estava em 4º no ranking de "acima do limite legal".
+ *
+ * O `Normal` tem os MESMOS 92,78% sobre uma RCL que bate com a receita: é o
+ * controle. Sem ele, os testes abaixo passariam com a regra acusando ninguém
+ * — ou tirando todo mundo do ranking.
+ */
+function fiscalComRclDesmentida(): never {
+  const m = (codigo: number, nome: string, pct: number, rcl: number) =>
+    [codigo, nome, "SP", 30000, true, pct, 51.3, pct * rcl / 100, rcl];
+  const receita = (total: number) => [total, [[0, total]], []];
+  return {
+    exercicio: 2024,
+    periodo: 3,
+    limites: { prudencial: 51.3, legal: 54.0 },
+    municipios: [
+      m(1, "Aparecida", 92.78, 99_072_793),
+      m(2, "Normal", 92.78, 200_000_000),
+      m(3, "Receita Baixa", 53.67, 155_366_454),
+    ],
+    receita: {
+      periodo: 6, fonte: "", rotulos: ["TRANSFERÊNCIAS CORRENTES"],
+      rotulosDetalhe: [], paiDoDetalhe: [], colunasMunicipio: [],
+      exercicios: [{
+        exercicio: 2024, coletadoEm: null,
+        cobertura: { consultados: 3, publicaram: 3, naoFecham: 0 },
+        porMunicipio: {
+          "1": receita(202_457_165),   // 2,04 vezes a RCL
+          "2": receita(205_000_000),   // 1,03 vezes: o normal do país
+          "3": receita(63_865_119),    // 0,41: o lado suspeito é o RREO
+        },
+      }],
+    },
+  } as never;
+}
+
+test("RCL desmentida pela receita vira implausível — o caso de Aparecida", () => {
+  const s = fiscalComRclDesmentida();
+  const linha = (s as { municipios: LinhaFiscal[] }).municipios[0]!;
+  assert.equal(faixaDaLinha(s, linha), "implausivel");
+});
+
+test("o mesmo percentual sobre RCL coerente CONTINUA acima do limite", () => {
+  // O controle: a regra não pode desarmar a acusação legítima.
+  const s = fiscalComRclDesmentida();
+  const linha = (s as { municipios: LinhaFiscal[] }).municipios[1]!;
+  assert.equal(faixaDaLinha(s, linha), "acima-legal");
+});
+
+test("receita BAIXA não põe o pessoal sob suspeita — o lado é outro", () => {
+  // Porto Calvo/AL: razão 0,41. Ali quem está errado é o RREO, e o
+  // percentual de pessoal (sobre uma RCL coerente) continua valendo.
+  const s = fiscalComRclDesmentida();
+  const linha = (s as { municipios: LinhaFiscal[] }).municipios[2]!;
+  assert.equal(faixaDaLinha(s, linha), "acima-prudencial");
+});
+
+test("receita de OUTRO exercício não desmente nada", () => {
+  const s = fiscalComRclDesmentida() as { exercicio: number; municipios: LinhaFiscal[] };
+  s.exercicio = 2025;
+  assert.equal(faixaDaLinha(s as never, s.municipios[0]!), "acima-legal");
+});
+
+test("o ranking segue a faixa: Aparecida sai, o Normal fica", () => {
+  const ibge = {
+    colunas: ["codigo", "nome", "uf"],
+    municipios: [[1, "Aparecida", "SP"], [2, "Normal", "SP"], [3, "Receita Baixa", "SP"]],
+  } as never;
+  const r = rankingPessoal(fiscalComRclDesmentida(), ibge);
+  assert.deepEqual(r.acimaDoTeto.map((x) => x.nome), ["Normal"]);
+  assert.deepEqual(r.implausiveis.map((x) => x.nome), ["Aparecida"],
+    "não some: vai para a lista dos que não descrevem a prefeitura");
+});
+
+test("indexarFiscal — que a página e a capa usam — dá a mesma faixa", () => {
+  // As duas portas por onde a faixa chega à tela têm de concordar; se uma
+  // delas chamasse `faixaDe` direto, Aparecida sairia do ranking e seguiria
+  // acusada no selo da própria página.
+  const mapa = indexarFiscal(fiscalComRclDesmentida());
+  assert.equal(mapa.get(1)!.faixa, "implausivel");
+  assert.equal(mapa.get(2)!.faixa, "acima-legal");
+});
+
+// ---------------------- a segunda cláusula: razão alta E salto na série
+
+/**
+ * Promissão/SP, o 1º lugar que a primeira versão da regra PROMOVEU: razão
+ * 1,92 (abaixo de 2,0) e o percentual indo de ~47% para 85,53%. E Pontalinda
+ * /SP, o controle: razão 1,43 sem salto nenhum — caso real, fica acusado.
+ */
+function fiscalComSalto(): never {
+  const hist = (v: number) => [[2023, 1, true, v], [2023, 2, true, v],
+    [2023, 3, true, v], [2024, 1, true, v], [2024, 2, true, v]];
+  const m = (codigo: number, pct: number, rcl: number) =>
+    [codigo, "M" + codigo, "SP", 20000, true, pct, 51.3, pct * rcl / 100, rcl];
+  const rec = (t: number) => [t, [[0, t]], []];
+  return {
+    exercicio: 2024, periodo: 3,
+    limites: { prudencial: 51.3, legal: 54.0 },
+    municipios: [m(1, 85.53, 100), m(2, 52.5, 100), m(3, 85.53, 100)],
+    serie: {
+      "1": [...hist(47.3), [2024, 3, true, 85.53]],   // salto 1,81
+      "2": [...hist(50.3), [2024, 3, true, 52.5]],    // salto 1,04
+      "3": [[2024, 3, true, 85.53]],                  // sem história
+    },
+    receita: {
+      periodo: 6, fonte: "", rotulos: ["X"], rotulosDetalhe: [],
+      paiDoDetalhe: [], colunasMunicipio: [],
+      exercicios: [{ exercicio: 2024, coletadoEm: null,
+        cobertura: { consultados: 3, publicaram: 3, naoFecham: 0 },
+        porMunicipio: { "1": rec(192), "2": rec(143), "3": rec(192) } }],
+    },
+  } as never;
+}
+
+test("razão entre 1,4 e 2,0 COM salto na série é implausível — Promissão", () => {
+  const s = fiscalComSalto();
+  const l = (s as { municipios: LinhaFiscal[] }).municipios;
+  assert.equal(faixaDaLinha(s, l[0]!), "implausivel");
+});
+
+test("razão alta SEM salto continua acusada — Pontalinda, o caso real", () => {
+  // O controle desta cláusula: a razão sozinha não separa os grupos.
+  const s = fiscalComSalto();
+  const l = (s as { municipios: LinhaFiscal[] }).municipios;
+  assert.equal(faixaDaLinha(s, l[1]!), "acima-prudencial");
+});
+
+test("sem história, não há salto a medir — e isso não reprova", () => {
+  // Ausência de régua não é reprovação: com razão abaixo de 2,0 e sem série,
+  // só a primeira cláusula poderia marcar, e ela não se aplica.
+  const s = fiscalComSalto();
+  const l = (s as { municipios: LinhaFiscal[] }).municipios;
+  assert.equal(faixaDaLinha(s, l[2]!), "acima-legal");
+  assert.equal(saltoSobreAHistoria(s, 3, 85.53), null);
+});
+
+test("o salto ignora o próprio período e os pontos implausíveis", () => {
+  const s = fiscalComSalto() as { serie: Record<string, unknown[]> };
+  s.serie["1"]!.splice(2, 0, [2023, 2, true, 371]);   // um ponto quebrado
+  assert.ok(Math.abs(saltoSobreAHistoria(s as never, 1, 85.53)! - 85.53 / 47.3) < 1e-9);
 });

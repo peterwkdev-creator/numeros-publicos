@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { br, expandir, inteiroImpresso } from "../../lib/dados";
-import { FUNCOES_DA_PORTARIA, LIMITE_PLAUSIVEL } from "../../lib/fiscal";
+import {
+  faixaDaLinha, FUNCOES_DA_PORTARIA, LIMITE_PLAUSIVEL,
+} from "../../lib/fiscal";
 import { conjuntoDoSite, siteDe, trilha } from "../../lib/jsonld";
 import { lerFiscal, lerIdeb, lerSnapshot, SITE } from "../../lib/servidor";
 import estilos from "./ajuda.module.css";
@@ -68,11 +70,21 @@ export default async function PaginaAjuda() {
   // varrido, e falsa depois: um valor entre 3.244 desloca 0,10 ponto. Número
   // cravado em prosa vira mentira na coleta seguinte, e ninguém revisa a
   // página de ajuda. Agora sai da conta.
-  const declarados = fiscal.municipios
-    .map((m) => m[5])
-    .filter((v): v is number => typeof v === "number");
-  const plausiveis = declarados.filter((v) => v > 0 && v <= 100);
+  //
+  // E a classificação é a do SITE (`faixaDaLinha`), não um filtro próprio. O
+  // que havia aqui era `v > 0 && v <= 100` — que tratava 0% como implausível,
+  // ao contrário do resto do site, e não conhecia o terceiro caso (RCL
+  // desmentida pela receita, 22/09/2026). Duas definições do mesmo rótulo na
+  // mesma base é a segunda verdade que o ranking já registra como erro.
+  const declaradas = fiscal.municipios.filter((m) => typeof m[5] === "number");
+  const faixas = declaradas.map((m) => faixaDaLinha(fiscal, m));
+  const declarados = declaradas.map((m) => m[5] as number);
+  const plausiveis = declarados.filter((_, i) => faixas[i] !== "implausivel");
   const implausiveis = declarados.length - plausiveis.length;
+  // Os que só são implausíveis pela RCL: o percentual em si cabe em 0–100%.
+  const desmentidos = declarados.filter(
+    (v, i) => faixas[i] === "implausivel" && v >= 0 && v <= LIMITE_PLAUSIVEL,
+  ).length;
   const medi = (v: number[]) => v.reduce((s, x) => s + x, 0) / (v.length || 1);
   const deslocamento = plausiveis.length
     ? medi(declarados) - medi(plausiveis)
@@ -251,12 +263,32 @@ export default async function PaginaAjuda() {
           crise: descrevem formulários preenchidos errado.
         </p>
         <p>
+          E há um terceiro caso, que o percentual sozinho não revela: ele pode
+          estar entre 0 e 100% e ainda assim não descrever a prefeitura, quando
+          foi calculado sobre uma receita corrente líquida que{" "}
+          <strong>o próprio município desmente</strong>. Ele declara a receita
+          em dois relatórios diferentes, e no país inteiro as duas declarações
+          batem — a mediana da razão entre elas é 1,04. Quando a receita
+          corrente passa do dobro da receita líquida usada no cálculo — ou passa
+          de 1,4 vez <em>e</em> o percentual saltou mais de 30% sobre a própria
+          história do município, que é o salto que uma receita líquida
+          subdeclarada produz —, o denominador está baixo demais e o percentual
+          sai inflado. Um sinal sozinho não basta: há municípios com a razão
+          alta e o percentual de sempre, e municípios cujo percentual subiu com
+          a receita batendo — nesses, o número descreve a prefeitura e continua
+          valendo.
+          Aparecida/SP, que declarou entre 44% e 52% de 2020 até o início de
+          2024, declarou 93% no 3º quadrimestre de 2024 — com uma receita
+          corrente duas vezes maior que a receita líquida usada na conta. São{" "}
+          <strong>{br(desmentidos)}</strong> casos assim na coleta atual.
+        </p>
+        <p>
           Eles continuam sendo exibidos, e marcados. Corrigir seria inventar
           número; esconder seria escolher quais declarações você pode ver. Mas
-          eles <strong>ficam fora das médias</strong> e das frases de
-          tendência, e o motivo é medido: são{" "}
-          <strong>{br(implausiveis)}</strong> declarações fora da faixa de 0 a
-          100% entre as {br(declarados.length)} entregues, e juntas elas puxam
+          eles <strong>ficam fora das médias</strong>, do ranking e das frases
+          de tendência, e o motivo é medido: são{" "}
+          <strong>{br(implausiveis)}</strong> declarações implausíveis entre as{" "}
+          {br(declarados.length)} entregues, e juntas elas puxam
           a média nacional em <strong>{br(deslocamento, 2)} ponto</strong>
           {inteiroImpresso(deslocamento, 2) >= 2 ? "s" : ""} — de{" "}
           {br(medi(plausiveis), 2)}% para{" "}

@@ -267,15 +267,20 @@ export default async function Pagina() {
 
       {r.implausiveis.length > 0 && (
         <section className={estilos.texto}>
-          <h2>{br(r.implausiveis.length)} declarações fora da faixa possível</h2>
+          <h2>{br(r.implausiveis.length)} declarações que não descrevem a prefeitura</h2>
           <p className={estilos.ressalva}>
             Estes municípios declararam valores acima de{" "}
             <strong>{br(LIMITE_PLAUSIVEL, 0)}%</strong> da receita — o que
             descreveria uma prefeitura gastando com a folha mais do que arrecada
-            no ano inteiro.{" "}
+            no ano inteiro —, ou calcularam o percentual sobre uma receita
+            corrente líquida que a declaração de receita do{" "}
+            <strong>próprio município</strong> desmente: a receita corrente que
+            ele declarou é mais que o dobro dela — ou mais de 1,4 vez, com o
+            percentual saltando sobre a própria história —, quando no país
+            inteiro as duas batem.{" "}
             <strong>São quase certamente erros de preenchimento</strong>, e por
             isso ficam fora do ranking: ordená-los junto publicaria uma acusação
-            produzida por um formulário errado.
+            produzida por um relatório errado.
           </p>
           <p className={estilos.ressalva}>
             Também não são escondidos — omiti-los faria esta página afirmar que

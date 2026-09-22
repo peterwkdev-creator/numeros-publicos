@@ -12,7 +12,9 @@ import {
 } from "../../../lib/jsonld";
 import {
   compararFuncoes, DESLOCAMENTO_MINIMO, FUNCOES_DA_PORTARIA, funcoesRecentesDe,
-  indexarFiscal, interrupcoes, receitaRecenteDe, ROTULO_FAIXA, rotuloPeriodo, saudeDe,
+  indexarFiscal, interrupcoes, rclDesmentida, receitaDe, receitaRecenteDe,
+  SALTO_MINIMO, saltoSobreAHistoria,
+  ROTULO_FAIXA, rotuloPeriodo, saudeDe,
   slugDe, variacao,
 } from "../../../lib/fiscal";
 import { contarMetas, medianaGeral, trajetoriaDe } from "../../../lib/ideb";
@@ -91,7 +93,13 @@ export async function generateMetadata(
   if (!m) return {};
 
   const pop = m.valores["populacao-censo-2022"] ?? null;
-  const pessoal = m.fiscal?.percentual ?? null;
+  // O implausível NÃO entra na descrição. A página o exibe marcado e
+  // explicado; o trecho do buscador não tem espaço para a marca, e mostraria
+  // "371,02% da receita em pessoal" (Guaratinga/BA) ou "92,78%" (Aparecida/SP,
+  // RCL desmentida pela receita) como fato. Achado em 22/09/2026: o trecho
+  // repetia no Google o que a página se recusava a afirmar.
+  const pessoal =
+    m.fiscal?.faixa === "implausivel" ? null : m.fiscal?.percentual ?? null;
   const maiorFuncao = funcoesRecentesDe(fiscal, m.codigo)?.fatias[0] ?? null;
   const ultimoIdeb = trajetoriaDe(ideb, m.codigo)?.ultimo.observado ?? null;
   // A descrição carrega os NÚMEROS, não adjetivos. É o que aparece no
@@ -208,14 +216,40 @@ export default async function PaginaMunicipio(
     (x) => x.fiscal?.publicou !== null && x.fiscal?.publicou !== undefined).length;
 
   const f = m.fiscal;
+  // A receita corrente que DESMENTE a RCL, quando desmente — `null` nos
+  // outros casos. Vem de `receitaDe` (exercício da coleta, sem recuar), o
+  // mesmo recorte que `rclDesmentida` usou para marcar o município: se os
+  // dois lessem anos diferentes, a frase citaria um número e a marca outro.
+  const receitaContraRcl =
+    f && f.faixa === "implausivel" &&
+    rclDesmentida(fiscal, m.codigo, f.rclAjustada, f.percentual)
+      ? receitaDe(fiscal, m.codigo)?.total ?? null
+      : null;
+  // A segunda prova, quando existe: o salto do percentual sobre a própria
+  // história. É ela que decide os casos com razão entre 1,4 e 2,0, e a página
+  // tem de mostrá-la — senão o leitor vê "1,9 vezes mais" e não tem como saber
+  // por que 1,9 condena e 1,4 não.
+  const saltoRcl =
+    receitaContraRcl !== null && f?.percentual != null
+      ? saltoSobreAHistoria(fiscal, m.codigo, f.percentual)
+      : null;
 
   // Onde este município cai entre os do seu estado. Responde a pergunta que o
   // limite legal deixa intacta: "isso é muito?" -- um teto absoluto não diz se
   // o município é caso isolado ou se metade do estado está no mesmo lugar, e as
   // duas situações pedem leituras opostas da mesma porcentagem.
+  //
+  // A FAIXA decide quem entra, e não a faixa numérica que `posicaoEntre`
+  // aplica por dentro (0 a 100%). Em 22/09/2026 oito municípios passaram a
+  // ser implausíveis com percentuais DENTRO de 0–100% — calculados sobre uma
+  // RCL que a receita deles desmente —, e sem este filtro continuariam aqui:
+  // Aparecida/SP sairia do ranking e apareceria como "acima de 99% dos
+  // municípios do estado", e entraria na distribuição dos vizinhos.
+  const comparavelNaFaixa = (x: typeof f) =>
+    x?.faixa === "implausivel" ? null : x?.percentual;
   const posicao = posicaoEntre(
-    f?.percentual,
-    municipios.filter((x) => x.uf === m.uf).map((x) => x.fiscal?.percentual),
+    comparavelNaFaixa(f),
+    municipios.filter((x) => x.uf === m.uf).map((x) => comparavelNaFaixa(x.fiscal)),
   );
 
   const quadrimestre = `${fiscal.periodo}º quadrimestre de ${fiscal.exercicio}`;
@@ -466,7 +500,7 @@ export default async function PaginaMunicipio(
               <Termo
                 ancora="implausivel"
                 bloco
-                dica="O município declarou um percentual que nenhuma prefeitura pode ter — acima de 100% da receita, ou negativo. Não descreve uma crise: descreve um formulário preenchido errado. Fica exibido e marcado, e fora das médias."
+                dica="O percentual declarado não pode descrever a prefeitura: acima de 100% da receita, negativo, ou calculado sobre uma receita corrente líquida que a declaração de receita do próprio município desmente. Não descreve uma crise: descreve um relatório preenchido errado. Fica exibido e marcado, e fora das médias e do ranking."
               >
                 {ROTULO_FAIXA.implausivel}
               </Termo>
@@ -568,12 +602,42 @@ export default async function PaginaMunicipio(
             {m.nome} declarou <strong>{br(f.percentual, 2)}%</strong> da sua
             receita corrente líquida ajustada comprometidos com pessoal no{" "}
             {quadrimestre} —{" "}
-            {(f.percentual ?? 0) < 0
+            {/* Três causas, e cada uma pede a sua frase. A terceira entrou em
+                22/09/2026: oito municípios com 71% a 99% declarados estavam
+                no ranking de "acima do limite legal", e a frase antiga diria
+                deles "mais do que toda a receita", o que é falso. */}
+            {receitaContraRcl !== null && f.rclAjustada !== null ? (
+              <>
+                calculados sobre{" "}
+                <strong>{escala(f.rclAjustada).curto}</strong> de receita
+                corrente líquida, quando o próprio município declarou{" "}
+                <strong>{escala(receitaContraRcl).curto}</strong> de receita
+                corrente no mesmo ano,{" "}
+                <strong>
+                  {br(receitaContraRcl / f.rclAjustada, 1)} vezes mais
+                </strong>
+                . No país inteiro essas duas declarações batem — a mediana da
+                razão entre elas é 1,04 —, então aqui uma delas não descreve o
+                município, e o percentual depende justamente da que está baixa
+                demais
+                {saltoRcl !== null && saltoRcl > SALTO_MINIMO &&
+                  f.percentual !== null && (
+                  <>
+                    ; e o próprio percentual saltou para{" "}
+                    <strong>{br(f.percentual, 2)}%</strong> vindo de uma
+                    mediana de <strong>{br(f.percentual / saltoRcl, 1)}%</strong>{" "}
+                    nos períodos anteriores — o salto que uma receita líquida
+                    subdeclarada produz
+                  </>
+                )}
+              </>
+            ) : (f.percentual ?? 0) < 0
               ? "um gasto negativo com pessoal, que nenhuma prefeitura pode ter"
               : "mais do que toda a receita do município"}
-            . Isso não descreve uma prefeitura em crise: descreve um formulário
+            . Isso não descreve uma prefeitura em crise: descreve um relatório
             preenchido errado.
-            {(f.despesa ?? 0) > 0 && (f.rclAjustada ?? 0) > 0 && (
+            {receitaContraRcl === null &&
+              (f.despesa ?? 0) > 0 && (f.rclAjustada ?? 0) > 0 && (
               <>
                 {" "}Em reais, o relatório traz {escala(f.despesa).curto} de
                 despesa sobre {escala(f.rclAjustada).curto} de receita.

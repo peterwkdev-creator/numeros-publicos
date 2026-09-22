@@ -720,6 +720,30 @@ export const ROTULO_FAIXA: Record<Faixa, string> = {
 };
 
 /**
+ * A faixa como ela sai nos CSVs — a coluna `pessoal_situacao`.
+ *
+ * Até 22/09/2026 os CSVs largos traziam `pessoal_pct_rcl` sem a faixa, e os 40
+ * percentuais que a página marca como erro de preenchimento saíam como número
+ * comum: Planalto Alegre/SC, com 99,69% sobre uma RCL desmentida, era a
+ * prefeitura mais comprometida do estado para quem abrisse o arquivo. É a
+ * lição do `pessoal_publicou` de Brasília: **o arquivo viaja sem a explicação
+ * da página**, e é ele que alguém republica.
+ *
+ * Código e não o rótulo por extenso: no CSV quem lê é quem filtra, e
+ * `implausivel` se filtra sem acento nem espaço. O XLSX, lido por gente, leva o
+ * rótulo — ver `ROTULO_FAIXA`.
+ */
+export const CODIGO_FAIXA: Record<Faixa, string> = {
+  implausivel: "implausivel",
+  "acima-legal": "acima_limite_legal",
+  "acima-prudencial": "acima_limite_prudencial",
+  abaixo: "dentro_do_limite",
+  "sem-dado": "sem_relatorio",
+  "nao-consultado": "nao_consultado",
+  "como-estado": "presta_contas_como_estado",
+};
+
+/**
  * Entes que o IBGE lista como município mas que **não entregam RGF municipal**,
  * porque não são municípios.
  *
@@ -907,6 +931,42 @@ export function faixaDaLinha(s: SnapshotFiscal, linha: LinhaFiscal): Faixa {
   return leuOPercentual && rclDesmentida(s, codigo, rclAjustada, percentual)
     ? "implausivel"
     : f;
+}
+
+/**
+ * A série de pessoal de um município, com a MESMA condenação que o cartão.
+ *
+ * ## Por que `pontoPlausivel` sozinho não basta aqui
+ *
+ * Achado em 22/09/2026, horas depois de `faixaDaLinha` entrar no ar. O cartão
+ * das 14 páginas de RCL desmentida dizia "implausível" — e, na mesma página, a
+ * série desenhava aquele ponto, a tabela o exibia sem marca e a prosa dizia que
+ * Aparecida/SP "subiu 43,90 pontos percentuais": uma frase construída
+ * justamente sobre o número que o cartão acima declarava inválido.
+ * `pontoPlausivel` só sabe da faixa 0–100%; quem sabe da RCL é `faixaDaLinha`,
+ * e ela decide um ponto só.
+ *
+ * **Só o ponto do período em destaque** é condenado pela RCL: é o único cuja
+ * receita do mesmo exercício existe para comparar (`razaoReceitaRcl`). Os
+ * anteriores continuam pela régua de 0–100% — e são eles que mostram o salto.
+ *
+ * `usaveis` é o que entra em gráfico, variação e interrupções; `condenado`
+ * decide a marca na tabela, que continua exibindo tudo.
+ */
+export function serieDePessoal(
+  s: SnapshotFiscal,
+  codigo: number,
+  faixa: Faixa | undefined,
+): {
+  todos: PontoSerie[];
+  usaveis: PontoSerie[];
+  condenado: (p: PontoSerie) => boolean;
+} {
+  const todos = s.serie[String(codigo)] ?? [];
+  const condenado = (p: PontoSerie) =>
+    !pontoPlausivel(p) ||
+    (faixa === "implausivel" && p[0] === s.exercicio && p[1] === s.periodo);
+  return { todos, usaveis: todos.filter((p) => !condenado(p)), condenado };
 }
 
 /** Índice por código IBGE, para juntar com o município do observatório. */

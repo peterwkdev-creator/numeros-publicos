@@ -110,7 +110,7 @@ export async function GET() {
        "95% do teto legal. Passar dele já proíbe criar cargo, conceder aumento e contratar.",
        "%", "Lei de Responsabilidade Fiscal"],
       ["Situação",
-       "Onde o município cai em relação aos limites. Três ausências diferentes, que NÃO devem ser lidas como a mesma coisa: \"Ainda não consultado\" é afirmação sobre a coleta; \"Sem relatório entregue\" é sobre o município; \"Presta contas como estado\" é sobre a esfera — o Distrito Federal entrega o relatório, na esfera estadual, porque não é um município.",
+       "Onde o município cai em relação aos limites. Três ausências diferentes, que NÃO devem ser lidas como a mesma coisa: \"Ainda não consultado\" é afirmação sobre a coleta; \"Sem relatório entregue\" é sobre o município; \"Presta contas como estado\" é sobre a esfera — o Distrito Federal entrega o relatório, na esfera estadual, porque não é um município. \"Valor implausível\" quer dizer que o percentual ao lado NÃO descreve a prefeitura: passa de 100% da receita, é negativo, ou foi calculado sobre uma receita corrente líquida que a declaração de receita do próprio município desmente. É erro de preenchimento, não crise — ordenar a coluna do percentual sem filtrar esta põe esses casos no topo.",
        "—", "calculado"],
       ["Despesa liquidada total (R$)",
        "O que de fato foi gasto no exercício até o bimestre — não o orçado nem o empenhado. Acumulado no ano.",

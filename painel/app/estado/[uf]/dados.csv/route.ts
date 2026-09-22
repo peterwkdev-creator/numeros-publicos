@@ -1,7 +1,7 @@
 import { expandir } from "../../../../lib/dados";
 import { cabecalhosCsv, paraCsv } from "../../../../lib/csv";
 import { resumirEstado, slugUf } from "../../../../lib/estado";
-import { funcoesDe, receitaDe } from "../../../../lib/fiscal";
+import { CODIGO_FAIXA, funcoesDe, receitaDe } from "../../../../lib/fiscal";
 import { lerFiscal, lerSnapshot } from "../../../../lib/servidor";
 import { atualDeFuncoes, atualDeReceita } from "@/lib/fiscal";
 
@@ -38,7 +38,8 @@ export async function GET(
     ...indicadores.map((i) => i.codigo),
     // O par entra junto do percentual, como na base completa e pela mesma
     // razão: o arquivo viaja sem a explicação da página.
-    "pessoal_pct_rcl", "pessoal_despesa", "pessoal_rcl_ajustada",
+    "pessoal_pct_rcl", "pessoal_situacao",
+    "pessoal_despesa", "pessoal_rcl_ajustada",
     "pessoal_limite_prudencial", "pessoal_publicou",
     "pessoal_exercicio", "pessoal_periodo",
     "despesa_liquidada_total", "despesa_educacao", "despesa_saude",
@@ -62,6 +63,8 @@ export async function GET(
       m.codigo, m.nome, m.uf,
       ...indicadores.map((i) => m.valores[i.codigo] ?? null),
       m.fiscal?.percentual ?? null,
+      // A mesma coluna da base completa, na mesma posição. Ver `CODIGO_FAIXA`.
+      CODIGO_FAIXA[m.fiscal?.faixa ?? "nao-consultado"],
       m.fiscal?.despesa ?? null,
       m.fiscal?.rclAjustada ?? null,
       m.fiscal?.limitePrudencial ?? null,

@@ -1,6 +1,8 @@
 import { expandir } from "../../../lib/dados";
 import { cabecalhosCsv, paraCsv } from "../../../lib/csv";
-import { funcoesDe, indexarFiscal, receitaDe } from "../../../lib/fiscal";
+import {
+  CODIGO_FAIXA, funcoesDe, indexarFiscal, receitaDe,
+} from "../../../lib/fiscal";
 import { lerFiscal, lerSnapshot } from "../../../lib/servidor";
 import { atualDeFuncoes, atualDeReceita } from "@/lib/fiscal";
 
@@ -29,7 +31,10 @@ export async function GET() {
     // prefeitura de R$ 1,2 bilhão de uma de R$ 12 milhões. Aqui pesa mais que
     // na tela — **o arquivo viaja sem a explicação da página**, e é ele que
     // alguém republica. Mesma lição do `pessoal_publicou` de Brasília.
-    "pessoal_pct_rcl", "pessoal_despesa", "pessoal_rcl_ajustada",
+    // A situação vai COLADA no percentual: é ela que diz se aquele número
+    // descreve a prefeitura. Ver `CODIGO_FAIXA`.
+    "pessoal_pct_rcl", "pessoal_situacao",
+    "pessoal_despesa", "pessoal_rcl_ajustada",
     "pessoal_limite_prudencial", "pessoal_publicou",
     "pessoal_exercicio", "pessoal_periodo",
     // Da despesa por função entram só o total e as duas maiores. As 28 viriam
@@ -65,6 +70,7 @@ export async function GET() {
       m.codigo, m.nome, m.uf,
       ...indicadores.map((i) => m.valores[i.codigo] ?? null),
       f?.percentual ?? null,
+      CODIGO_FAIXA[f?.faixa ?? "nao-consultado"],
       // Vazio quando a fonte não publica a linha — são 91 os municípios com
       // despesa e sem RCL. Célula vazia e não zero, pela regra de sempre.
       f?.despesa ?? null,

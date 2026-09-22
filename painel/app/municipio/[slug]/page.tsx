@@ -14,7 +14,7 @@ import {
   compararFuncoes, DESLOCAMENTO_MINIMO, FUNCOES_DA_PORTARIA, funcoesRecentesDe,
   indexarFiscal, interrupcoes, rclDesmentida, receitaDe, receitaRecenteDe,
   SALTO_MINIMO, saltoSobreAHistoria,
-  ROTULO_FAIXA, rotuloPeriodo, saudeDe,
+  ROTULO_FAIXA, rotuloPeriodo, saudeDe, serieDePessoal,
   slugDe, variacao,
 } from "../../../lib/fiscal";
 import { contarMetas, medianaGeral, trajetoriaDe } from "../../../lib/ideb";
@@ -253,9 +253,15 @@ export default async function PaginaMunicipio(
   );
 
   const quadrimestre = `${fiscal.periodo}º quadrimestre de ${fiscal.exercicio}`;
-  const serie = fiscal.serie[String(m.codigo)] ?? [];
-  const delta = variacao(serie);
-  const vazios = interrupcoes(serie);
+  // `serieDePessoal`, e não a série crua: o ponto que o cartão condena pela
+  // RCL desmentida não pode sustentar a variação nem o traço do gráfico.
+  const { todos: serie, usaveis, condenado } =
+    serieDePessoal(fiscal, m.codigo, f?.faixa);
+  const delta = variacao(usaveis);
+  // Quando o último ponto publicado é o condenado, "o último quadrimestre
+  // publicado" deixa de ser o ponto de chegada da variação -- e a frase diz isso.
+  const finalCondenado = serie.length > 0 && condenado(serie[serie.length - 1]!);
+  const vazios = interrupcoes(usaveis);
   // A aplicação em saúde (SIOPS). `saudeDe` já descarta os anos ausentes, e
   // devolve `null` quando o município não tem ponto nenhum -- Brasília e Boa
   // Esperança do Norte/MT são os dois casos, e os dois são fato da fonte:
@@ -820,14 +826,14 @@ export default async function PaginaMunicipio(
                 O comprometimento com pessoal <strong>subiu {br(delta, 2)} ponto
                 {Math.abs(delta) >= 2 ? "s" : ""} percentua
                 {Math.abs(delta) >= 2 ? "is" : "l"}</strong> entre o primeiro e o
-                último quadrimestre publicado.
+                último quadrimestre {finalCondenado ? "com valor plausível" : "publicado"}.
               </>
             ) : delta < 0 ? (
               <>
                 O comprometimento com pessoal <strong>caiu {br(Math.abs(delta), 2)}{" "}
                 ponto{Math.abs(delta) >= 2 ? "s" : ""} percentua
                 {Math.abs(delta) >= 2 ? "is" : "l"}</strong> entre o primeiro e o
-                último quadrimestre publicado.
+                último quadrimestre {finalCondenado ? "com valor plausível" : "publicado"}.
               </>
             ) : (
               <>O comprometimento com pessoal ficou <strong>estável</strong>.</>
@@ -858,7 +864,7 @@ export default async function PaginaMunicipio(
           </p>
           <div className={estilos.grafico}>
             <SerieSvg
-              pontos={serie}
+              pontos={usaveis}
               prudencial={f?.limitePrudencial ?? fiscal.limites.prudencial}
               legal={fiscal.limites.legal}
               municipio={m.nome}
@@ -874,11 +880,13 @@ export default async function PaginaMunicipio(
                 </tr>
               </thead>
               <tbody>
-                {serie.map(([ex, pe, , pct]) => {
+                {serie.map((ponto) => {
+                  const [ex, pe, , pct] = ponto;
                   // Ponto implausivel na serie precisa da mesma marca que no
                   // cartao. Paripueira/AL declarou -19,35% em 2024/1: sem
-                  // marca, a linha parece o melhor resultado da tabela.
-                  const fora = pct < 0 || pct > 100;
+                  // marca, a linha parece o melhor resultado da tabela. E a
+                  // regra e a do cartao, inclusive a RCL desmentida.
+                  const fora = condenado(ponto);
                   return (
                     <tr key={`${ex}-${pe}`}>
                       <th scope="row">{rotuloPeriodo(ex, pe)}</th>

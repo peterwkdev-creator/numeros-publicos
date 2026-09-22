@@ -28,7 +28,7 @@ import {
   funcoesRecentesDe, LETRA_FAIXA, parDeFuncoes,
   contiguos, indiceQuadrimestre, interrupcoes, pontoPlausivel, PRESTA_COMO_ESTADO,
   receitaDe, receitaRecenteDe, rotuloReceita, ROTULO_FAIXA, saudeDe,
-  serieFuncoesDe,
+  serieFuncoesDe, serieDePessoal, CODIGO_FAIXA, variacao,
   type PontoSerie, type Receita,
 } from "../lib/fiscal.ts";
 import { posicaoEntre, posicaoNoEstado } from "../lib/posicao.ts";
@@ -1856,4 +1856,54 @@ test("o salto ignora o próprio período e os pontos implausíveis", () => {
   const s = fiscalComSalto() as { serie: Record<string, unknown[]> };
   s.serie["1"]!.splice(2, 0, [2023, 2, true, 371]);   // um ponto quebrado
   assert.ok(Math.abs(saltoSobreAHistoria(s as never, 1, 85.53)! - 85.53 / 47.3) < 1e-9);
+});
+
+// ---------------------- a série obedece à MESMA condenação que o cartão
+
+test("série: o ponto que o cartão condena sai da variação e do gráfico", () => {
+  // Achado em 22/09/2026: a página de Aparecida dizia "subiu 43,90 pontos
+  // percentuais", calculado sobre o ponto que o cartão acima dela declarava
+  // implausível. Com a história em 47,3 e o ponto condenado fora, a variação
+  // é zero — e não os 38,23 que a série crua daria.
+  const s = fiscalComSalto();
+  const faixa = indexarFiscal(s).get(1)!.faixa;
+  assert.equal(faixa, "implausivel");
+  const { todos, usaveis, condenado } = serieDePessoal(s, 1, faixa);
+  assert.equal(todos.length, 6, "a tabela continua exibindo tudo");
+  assert.equal(usaveis.length, 5);
+  assert.ok(condenado([2024, 3, true, 85.53]));
+  assert.equal(variacao(usaveis), 0);
+  assert.ok(Math.abs(variacao(todos)! - 38.23) < 1e-9,
+    "o controle: a série crua é que produzia a frase falsa");
+});
+
+test("série: os pontos ANTERIORES não são condenados pela RCL de agora", () => {
+  // A receita que desmente a RCL é a do exercício em destaque; os pontos de
+  // antes são justamente os que mostram o salto, e continuam valendo.
+  const s = fiscalComSalto();
+  const { condenado } = serieDePessoal(s, 1, "implausivel");
+  assert.equal(condenado([2024, 2, true, 47.3]), false);
+  assert.equal(condenado([2024, 3, true, 371]), true, "e 0–100% continua valendo");
+});
+
+test("série: sem condenação na faixa, nenhum ponto plausível sai — Pontalinda", () => {
+  const s = fiscalComSalto();
+  const faixa = indexarFiscal(s).get(2)!.faixa;
+  assert.equal(faixa, "acima-prudencial");
+  const { todos, usaveis } = serieDePessoal(s, 2, faixa);
+  assert.equal(usaveis.length, todos.length);
+  assert.ok(Math.abs(variacao(usaveis)! - (52.5 - 50.3)) < 1e-9);
+});
+
+test("CODIGO_FAIXA: um código por faixa, distinto e filtrável", () => {
+  // O código vai para o CSV, onde quem lê filtra: sem acento, sem espaço, e
+  // duas faixas nunca com o mesmo código — senão o filtro junta o que a
+  // página separa.
+  const faixas = Object.keys(ROTULO_FAIXA);
+  assert.deepEqual(Object.keys(CODIGO_FAIXA).sort(), faixas.sort());
+  const codigos = Object.values(CODIGO_FAIXA);
+  assert.equal(new Set(codigos).size, codigos.length);
+  for (const c of codigos) assert.match(c, /^[a-z_]+$/);
+  assert.equal(CODIGO_FAIXA["como-estado"], "presta_contas_como_estado",
+    "o mesmo código que `pessoal_publicou` já publica para Brasília");
 });

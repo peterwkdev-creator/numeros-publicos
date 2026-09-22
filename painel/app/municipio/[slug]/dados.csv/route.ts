@@ -1,6 +1,8 @@
 import { expandir } from "../../../../lib/dados";
 import { cabecalhosCsv, paraCsv } from "../../../../lib/csv";
-import { funcoesDe, indexarFiscal, slugDe } from "../../../../lib/fiscal";
+import {
+  CODIGO_FAIXA, funcoesDe, indexarFiscal, slugDe,
+} from "../../../../lib/fiscal";
 import { trajetoriaDe } from "../../../../lib/ideb";
 import { lerFiscal, lerIdeb, lerSnapshot } from "../../../../lib/servidor";
 import { rotuloDownload } from "../../../../lib/censo";
@@ -78,6 +80,14 @@ export async function GET(
       `${fiscal.exercicio}/${fiscal.periodo}`, f.rclAjustada, "R$", "SICONFI",
       fiscal.coletadoEm ?? ""]);
   }
+  // A SITUAÇÃO do período em destaque, como linha e não como coluna — o
+  // cabeçalho fica intacto, que é o que este formato promete. Sem ela, o
+  // percentual que a página condena por RCL desmentida saía aqui como número
+  // comum. Mesmo código da coluna `pessoal_situacao` dos CSVs largos.
+  linhas.push([...comum, "Situação do gasto com pessoal",
+    `${fiscal.exercicio}/${fiscal.periodo}`,
+    CODIGO_FAIXA[f?.faixa ?? "nao-consultado"], "código", "calculado",
+    fiscal.coletadoEm ?? ""]);
 
   // A despesa por função entra como linhas novas, e não como colunas: é
   // exatamente o que o formato longo compra. Um CSV largo precisaria de 28

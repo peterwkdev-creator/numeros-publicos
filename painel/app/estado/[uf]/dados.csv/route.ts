@@ -1,9 +1,9 @@
 import { expandir } from "../../../../lib/dados";
 import { cabecalhosCsv, paraCsv } from "../../../../lib/csv";
 import { resumirEstado, slugUf } from "../../../../lib/estado";
-import { funcoesDe } from "../../../../lib/fiscal";
+import { funcoesDe, receitaDe } from "../../../../lib/fiscal";
 import { lerFiscal, lerSnapshot } from "../../../../lib/servidor";
-import { atualDeFuncoes } from "@/lib/fiscal";
+import { atualDeFuncoes, atualDeReceita } from "@/lib/fiscal";
 
 /**
  * Os municípios de um estado em CSV.
@@ -43,6 +43,10 @@ export async function GET(
     "pessoal_exercicio", "pessoal_periodo",
     "despesa_liquidada_total", "despesa_educacao", "despesa_saude",
     "despesa_exercicio", "despesa_periodo",
+    // As mesmas colunas da base completa, e a mesma ressalva: transferencias
+    // e impostos/taxas NAO somam o total -- ha seis outras componentes.
+    "receita_corrente_total", "receita_transferencias", "receita_impostos_taxas",
+    "receita_exercicio", "receita_periodo",
   ];
 
   const acha = (
@@ -52,6 +56,8 @@ export async function GET(
 
   const linhas = r.municipios.map((m) => {
     const fn = funcoesDe(fiscal, m.codigo);
+    // Nunca `receitaRecenteDe` aqui: ver o comentario da base completa.
+    const rc = receitaDe(fiscal, m.codigo);
     return [
       m.codigo, m.nome, m.uf,
       ...indicadores.map((i) => m.valores[i.codigo] ?? null),
@@ -74,6 +80,11 @@ export async function GET(
       acha(fn, "Saúde"),
       fiscal.funcoes ? atualDeFuncoes(fiscal.funcoes)?.exercicio ?? null : null,
       fiscal.funcoes?.periodo ?? null,
+      rc?.total ?? null,
+      rc?.transferida ?? null,
+      rc?.tributaria ?? null,
+      fiscal.receita ? atualDeReceita(fiscal.receita)?.exercicio ?? null : null,
+      fiscal.receita?.periodo ?? null,
     ];
   });
 

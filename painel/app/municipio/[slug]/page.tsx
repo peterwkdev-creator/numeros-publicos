@@ -12,14 +12,14 @@ import {
 } from "../../../lib/jsonld";
 import {
   compararFuncoes, DESLOCAMENTO_MINIMO, FUNCOES_DA_PORTARIA, funcoesRecentesDe,
-  indexarFiscal, interrupcoes, ROTULO_FAIXA, rotuloPeriodo, saudeDe, slugDe,
-  variacao,
+  indexarFiscal, interrupcoes, receitaRecenteDe, ROTULO_FAIXA, rotuloPeriodo, saudeDe,
+  slugDe, variacao,
 } from "../../../lib/fiscal";
 import { contarMetas, medianaGeral, trajetoriaDe } from "../../../lib/ideb";
 import { medianasCache, medidasDe, taxasCache } from "../../../lib/censo";
 import TabelaCenso from "../../componentes/tabela-censo";
 import { cartaoSocial, lerFiscal, lerIdeb, lerSnapshot, SITE } from "../../../lib/servidor";
-import FuncoesBarras from "../../componentes/funcoes-barras";
+import ComposicaoBarras from "../../componentes/composicao-barras";
 import DistribuicaoSvg from "../../componentes/distribuicao-svg";
 import IdebSvg from "../../componentes/ideb-svg";
 import Termo from "../../componentes/termo";
@@ -254,6 +254,10 @@ export default async function PaginaMunicipio(
   // entregou o RREO -- que é um relatório diferente do RGF, entregue em outra
   // data, então quem tem um pode perfeitamente não ter o outro.
   const funcoes = funcoesRecentesDe(fiscal, m.codigo);
+  // A pergunta que vinha ANTES e que a página não respondia: de onde vem o
+  // dinheiro. Sai do mesmo relatório das funções (RREO), anexo diferente --
+  // então quem tem uma seção quase sempre tem a outra, mas não por construção.
+  const receita = receitaRecenteDe(fiscal, m.codigo);
   // O ano vem de `funcoes`, NÃO de `atualDeFuncoes`. São coisas diferentes
   // quando o município não entregou o exercício mais novo, e a diferença é o
   // defeito que esta seção tinha: o rótulo dizia 2024 ou a seção sumia, e
@@ -957,7 +961,7 @@ export default async function PaginaMunicipio(
             </p>
           )}
           <div className={estilos.rolagem}>
-            <FuncoesBarras
+            <ComposicaoBarras
               fatias={funcoes.fatias}
               total={funcoes.total}
               municipio={m.nome}
@@ -978,6 +982,82 @@ export default async function PaginaMunicipio(
             soma delas fecha com o total que o próprio município declarou.
             Fonte: {fiscal.funcoes?.fonte}.{" "}
             <Link href="/ajuda/#funcao">O que é despesa liquidada?</Link>
+          </p>
+        </section>
+      )}
+
+      {/* A pergunta que vem ANTES da de cima, e que o site não respondia.
+          Fica DEPOIS na página de propósito: quem chega aqui veio buscar o
+          gasto, e "de onde vem" é a explicação que faz aquele número mudar de
+          sentido -- o município mediano do país custeia 7% do que gasta. */}
+      {receita && receita.total !== null && receita.total > 0 && (
+        <section className={estilos.texto}>
+          <h2>De onde vem o dinheiro que {m.nome} gasta</h2>
+          <p>
+            No {receita.periodo}º bimestre de {receita.exercicio},{" "}
+            {m.nome} arrecadou{" "}
+            <strong>{escala(receita.total).curto}</strong> de receita corrente.
+            {receita.transferida !== null && (
+              <>
+                {" "}
+                <strong>{br((receita.transferida / receita.total) * 100, 1)}%</strong>{" "}
+                veio de <strong>transferências</strong> — dinheiro que a União,
+                o estado e os fundos repassam
+              </>
+            )}
+            {receita.tributaria !== null && (
+              <>
+                , e{" "}
+                <strong>{br((receita.tributaria / receita.total) * 100, 1)}%</strong>{" "}
+                de <strong>impostos, taxas e contribuição de melhoria</strong>
+                {" "}cobrados de quem mora e trabalha no município
+              </>
+            )}
+            . É a outra metade da seção acima: ali está para onde o dinheiro
+            vai, aqui de onde ele veio.
+          </p>
+          <div className={estilos.rolagem}>
+            <ComposicaoBarras
+              fatias={receita.fatias}
+              total={receita.total}
+              municipio={m.nome}
+              legenda="Composição da receita corrente"
+              cabecalho="Origem"
+              cabecalhoPercentual="% da receita"
+              nomeDaCauda={["origem", "origens"]}
+            />
+          </div>
+          {receita.detalhe.length > 0 && (
+            <>
+              <h3 className={estilos.subtitulo}>Dentro dessas origens</h3>
+              {/* Lista, e não linhas da tabela acima: estes valores estão
+                  CONTIDOS nas componentes de lá. Numa tabela só, quem somasse
+                  a coluna encontraria mais dinheiro do que o município
+                  arrecadou -- e o número continuaria bem formado. */}
+              <ul className={estilos.lista}>
+                {receita.detalhe.map((d) => (
+                  <li key={d.nome}>
+                    <strong title={escala(d.valor).exato}>
+                      {escala(d.valor).curto}
+                    </strong>{" "}
+                    de {d.nome}
+                    {d.dentroDe && <>, dentro de {d.dentroDe}</>}
+                    {d.percentual !== null && (
+                      <> ({br(d.percentual, 1)}% da receita corrente)</>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+          <p className={estilos.ressalva}>
+            Receita <strong>corrente</strong> realizada até o bimestre — o que
+            de fato entrou no caixa, não o que foi orçado. Não inclui receita de
+            capital (empréstimos e venda de bens), que é dinheiro de natureza
+            diferente e não custeia o dia a dia. As origens listadas somam o
+            total que o próprio município declarou; os itens de{" "}
+            <em>dentro dessas origens</em> já estão contados nelas e não se
+            somam por fora. Fonte: {fiscal.receita?.fonte}.
           </p>
         </section>
       )}

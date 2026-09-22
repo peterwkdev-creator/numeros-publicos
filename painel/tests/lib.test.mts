@@ -26,7 +26,9 @@ import {
   compararFuncoes, faixaDe, faixasEmLinha, FAIXA_DA_LETRA, funcoesDe,
   funcoesRecentesDe, LETRA_FAIXA, parDeFuncoes,
   contiguos, indiceQuadrimestre, interrupcoes, pontoPlausivel, PRESTA_COMO_ESTADO,
-  ROTULO_FAIXA, saudeDe, serieFuncoesDe, type PontoSerie,
+  receitaDe, receitaRecenteDe, rotuloReceita, ROTULO_FAIXA, saudeDe,
+  serieFuncoesDe,
+  type PontoSerie, type Receita,
 } from "../lib/fiscal.ts";
 import { posicaoEntre, posicaoNoEstado } from "../lib/posicao.ts";
 import { emContracao } from "../lib/estado.ts";
@@ -1517,4 +1519,166 @@ test("a trilha de dois níveis não inventa um terceiro", () => {
     { nome: "Gasto com pessoal", caminho: "/ranking/gasto-com-pessoal/" },
   ]);
   assert.equal(t.itemListElement.length, 2);
+});
+
+// -------------------------------------------- de onde vem o dinheiro
+
+/**
+ * Um bloco de receita com os dois municípios que a coleta real produziu.
+ *
+ * `1` é o caso completo: duas componentes que somam e três linhas de detalhe
+ * dentro delas. `2` não tem detalhe nenhum — existe para provar que a seção
+ * não depende dele.
+ */
+function fiscalComReceita(): never {
+  return {
+    limites: LIMITES,
+    municipios: [],
+    receita: {
+      periodo: 6,
+      fonte: "SICONFI/Tesouro Nacional — RREO Anexo 01",
+      rotulos: ["TRANSFERÊNCIAS CORRENTES",
+                "IMPOSTOS, TAXAS E CONTRIBUIÇÕES DE MELHORIA"],
+      rotulosDetalhe: ["Transferências da União e de suas Entidades",
+                       "Impostos", "Taxas"],
+      paiDoDetalhe: [0, 1, 1],
+      colunasMunicipio: ["total", "valores", "detalhe"],
+      exercicios: [
+        {
+          exercicio: 2024,
+          coletadoEm: "2026-09-22T05:00:00+00:00",
+          cobertura: { consultados: 2, publicaram: 2, naoFecham: 0 },
+          porMunicipio: {
+            "1": [1000, [[0, 900], [1, 100]], [[0, 700], [1, 90], [2, 10]]],
+            "2": [500, [[0, 500]], []],
+          },
+        },
+      ],
+    },
+  } as never;
+}
+
+test("a receita separa o que soma do que está dentro", () => {
+  // O contrato inteiro desta seção. `detalhe` são linhas contidas nas de
+  // `fatias`; concatenar as duas conta o mesmo dinheiro duas vezes.
+  const r = receitaDe(fiscalComReceita(), 1)!;
+  assert.equal(r.total, 1000);
+  assert.equal(r.fatias.reduce((a, f) => a + f.valor, 0), 1000, "as fatias FECHAM");
+  assert.equal(r.detalhe.length, 3);
+});
+
+test("somar fatias com detalhe estouraria — o contrafactual", () => {
+  // Para o teste acima não passar por acaso: é exatamente o `reduce` distraído,
+  // e ele tem de dar um número maior que o total declarado.
+  const r = receitaDe(fiscalComReceita(), 1)!;
+  const tudo = [...r.fatias, ...r.detalhe].reduce((a, f) => a + f.valor, 0);
+  assert.ok(tudo > r.total!, `somar tudo daria ${tudo} contra ${r.total}`);
+});
+
+test("cada detalhe diz DENTRO DE quem ele está", () => {
+  // Sem isso a página apresentaria os 700 da União ao lado dos 900 de
+  // transferências como se fossem duas parcelas somáveis.
+  const r = receitaDe(fiscalComReceita(), 1)!;
+  // `dentroDe` passa pelo mesmo `rotuloReceita` das fatias: se viesse cru, a
+  // frase citaria a mesma conta com duas grafias na mesma tela.
+  const porNome = new Map(r.detalhe.map((d) => [d.nome, d.dentroDe]));
+  assert.equal(porNome.get("Transferências da União e de suas Entidades"),
+               "Transferências correntes");
+  assert.equal(porNome.get("Impostos"),
+               "Impostos, taxas e contribuições de melhoria");
+});
+
+test("as duas contas da frase saem pelo NOME, nunca por índice", () => {
+  // `rotulos` é ordenado por peso, então a posição muda entre coletas. Um
+  // índice cravado exibiria a conta errada com o rótulo certo.
+  const r = receitaDe(fiscalComReceita(), 1)!;
+  assert.equal(r.transferida, 900);
+  assert.equal(r.tributaria, 100);
+});
+
+test("a ordem de `rotulos` pode mudar sem trocar os números", () => {
+  // O canário da regra acima: invertendo a ordem do bloco, a frase da página
+  // tem de continuar dizendo a mesma coisa.
+  const s = fiscalComReceita();
+  const bloco = (s as { receita: Receita }).receita;
+  bloco.rotulos = ["IMPOSTOS, TAXAS E CONTRIBUIÇÕES DE MELHORIA",
+                   "TRANSFERÊNCIAS CORRENTES"];
+  // Os índices acompanham a troca; é o dado que o exportador produziria.
+  bloco.exercicios[0]!.porMunicipio["1"] = [1000, [[1, 900], [0, 100]],
+                                            [[0, 700], [1, 90], [2, 10]]];
+  const r = receitaDe(s, 1)!;
+  assert.equal(r.transferida, 900, "a conta é a mesma com outra ordem");
+  assert.equal(r.tributaria, 100);
+});
+
+test("município sem detalhe mantém a seção", () => {
+  const r = receitaDe(fiscalComReceita(), 2)!;
+  assert.ok(r, "a seção não pode depender do detalhe");
+  assert.equal(r.detalhe.length, 0);
+  assert.equal(r.fatias.length, 1);
+});
+
+test("quem não publicou receita não ganha seção de travessões", () => {
+  assert.equal(receitaDe(fiscalComReceita(), 99), null);
+  assert.equal(receitaDe({ limites: LIMITES, municipios: [] } as never, 1), null,
+               "sem o bloco inteiro, também null");
+});
+
+/** Como `fiscalComReceita`, mas com dois anos e um município que parou em 2023. */
+function receitaDesencontrada(): never {
+  const bloco = (fiscalComReceita() as { receita: Receita }).receita;
+  bloco.exercicios = [
+    {
+      exercicio: 2024, coletadoEm: null,
+      cobertura: { consultados: 2, publicaram: 1, naoFecham: 0 },
+      porMunicipio: { "1": [1000, [[0, 900], [1, 100]], []] },
+    },
+    {
+      exercicio: 2023, coletadoEm: null,
+      cobertura: { consultados: 2, publicaram: 2, naoFecham: 0 },
+      porMunicipio: { "1": [800, [[0, 700], [1, 100]], []],
+                      "2": [400, [[0, 400]], []] },
+    },
+  ];
+  return { limites: LIMITES, municipios: [], receita: bloco } as never;
+}
+
+test("receitaDe NÃO recua — é o que impede misturar anos num CSV", () => {
+  // A mesma regra de `funcoesDe`, e ela entra ANTES de existir um segundo ano
+  // coletado: hoje as duas funções coincidem, então a diferença só apareceria
+  // no dia da segunda varredura, calada, numa linha de planilha.
+  const s = receitaDesencontrada();
+  assert.equal(receitaDe(s, 2), null, "sem 2024, o agregado não recebe nada");
+  assert.equal(receitaDe(s, 1)!.exercicio, 2024);
+});
+
+test("receitaRecenteDe recua, e devolve o ano junto", () => {
+  // O ano volta dentro do resultado para o rótulo da página não poder divergir
+  // do dado — foi o defeito que a seção de funções teve.
+  const s = receitaDesencontrada();
+  assert.equal(receitaRecenteDe(s, 2)!.exercicio, 2023);
+  assert.equal(receitaRecenteDe(s, 2)!.total, 400);
+  assert.equal(receitaRecenteDe(s, 1)!.exercicio, 2024);
+});
+
+test("caixa alta vira caixa de frase, e nome próprio sobrevive", () => {
+  // O SICONFI publica as componentes gritando e o detalhe em caixa mista.
+  // Minusculizar tudo faria "da União" virar "da união" -- por isso a
+  // conversão só toca no que não tem minúscula nenhuma a preservar.
+  assert.equal(rotuloReceita("TRANSFERÊNCIAS CORRENTES"), "Transferências correntes");
+  assert.equal(rotuloReceita("IMPOSTOS, TAXAS E CONTRIBUIÇÕES DE MELHORIA"),
+               "Impostos, taxas e contribuições de melhoria");
+  assert.equal(rotuloReceita("Transferências da União e de suas Entidades"),
+               "Transferências da União e de suas Entidades",
+               "tem minúscula: fica exatamente como veio");
+  assert.equal(rotuloReceita("Taxas"), "Taxas");
+});
+
+test("os downloads NÃO usam o rótulo de tela", () => {
+  // A grafia da fonte é o que permite cruzar o arquivo com o dado original.
+  // `receitaDe` transforma só os nomes que devolve; os números e as buscas por
+  // conta continuam sobre `rotulos` cru — este teste prova a segunda metade.
+  const r = receitaDe(fiscalComReceita(), 1)!;
+  assert.equal(r.fatias[0]!.nome, "Transferências correntes", "tela");
+  assert.equal(r.transferida, 900, "a busca por conta usa o nome CRU da fonte");
 });

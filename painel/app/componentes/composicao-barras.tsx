@@ -1,9 +1,16 @@
 import { br, escala } from "../../lib/dados";
 import type { FatiaFuncao } from "../../lib/fiscal";
-import estilos from "./funcoes-barras.module.css";
+import estilos from "./composicao-barras.module.css";
 
 /**
- * Para onde vai o dinheiro do município, por função orçamentária.
+ * A composição de um total em partes, como tabela de barras.
+ *
+ * Nasceu para a despesa por função ("para onde vai o dinheiro") e em
+ * 22/09/2026 passou a servir também a composição da receita ("de onde vem").
+ * **Generalizada em vez de copiada**: as decisões de acessibilidade aqui
+ * dentro -- `th scope`, a barra `aria-hidden` que repete a célula vizinha, a
+ * mesma classe no `th` e no `td` da coluna que some em tela estreita -- têm
+ * dono, e uma segunda cópia significaria consertar metade delas na próxima vez.
  *
  * Uma tabela, não um gráfico de pizza. Pizza obriga a comparar ângulos, que é
  * a comparação que o olho faz pior — e com catorze fatias vira decoração. Aqui
@@ -29,14 +36,23 @@ import estilos from "./funcoes-barras.module.css";
 /** Quantas funções aparecem nomeadas antes de a cauda virar uma linha só. */
 const NOMEADAS = 8;
 
-export default function FuncoesBarras({
+export default function ComposicaoBarras({
   fatias,
   total,
   municipio,
+  legenda = "Despesa liquidada por função",
+  cabecalho = "Função",
+  cabecalhoPercentual = "% do gasto",
+  /** O singular e o plural da cauda agrupada, quando ela existir. */
+  nomeDaCauda = ["função", "funções"],
 }: {
   fatias: FatiaFuncao[];
   total: number | null;
   municipio: string;
+  legenda?: string;
+  cabecalho?: string;
+  cabecalhoPercentual?: string;
+  nomeDaCauda?: [singular: string, plural: string];
 }) {
   if (fatias.length === 0) return null;
 
@@ -68,12 +84,12 @@ export default function FuncoesBarras({
   return (
     <table className={estilos.funcoes}>
       <caption className="so-leitor">
-        Despesa liquidada por função em {municipio}, da maior para a menor.
+        {legenda} em {municipio}, da maior para a menor.
       </caption>
       <thead>
         <tr>
-          <th scope="col">Função</th>
-          <th scope="col" className={estilos.num}>% do gasto</th>
+          <th scope="col">{cabecalho}</th>
+          <th scope="col" className={estilos.num}>{cabecalhoPercentual}</th>
           <th scope="col" className={estilos.num}>Em reais</th>
           {/* A coluna da barra não tem título porque não tem conteúdo próprio
               — ela desenha a coluna anterior. Um cabeçalho vazio precisa ser
@@ -91,7 +107,7 @@ export default function FuncoesBarras({
         {cabeca.map((f) => linha(f.nome, f.valor, f.percentual, f.nome))}
         {cauda.length > 0 &&
           linha(
-            `outras ${cauda.length} ${cauda.length === 1 ? "função" : "funções"}`,
+            `outras ${cauda.length} ${cauda.length === 1 ? nomeDaCauda[0] : nomeDaCauda[1]}`,
             somaCauda,
             pctCauda,
             "__cauda",

@@ -14,7 +14,7 @@ import {
   medianasCache, medidasDoPaisCache,
 } from "@/lib/censo";
 import TabelaCenso from "./componentes/tabela-censo";
-import FuncoesBarras from "./componentes/funcoes-barras";
+import ComposicaoBarras from "./componentes/composicao-barras";
 import RoscaFuncoes from "./componentes/rosca-funcoes";
 import {
   coberturaTemporal, FONTES, idCatalogo, palavrasChave, VARIAVEIS,
@@ -251,7 +251,7 @@ export default async function Pagina() {
           <div className={s.duasVistas}>
             <RoscaFuncoes fatias={pais.fatias} total={pais.total} />
             <div className={s.aoLado}>
-              <FuncoesBarras
+              <ComposicaoBarras
                 fatias={pais.fatias}
                 total={pais.total}
                 municipio={`${br(pais.municipios)} municípios do Brasil`}

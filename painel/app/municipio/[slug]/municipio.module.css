@@ -326,6 +326,29 @@
   color: var(--tinta);
 }
 
+/* Lista de prosa, e NAO `.mudancas`: aquela usa `flex` com `gap`, que aqui
+   abriria espaco entre "R$ 101 milhoes" e a frase seguinte -- e um espaco
+   antes da virgula e o tipo de defeito que so aparece lido em voz alta.
+   A barra a esquerda repete o idioma visual da vizinha, sem o layout dela. */
+.lista {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--e-4);
+  display: grid;
+  gap: var(--e-2);
+}
+
+.lista li {
+  font-size: var(--texto-base);
+  color: var(--tinta-suave);
+  padding-left: var(--e-3);
+  border-left: 3px solid var(--borda-forte);
+}
+
+.lista strong {
+  color: var(--tinta);
+}
+
 /* Verde para "subiu" e vermelho para "caiu" seria julgamento: mais gasto em
    previdencia nao e bom nem ruim, e o painel nao opina. A cor aqui diz apenas
    a DIRECAO, com dois tons neutros da mesma escala. */

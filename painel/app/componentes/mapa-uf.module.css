@@ -85,7 +85,7 @@
   stroke-width: 3;
   stroke-linejoin: round;
   /* Em alto contraste forçado o `fill` é descartado e o mapa sumiria inteiro,
-     sem deixar rastro — mesma razão da barra de `funcoes-barras`. */
+     sem deixar rastro — mesma razão da barra de `composicao-barras`. */
   forced-color-adjust: none;
   transition: fill 0.15s ease;
 }

@@ -96,6 +96,11 @@ export type SnapshotFiscal = {
   funcoes: Funcoes | null;
   /** A aplicação em saúde. `null` enquanto o `ingerir-saude` não tiver rodado. */
   saude: Saude | null;
+  /**
+   * De onde vem a receita corrente. `null` enquanto o `ingerir-receita` não
+   * tiver rodado. É a outra metade de `funcoes`, que diz para onde ela vai.
+   */
+  receita: Receita | null;
 };
 
 /**
@@ -846,4 +851,237 @@ export function faixasEmLinha(
       return LETRA_FAIXA[f?.faixa ?? "nao-consultado"];
     })
     .join("");
+}
+
+// ------------------------------------------------- de onde vem o dinheiro
+
+/**
+ * A composição da receita corrente (RREO Anexo 01).
+ *
+ * `funcoes` responde *para onde vai* o dinheiro. Este bloco responde a
+ * pergunta que vem antes e que o site não respondia: **de onde ele vem.**
+ *
+ * ## `valores` e `detalhe` chegam separados, e têm de continuar separados
+ *
+ * `rotulos` são as oito componentes que **somam** as receitas correntes e
+ * fecham com o total que o próprio ente declarou. `rotulosDetalhe` são quatro
+ * linhas que estão **dentro** daquelas: `Impostos` e `Taxas` dentro de
+ * IMPOSTOS, TAXAS E CONTRIBUIÇÕES DE MELHORIA, e as duas transferências por
+ * origem dentro de TRANSFERÊNCIAS CORRENTES.
+ *
+ * Concatenar as duas listas infla a receita do município em ~20%, com o número
+ * bem formado e a página plausível. O motor Python as emite em posições
+ * diferentes da tupla justamente para que isso exija um gesto deliberado — e
+ * aqui elas continuam em campos diferentes, pela mesma razão.
+ */
+export type Receita = {
+  /** **Bimestre** (1..6). O RREO não usa a escala quadrimestral do RGF. */
+  periodo: number;
+  fonte: string;
+  rotulos: string[];
+  rotulosDetalhe: string[];
+  /**
+   * Alinhado a `rotulosDetalhe`: o índice em `rotulos` da componente que
+   * **contém** cada detalhe, ou `null` se ela não existe no corpus. É o que
+   * permite dizer "dos R$ 147 mi de transferências, R$ 101 mi vieram da
+   * União" sem inferir hierarquia pelo nome da conta.
+   */
+  paiDoDetalhe: (number | null)[];
+  colunasMunicipio: string[];
+  /** Do mais recente para o mais antigo, como em `Funcoes`. */
+  exercicios: ExercicioReceita[];
+};
+
+export type ExercicioReceita = {
+  exercicio: number;
+  coletadoEm: string | null;
+  /**
+   * `naoFecham` é a régua da própria fonte: a soma das componentes contra o
+   * total declarado. Em 2024/6 ela apontou 15 municípios, e **os 15 eram
+   * defeito do leitor**, não do dado — corrigidos em 22/09/2026.
+   */
+  cobertura: { consultados: number; publicaram: number; naoFecham: number };
+  porMunicipio: Record<string, EntradaReceita>;
+};
+
+export type EntradaReceita = [
+  total: number | null,
+  valores: [indice: number, valor: number][],
+  detalhe: [indice: number, valor: number][],
+];
+
+/**
+ * As duas contas que a frase da página nomeia.
+ *
+ * Constantes, e não `rotulos[0]`/`rotulos[1]`: a ordem de `rotulos` é por
+ * **peso no exercício mais recente**, então ela pode mudar entre coletas. Um
+ * índice cravado sobreviveria à mudança exibindo a conta errada com o rótulo
+ * certo, que é a classe de defeito que este arquivo inteiro existe para evitar.
+ */
+export const CONTA_TRIBUTARIA = "IMPOSTOS, TAXAS E CONTRIBUIÇÕES DE MELHORIA";
+export const CONTA_TRANSFERIDA = "TRANSFERÊNCIAS CORRENTES";
+
+/**
+ * O nome de uma conta como a página o exibe.
+ *
+ * O SICONFI publica as componentes em CAIXA ALTA (`TRANSFERÊNCIAS CORRENTES`)
+ * e o detalhe em caixa mista (`Transferências da União e de suas Entidades`).
+ * Numa tabela, a caixa alta grita — e as funções orçamentárias, ao lado, vêm
+ * em caixa mista.
+ *
+ * **Minusculizar tudo seria pior que gritar**: `da União` viraria `da união` e
+ * `do Distrito Federal` viraria `do distrito federal`. Por isso a conversão só
+ * acontece quando o nome **não tem nenhuma minúscula** — aí não há nome
+ * próprio a preservar, porque não há informação de caixa nenhuma para perder.
+ *
+ * E só vale para a TELA. Os downloads mantêm a grafia da fonte: num arquivo
+ * que alguém cruza com o dado original, a forma exata da conta é o que permite
+ * casar as duas pontas.
+ */
+export function rotuloReceita(nome: string): string {
+  if (/\p{Ll}/u.test(nome)) return nome;
+  const baixo = nome.toLocaleLowerCase("pt-BR");
+  return baixo.charAt(0).toLocaleUpperCase("pt-BR") + baixo.slice(1);
+}
+
+/** Uma componente da receita, com nome, valor e fatia do total. */
+export type FatiaReceita = {
+  nome: string;
+  valor: number;
+  /** `null` quando o total é zero ou ausente — ver `FatiaFuncao`. */
+  percentual: number | null;
+};
+
+/**
+ * Uma linha de detalhe, **com o nome de quem a contém**.
+ *
+ * O `dentroDe` viaja junto do valor de propósito: é ele que impede a página de
+ * apresentar R$ 101 mi da União ao lado dos R$ 147 mi de transferências como
+ * se fossem duas parcelas somáveis.
+ */
+export type DetalheReceita = FatiaReceita & { dentroDe: string | null };
+
+export type ComposicaoReceita = {
+  exercicio: number;
+  periodo: number;
+  total: number | null;
+  /** As componentes que somam, da maior para a menor. */
+  fatias: FatiaReceita[];
+  /** O que está dentro delas. **Nunca somar com `fatias`.** */
+  detalhe: DetalheReceita[];
+  /**
+   * O que o município cobra de quem mora nele (impostos, taxas e contribuição
+   * de melhoria). `null` se a conta não veio.
+   *
+   * **Não se chama "receita própria" de propósito.** O termo tem duas
+   * definições correntes — só a tributária, ou tudo que não é transferência —
+   * e escolher uma em silêncio publicaria um número contestável em 5.571
+   * páginas com cara de fato. A página nomeia a conta que está mostrando.
+   */
+  tributaria: number | null;
+  /** O que vem da União, dos Estados e dos fundos. `null` se não veio. */
+  transferida: number | null;
+};
+
+/** O exercício em destaque: o mais recente da coleta. Não recua. */
+export function atualDeReceita(r: Receita): ExercicioReceita | null {
+  return r.exercicios[0] ?? null;
+}
+
+/** O exercício mais recente **que este município tem**, como em funções. */
+export function exercicioDeReceita(
+  r: Receita,
+  codigo: number,
+): ExercicioReceita | null {
+  const chave = String(codigo);
+  for (const e of r.exercicios) if (e.porMunicipio[chave]) return e;
+  return null;
+}
+
+/**
+ * A composição da receita no exercício da COLETA — para agregar e exportar.
+ *
+ * **Não recua**, e o par com `receitaRecenteDe` existe pela mesma razão que o
+ * de `funcoesDe`/`funcoesRecentesDe`: quem soma estados ou escreve uma linha
+ * de CSV não pode misturar anos. Recuar aqui somaria a receita de 2024 de um
+ * município com a de 2021 do vizinho, ou publicaria colunas de anos diferentes
+ * na mesma linha de um arquivo que **viaja sem a explicação da página**.
+ *
+ * Nenhum dos dois quebraria nada. Os dois dariam número.
+ *
+ * Hoje a coleta tem um exercício só, então as duas funções coincidem — e é
+ * exatamente por isso que a separação entra agora: no dia em que o segundo ano
+ * for varrido, a diferença aparece calada.
+ */
+export function receitaDe(
+  s: SnapshotFiscal,
+  codigo: number,
+): ComposicaoReceita | null {
+  const bloco = s.receita;
+  if (!bloco) return null;
+  return montarReceita(bloco, codigo, atualDeReceita(bloco));
+}
+
+/**
+ * Como `receitaDe`, mas recuando até o exercício mais recente **deste
+ * município**. Só a página do município usa.
+ *
+ * Quem chama tem de imprimir o ano — por isso ele volta dentro do resultado,
+ * para o rótulo não poder divergir do dado.
+ */
+export function receitaRecenteDe(
+  s: SnapshotFiscal,
+  codigo: number,
+): ComposicaoReceita | null {
+  const bloco = s.receita;
+  if (!bloco) return null;
+  return montarReceita(bloco, codigo, exercicioDeReceita(bloco, codigo));
+}
+
+function montarReceita(
+  bloco: Receita,
+  codigo: number,
+  ex: ExercicioReceita | null,
+): ComposicaoReceita | null {
+  if (!ex) return null;
+  const entrada = ex.porMunicipio[String(codigo)];
+  if (!entrada) return null;
+
+  const [total, valores, detalhe] = entrada;
+  const fracao = (v: number) =>
+    total && total > 0 ? (v / total) * 100 : null;
+  // O `?? ...` não é paranoia decorativa: se o export mudar a ordem dos
+  // rótulos sem regerar o resto, o nome faltante iria para a tela como
+  // `undefined`. Mesma guarda de `montarFuncoes`.
+  const nomeDe = (i: number) => rotuloReceita(bloco.rotulos[i] ?? `Componente ${i}`);
+
+  const fatias = valores
+    .map(([i, valor]) => ({ nome: nomeDe(i), valor, percentual: fracao(valor) }))
+    .sort((a, b) => b.valor - a.valor);
+
+  const achar = (conta: string) => {
+    const i = bloco.rotulos.indexOf(conta);
+    if (i < 0) return null;
+    return valores.find(([j]) => j === i)?.[1] ?? null;
+  };
+
+  return {
+    exercicio: ex.exercicio,
+    periodo: bloco.periodo,
+    total,
+    fatias,
+    detalhe: detalhe
+      .map(([i, valor]) => {
+        const pai = bloco.paiDoDetalhe[i];
+        return {
+          nome: rotuloReceita(bloco.rotulosDetalhe[i] ?? `Detalhe ${i}`),
+          valor,
+          percentual: fracao(valor),
+          dentroDe: pai == null ? null : nomeDe(pai),
+        };
+      })
+      .sort((a, b) => b.valor - a.valor),
+    tributaria: achar(CONTA_TRIBUTARIA),
+    transferida: achar(CONTA_TRANSFERIDA),
+  };
 }

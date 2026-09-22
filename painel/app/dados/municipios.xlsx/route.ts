@@ -1,5 +1,5 @@
 import { expandir } from "../../../lib/dados";
-import { funcoesDe, indexarFiscal, ROTULO_FAIXA } from "../../../lib/fiscal";
+import { funcoesDe, indexarFiscal, receitaDe, ROTULO_FAIXA } from "../../../lib/fiscal";
 import { trajetoriaDe } from "../../../lib/ideb";
 import { lerFiscal, lerIdeb, lerSnapshot, SITE } from "../../../lib/servidor";
 import { cabecalhosXlsx, xlsx, type Aba } from "../../../lib/xlsx";
@@ -49,12 +49,17 @@ export async function GET() {
     "Pessoal / RCL ajustada (%)", "Despesa com pessoal (R$)",
     "RCL ajustada (R$)", "Limite prudencial (%)", "Situação",
     "Despesa liquidada total (R$)", "Educação (R$)", "Saúde (R$)",
+    "Receita corrente total (R$)", "Transferências correntes (R$)",
+    "Impostos, taxas e contribuição de melhoria (R$)",
     "IDEB anos iniciais", "IDEB anos finais",
   ];
 
   const linhas = municipios.map((m) => {
     const f = porCodigo.get(m.codigo);
     const fn = funcoesDe(fiscal, m.codigo);
+    // `receitaDe` e nao `receitaRecenteDe`: numa linha por municipio, recuar
+    // poria anos diferentes em colunas vizinhas sem nada avisar.
+    const rc = receitaDe(fiscal, m.codigo);
     const acha = (nome: string) =>
       fn?.fatias.find((x) => x.nome === nome)?.valor ?? null;
     return [
@@ -72,6 +77,9 @@ export async function GET() {
       fn?.total ?? null,
       acha("Educação"),
       acha("Saúde"),
+      rc?.total ?? null,
+      rc?.transferida ?? null,
+      rc?.tributaria ?? null,
       trajetoriaDe(ideb, m.codigo)?.ultimo.observado ?? null,
       trajetoriaDe(idebFinais, m.codigo)?.ultimo.observado ?? null,
     ];
@@ -109,6 +117,15 @@ export async function GET() {
        "R$", "SICONFI — RREO Anexo 02"],
       ["Educação (R$)", "Despesa liquidada na função orçamentária Educação.", "R$", "SICONFI — RREO Anexo 02"],
       ["Saúde (R$)", "Despesa liquidada na função orçamentária Saúde.", "R$", "SICONFI — RREO Anexo 02"],
+      ["Receita corrente total (R$)",
+       "O que de fato entrou no caixa até o bimestre, acumulado no ano — não o que foi orçado. Só receita CORRENTE: não inclui empréstimos nem venda de bens, que são receita de capital e não custeiam o dia a dia.",
+       "R$", "SICONFI — RREO Anexo 01"],
+      ["Transferências correntes (R$)",
+       "O que a União, o estado e os fundos repassam. É a maior origem na esmagadora maioria dos municípios brasileiros.",
+       "R$", "SICONFI — RREO Anexo 01"],
+      ["Impostos, taxas e contribuição de melhoria (R$)",
+       "O que o próprio município cobra de quem mora e trabalha nele. ATENÇÃO: esta coluna e a anterior NÃO somam a receita corrente total — há outras seis origens (contribuições, patrimonial, agropecuária, industrial, serviços e outras receitas correntes) que não cabem nesta planilha. Para a decomposição completa, use o CSV de cada município.",
+       "R$", "SICONFI — RREO Anexo 01"],
       ["IDEB anos iniciais", "Índice da rede MUNICIPAL, 1º ao 5º ano. Escala de 0 a 10.", "índice", "INEP"],
       ["IDEB anos finais",
        "Índice da rede MUNICIPAL, 6º ao 9º ano. NÃO se compara com os anos iniciais: provas e escalas próprias.",

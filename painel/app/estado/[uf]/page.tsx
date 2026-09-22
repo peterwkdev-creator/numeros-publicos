@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import FuncoesBarras from "../../componentes/funcoes-barras";
+import ComposicaoBarras from "../../componentes/composicao-barras";
 import TiraEstados from "../../componentes/tira-estados";
 import Termo from "../../componentes/termo";
 import {
@@ -516,7 +516,7 @@ export default async function PaginaEstado(
             média, não o estado.
           </p>
           <div className={estilos.rolagem}>
-            <FuncoesBarras
+            <ComposicaoBarras
               fatias={r.funcoes.fatias}
               total={r.funcoes.total}
               municipio={r.uf.nome}

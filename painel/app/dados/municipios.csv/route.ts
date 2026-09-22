@@ -1,8 +1,8 @@
 import { expandir } from "../../../lib/dados";
 import { cabecalhosCsv, paraCsv } from "../../../lib/csv";
-import { funcoesDe, indexarFiscal } from "../../../lib/fiscal";
+import { funcoesDe, indexarFiscal, receitaDe } from "../../../lib/fiscal";
 import { lerFiscal, lerSnapshot } from "../../../lib/servidor";
-import { atualDeFuncoes } from "@/lib/fiscal";
+import { atualDeFuncoes, atualDeReceita } from "@/lib/fiscal";
 
 /**
  * A base inteira num arquivo: 5.571 municípios, uma linha cada.
@@ -38,6 +38,13 @@ export async function GET() {
     // traz completa. Aqui o que se quer é **comparar** 5.571 linhas.
     "despesa_liquidada_total", "despesa_educacao", "despesa_saude",
     "despesa_exercicio", "despesa_periodo",
+    // Da receita entram o total e as duas origens que a página nomeia. **Elas
+    // NAO somam o total** -- ha seis outras componentes --, e o dicionario diz
+    // isso, porque aqui a tentacao de somar duas colunas e o total e maior que
+    // na tela. O detalhe (impostos, taxas, transferencias por origem) fica so
+    // no CSV do municipio, que e longo: ali cada linha se explica sozinha.
+    "receita_corrente_total", "receita_transferencias", "receita_impostos_taxas",
+    "receita_exercicio", "receita_periodo",
   ];
 
   // `undefined` quando o município não entregou o RREO. Vira campo vazio no
@@ -51,6 +58,9 @@ export async function GET() {
   const linhas = expandir(snapshot).map((m) => {
     const f = porCodigo.get(m.codigo);
     const fn = funcoesDe(fiscal, m.codigo);
+    // `receitaDe`, nunca `receitaRecenteDe`: numa linha por municipio, recuar
+    // publicaria 2024 numa coluna e 2021 na vizinha sem nada avisar.
+    const rc = receitaDe(fiscal, m.codigo);
     return [
       m.codigo, m.nome, m.uf,
       ...indicadores.map((i) => m.valores[i.codigo] ?? null),
@@ -78,6 +88,11 @@ export async function GET() {
       acha(fn, "Saúde"),
       fiscal.funcoes ? atualDeFuncoes(fiscal.funcoes)?.exercicio ?? null : null,
       fiscal.funcoes?.periodo ?? null,
+      rc?.total ?? null,
+      rc?.transferida ?? null,
+      rc?.tributaria ?? null,
+      fiscal.receita ? atualDeReceita(fiscal.receita)?.exercicio ?? null : null,
+      fiscal.receita?.periodo ?? null,
     ];
   });
 

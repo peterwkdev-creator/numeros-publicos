@@ -104,6 +104,39 @@ export async function GET(
     }
   }
 
+  // A composição da RECEITA, pelo mesmo caminho da despesa por função: linhas
+  // novas, nenhuma coluna nova. Aqui o formato longo paga mais do que ali --
+  // são doze rubricas, e o CSV largo levou só três.
+  //
+  // **O rótulo separa o que soma do que está dentro**, e é a única defesa que
+  // este arquivo tem. Nele as doze linhas chegam iguais, e quem somar a coluna
+  // `valor` filtrando por "Receita corrente" encontraria ~20% a mais do que o
+  // município arrecadou. "— dentro de X" no rótulo é o que avisa, num arquivo
+  // que viaja sem a explicação da página.
+  const rec = fiscal.receita;
+  for (const e of rec?.exercicios ?? []) {
+    const entrada = e.porMunicipio[String(m.codigo)];
+    if (!entrada) continue;
+    const [total, valores, detalhe] = entrada;
+    const quando = `${e.exercicio}/${rec!.periodo}`;
+    for (const [i, valor] of valores) {
+      linhas.push([...comum,
+        `Receita corrente — ${rec!.rotulos[i] ?? `Componente ${i}`}`,
+        quando, valor, "R$", "SICONFI", e.coletadoEm ?? ""]);
+    }
+    for (const [i, valor] of detalhe) {
+      const pai = rec!.paiDoDetalhe[i];
+      const dentro = pai == null ? "" : ` — dentro de ${rec!.rotulos[pai]}`;
+      linhas.push([...comum,
+        `Receita corrente (detalhe) — ${rec!.rotulosDetalhe[i] ?? `Detalhe ${i}`}${dentro}`,
+        quando, valor, "R$", "SICONFI", e.coletadoEm ?? ""]);
+    }
+    if (total !== null) {
+      linhas.push([...comum, "Receita corrente — total declarado",
+        quando, total, "R$", "SICONFI", e.coletadoEm ?? ""]);
+    }
+  }
+
   // O IDEB entra como linhas, uma por edição e etapa. As duas etapas ficam em
   // indicadores DIFERENTES: têm escalas próprias, e uma coluna só convidaria
   // quem baixou a compará-las.

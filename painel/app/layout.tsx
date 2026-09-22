@@ -127,6 +127,11 @@ export default function RootLayout({
             Este site não coleta nada sobre quem o visita.
           </p>
         </div>
+        {/* O comportamento da busca do cabeçalho, sem React — ver o cabeçalho
+            de `public/busca.js`. Módulo já é adiado por padrão. É o ÚNICO
+            script que o `enxugar.mjs` mantém nas páginas sem componente de
+            cliente, e ele recusa terminar se não o encontrar. */}
+        <script type="module" src="/busca.js" />
       </body>
     </html>
   );

@@ -28,7 +28,7 @@ import {
   funcoesRecentesDe, LETRA_FAIXA, parDeFuncoes,
   contiguos, indiceQuadrimestre, interrupcoes, pontoPlausivel, PRESTA_COMO_ESTADO,
   receitaDe, receitaRecenteDe, rotuloReceita, ROTULO_FAIXA, saudeDe,
-  serieFuncoesDe, serieDePessoal, CODIGO_FAIXA, variacao,
+  serieFuncoesDe, serieDePessoal, CODIGO_FAIXA, variacao, slugDe,
   type PontoSerie, type Receita,
 } from "../lib/fiscal.ts";
 import { posicaoEntre, posicaoNoEstado } from "../lib/posicao.ts";
@@ -1906,4 +1906,79 @@ test("CODIGO_FAIXA: um código por faixa, distinto e filtrável", () => {
   for (const c of codigos) assert.match(c, /^[a-z_]+$/);
   assert.equal(CODIGO_FAIXA["como-estado"], "presta_contas_como_estado",
     "o mesmo código que `pessoal_publicou` já publica para Brasília");
+});
+
+// ---------------------- a busca sem React, e quem ainda pode hidratar
+
+test("busca.js: o slug é o MESMO do build nos 5.571 municípios", async () => {
+  // A busca calcula o endereço no navegador com uma cópia de `slugDe`. Duas
+  // implementações divergem; esta cobrança é o que impede o link morto.
+  const busca = await import("../public/busca.js");
+  const snapshot = JSON.parse(
+    fs.readFileSync(new URL("../dados/snapshot.json", import.meta.url), "utf-8"),
+  );
+  const iNome = snapshot.colunas.indexOf("nome");
+  const iUf = snapshot.colunas.indexOf("uf");
+  assert.ok(iNome >= 0 && iUf >= 0, "colunas nome/uf no snapshot");
+  let n = 0;
+  for (const linha of snapshot.municipios) {
+    assert.equal(busca.slugDe(linha[iNome], linha[iUf]), slugDe(linha[iNome], linha[iUf]),
+      `slug divergente para ${linha[iNome]}/${linha[iUf]}`);
+    n += 1;
+  }
+  assert.ok(n > 5000, `conferiu ${n} municípios`);
+});
+
+test("busca.js: prefixo antes de 'contém', até oito", async () => {
+  const { procurar, MAXIMO } = await import("../public/busca.js");
+  const indice = [["Conceição do Coité", "BA"], ["São Paulo", "SP"], ["São Luís", "MA"]];
+  assert.deepEqual(procurar(indice, "sao").map((x: string[]) => x[0]),
+    ["São Paulo", "São Luís"]);
+  assert.deepEqual(procurar(indice, "coite").map((x: string[]) => x[0]),
+    ["Conceição do Coité"]);
+  const muitos = Array.from({ length: 20 }, (_, i) => [`Santa ${i}`, "SC"]);
+  assert.equal(procurar(muitos, "santa").length, MAXIMO);
+});
+
+test("só hidrata quem tem componente de cliente — e a lista é a do código", async () => {
+  // Tirar o React de uma página que precisa dele a quebra EM SILÊNCIO. Os
+  // arquivos "use client" têm de ser exatamente os que `HIDRATAM` cobre: hoje,
+  // a tabela filtrável da capa. Criou outro? Decida em `desidratar.mjs` onde
+  // ele hidrata, e atualize esta lista junto.
+  const { HIDRATAM } = await import("../scripts/desidratar.mjs");
+  const clientes: string[] = [];
+  const varrer = (dir: string) => {
+    for (const nome of fs.readdirSync(dir)) {
+      const p = `${dir}/${nome}`;
+      if (fs.statSync(p).isDirectory()) varrer(p);
+      else if (/\.tsx?$/.test(nome) && /^\s*["']use client["']/.test(fs.readFileSync(p, "utf-8")))
+        clientes.push(p);
+    }
+  };
+  varrer("app");
+  varrer("lib");
+  assert.deepEqual(clientes.sort(), ["app/municipios.tsx"]);
+  assert.deepEqual([...HIDRATAM], ["index.html"]);
+  const quem = fs.readFileSync("app/page.tsx", "utf-8");
+  assert.match(quem, /from "\.\/municipios"/, "a tabela é usada pela capa");
+});
+
+test("desidratar tira payload e runtime, e mantém CSS, JSON-LD e a busca", async () => {
+  const { desidratar } = await import("../scripts/desidratar.mjs");
+  const html =
+    '<head><link rel="stylesheet" href="/_next/static/chunks/a.css"/>' +
+    '<link rel="preload" as="script" fetchPriority="low" href="/_next/static/chunks/x.js"/>' +
+    '<script src="/_next/static/chunks/x.js" async=""></script>' +
+    '<script type="application/ld+json">{"@type":"Dataset"}</script></head>' +
+    '<body><p>conteúdo</p><script type="module" src="/busca.js"></script>' +
+    '<script>(self.__next_f=self.__next_f||[]).push([0])</script>' +
+    // `\\u003c`: o Next escapa o `<` dentro do payload, então `</script>` não
+    // aparece cru ali — e o regex não corta o bloco no meio.
+    '<script>self.__next_f.push([1,"a:\\u003c/script>"])</script></body>';
+  const s = desidratar(html, "teste");
+  assert.ok(!s.includes("__next_f"));
+  assert.ok(!s.includes("x.js"));
+  assert.ok(s.includes("a.css") && s.includes("ld+json") && s.includes("/busca.js"));
+  assert.throws(() => desidratar(html.replace('<script type="module" src="/busca.js"></script>', ""), "t"),
+    /busca ficaria muda/);
 });

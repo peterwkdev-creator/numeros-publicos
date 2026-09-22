@@ -5,7 +5,7 @@
   "description": "Painel estático do Observatório NE. Lê o snapshot JSON gerado pelo motor Python.",
   "scripts": {
     "dev": "next dev",
-    "build": "next build && node scripts/enxugar.mjs",
+    "build": "next build && node scripts/enxugar.mjs && node scripts/desidratar.mjs",
     "build:completo": "next build",
     "start": "npx serve out -l 8791",
     "typecheck": "tsc --noEmit",

@@ -1982,3 +1982,23 @@ test("desidratar tira payload e runtime, e mantém CSS, JSON-LD e a busca", asyn
   assert.throws(() => desidratar(html.replace('<script type="module" src="/busca.js"></script>', ""), "t"),
     /busca ficaria muda/);
 });
+
+test("vercel.json cabe no esquema da Vercel — o erro que só o deploy mostrava", () => {
+  // Em 22/09/2026 o deploy inteiro foi recusado: `ignoreCommand` com mais de
+  // 256 caracteres. Nenhum build local valida o vercel.json; o limite só
+  // aparecia na Vercel, depois do push. Os comandos têm teto de 256 no
+  // esquema (https://openapi.vercel.sh/vercel.json).
+  const cfg = JSON.parse(fs.readFileSync("vercel.json", "utf-8"));
+  for (const chave of ["buildCommand", "ignoreCommand", "installCommand", "devCommand"]) {
+    if (typeof cfg[chave] === "string") {
+      assert.ok(cfg[chave].length <= 256, `${chave} tem ${cfg[chave].length} caracteres`);
+    }
+  }
+  // O script chamado existe, e o erro dele fica do lado de CONSTRUIR.
+  const m = /^sh (\S+)$/.exec(cfg.ignoreCommand ?? "");
+  assert.ok(m, "ignoreCommand chama um script sh");
+  const script = fs.readFileSync(m[1], "utf-8");
+  assert.match(script, /\[ -n "\$VERCEL_GIT_PREVIOUS_SHA" \] \|\| exit 1/,
+    "sem SHA anterior, constrói");
+  assert.ok(!script.includes("\r"), "fim de linha LF: o sh da Vercel leria \r como parte do comando");
+});

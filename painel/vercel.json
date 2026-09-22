@@ -2,7 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
   "buildCommand": "npm run build",
-  "ignoreCommand": "[ -n \"$VERCEL_GIT_PREVIOUS_SHA\" ] && git diff --quiet \"$VERCEL_GIT_PREVIOUS_SHA\" HEAD -- . ':(exclude)tests' ':(exclude).indexnow.json' ':(exclude)scripts/auditar.mjs' ':(exclude)scripts/conferir-links.mjs' ':(exclude)scripts/conferir-xlsx.mjs' ':(exclude)scripts/indexnow.mjs' ':(exclude)scripts/medir-inp.mjs'",
+  "ignoreCommand": "sh scripts/ignorar-build.sh",
   "outputDirectory": "out",
   "trailingSlash": true,
   "headers": [

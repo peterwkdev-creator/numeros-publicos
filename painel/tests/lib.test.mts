@@ -2002,3 +2002,56 @@ test("vercel.json cabe no esquema da Vercel — o erro que só o deploy mostrava
     "sem SHA anterior, constrói");
   assert.ok(!script.includes("\r"), "fim de linha LF: o sh da Vercel leria \r como parte do comando");
 });
+
+// ---------------------- o experimento de título (só nas UFs de UFS_TITULO_FISCAL)
+
+test("título fiscal: cabe em 60, só nas UFs do experimento, e nunca com implausível", async () => {
+  const { tituloDe, tituloFiscalDe, UFS_TITULO_FISCAL, LIMITE_TITULO } =
+    await import("../lib/titulo.ts");
+  const snapshot = JSON.parse(
+    fs.readFileSync(new URL("../dados/snapshot.json", import.meta.url), "utf-8"),
+  );
+  const fiscal = JSON.parse(
+    fs.readFileSync(new URL("../dados/fiscal.json", import.meta.url), "utf-8"),
+  );
+  const porCodigo = indexarFiscal(fiscal);
+  const iCod = snapshot.colunas.indexOf("codigo");
+  const iNome = snapshot.colunas.indexOf("nome");
+  const iUf = snapshot.colunas.indexOf("uf");
+  const vistos = new Set<string>();
+  let fiscais = 0;
+  for (const l of snapshot.municipios) {
+    const f = porCodigo.get(l[iCod]);
+    const t = tituloFiscalDe(l[iNome], l[iUf], f?.faixa, f?.percentual);
+    assert.ok(t.length <= LIMITE_TITULO || t === `${l[iNome]} (${l[iUf]})`,
+      `${t.length} caracteres: ${t}`);
+    if (!UFS_TITULO_FISCAL.has(l[iUf])) {
+      assert.equal(t, tituloDe(l[iNome], l[iUf]), "fora do experimento, o título de sempre");
+    }
+    if (f?.faixa === "implausivel") {
+      assert.equal(t, tituloDe(l[iNome], l[iUf]), `implausível no título: ${t}`);
+    }
+    if (t !== tituloDe(l[iNome], l[iUf])) fiscais += 1;
+    assert.ok(!vistos.has(t), `título repetido: ${t}`);
+    vistos.add(t);
+  }
+  assert.ok(fiscais > 300, `só ${fiscais} títulos fiscais — o experimento não pegou`);
+});
+
+test("abertura fiscal cita o limite do veredito, não outro", async () => {
+  const { aberturaFiscalDe } = await import("../lib/titulo.ts");
+  const lim = { legal: 54, prudencial: 51.3 };
+  assert.match(aberturaFiscalDe("Adolfo", "SP", "acima-prudencial", 52.1, lim)!,
+    /acima do limite prudencial de 51,3%$/);
+  assert.match(aberturaFiscalDe("Adolfo", "SP", "acima-legal", 60, lim)!,
+    /acima do limite legal de 54%$/);
+  assert.equal(aberturaFiscalDe("Adolfo", "SP", "implausivel", 99, lim), null);
+  assert.equal(aberturaFiscalDe("Imperatriz", "MA", "acima-legal", 60, lim), null);
+});
+
+test("título fiscal não chama o prudencial de 'alerta' — a LRF tem outro limite com esse nome", async () => {
+  const { tituloFiscalDe } = await import("../lib/titulo.ts");
+  const t = tituloFiscalDe("Cachoeira Paulista", "SP", "acima-prudencial", 51.4);
+  assert.doesNotMatch(t, /alerta/i);
+  assert.match(t, /prudencial/);
+});

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { br, descricaoDe, escala, expandir, milReaisParaReais } from "../../../lib/dados";
+import { aberturaFiscalDe, tituloFiscalDe } from "../../../lib/titulo";
 import { slugUf, vizinhosDe } from "../../../lib/estado";
 import { medianasSaudeCache, rankingCache } from "../../../lib/nacional";
 import { posicaoEntre, posicaoNoEstado } from "../../../lib/posicao";
@@ -60,29 +61,7 @@ export async function generateStaticParams() {
 }
 
 
-/**
- * O `<title>`, dentro do que o Google mostra.
- *
- * O buscador corta perto de **60 caracteres**, e nomes brasileiros de município
- * chegam longe: "Boa Esperança do Norte" com o sufixo completo dava 64, e o
- * resultado apareceria truncado justamente no que diferencia a página.
- *
- * A escolha é encurtar o SUFIXO, nunca o nome: o nome é o que a pessoa digitou
- * na busca, e é ele que precisa aparecer inteiro. Três variantes, da mais
- * informativa para a mais curta, e a primeira que couber vence.
- */
-function tituloDe(nome: string, uf: string): string {
-  const base = `${nome} (${uf})`;
-  for (const sufixo of [
-    " — população, PIB e gasto com pessoal",
-    " — população, PIB e dados fiscais",
-    " — dados abertos do município",
-    " — dados abertos",
-  ]) {
-    if ((base + sufixo).length <= 60) return base + sufixo;
-  }
-  return base;
-}
+// O título mora em `lib/titulo.ts`, com o experimento de 22/09/2026.
 
 export async function generateMetadata(
   { params }: { params: Promise<{ slug: string }> },
@@ -121,13 +100,23 @@ export async function generateMetadata(
   // estava na cauda era a frase de procedência -- idêntica nas 1.794 páginas,
   // ou seja, o pedaço com MENOS valor de diferenciação ocupando o espaço do
   // que mais tem: os números deste município.
+  // Nas UFs do experimento de título (ver `lib/titulo.ts`), a descrição abre
+  // pelo veredito fiscal, e a população vai para depois. O limite prudencial é
+  // o do PRÓPRIO município quando ele declara um: é esse que decidiu a faixa.
+  const abertura = aberturaFiscalDe(m.nome, m.uf, m.fiscal?.faixa, pessoal, {
+    legal: fiscal.limites.legal,
+    prudencial: m.fiscal?.limitePrudencial ?? fiscal.limites.prudencial,
+  });
+  const resto = partes.filter((p) => !String(p).endsWith("da receita em pessoal"));
   const descricao = descricaoDe(
-    `${m.nome} (${m.uf}): ${partes.join(", ")}.`,
+    abertura
+      ? `${abertura}.${resto.length ? ` ${resto.join(", ")}.` : ""}`
+      : `${m.nome} (${m.uf}): ${partes.join(", ")}.`,
     "Dados oficiais do IBGE, do Tesouro Nacional e do INEP.",
   );
 
   return {
-    title: tituloDe(m.nome, m.uf),
+    title: tituloFiscalDe(m.nome, m.uf, m.fiscal?.faixa, pessoal),
     description: descricao,
     alternates: { canonical: `${SITE}/municipio/${m.slug}/` },
     ...cartaoSocial(

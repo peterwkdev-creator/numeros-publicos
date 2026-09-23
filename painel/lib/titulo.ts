@@ -114,5 +114,15 @@ export function aberturaFiscalDe(
   // afirmação falsa.
   const limite = faixa === "acima-prudencial" ? limites.prudencial : limites.legal;
   return `A prefeitura de ${nome} (${uf}) comprometeu ${br(percentual, 2)}% da ` +
-    `receita com pessoal, ${veredito} de ${br(limite, Number.isInteger(limite) ? 0 : 1)}%`;
+    `receita com pessoal, ${veredito} de ${br(limite, casasDe(limite))}%`;
+}
+
+/**
+ * As casas que o limite TEM, até duas: 54 → "54", 51,3 → "51,3", 59,05 →
+ * "59,05". Arredondar para uma casa fixa escreveria "acima do limite
+ * prudencial de 59,1%" para quem tem 59,08% e limite próprio de 59,05% — o
+ * número ao lado do veredito o desmentiria.
+ */
+export function casasDe(limite: number): number {
+  return [0, 1].find((k) => Number(limite.toFixed(k)) === limite) ?? 2;
 }

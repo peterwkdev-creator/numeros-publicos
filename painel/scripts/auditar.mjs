@@ -96,6 +96,14 @@ for (const caminho of caminhos) {
   // abaixo passa a valer também para ela. Escrito em 04/09/2026, depois de
   // conferir esses contrastes à mão e perceber que a auditoria nunca os veria.
   await p.evaluate(async () => {
+    // Troca a marcação da busca por um CLONE antes de digitar, que é o que o
+    // React faz quando a hidratação da capa diverge e ele refaz a raiz (ver o
+    // cabeçalho de `public/busca.js`, 23/09/2026). Um `busca.js` com ouvintes
+    // presos ao elemento original não responde ao clone, a lista não abre, e o
+    // sentinela abaixo reprova. Toda página passa por isso, e não só a capa:
+    // o comportamento é o mesmo, e a condição que o dispara é de tempo.
+    const s = document.querySelector("search[data-busca]");
+    if (s) s.replaceWith(s.cloneNode(true));
     const c = document.querySelector("[role=combobox]");
     if (!c) return;
     const d = Object.getOwnPropertyDescriptor(

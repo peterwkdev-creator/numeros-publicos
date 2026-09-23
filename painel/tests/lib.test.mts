@@ -2049,6 +2049,16 @@ test("abertura fiscal cita o limite do veredito, não outro", async () => {
   assert.equal(aberturaFiscalDe("Imperatriz", "MA", "acima-legal", 60, lim), null);
 });
 
+test("abertura fiscal escreve o limite próprio com as casas que ele tem", async () => {
+  const { aberturaFiscalDe, casasDe } = await import("../lib/titulo.ts");
+  // 59,08% contra um prudencial próprio de 59,05%: com uma casa fixa a frase
+  // diria "acima do limite prudencial de 59,1%", e o número a desmentiria.
+  assert.match(
+    aberturaFiscalDe("Adolfo", "SP", "acima-prudencial", 59.08, { legal: 62, prudencial: 59.05 })!,
+    /acima do limite prudencial de 59,05%$/);
+  assert.deepEqual([54, 51.3, 48.6, 59.05, 57].map(casasDe), [0, 1, 1, 2, 0]);
+});
+
 test("título fiscal não chama o prudencial de 'alerta' — a LRF tem outro limite com esse nome", async () => {
   const { tituloFiscalDe } = await import("../lib/titulo.ts");
   const t = tituloFiscalDe("Cachoeira Paulista", "SP", "acima-prudencial", 51.4);

@@ -61,34 +61,62 @@ export function procurar(indice, alvo) {
   return [...prefixo, ...meio].slice(0, MAXIMO);
 }
 
-function iniciar(raizBusca) {
-  const campo = raizBusca.querySelector('[role="combobox"]');
-  const lista = raizBusca.querySelector('[role="listbox"]');
-  const caixa = campo?.parentElement;
-  const status = raizBusca.querySelector('[role="status"]');
-  const erroModelo = raizBusca.querySelector("[data-erro]");
-  if (!campo || !lista || !caixa || !status) return;
+/*
+ * ## Os ouvintes moram no `document`, e os elementos são buscados a cada evento
+ *
+ * Achado numa revisão em 23/09/2026. A capa continua hidratando (tem a tabela
+ * filtrável), e a marcação da busca faz parte da árvore do React. Se alguém
+ * digita ANTES de a hidratação terminar — segundos, num celular lento —, este
+ * script já pôs texto no `role="status"` e opções na lista; o React acusa
+ * divergência, refaz a raiz no cliente e **troca o `<input>` por outro**. Com
+ * ouvintes presos ao elemento, a busca da capa morria até recarregar.
+ *
+ * Delegados ao `document`, eles sobrevivem à troca: cada evento pergunta quem é
+ * o campo agora. Há uma busca por página (os ids são fixos), então o estado é
+ * um só. O teste de regressão troca a marcação por um clone, que é o que o
+ * React faz, e cobra que a busca continue respondendo.
+ */
+const RAIZ = "search[data-busca]";
+const CAMPO = `${RAIZ} [role="combobox"]`;
 
-  // As classes vêm da própria marcação (CSS Modules têm nome com hash).
-  const c = lista.dataset;
+function partes() {
+  const raiz = document.querySelector(RAIZ);
+  const campo = raiz?.querySelector('[role="combobox"]');
+  const lista = raiz?.querySelector('[role="listbox"]');
+  const status = raiz?.querySelector('[role="status"]');
+  if (!campo || !lista || !status) return null;
+  return { campo, lista, status, caixa: campo.parentElement, erro: raiz.querySelector("[data-erro]") };
+}
+
+function iniciar() {
   let indice = null;
   let carregando = false;
   let achados = [];
   let ativo = -1;
   let aberto = false;
 
-  const opcaoId = (i) => `${lista.id}-o${i}`;
+  const opcaoId = (lista, i) => `${lista.id}-o${i}`;
 
   function anunciar(texto) {
-    status.textContent = texto;
+    const p = partes();
+    if (p) p.status.textContent = texto;
+  }
+
+  /** A lista está à vista — a mesma condição que a desenha. */
+  function visivel(p) {
+    return aberto && !!normalizar(p.campo.value) && !!indice;
   }
 
   function desenhar() {
-    const alvo = normalizar(campo.value);
-    const mostrar = aberto && !!alvo && !!indice;
+    const p = partes();
+    if (!p) return;
+    const { campo, lista } = p;
+    // As classes vêm da própria marcação (CSS Modules têm nome com hash).
+    const c = lista.dataset;
+    const mostrar = visivel(p);
     lista.hidden = !mostrar;
     campo.setAttribute("aria-expanded", String(mostrar));
-    if (mostrar && ativo >= 0) campo.setAttribute("aria-activedescendant", opcaoId(ativo));
+    if (mostrar && ativo >= 0) campo.setAttribute("aria-activedescendant", opcaoId(lista, ativo));
     else campo.removeAttribute("aria-activedescendant");
 
     lista.replaceChildren();
@@ -103,7 +131,8 @@ function iniciar(raizBusca) {
     }
     achados.forEach((x, i) => {
       const li = document.createElement("li");
-      li.id = opcaoId(i);
+      li.id = opcaoId(lista, i);
+      li.dataset.i = String(i);
       li.setAttribute("role", "option");
       li.setAttribute("aria-selected", String(i === ativo));
       if (i === ativo && c.classeAtiva) li.className = c.classeAtiva;
@@ -114,28 +143,20 @@ function iniciar(raizBusca) {
       uf.className = c.classeUf ?? "";
       uf.textContent = x[1];
       li.append(nome, uf);
-      li.addEventListener("pointerdown", (ev) => {
-        ev.preventDefault();
-        ir(x);
-      });
-      li.addEventListener("mousemove", () => {
-        if (ativo !== i) {
-          ativo = i;
-          desenhar();
-        }
-      });
       lista.append(li);
     });
   }
 
   function atualizar() {
-    const alvo = normalizar(campo.value);
+    const p = partes();
+    if (!p) return;
+    const alvo = normalizar(p.campo.value);
     achados = !alvo || !indice ? [] : procurar(indice, alvo);
     ativo = -1;
     desenhar();
     if (indice && alvo) {
       anunciar(`${achados.length} ${achados.length === 1
-        ? "município encontrado" : "municípios encontrados"} para ${campo.value}.`);
+        ? "município encontrado" : "municípios encontrados"} para ${p.campo.value}.`);
     } else if (!carregando) {
       anunciar("");
     }
@@ -150,31 +171,48 @@ function iniciar(raizBusca) {
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       indice = await r.json();
       carregando = false;
+      // Uma tentativa anterior pode ter falhado e mostrado o aviso; sem isto
+      // ele ficava na tela, com `role="alert"`, ao lado da busca funcionando.
+      const erro = partes()?.erro;
+      if (erro) erro.hidden = true;
       atualizar();
     } catch (causa) {
       // Falha de rede não pode virar campo mudo.
       carregando = false;
       console.error("não foi possível carregar o índice de busca", causa);
       anunciar("A busca não pôde ser carregada.");
-      if (erroModelo) erroModelo.hidden = false;
+      const erro = partes()?.erro;
+      if (erro) erro.hidden = false;
     }
   }
 
   function ir(x) {
     aberto = false;
-    campo.value = "";
-    campo.blur();
+    const p = partes();
+    if (p) {
+      p.campo.value = "";
+      p.campo.blur();
+    }
     desenhar();
     location.assign(`/municipio/${slugDe(x[0], x[1])}/`);
   }
 
-  campo.addEventListener("focus", () => void carregar());
-  campo.addEventListener("input", () => {
+  const doCampo = (ev) => ev.target instanceof Element && ev.target.matches(CAMPO);
+
+  document.addEventListener("focusin", (ev) => {
+    if (doCampo(ev)) void carregar();
+  });
+  document.addEventListener("input", (ev) => {
+    if (!doCampo(ev)) return;
     aberto = true;
     void carregar();
     atualizar();
   });
-  campo.addEventListener("keydown", (ev) => {
+  document.addEventListener("keydown", (ev) => {
+    if (!doCampo(ev)) return;
+    const p = partes();
+    if (!p) return;
+    const campo = p.campo;
     if (ev.altKey && ev.key === "ArrowDown") {
       ev.preventDefault();
       aberto = true;
@@ -218,6 +256,10 @@ function iniciar(raizBusca) {
         }
         break;
       case "Enter": {
+        // Só com a lista à vista. Depois do Escape ela fecha e `achados`
+        // continua cheio; sem esta guarda o Enter seguinte navegava para o
+        // primeiro resultado sem nada na tela, e o Escape é o "desisto".
+        if (!visivel(p)) break;
         const x = achados[ativo >= 0 ? ativo : 0];
         if (x) {
           ev.preventDefault();
@@ -227,15 +269,36 @@ function iniciar(raizBusca) {
       }
     }
   });
-  // Fecha ao clicar fora; `pointerdown`, pelo mesmo motivo da opção.
+  // `pointerdown`, e não `click`, na opção: o clique tira o foco do campo antes
+  // de disparar. E fecha ao clicar fora, pelo mesmo motivo.
   document.addEventListener("pointerdown", (ev) => {
-    if (aberto && !caixa.contains(ev.target)) {
+    const p = partes();
+    if (!p || !(ev.target instanceof Element)) return;
+    const opcao = ev.target.closest("[data-i]");
+    if (opcao && p.lista.contains(opcao)) {
+      const x = achados[Number(opcao.dataset.i)];
+      if (x) {
+        ev.preventDefault();
+        ir(x);
+      }
+      return;
+    }
+    if (aberto && !p.caixa.contains(ev.target)) {
       aberto = false;
+      desenhar();
+    }
+  });
+  document.addEventListener("mouseover", (ev) => {
+    const p = partes();
+    if (!p || !(ev.target instanceof Element)) return;
+    const opcao = ev.target.closest("[data-i]");
+    if (!opcao || !p.lista.contains(opcao)) return;
+    const i = Number(opcao.dataset.i);
+    if (ativo !== i) {
+      ativo = i;
       desenhar();
     }
   });
 }
 
-if (typeof document !== "undefined") {
-  for (const s of document.querySelectorAll("search[data-busca]")) iniciar(s);
-}
+if (typeof document !== "undefined" && document.querySelector(RAIZ)) iniciar();

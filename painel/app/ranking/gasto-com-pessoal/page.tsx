@@ -5,7 +5,7 @@ import { br } from "../../../lib/dados";
 import { rankingPessoal } from "../../../lib/nacional";
 import { LIMITE_PLAUSIVEL } from "../../../lib/fiscal";
 import {
-  catalogoDe, coberturaTemporal, FONTES, palavrasChave, trilha,
+  catalogoDe, coberturaTemporal, FONTES, palavrasChave, trilha, LICENCA_DADOS,
 } from "../../../lib/jsonld";
 import { cartaoSocial, lerFiscal, lerIdeb, lerSnapshot, SITE } from "../../../lib/servidor";
 import estilos from "./ranking.module.css";
@@ -72,7 +72,7 @@ export default async function Pagina() {
       `receita corrente líquida ajustada, entre os ${r.publicaram} que ` +
       `entregaram o Relatório de Gestão Fiscal.`,
     url: `${SITE}${CAMINHO}`,
-    license: "https://www.gnu.org/licenses/agpl-3.0.html",
+    license: LICENCA_DADOS,
     isAccessibleForFree: true,
     isBasedOn: FONTES,
     inLanguage: "pt-BR",

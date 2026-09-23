@@ -8,7 +8,7 @@ import { slugUf, vizinhosDe } from "../../../lib/estado";
 import { medianasSaudeCache, rankingCache } from "../../../lib/nacional";
 import { posicaoEntre, posicaoNoEstado } from "../../../lib/posicao";
 import {
-  FONTES, trilha, VARIAVEIS, catalogoDe, coberturaTemporal, identificadorIbge,
+  FONTES, trilha, VARIAVEIS, catalogoDe, coberturaTemporal, identificadorIbge, LICENCA_DADOS,
   palavrasChave,
 } from "../../../lib/jsonld";
 import {
@@ -342,7 +342,7 @@ export default async function PaginaMunicipio(
       `orçamentária do município de ${m.nome}, ${m.uf}, a partir das APIs ` +
       `públicas do IBGE e do SICONFI/Tesouro Nacional.`,
     url: `${SITE}/municipio/${m.slug}/`,
-    license: "https://www.gnu.org/licenses/agpl-3.0.html",
+    license: LICENCA_DADOS,
     isAccessibleForFree: true,
     inLanguage: "pt-BR",
     creator: { "@type": "Person", name: "Peter Wilhelm Kretzschmar" },
@@ -1612,7 +1612,9 @@ export default async function PaginaMunicipio(
         <p>
           Fontes: {snapshot.fonte} e {fiscal.fonte}
           {fiscal.coletadoEm ? ` · coleta fiscal em ${fiscal.coletadoEm.slice(0, 10)}` : ""}.
-          Dados abertos, sob licença AGPL-3.0.
+          Dados sob a{" "}
+          <a href="/ajuda/#licenca">licença de cada fonte</a>; os do SICONFI,
+          e as planilhas deste site, sob ODbL.
         </p>
       </footer>
     </main>

@@ -122,9 +122,12 @@ export default function RootLayout({
             </a>
           </nav>
           <p>
-            Dados abertos do IBGE e do SICONFI/Tesouro Nacional, com a fonte e a
-            data de coleta ao lado de cada número. Software livre sob AGPL-3.0.
-            Este site não coleta nada sobre quem o visita.
+            Dados abertos do IBGE, do SICONFI/Tesouro Nacional, do SIOPS e do
+            INEP, com a fonte e a data de coleta ao lado de cada número. Os
+            dados seguem a{" "}
+            <a href="/ajuda/#licenca">licença de cada fonte</a>; o código é
+            software livre sob AGPL-3.0. Este site não coleta nada sobre quem o
+            visita.
           </p>
         </div>
         {/* O comportamento da busca do cabeçalho, sem React — ver o cabeçalho

@@ -16,8 +16,9 @@ export const dynamic = "force-static";
  * medido em 03/09/2026. Não é fatal, mas é o primeiro lugar onde um rastreador
  * olha, e um 404 ali não dá nenhuma pista de que existem 5.603 páginas.
  *
- * Tudo é liberado de propósito: é dado público, republicado sob AGPL-3.0, e
- * não há nada aqui que não deva ser indexado.
+ * Tudo é liberado de propósito: é dado público, republicado sob a licença de
+ * cada fonte (ver `LICENCA_DADOS` em `lib/jsonld.ts`), e não há nada aqui que
+ * não deva ser indexado.
  */
 export default function robots(): MetadataRoute.Robots {
   return {

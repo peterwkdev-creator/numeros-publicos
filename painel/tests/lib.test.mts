@@ -2065,3 +2065,44 @@ test("título fiscal não chama o prudencial de 'alerta' — a LRF tem outro lim
   assert.doesNotMatch(t, /alerta/i);
   assert.match(t, /prudencial/);
 });
+
+/**
+ * A AGPL é a licença do CÓDIGO, e nunca a dos dados.
+ *
+ * Até 23/09/2026 o site dizia "Dados abertos, sob licença AGPL-3.0" em 5.600
+ * páginas e punha a AGPL no `license` de todo `Dataset`. O SICONFI é ODbL, e
+ * a ODbL exige que a base derivada siga sob ela. O teste lê o código-fonte
+ * SEM os comentários (o comentário que conta o erro cita a frase antiga) e
+ * reprova as duas formas que o erro tinha.
+ */
+test("licença: a AGPL não volta a ser declarada como licença dos dados", async () => {
+  const { LICENCA_DADOS, LICENCA_CODIGO, FONTES } = await import("../lib/jsonld.ts");
+  assert.equal(LICENCA_DADOS, "https://opendatacommons.org/licenses/odbl/1-0/");
+  assert.match(LICENCA_CODIGO, /agpl-3\.0/);
+
+  const semComentario = (texto: string) =>
+    texto.split("\n")
+      .filter((l) => !/^\s*(\/\/|\/?\*)/.test(l))
+      .join(" ");
+  const arquivos = ["app", "lib"].flatMap((raiz) =>
+    (fs.readdirSync(raiz, { recursive: true }) as string[])
+      .filter((a) => /\.(tsx?|mts)$/.test(a))
+      .map((a) => `${raiz}/${a.replaceAll("\\", "/")}`));
+  assert.ok(arquivos.length > 20, `só ${arquivos.length} arquivos lidos — o caminho mudou?`);
+
+  const achados: string[] = [];
+  for (const arquivo of arquivos) {
+    const codigo = semComentario(fs.readFileSync(arquivo, "utf-8"));
+    if (/license:\s*["']https:\/\/www\.gnu\.org/.test(codigo)) {
+      achados.push(`${arquivo}: license do JSON-LD aponta para a AGPL`);
+    }
+    const frase = codigo.match(/[Dd]ados[^.;]{0,80}AGPL/);
+    if (frase) achados.push(`${arquivo}: "${frase[0].replace(/\s+/g, " ")}"`);
+  }
+  assert.deepEqual(achados, []);
+
+  // E a fonte fiscal carrega a própria licença, e o SIOPS está na lista.
+  const siconfi = FONTES.find((f) => f.name.startsWith("SICONFI"));
+  assert.equal((siconfi as { license?: string })?.license, LICENCA_DADOS);
+  assert.ok(FONTES.some((f) => f.name.startsWith("SIOPS")), "o SIOPS saiu das fontes");
+});

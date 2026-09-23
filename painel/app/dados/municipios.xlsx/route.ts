@@ -161,7 +161,14 @@ export async function GET() {
       ["Entregaram o relatório fiscal", fiscal.cobertura.publicaram, ""],
       ["Com rede municipal (anos iniciais)", ideb.cobertura.municipios, ""],
       [],
-      ["Licença", "AGPL-3.0. Os dados de origem são públicos.", ""],
+      // Até 23/09/2026 dizia "AGPL-3.0", que é a licença do CÓDIGO. A planilha
+      // deriva do SICONFI, que o Tesouro publica sob ODbL, e a ODbL exige que
+      // a base derivada siga sob ela. Ver `LICENCA_DADOS` em `lib/jsonld.ts`.
+      ["Licença dos dados",
+       "ODbL 1.0 (opendatacommons.org/licenses/odbl/1-0). Os dados fiscais vêm " +
+       "do SICONFI/Tesouro Nacional, publicado sob ODbL; os do IBGE e do INEP, " +
+       "de uso livre citando a fonte. Cite as fontes e mantenha a licença.", ""],
+      ["Licença do código do site", "AGPL-3.0", ""],
       ["Site", SITE, ""],
       ["Como conferir", "Cada número tem a sua página no site, com a fonte ao lado.", ""],
     ],

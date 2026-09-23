@@ -34,6 +34,26 @@ export function idCatalogo(site: string): string {
 export const NOME_CATALOGO = "Números Públicos";
 
 /**
+ * A licença dos DADOS — que não é a do código.
+ *
+ * Até 23/09/2026 o site declarava os dados "sob licença AGPL-3.0", no rodapé,
+ * na ajuda, na planilha e no `license` de todo `Dataset`. A AGPL é licença de
+ * **programa**, e os dados têm dono: o Tesouro publica o SICONFI (gasto com
+ * pessoal, funções, receita) sob a **ODbL 1.0**, conferido na API do Tesouro
+ * Transparente (`license_id: odc-odbl` em `api-rgf-entes` e `api-rreo-entes`).
+ * A ODbL é *share-alike*: a base adaptada que se publica tem de seguir sob
+ * ODbL, com atribuição. É o que este site faz com as planilhas, e é o que
+ * passa a declarar. IBGE e INEP entram pela regra geral do Decreto 8.777/2016
+ * (livre utilização, citando a fonte), compatível com isso; o SIOPS vem sob
+ * CC BY-ND 3.0 e é republicado como a fonte o publica. O texto por extenso
+ * está na ajuda, em `#licenca`.
+ */
+export const LICENCA_DADOS = "https://opendatacommons.org/licenses/odbl/1-0/";
+
+/** A licença do CÓDIGO do site e do motor de ingestão. */
+export const LICENCA_CODIGO = "https://www.gnu.org/licenses/agpl-3.0.html";
+
+/**
  * Referência a um nó declarado em OUTRA página — com identidade própria.
  *
  * ## Por que `@id` sozinho não basta fora da capa
@@ -194,11 +214,21 @@ export const FONTES = [
     "@type": "CreativeWork",
     name: "SICONFI — Tesouro Nacional",
     url: "https://apidatalake.tesouro.gov.br",
+    license: LICENCA_DADOS,
   },
   {
     "@type": "CreativeWork",
     name: "INEP — IDEB",
     url: "https://www.gov.br/inep/pt-br/areas-de-atuacao/pesquisas-estatisticas-e-indicadores/ideb",
+  },
+  {
+    // Faltava até 23/09/2026, e as páginas de município mostram a aplicação
+    // em saúde desde 09/09. A licença é a que o Portal de Dados Abertos do SUS
+    // declara para o conjunto SIOPS.
+    "@type": "CreativeWork",
+    name: "SIOPS — Ministério da Saúde",
+    url: "https://dadosabertos.saude.gov.br/dataset/siops",
+    license: "https://creativecommons.org/licenses/by-nd/3.0/",
   },
 ] as const;
 

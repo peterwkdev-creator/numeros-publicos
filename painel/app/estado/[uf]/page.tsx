@@ -18,7 +18,7 @@ import { medidasDe, taxasCache } from "../../../lib/censo";
 import MapaUf from "../../componentes/mapa-uf";
 import TabelaCenso from "../../componentes/tabela-censo";
 import {
-  FONTES, trilha, VARIAVEIS, catalogoDe, coberturaTemporal, palavrasChave,
+  FONTES, trilha, VARIAVEIS, catalogoDe, coberturaTemporal, palavrasChave, LICENCA_DADOS,
 } from "../../../lib/jsonld";
 import { lerFiscal, lerIdeb, lerSnapshot, SITE, cartaoSocial } from "../../../lib/servidor";
 import estilos from "./estado.module.css";
@@ -215,7 +215,7 @@ export default async function PaginaEstado(
       `${de}, a partir das APIs públicas do ` +
       `IBGE e do SICONFI/Tesouro Nacional.`,
     url: `${SITE}/estado/${slugUf(r.uf.sigla)}/`,
-    license: "https://www.gnu.org/licenses/agpl-3.0.html",
+    license: LICENCA_DADOS,
     isAccessibleForFree: true,
     // As fontes de onde este conjunto deriva. Estava só nas páginas de
     // município e na capa; a de estado dizia de onde o dado vinha em PROSA e
@@ -795,7 +795,9 @@ export default async function PaginaEstado(
           {fiscal.coletadoEm
             ? ` · coleta fiscal em ${fiscal.coletadoEm.slice(0, 10)}`
             : ""}
-          . Dados abertos, sob licença AGPL-3.0.
+          . Dados sob a{" "}
+          <a href="/ajuda/#licenca">licença de cada fonte</a>; os do SICONFI,
+          e as planilhas deste site, sob ODbL.
         </p>
       </footer>
     </main>

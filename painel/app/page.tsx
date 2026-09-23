@@ -17,7 +17,7 @@ import TabelaCenso from "./componentes/tabela-censo";
 import ComposicaoBarras from "./componentes/composicao-barras";
 import RoscaFuncoes from "./componentes/rosca-funcoes";
 import {
-  coberturaTemporal, FONTES, idCatalogo, palavrasChave, VARIAVEIS,
+  coberturaTemporal, FONTES, idCatalogo, palavrasChave, VARIAVEIS, LICENCA_DADOS,
 } from "@/lib/jsonld";
 import { lerFiscal, lerIdeb, lerSnapshot, SITE } from "@/lib/servidor";
 import { Municipios } from "./municipios";
@@ -110,7 +110,7 @@ export default async function Pagina() {
         url: `${SITE}/`,
         inLanguage: "pt-BR",
         publisher: { "@id": `${SITE}/#autor` },
-        license: "https://www.gnu.org/licenses/agpl-3.0.html",
+        license: LICENCA_DADOS,
       },
       {
         "@type": "Dataset",
@@ -125,7 +125,7 @@ export default async function Pagina() {
           `partir das APIs públicas do IBGE, do SICONFI/Tesouro Nacional e do ` +
           `INEP, com a fonte e a data de coleta ao lado de cada número.`,
         url: `${SITE}/`,
-        license: "https://www.gnu.org/licenses/agpl-3.0.html",
+        license: LICENCA_DADOS,
         isAccessibleForFree: true,
         inLanguage: "pt-BR",
         creator: { "@id": `${SITE}/#autor` },

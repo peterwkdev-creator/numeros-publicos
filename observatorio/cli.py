@@ -13,8 +13,11 @@ import sys
 
 from .armazem import Armazem
 from .ibge import (
+    MAIS_RECENTE,
     PAUSA_PADRAO,
+    ErroIBGE,
     buscar_json,
+    periodo_mais_recente,
     metadados_da_serie,
     total_da_regiao,
     url_serie_regiao,
@@ -126,7 +129,10 @@ def conferir(args, transporte=None) -> int:
         divergiu = False
         for ind in indicadores:
             s = INDICADORES[ind["codigo"]]
-            periodo = s.periodo
+            # O período que o SITE publica (o vigente no banco), e não o do
+            # registro: com `MAIS_RECENTE` o registro nem tem ano, e conferir
+            # outro período aprovaria um número que não é o exibido.
+            periodo = db.periodo_vigente(ind["codigo"])
             _, nivel = recorte_de(args)
             # A classificação vai junto, e não é detalhe: sem ela a soma dos
             # municípios (só "Superior completo") seria comparada com o total
@@ -156,7 +162,7 @@ def conferir(args, transporte=None) -> int:
             else:
                 veredito = f"DIVERGE em {br(diferenca)} ({relativa:.2%})"
                 divergiu = True
-            print(f"  {ind['codigo']:<24} municípios {br(nossa)} · "
+            print(f"  {ind['codigo']:<24} {periodo}  municípios {br(nossa)} · "
                   f"IBGE (região) {br(oficial)} · {veredito}")
     return 1 if divergiu else 0
 
@@ -198,8 +204,12 @@ def ingerir_municipios(args, transporte=None, dormir=None) -> int:
 #: HTTP 500 e ficaram de fora — escrevê-las pelo catálogo seria promessa falsa.
 INDICADORES: dict[str, Serie] = {
     "populacao-censo-2022": Serie(4714, "2022", 93),
-    "populacao-estimada":   Serie(6579, "2024", 9324),
-    "pib-municipal":        Serie(5938, "2021", 37),
+    # Estas duas a fonte ATUALIZA todo ano: a estimativa sai em agosto, o PIB
+    # municipal em dezembro. `MAIS_RECENTE` pergunta à API qual é o último
+    # período na hora de ingerir, e o cron passa a trazer o ano novo sozinho.
+    # O Censo e os pares abaixo ficam com o ano escrito: são de uma edição só.
+    "populacao-estimada":   Serie(6579, MAIS_RECENTE, 9324),
+    "pib-municipal":        Serie(5938, MAIS_RECENTE, 37),
 
     # --- Censo 2022: pares numerador/denominador ---------------------------
     #
@@ -299,13 +309,19 @@ def _ingerir_um(args, transporte=None, dormir=None) -> int:
     todas, _ = recorte_de(args)
     ufs = [args.uf] if args.uf else list(todas)
     transporte = transporte or transporte_http()
-    print(f"Ingerindo '{args.indicador}' (agregado {agregado}, período "
-          f"{periodo}, variável {variavel}) em {len(ufs)} UF(s).")
 
     lidas = novas = inalteradas = 0
     erro = None
     with Armazem(args.banco) as db:
         try:
+            # Dentro do `try`: a consulta dos períodos é uma requisição como as
+            # outras, e falhar nela tem de ficar registrado na coleta.
+            if periodo == MAIS_RECENTE:
+                periodo = periodo_mais_recente(
+                    transporte, agregado,
+                    **({} if dormir is None else {"dormir": dormir}))
+            print(f"Ingerindo '{args.indicador}' (agregado {agregado}, período "
+                  f"{periodo}, variável {variavel}) em {len(ufs)} UF(s).")
             # O rótulo e a unidade vêm da própria resposta: assim não divergem
             # da fonte nem dependem de alguém digitar certo.
             amostra = buscar_json(transporte, url_serie(agregado, periodo,
@@ -321,6 +337,14 @@ def _ingerir_um(args, transporte=None, dormir=None) -> int:
                                             classificacao=s.classificacao,
                                             **extra))
             lidas = len(observacoes)
+            # Período anunciado e ainda vazio (todos os valores ausentes) não
+            # se grava: o snapshot escolhe o período MAIS NOVO do banco, e
+            # gravá-lo trocaria o número de 5.571 páginas por travessão -- sem
+            # mudar nenhuma contagem que a trava do encolhimento lê.
+            if observacoes and all(o.valor is None for o in observacoes):
+                raise ErroIBGE(
+                    f"período {periodo} do agregado {agregado} veio sem nenhum "
+                    f"valor em {len(observacoes)} municípios; nada foi gravado")
             novas, inalteradas = db.gravar_observacoes(args.indicador,
                                                        observacoes)
         except (Exception, KeyboardInterrupt) as e:
@@ -431,6 +455,27 @@ def exportar(args) -> int:
     encolheram = [(rotulo, anterior[chave], len(dados[chave]))
                   for chave, rotulo in DIMENSOES
                   if anterior.get(chave) and len(dados[chave]) < anterior[chave]]
+
+    # ── A quarta dimensão: VALORES por coluna ──────────────────────────────
+    #
+    # Entrou em 24/09/2026, com o período que passou a vir da fonte
+    # (`MAIS_RECENTE`). O snapshot publica o período MAIS NOVO do banco, e um
+    # período novo gravado pela metade -- uma ingestão com `--uf`, uma UF que
+    # falhou no meio -- viraria o vigente com a coluna quase vazia. Municípios,
+    # indicadores e UFs continuariam iguais, e as três dimensões acima
+    # passariam; 5.500 páginas trocariam o número por travessão. Contar os
+    # municípios COM VALOR em cada coluna é o que vê isso.
+    def _com_valor(d: dict) -> dict[str, int]:
+        colunas = d.get("colunas", [])[3:]
+        return {c: sum(1 for linha in d.get("municipios", [])
+                       if len(linha) > 3 + j and linha[3 + j] is not None)
+                for j, c in enumerate(colunas)}
+
+    if velho is not None:
+        antes_v, agora_v = _com_valor(velho), _com_valor(dados)
+        encolheram += [(f"municípios com valor em {c}", antes_v[c], agora_v[c])
+                       for c in agora_v
+                       if c in antes_v and agora_v[c] < antes_v[c]]
     if encolheram and not getattr(args, "permitir_encolher", False):
         raise SystemExit("\n".join([
             "RECUSADO: a cobertura encolheria.",

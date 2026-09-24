@@ -14,7 +14,7 @@ import fs from "node:fs";
 import { inflateRawSync } from "node:zlib";
 
 import {
-  concorda, descricaoDe, escala, fracaoDe, INDICADORES_DA_CAPA,
+  concorda, descricaoDe, escala, fracaoDe, INDICADORES_DA_CAPA, periodoDe,
   inteiroImpresso, projetar,
   COLUNA_DA_CAPA, rotuloCurto, unidadeDaColuna, type Snapshot,
 } from "../lib/dados.ts";
@@ -2105,4 +2105,28 @@ test("licença: a AGPL não volta a ser declarada como licença dos dados", asyn
   const siconfi = FONTES.find((f) => f.name.startsWith("SICONFI"));
   assert.equal((siconfi as { license?: string })?.license, LICENCA_DADOS);
   assert.ok(FONTES.some((f) => f.name.startsWith("SIOPS")), "o SIOPS saiu das fontes");
+});
+
+/**
+ * O ano do número vem do snapshot, e nunca de texto digitado.
+ *
+ * Até 24/09/2026 o cartão dizia "Estimativa mais recente: 285.146" — a de
+ * 2024, com a de 2026 já publicada — e o do PIB não dizia o ano. O registro do
+ * Python tinha os anos fixos, e o cron reingeria o mesmo ano toda semana.
+ */
+test("periodoDe lê o ano do snapshot e recusa indicador que não existe", () => {
+  const snap = JSON.parse(
+    fs.readFileSync(new URL("../dados/snapshot.json", import.meta.url), "utf-8"),
+  ) as Snapshot;
+  const estimada = snap.indicadores.find((i) => i.codigo === "populacao-estimada")!;
+  assert.equal(periodoDe(snap, "populacao-estimada"), estimada.periodo);
+  assert.match(periodoDe(snap, "pib-municipal") ?? "", /^\d{4}$/);
+  assert.throws(() => periodoDe(snap, "nao-existe"), /não está no snapshot/);
+});
+
+test("o cartão de população não volta a afirmar 'mais recente' por escrito", () => {
+  const pagina = fs.readFileSync("app/municipio/[slug]/page.tsx", "utf-8");
+  assert.doesNotMatch(pagina, /Estimativa mais recente/);
+  assert.match(pagina, /periodoDe\(snapshot, "populacao-estimada"\)/);
+  assert.match(pagina, /periodoDe\(snapshot, "pib-municipal"\)/);
 });

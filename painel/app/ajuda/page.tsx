@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { br, expandir, inteiroImpresso } from "../../lib/dados";
+import { br, expandir, inteiroImpresso, periodoDe } from "../../lib/dados";
 import {
   faixaDaLinha, FUNCOES_DA_PORTARIA, LIMITE_PLAUSIVEL,
 } from "../../lib/fiscal";
@@ -449,8 +449,12 @@ export default async function PaginaAjuda() {
         </p>
         <ul className={estilos.lista}>
           <li>
-            <strong>População e PIB:</strong> IBGE — Censo 2022 e PIB municipal
-            a preços correntes.
+            <strong>População e PIB:</strong> IBGE — Censo 2022, estimativa de
+            população de {periodoDe(snapshot, "populacao-estimada")} e PIB
+            municipal de {periodoDe(snapshot, "pib-municipal")}, a preços
+            correntes. A estimativa e o PIB são atualizados quando o IBGE
+            publica um ano novo (a estimativa sai em agosto; o PIB, em
+            dezembro).
           </li>
           <li>
             <strong>Despesa com pessoal:</strong> SICONFI/Tesouro Nacional, RGF

@@ -306,6 +306,46 @@ def url_serie_regiao(agregado: int, periodo: str, variavel: int,
             f"{_sufixo_classificacao(classificacao)}")
 
 
+#: O período de uma `Serie` que se resolve NA HORA, perguntando à fonte.
+#:
+#: Até 24/09/2026 a população estimada e o PIB tinham o ano escrito no
+#: registro (2024 e 2021), e o cron semanal reingeria esses anos toda segunda
+#: sem perceber que o IBGE já tinha publicado 2025 e 2026 da estimativa e
+#: 2022 e 2023 do PIB. O site mostrou por meses números de dois anos atrás
+#: -- ao lado de "Estimativa mais recente" -- nas buscas que mais trazem
+#: visita. Ano fixo em série que a fonte atualiza é padrão que apodrece sem
+#: avisar: quem digita o comando nunca o vê envelhecer.
+MAIS_RECENTE = "mais-recente"
+
+
+def url_periodos(agregado: int) -> str:
+    return f"{BASE}/api/v3/agregados/{agregado}/periodos"
+
+
+def periodo_mais_recente(
+    transporte: Transporte,
+    agregado: int,
+    dormir: Callable[[float], None] = time.sleep,
+) -> str:
+    """O último período que o agregado publica, lido da própria API.
+
+    Os períodos anuais vêm como `"2026"`; a comparação é **numérica**, para
+    não depender da ordem da resposta. Período que não é número não é o que
+    este código sabe tratar, e recusa em vez de escolher às cegas.
+    """
+    url = url_periodos(agregado)
+    dados = buscar_json(transporte, url, dormir)
+    try:
+        ids = [str(p["id"]) for p in dados]  # type: ignore[union-attr]
+    except (TypeError, KeyError) as e:
+        raise ErroIBGE(f"lista de períodos ilegível em {url}") from e
+    if not ids:
+        raise ErroIBGE(f"nenhum período publicado em {url}")
+    if not all(i.isdigit() for i in ids):
+        raise ErroIBGE(f"período que não é ano em {url}: {ids[-5:]}")
+    return max(ids, key=int)
+
+
 def total_da_regiao(dados: object) -> float | None:
     """O valor único de uma resposta de nível regional."""
     try:

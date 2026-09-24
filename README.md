@@ -59,18 +59,24 @@ IBGE itself publishes**. Verifying one city proves the parser is right; only the
 sum proves the ingestion is *complete* — it catches a missing, duplicated or
 mis-summed municipality in a single comparison.
 
-Run against the live API on 2026-09-04, national cut (`--regiao BR`, IBGE's
+Run against the live API on 2026-09-24, national cut (`--regiao BR`, IBGE's
 own N1 aggregate):
 
 | Indicator | Sum of municipalities | vs. IBGE national total |
 |---|---|---|
 | Population (2022 Census) | 203,080,756 | **exact** |
-| Estimated population (2024) | 212,583,750 | **exact** |
-| Municipal GDP (2021) | 9,012,142,031 (BRL thousands) | rounding, 31 (3.4e-09) |
+| Estimated population (2026) | 214,211,951 | **exact** |
+| Municipal GDP (2023) | 10,943,345,420 (BRL thousands) | rounding, 19 (1.7e-09) |
+
+**The estimate and the GDP follow the latest year IBGE publishes.** Their
+period is not written in the code: ingestion asks the API for the aggregate's
+newest period (`MAIS_RECENTE`), so the weekly job picks up a new year on its
+own. Until 2026-09-24 the years were hard-coded, and the site kept showing the
+2024 estimate and the 2021 GDP while 2026 and 2023 were already out.
 
 **Exact equality is the wrong test for a rounded aggregate**, and the first real
 run showed why: GDP came out 5 apart in 1,243,103,280 back when the cut was
-regional, and 31 apart in 9,012,142,000 nationally — the absolute gap grows
+regional, and 31 apart in 9,012,142,000 nationally (2021) — the absolute gap grows
 with the sum, the relative one does not. IBGE publishes municipal
 GDP already rounded to thousands and computes the regional total before
 rounding. Widening the tolerance to hide that would be dishonest; the check
@@ -84,7 +90,7 @@ times over.
 python -m unittest discover -s tests -t .
 ```
 
-56 tests, **no network and no real waiting** — the HTTP transport and the clock
+82 tests, **no network and no real waiting** — the HTTP transport and the clock
 are injected. The fixtures in `tests/fixtures/` are real captured responses from
 the IBGE API: the 75 municipalities of Sergipe, the 2022 Census population of
 Rio Grande do Norte, and the 2021 GDP of Sergipe.

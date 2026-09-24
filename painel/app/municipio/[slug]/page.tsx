@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { br, descricaoDe, escala, expandir, milReaisParaReais } from "../../../lib/dados";
+import {
+  br, descricaoDe, escala, expandir, milReaisParaReais, periodoDe,
+} from "../../../lib/dados";
 import { aberturaFiscalDe, tituloFiscalDe } from "../../../lib/titulo";
 import { slugUf, vizinhosDe } from "../../../lib/estado";
 import { medianasSaudeCache, rankingCache } from "../../../lib/nacional";
@@ -183,6 +185,11 @@ export default async function PaginaMunicipio(
   // O PIB vem em MIL reais no agregado do IBGE; per capita em reais inteiros.
   const pibReais = milReaisParaReais(pib);
   const perCapita = pibReais !== null && pop !== null && pop ? pibReais / pop : null;
+  // O ano de cada número vem do snapshot, que o recebe da própria fonte (ver
+  // `periodoDe`). Escrito aqui, envelheceria em silêncio a cada publicação do
+  // IBGE, como a "estimativa mais recente" que era de 2024 com a de 2026 no ar.
+  const anoEstimada = periodoDe(snapshot, "populacao-estimada");
+  const anoPib = periodoDe(snapshot, "pib-municipal");
 
   // Onde este município cai entre os do estado. Vai em TODAS as páginas: se o
   // contexto vale numa página curta, vale numa longa — e acrescentar só onde
@@ -452,7 +459,7 @@ export default async function PaginaMunicipio(
           <p className={estilos.fonte}>Censo 2022 · IBGE</p>
           {estimada !== null && (
             <p className={estilos.fonte}>
-              Estimativa mais recente: {br(estimada, 0)}
+              Estimativa do IBGE para {anoEstimada}: {br(estimada, 0)}
             </p>
           )}
         </article>
@@ -463,7 +470,7 @@ export default async function PaginaMunicipio(
             {escala(pibReais).curto}
           </p>
           <p className={estilos.fonte}>
-            A preços correntes · IBGE
+            {anoPib}, a preços correntes · IBGE
             {pibReais !== null && (
               <>
                 <br />
@@ -479,7 +486,7 @@ export default async function PaginaMunicipio(
             {perCapita === null ? "—" : `R$ ${br(perCapita, 0)}`}
           </p>
           <p className={estilos.fonte}>
-            calculado a partir do PIB e do Censo 2022
+            PIB de {anoPib} dividido pela população do Censo 2022
           </p>
         </article>
 

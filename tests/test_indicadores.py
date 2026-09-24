@@ -43,6 +43,11 @@ SERGIPE = (FIXTURES / "municipios_se.json").read_text(encoding="utf-8")
 
 ACARI = 2400109   # código IBGE de Acari/RN
 
+#: A resposta de `/agregados/5938/periodos` reduzida ao que o código lê. O
+#: fixture do PIB é de 2021, então 2021 é o "mais recente" dos testes.
+PERIODOS_PIB = Resposta(200, json.dumps([{"id": "2019"}, {"id": "2020"},
+                                         {"id": "2021"}]))
+
 
 def transporte(*respostas):
     pendentes = list(respostas)
@@ -209,18 +214,24 @@ class TestIngestaoDeIndicadorPontaAPonta(unittest.TestCase):
 
     def _rodar(self, *respostas):
         pendentes = list(respostas)
+        self.urls: list[str] = []
+        def transporte_(u):
+            self.urls.append(u)
+            return pendentes.pop(0)
         args = construir_parser().parse_args(
             ["--banco", self.banco, "ingerir-indicador", "pib-municipal",
              "--uf", "28", "--pausa", "0"])
         saida, erros = io.StringIO(), io.StringIO()
         with redirect_stdout(saida), redirect_stderr(erros):
-            codigo = ingerir_indicador(args, transporte=lambda u: pendentes.pop(0),
+            codigo = ingerir_indicador(args, transporte=transporte_,
                                        dormir=lambda _: None)
         return codigo, saida.getvalue() + erros.getvalue()
 
     def test_ingestao_completa_e_o_indicador_fica_rotulado_pela_fonte(self):
-        # Duas respostas: a primeira lê metadados, a segunda traz a série.
-        codigo, saida = self._rodar(Resposta(200, PIB_SE), Resposta(200, PIB_SE))
+        # Três respostas: os períodos (o PIB é `MAIS_RECENTE`), os metadados e
+        # a série.
+        codigo, saida = self._rodar(PERIODOS_PIB, Resposta(200, PIB_SE),
+                                    Resposta(200, PIB_SE))
         self.assertEqual(codigo, 0)
         self.assertIn("75 lidas", saida)
         self.assertIn("75 novas", saida)
@@ -230,9 +241,36 @@ class TestIngestaoDeIndicadorPontaAPonta(unittest.TestCase):
             self.assertEqual(ind["unidade"], "Mil Reais")   # veio da resposta
             self.assertEqual(len(db.observacoes("pib-municipal", limite=200)), 75)
 
+    def test_o_periodo_pedido_e_o_mais_recente_que_a_fonte_publica(self):
+        # A resposta lista 2023 ANTES de 2021 de propósito: a escolha é pelo
+        # número, não pela ordem.
+        codigo, saida = self._rodar(
+            Resposta(200, json.dumps([{"id": "2019"}, {"id": "2023"}, {"id": "2021"}])),
+            Resposta(200, PIB_SE), Resposta(200, PIB_SE))
+        self.assertEqual(codigo, 0)
+        self.assertTrue(self.urls[0].endswith("/agregados/5938/periodos"))
+        self.assertIn("/periodos/2023/", self.urls[1])
+        self.assertIn("/periodos/2023/", self.urls[2])
+        self.assertIn("período 2023", saida)
+
+    def test_periodo_anunciado_e_ainda_vazio_nao_e_gravado(self):
+        # Todo valor ausente: gravar trocaria o número de todas as páginas por
+        # travessão, porque o snapshot usa o período mais novo do banco.
+        vazio = json.loads(PIB_SE)
+        for resultado in vazio[0]["resultados"]:
+            for item in resultado["series"]:
+                item["serie"] = {k: "..." for k in item["serie"]}
+        codigo, saida = self._rodar(PERIODOS_PIB, Resposta(200, PIB_SE),
+                                    Resposta(200, json.dumps(vazio)))
+        self.assertEqual(codigo, 1)
+        self.assertIn("sem nenhum valor", saida)
+        with Armazem(self.banco) as db:
+            self.assertEqual(db.observacoes("pib-municipal"), [])
+
     def test_rodar_de_novo_e_idempotente(self):
-        self._rodar(Resposta(200, PIB_SE), Resposta(200, PIB_SE))
-        codigo, saida = self._rodar(Resposta(200, PIB_SE), Resposta(200, PIB_SE))
+        self._rodar(PERIODOS_PIB, Resposta(200, PIB_SE), Resposta(200, PIB_SE))
+        codigo, saida = self._rodar(PERIODOS_PIB, Resposta(200, PIB_SE),
+                                    Resposta(200, PIB_SE))
         self.assertEqual(codigo, 0)
         self.assertIn("0 novas", saida)
         self.assertIn("75 já conhecidas", saida)

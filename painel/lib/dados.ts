@@ -150,6 +150,26 @@ export const COLUNA_DA_CAPA: Record<
   "populacao-estimada": { rotulo: "População estimada" },
 };
 
+/**
+ * O período (ano) de um indicador, lido do snapshot — nunca escrito na página.
+ *
+ * Até 24/09/2026 o cartão de população dizia *"Estimativa mais recente:
+ * 285.146"*, que era a de **2024**, com a de 2026 já publicada pelo IBGE; e o
+ * do PIB não dizia de que ano era. "Mais recente" digitado é afirmação que
+ * envelhece sem nada acusar. Com o ano ao lado, o leitor julga sozinho, e a
+ * frase fica verdadeira no dia em que o dado mudar.
+ *
+ * **Levanta se o indicador não existe**, pela mesma razão de `projetar`: um
+ * código renomeado não pode virar um ano em branco em 5.571 páginas.
+ */
+export function periodoDe(snapshot: Snapshot, codigo: string): string | null {
+  const ind = snapshot.indicadores.find((x) => x.codigo === codigo);
+  if (!ind) {
+    throw new Error(`indicador "${codigo}" não está no snapshot`);
+  }
+  return ind.periodo;
+}
+
 /** O rótulo curto, ou o nome da fonte quando não houver um. */
 export function rotuloCurto(codigo: string, nome: string): string {
   return COLUNA_DA_CAPA[codigo]?.rotulo ?? nome;

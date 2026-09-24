@@ -259,6 +259,20 @@ class Armazem:
             " WHERE o.indicador = ? GROUP BY m.uf_sigla ORDER BY m.uf_sigla",
             (indicador,)))
 
+    def periodo_vigente(self, indicador: str) -> str | None:
+        """O período MAIS NOVO gravado para o indicador, comparado como
+        número (`"2026"` > `"2024"`), ou `None` se não há observação.
+
+        É o período que o site publica e o que o `conferir` confere: os dois
+        têm de olhar o mesmo, senão a conferência aprova um número e o site
+        mostra outro.
+        """
+        linha = self.con.execute(
+            "SELECT periodo FROM observacao WHERE indicador = ?"
+            " ORDER BY CAST(periodo AS INTEGER) DESC, periodo DESC LIMIT 1",
+            (indicador,)).fetchone()
+        return linha["periodo"] if linha else None
+
     # ------------------------------------------------------------------ snapshot
 
     def snapshot(self) -> dict:
@@ -272,50 +286,66 @@ class Armazem:
         Cada indicador carrega `origem` e o período: **o painel não pode exibir
         um número sem poder dizer de onde ele veio.**
         """
+        # ## Um período por indicador, e TUDO dele sai desse período
+        #
+        # Até 24/09/2026 cada indicador tinha um período só no banco, e três
+        # consultas daqui dependiam disso sem dizer: o valor de cada município
+        # vinha da coleta mais recente **de qualquer período**, e os totais
+        # por UF somavam **todas** as observações. No dia em que a estimativa
+        # de 2026 entrasse ao lado da de 2024, a coluna misturaria anos (quem
+        # faltasse em 2026 ficaria com o de 2024, calado) e o total de cada
+        # estado dobraria. O período vigente é o MAIS NOVO, comparado como
+        # número; dentro dele, a coleta mais recente de cada município (uma
+        # revisão do IBGE convive com o valor anterior, e só a última vale).
+        valores: dict[int, dict[str, float | None]] = {}
         indicadores = []
         for ind in self.indicadores():
-            recente = self.con.execute(
-                "SELECT periodo, origem, MAX(coletado_em) AS coletado_em"
-                "  FROM observacao WHERE indicador = ?", (ind["codigo"],)
-            ).fetchone()
-            total = self.con.execute(
-                "SELECT SUM(valor) AS t FROM observacao WHERE indicador = ?"
-                "   AND periodo = ?",
-                (ind["codigo"], recente["periodo"] if recente else None),
-            ).fetchone()
+            codigo = ind["codigo"]
+            periodo = self.periodo_vigente(codigo)
+            # Uma consulta por indicador, com pivô em Python: 5.571 municípios
+            # em consultas separadas seria N+1 sobre um banco que cabe na memória.
+            soma = 0.0
+            algum = False
+            for l in self.con.execute(
+                "SELECT o.municipio, o.valor FROM observacao o"
+                " WHERE o.indicador = ? AND o.periodo = ?"
+                "   AND o.coletado_em = (SELECT MAX(o2.coletado_em)"
+                "                          FROM observacao o2"
+                "                         WHERE o2.municipio = o.municipio"
+                "                           AND o2.indicador = o.indicador"
+                "                           AND o2.periodo = o.periodo)",
+                (codigo, periodo)):
+                valores.setdefault(l["municipio"], {})[codigo] = l["valor"]
+                if l["valor"] is not None:
+                    soma += l["valor"]
+                    algum = True
+            procedencia = self.con.execute(
+                "SELECT origem, MAX(coletado_em) AS coletado_em"
+                "  FROM observacao WHERE indicador = ? AND periodo = ?",
+                (codigo, periodo)).fetchone()
             indicadores.append({
-                "codigo": ind["codigo"],
+                "codigo": codigo,
                 "nome": ind["nome"],
                 "unidade": ind["unidade"],
                 "agregado": ind["agregado"],
                 "variavel": ind["variavel"],
-                "periodo": recente["periodo"] if recente else None,
-                "origem": recente["origem"] if recente else None,
-                "coletadoEm": recente["coletado_em"] if recente else None,
-                "totalRegiao": total["t"] if total else None,
+                "periodo": periodo,
+                "origem": procedencia["origem"] if procedencia else None,
+                "coletadoEm": procedencia["coletado_em"] if procedencia else None,
+                "totalRegiao": soma if algum else None,
             })
 
         codigos = [i["codigo"] for i in indicadores]
-        # Uma consulta só, com pivô em Python: 1.794 municípios × N indicadores
-        # em consultas separadas seria N+1 sobre um banco que cabe na memória.
-        valores: dict[int, dict[str, float | None]] = {}
-        for l in self.con.execute(
-            "SELECT o.municipio, o.indicador, o.valor, o.coletado_em"
-            "  FROM observacao o"
-            " WHERE o.coletado_em = (SELECT MAX(o2.coletado_em) FROM observacao o2"
-            "                         WHERE o2.municipio = o.municipio"
-            "                           AND o2.indicador = o.indicador)"
-        ):
-            valores.setdefault(l["municipio"], {})[l["indicador"]] = l["valor"]
 
+        todos = self.municipios()
         municipios = [
             [m["codigo"], m["nome"], m["uf_sigla"],
              *[valores.get(m["codigo"], {}).get(c) for c in codigos]]
-            for m in self.municipios()
+            for m in todos
         ]
 
         ufs = {}
-        for m in self.municipios():
+        for m in todos:
             # `regiao` entra no snapshot desde a expansão nacional: com 27
             # UFs numa lista plana, o leitor procura "Ceará" varrendo a tabela
             # inteira. Agrupada por região, ele vai direto — e o dado já estava
@@ -325,15 +355,18 @@ class Armazem:
                                            "regiao": m["regiao"],
                                            "municipios": 0})
             ufs[m["uf_sigla"]]["municipios"] += 1
+        # O total da UF sai dos MESMOS valores que as linhas mostram -- um por
+        # município, do período vigente --, e não de um SUM sobre a tabela, que
+        # contaria duas vezes o município com dois períodos ou uma revisão.
+        # `None` quando nenhum município da UF tem valor: soma de ausências não
+        # é zero.
         for sigla, uf in ufs.items():
-            uf["totais"] = {
-                c: self.con.execute(
-                    "SELECT SUM(o.valor) AS t FROM observacao o"
-                    "  JOIN municipio m ON m.codigo = o.municipio"
-                    " WHERE o.indicador = ? AND m.uf_sigla = ?", (c, sigla)
-                ).fetchone()["t"]
-                for c in codigos
-            }
+            daqui = [m["codigo"] for m in todos if m["uf_sigla"] == sigla]
+            uf["totais"] = {}
+            for c in codigos:
+                presentes = [v for v in (valores.get(cod, {}).get(c) for cod in daqui)
+                             if v is not None]
+                uf["totais"][c] = sum(presentes) if presentes else None
 
         return {
             "geradoEm": agora(),

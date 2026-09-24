@@ -126,7 +126,8 @@ class TestTravaDoEncolhimento(unittest.TestCase):
 
     def _exportar(self, quantos: int, permitir: bool = False,
                   indicadores: int = 13, ufs: int = 27,
-                  carimbo: str = "2026-09-07T00:00:00") -> int:
+                  carimbo: str = "2026-09-07T00:00:00",
+                  com_valor: int | None = None) -> int:
         """Chama `exportar` com um snapshot daquele tamanho, em cada dimensão.
 
         `carimbo` é o que muda a cada execução do cron sem o dado mudar:
@@ -148,6 +149,12 @@ class TestTravaDoEncolhimento(unittest.TestCase):
             "ufs": [{"sigla": f"U{n}"} for n in range(ufs)],
             "municipios": [[i] for i in range(quantos)],
         }
+        if com_valor is not None:
+            # Uma coluna de indicador, com valor só nas `com_valor` primeiras
+            # linhas: é a forma de um período novo gravado pela metade.
+            falso["colunas"] = ["codigo", "nome", "uf", "populacao-estimada"]
+            falso["municipios"] = [[i, "m", "UF", 1000.0 if i < com_valor else None]
+                                   for i in range(quantos)]
 
         class ArmazemFalso:
             def __init__(self, *a, **k) -> None: ...
@@ -260,6 +267,113 @@ class TestTravaDoEncolhimento(unittest.TestCase):
         self._exportar(1794, indicadores=13)
         with self.assertRaises(SystemExit):
             self._exportar(5571, indicadores=3)
+
+    def test_coluna_que_perde_VALORES_e_RECUSADA_mesmo_com_as_contagens_iguais(self) -> None:
+        # 24/09/2026: com o período vindo da fonte, um período novo gravado
+        # pela metade vira o vigente. Municípios, indicadores e UFs ficam
+        # iguais; o que encolhe é quantos municípios têm valor na coluna.
+        self._exportar(5571, com_valor=5571)
+        with self.assertRaises(SystemExit) as ctx:
+            self._exportar(5571, com_valor=75)
+        self.assertIn("com valor em populacao-estimada", str(ctx.exception))
+        self.assertIn("de 5571 para 75", str(ctx.exception))
+
+    def test_coluna_com_os_mesmos_valores_ou_mais_passa(self) -> None:
+        self._exportar(5571, com_valor=5570)
+        self.assertEqual(self._exportar(5571, com_valor=5571), 0)
+
+
+class TestPeriodoVigente(unittest.TestCase):
+    """Um período por indicador, e tudo dele sai desse período.
+
+    Escrito em 24/09/2026, quando a estimativa e o PIB passaram a buscar o
+    período mais recente da fonte. Até então cada indicador tinha um período
+    só no banco, e o snapshot dependia disso sem dizer: o valor vinha da coleta
+    mais recente de QUALQUER período, e o total da UF somava TODAS as
+    observações. Com 2024 e 2026 lado a lado, a coluna misturaria anos e o
+    total do estado dobraria.
+    """
+
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory()
+        self.db = Armazem(Path(self.tmp.name) / "obs.db")
+        self.db.gravar_municipios(
+            [Municipio.de_json(b) for b in json.loads(SERGIPE)])
+        self.db.registrar_indicador("pib-municipal", "PIB a preços correntes",
+                                    "Mil Reais", 5938, 37)
+        self.antigo = list(serie(lambda u: Resposta(200, PIB_SE), 5938, "2021",
+                                 37, ufs=[28], dormir=lambda _: None))
+        self.db.gravar_observacoes("pib-municipal", self.antigo)
+        # O período novo: o dobro do valor, para os números não se confundirem,
+        # e SEM o primeiro município (que na vida real seria um ausente).
+        self.novo = [Observacao(o.municipio, "2023",
+                                None if o.valor is None else o.valor * 2, o.origem)
+                     for o in self.antigo[1:]]
+        self.db.gravar_observacoes("pib-municipal", self.novo)
+
+    def tearDown(self) -> None:
+        self.db.fechar()
+        self.tmp.cleanup()
+
+    def _coluna(self, snap):
+        i = snap["colunas"].index("pib-municipal")
+        return {l[0]: l[i] for l in snap["municipios"]}
+
+    def test_o_periodo_publicado_e_o_mais_novo_comparado_como_numero(self) -> None:
+        self.assertEqual(self.db.periodo_vigente("pib-municipal"), "2023")
+        snap = self.db.snapshot()
+        self.assertEqual(snap["indicadores"][0]["periodo"], "2023")
+
+    def test_os_valores_sao_todos_do_periodo_vigente(self) -> None:
+        coluna = self._coluna(self.db.snapshot())
+        for o in self.novo:
+            self.assertEqual(coluna[o.municipio], o.valor)
+
+    def test_quem_falta_no_periodo_novo_fica_SEM_valor_e_nao_com_o_antigo(self) -> None:
+        # O defeito calado: a coluna diria "2023" e mostraria o 2021 dele.
+        faltante = self.antigo[0].municipio
+        self.assertIsNone(self._coluna(self.db.snapshot())[faltante])
+
+    def test_o_total_da_uf_nao_soma_os_dois_periodos(self) -> None:
+        snap = self.db.snapshot()
+        esperado = sum(o.valor for o in self.novo if o.valor is not None)
+        self.assertAlmostEqual(snap["ufs"][0]["totais"]["pib-municipal"],
+                               esperado, places=2)
+        self.assertAlmostEqual(snap["indicadores"][0]["totalRegiao"],
+                               esperado, places=2)
+
+    def test_revisao_no_mesmo_periodo_conta_uma_vez_so(self) -> None:
+        # O IBGE revisa: o valor anterior fica no banco como história, e só o
+        # último entra no retrato e no total.
+        alvo = self.novo[0]
+        revisado = Observacao(alvo.municipio, "2023", alvo.valor + 1000, alvo.origem)
+        self.db.gravar_observacoes("pib-municipal", [revisado])
+        snap = self.db.snapshot()
+        self.assertEqual(self._coluna(snap)[alvo.municipio], alvo.valor + 1000)
+        esperado = sum(o.valor for o in self.novo if o.valor is not None) + 1000
+        self.assertAlmostEqual(snap["ufs"][0]["totais"]["pib-municipal"],
+                               esperado, places=2)
+
+
+class TestPeriodoMaisRecente(unittest.TestCase):
+    def _resolver(self, corpo):
+        from observatorio.ibge import periodo_mais_recente
+        return periodo_mais_recente(lambda u: Resposta(200, corpo), 6579,
+                                    dormir=lambda _: None)
+
+    def test_escolhe_pelo_numero_e_nao_pela_ordem(self) -> None:
+        self.assertEqual(
+            self._resolver('[{"id":"2026"},{"id":"2020"},{"id":"2025"}]'), "2026")
+
+    def test_periodo_que_nao_e_ano_e_recusado(self) -> None:
+        from observatorio.ibge import ErroIBGE
+        with self.assertRaises(ErroIBGE):
+            self._resolver('[{"id":"2024"},{"id":"202403"},{"id":"2024-T1"}]')
+
+    def test_lista_vazia_e_recusada(self) -> None:
+        from observatorio.ibge import ErroIBGE
+        with self.assertRaises(ErroIBGE):
+            self._resolver("[]")
 
 
 class TestPadraoDoRecorte(unittest.TestCase):

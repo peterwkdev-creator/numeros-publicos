@@ -7,6 +7,7 @@ import TiraEstados from "../../componentes/tira-estados";
 import Termo from "../../componentes/termo";
 import {
   br, concorda, descricaoDe, escala, expandir, fracaoDe, milReaisParaReais,
+  periodoDe,
 } from "../../../lib/dados";
 import { resumirEstado, slugUf } from "../../../lib/estado";
 import { ROTULO_FAIXA } from "../../../lib/fiscal";
@@ -303,7 +304,9 @@ export default async function PaginaEstado(
           <p className={`${estilos.valor} tabular`} title={escala(pibReais).exato}>
             {escala(pibReais).curto}
           </p>
-          <p className={estilos.fonte}>a preços correntes · IBGE</p>
+          <p className={estilos.fonte}>
+            {periodoDe(snapshot, "pib-municipal")}, a preços correntes · IBGE
+          </p>
         </article>
 
         <article className={estilos.cartao}>

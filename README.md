@@ -90,10 +90,33 @@ times over.
 python -m unittest discover -s tests -t .
 ```
 
-82 tests, **no network and no real waiting** — the HTTP transport and the clock
+100 tests, **no network and no real waiting** — the HTTP transport and the clock
 are injected. The fixtures in `tests/fixtures/` are real captured responses from
 the IBGE API: the 75 municipalities of Sergipe, the 2022 Census population of
 Rio Grande do Norte, and the 2021 GDP of Sergipe.
+
+## INSS: the social-security queue (ingestion only, not on the site yet)
+
+`observatorio/inss.py` reads two monthly datasets from INSS's open-data portal
+into a separate database (`inss.db`, nothing here touches the site):
+
+```bash
+python -m observatorio inss-ingerir --mes 2026-07
+python -m observatorio inss-resumo --mes 2026-07
+```
+
+- **Pending requests** measure the *age of the queue*: how long the requests
+  still undecided on the reference date have been waiting. Not the time to a
+  decision — whoever was served fast has already left the file.
+- **Denied requests** carry the request date and the denial date, so they give
+  the time to a "no". Granted requests carry no request date; **the time to a
+  "yes" is not in the open data.**
+
+The portal's labels are not trusted: in September 2026 the resource labelled
+"August 2026" was July 2025's file. The month is checked **inside** each file,
+and a mismatch is refused. The spreadsheets (60–70 MB) are read by a
+dependency-free XLSX reader, checked cell by cell against `openpyxl` on a real
+935,123-row file: zero differences.
 
 ## The panel
 

@@ -622,7 +622,126 @@ def construir_parser() -> argparse.ArgumentParser:
 
     c = sub.add_parser("coletas", help="histórico de execuções")
     c.set_defaults(func=listar_coletas)
+
+    # ── INSS: banco próprio, nenhum efeito no snapshot nem no site ─────────
+    ig = sub.add_parser(
+        "inss-ingerir",
+        help="grava a fila (pendentes) e os negados do INSS de um mês")
+    ig.add_argument("--mes", required=True, help="AAAA-MM, ex.: 2026-07")
+    ig.add_argument("--conjunto", default="todos",
+                    choices=["pendentes", "indeferidos", "todos"])
+    ig.add_argument("--arquivo",
+                    help="arquivo local em vez do portal (só com um conjunto)")
+    ig.add_argument("--banco-inss",
+                    default=os.environ.get("INSS_BANCO", "inss.db"))
+    ig.add_argument("--permitir-encolher", action="store_true",
+                    help="aceita cobertura menor que 80%% do mês anterior")
+    ig.set_defaults(func=inss_ingerir)
+
+    ir = sub.add_parser("inss-resumo",
+                        help="idade da fila por serviço e dias até o 'não'")
+    ir.add_argument("--mes", required=True, help="AAAA-MM")
+    ir.add_argument("--banco-inss",
+                    default=os.environ.get("INSS_BANCO", "inss.db"))
+    ir.set_defaults(func=inss_resumo)
     return p
+
+
+def _baixar(url: str, destino: str) -> None:
+    """Baixa em blocos: os arquivos do INSS têm de 60 a 125 MB."""
+    import shutil
+    import urllib.request
+    pedido = urllib.request.Request(
+        url, headers={"User-Agent": "Mozilla/5.0 (numeros-publicos)"})
+    with urllib.request.urlopen(pedido, timeout=120) as r, open(destino, "wb") as fh:
+        shutil.copyfileobj(r, fh, length=1 << 20)
+
+
+def inss_ingerir(args, transporte=None, baixar=_baixar) -> int:
+    """Grava um mês do INSS. O mês do rótulo é só o candidato: quem decide é
+    o que está dentro do arquivo (ver `observatorio/inss.py`)."""
+    import json as _json
+    import tempfile
+    import urllib.parse
+    from . import inss
+
+    conjuntos = (["pendentes", "indeferidos"] if args.conjunto == "todos"
+                 else [args.conjunto])
+    if args.arquivo and len(conjuntos) != 1:
+        print("--arquivo exige --conjunto pendentes ou indeferidos",
+              file=sys.stderr)
+        return 2
+    falhou = False
+    with inss.ArmazemINSS(args.banco_inss) as db:
+        for conjunto in conjuntos:
+            temporario = None
+            try:
+                if args.arquivo:
+                    caminho, nome = args.arquivo, os.path.basename(args.arquivo)
+                else:
+                    pacote = (inss.PACOTE_PENDENTES if conjunto == "pendentes"
+                              else inss.PACOTE_INDEFERIDOS)
+                    t = transporte or transporte_http(timeout=60)
+                    resposta = t(inss.PORTAL + pacote)
+                    if resposta.status != 200:
+                        raise inss.ErroINSS(
+                            f"portal do INSS respondeu {resposta.status} para "
+                            f"o pacote {pacote}")
+                    dados = _json.loads(resposta.corpo)
+                    recurso = inss.recurso_do_mes(dados["result"]["resources"],
+                                                  conjunto, args.mes)
+                    url = recurso["url"]
+                    nome = urllib.parse.unquote(url.rsplit("/", 1)[-1])
+                    fd, temporario = tempfile.mkstemp(suffix="-" + nome)
+                    os.close(fd)
+                    print(f"{conjunto} {args.mes}: baixando {nome}")
+                    baixar(url, temporario)
+                    caminho = temporario
+                if conjunto == "pendentes":
+                    with inss.abrir_pendentes(caminho) as fh:
+                        r = inss.gravar_pendentes(db, args.mes, nome,
+                                                  inss.ler_pendentes(fh),
+                                                  args.permitir_encolher)
+                else:
+                    r = inss.gravar_indeferidos(
+                        db, args.mes, nome,
+                        inss.ler_indeferidos(inss.linhas_xlsx(caminho)),
+                        args.permitir_encolher)
+                print(f"{conjunto} {args.mes}: gravado · " + " · ".join(
+                    f"{k} {br(v) if isinstance(v, (int, float)) else v}"
+                    for k, v in r.items()))
+            except inss.ErroINSS as e:
+                falhou = True
+                print(f"{conjunto} {args.mes}: {e}", file=sys.stderr)
+            finally:
+                if temporario and os.path.exists(temporario):
+                    os.remove(temporario)
+    return 1 if falhou else 0
+
+
+def inss_resumo(args) -> int:
+    from . import inss
+
+    def linha(nome, r):
+        return (f"  {nome[:52]:<52} {br(r['n']):>9} {r['mediana']:>5} "
+                f"{r['p75']:>5} {100 * r['acima_45']:>6.1f}% {100 * r['acima_90']:>6.1f}%")
+
+    with inss.ArmazemINSS(args.banco_inss) as db:
+        for titulo, conjunto, por in (
+                ("IDADE DA FILA (pedidos ainda sem decisão, na data de referência)",
+                 "pendentes", inss.fila_por_servico),
+                ("DIAS DO PEDIDO AO 'NÃO' (negados no mês)",
+                 "indeferidos", inss.negados_por_especie)):
+            total = inss.total_distribuicao(db, conjunto, args.mes)
+            print(f"\n{titulo} — {args.mes}")
+            if not total:
+                print("  nada gravado para este mês")
+                continue
+            print(f"  {'':<52} {'n':>9} {'med.':>5} {'p75':>5} {'>45d':>7} {'>90d':>7}")
+            print(linha("TOTAL", total))
+            for _, nome, r in por(db, args.mes)[:15]:
+                print(linha(nome, r))
+    return 0
 
 
 def main(argv: list[str] | None = None) -> int:

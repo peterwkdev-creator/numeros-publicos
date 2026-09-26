@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import datetime as dt
 import io
+import sqlite3
 import tempfile
 import unittest
 import zipfile
@@ -90,10 +91,18 @@ NOMES_UF = {v: k.title() for k, v in inss.UF_POR_NOME.items()}
 
 
 def linha_negada(comp: int, especie: int, motivo: str, uf: str, aps: int,
-                 pedido: dt.date, negado: dt.date) -> list:
+                 pedido: dt.date, negado: dt.date, clientela: str = "Urbano") -> list:
     return [comp, especie, f"Espécie {especie}", motivo, serial(dt.date(1980, 1, 1)),
-            "Feminino", "Urbano", "Empregado", NOMES_UF[uf], serial(negado),
+            "Feminino", clientela, "Empregado", NOMES_UF[uf], serial(negado),
             "Comerciario", aps, f"{aps:08d}-Aps {uf}", serial(pedido)]
+
+
+def negados_do_mes(comp: int, especie: int = 87, clientelas=("Urbano",)) -> list:
+    """Uma negativa por UF para cada clientela: o mínimo que passa na trava."""
+    ano, mes = divmod(comp, 100)
+    return [linha_negada(comp, especie, "Motivo", uf, 1000 + i,
+                         dt.date(ano, mes, 1), dt.date(ano, mes, 11), c)
+            for c in clientelas for i, uf in enumerate(sorted(inss.UFS))]
 
 
 class TestMesDoArquivo(unittest.TestCase):
@@ -259,6 +268,88 @@ class TestNegados(unittest.TestCase):
         self.assertEqual(self.db.con.execute("SELECT COUNT(*) FROM servico").fetchone()[0], 0)
         self.assertEqual({r[0] for r in self.db.con.execute("SELECT codigo FROM especie")},
                          {87, 36})
+
+
+class TestClientela(unittest.TestCase):
+    """Os indeferidos trazem Urbano/Rural, e é a única coluna que separa, nos
+    negados, a aposentadoria por idade urbana (serviço 2772) da rural (1671):
+    as duas são a espécie 41. A primeira ingestão a descartava (26/09/2026)."""
+
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory()
+        self.caminho = Path(self.tmp.name) / "inss.db"
+        self.db = inss.ArmazemINSS(self.caminho)
+
+    def tearDown(self) -> None:
+        self.db.con.close()
+        self.tmp.cleanup()
+
+    def _gravar(self, mes, linhas, permitir=False):
+        return inss.gravar_indeferidos(
+            self.db, mes, "x.xlsx", inss.ler_indeferidos([["t"], CAB_NEG, *linhas]),
+            permitir)
+
+    def test_urbano_e_rural_da_mesma_especie_ficam_separados(self) -> None:
+        linhas = negados_do_mes(202607, 41, ("Urbano", "Rural"))
+        linhas.append(linha_negada(202607, 41, "Motivo", "PI", 7, dt.date(2026, 7, 1),
+                                   dt.date(2026, 7, 31), "Rural"))
+        r = self._gravar("2026-07", linhas)
+        self.assertEqual(r["clientelas"], 2)
+        por = dict(self.db.con.execute(
+            "SELECT clientela, SUM(quantidade) FROM negado GROUP BY clientela"))
+        self.assertEqual(por, {"urbano": 27, "rural": 28})
+        rural = inss.negados_por_especie(self.db, "2026-07", clientela="rural")
+        self.assertEqual(rural[0][2]["n"], 28)
+        self.assertEqual(inss.negados_por_especie(self.db, "2026-07")[0][2]["n"], 55)
+
+    def test_clientela_desconhecida_e_recusada_sem_gravar(self) -> None:
+        # Um valor novo é a fonte mudando: vira notícia, não uma terceira
+        # categoria que nenhuma página sabe nomear.
+        linhas = negados_do_mes(202607) + [linha_negada(
+            202607, 87, "Motivo", "SP", 9, dt.date(2026, 7, 1), dt.date(2026, 7, 2),
+            "Indígena")]
+        with self.assertRaises(inss.ErroINSS) as ctx:
+            self._gravar("2026-07", linhas)
+        self.assertIn("Indígena", str(ctx.exception))
+        self.assertEqual(self.db.con.execute("SELECT COUNT(*) FROM negado").fetchone()[0], 0)
+
+    def test_sumir_uma_clientela_e_encolher_a_cobertura(self) -> None:
+        self._gravar("2026-07", negados_do_mes(202607, 41, ("Urbano", "Rural")))
+        with self.assertRaises(inss.ErroINSS) as ctx:
+            self._gravar("2026-08", negados_do_mes(202608, 41, ("Urbano",)))
+        self.assertIn("clientelas: 2", str(ctx.exception))
+
+    def test_banco_anterior_a_clientela_nao_abre_sem_migrar(self) -> None:
+        # O banco de 25/09 tem negados sem clientela. Não há como completá-los
+        # sem reler o arquivo, e linha sem clientela misturaria urbano e rural
+        # em silêncio: recusa, e só a ingestão (que vai reler) migra.
+        self.db.con.close()
+        antigo = Path(self.tmp.name) / "antigo.db"
+        con = sqlite3.connect(antigo)
+        con.executescript(
+            "CREATE TABLE negado (mes TEXT NOT NULL, especie INTEGER NOT NULL,"
+            " motivo TEXT NOT NULL, uf TEXT NOT NULL, aps INTEGER,"
+            " dias INTEGER NOT NULL, quantidade INTEGER NOT NULL);"
+            "INSERT INTO negado VALUES ('2026-07', 41, 'M', 'SP', 1, 10, 5);"
+            "CREATE TABLE coleta (mes TEXT NOT NULL, conjunto TEXT NOT NULL,"
+            " arquivo TEXT NOT NULL, linhas INTEGER NOT NULL, total INTEGER NOT NULL,"
+            " descartadas INTEGER NOT NULL, gravado_em TEXT NOT NULL,"
+            " PRIMARY KEY (mes, conjunto));"
+            "INSERT INTO coleta VALUES ('2026-07', 'indeferidos', 'x', 1, 5, 0, 'h');"
+            "INSERT INTO coleta VALUES ('2026-07', 'pendentes', 'p', 1, 9, 0, 'h');")
+        con.commit()
+        con.close()
+        with self.assertRaises(inss.ErroINSS) as ctx:
+            inss.ArmazemINSS(antigo)
+        self.assertIn("inss-ingerir", str(ctx.exception))
+        with inss.ArmazemINSS(antigo, migrar=True) as db:
+            self.assertTrue(db.migrado)
+            self.assertEqual(db.con.execute("SELECT COUNT(*) FROM negado").fetchone()[0], 0)
+            conjuntos = {r[0] for r in db.con.execute("SELECT conjunto FROM coleta")}
+            self.assertEqual(conjuntos, {"pendentes"})   # a fila não é tocada
+        with inss.ArmazemINSS(antigo) as db:           # já migrado: abre normal
+            self.assertFalse(db.migrado)
+        self.db = inss.ArmazemINSS(self.caminho)       # para o tearDown
 
 
 class TestLeitorXlsx(unittest.TestCase):

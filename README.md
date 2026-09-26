@@ -110,7 +110,11 @@ python -m observatorio inss-resumo --mes 2026-07
   decision — whoever was served fast has already left the file.
 - **Denied requests** carry the request date and the denial date, so they give
   the time to a "no". Granted requests carry no request date; **the time to a
-  "yes" is not in the open data.**
+  "yes" is not in the open data.** They are stored with the *clientele*
+  (urban or rural): it is the only column that separates, among denials, the
+  urban old-age pension from the rural one, which share the same benefit code.
+  A database written before this column existed refuses to open;
+  `inss-ingerir --conjunto indeferidos` migrates it by re-reading each month.
 
 The portal's labels are not trusted: in September 2026 the resource labelled
 "August 2026" was July 2025's file. The month is checked **inside** each file,

@@ -242,12 +242,19 @@ def serial_para_data(valor: str | float | None) -> dt.date | None:
 
 # ── indeferidos (XLSX) ──────────────────────────────────────────────────────
 
+# A clientela é o que separa, nos negados, o urbano do rural da MESMA espécie
+# (aposentadoria por idade urbana e rural são as duas a espécie 41; ver a §10
+# da especificação). Valor fora desta lista é a fonte mudando: recusa.
+CLIENTELA = {"Urbano": "urbano", "Rural": "rural"}
+
+
 @dataclass(frozen=True, slots=True)
 class LinhaNegada:
     competencia: int
     especie: int
     especie_nome: str
     motivo: str
+    clientela: str
     uf: str
     aps: int | None
     aps_nome: str
@@ -278,16 +285,21 @@ def ler_indeferidos(linhas: Iterable[list]) -> Iterator[LinhaNegada]:
     i_comp = _achar(cab, "Competência indeferimento")
     i_esp, i_espn = _achar(cab, "Espécie"), _achar(cab, "Espécie", 2)
     i_mot, i_uf = _achar(cab, "Motivo Indeferimento"), _achar(cab, "UF")
+    i_cli = _achar(cab, "Clientela")
     i_aps, i_apsn = _achar(cab, "APS"), _achar(cab, "APS", 2)
     i_neg, i_der = _achar(cab, "Dt Indeferimento"), _achar(cab, "Dt DER")
-    for l in it:
+    for n, l in enumerate(it, start=1):
         if not l or l[i_comp] in (None, ""):
             continue
         uf_nome = _sem_acento(str(l[i_uf] or ""))
+        cli = str(l[i_cli] or "").strip()
+        if cli not in CLIENTELA:
+            raise ErroINSS(f"indeferidos: linha {n} tem clientela {cli!r}, fora de "
+                           f"{sorted(CLIENTELA)} — a fonte mudou; nada gravado")
         yield LinhaNegada(
             competencia=int(float(l[i_comp])),
             especie=int(float(l[i_esp])), especie_nome=str(l[i_espn]).strip(),
-            motivo=str(l[i_mot]).strip(),
+            motivo=str(l[i_mot]).strip(), clientela=CLIENTELA[cli],
             uf=UF_POR_NOME.get(uf_nome, uf_nome.upper()),
             aps=None if l[i_aps] in (None, "") else int(float(l[i_aps])),
             aps_nome=str(l[i_apsn] or "").strip(),
@@ -337,9 +349,10 @@ CREATE INDEX IF NOT EXISTS idx_pendente_mes ON pendente (mes, servico);
 
 -- Os negados, agregados: o arquivo tem uma linha por pedido (~900 mil/mês).
 -- O motivo NÃO tem código no arquivo; a chave é o texto, como vem.
+-- A clientela (urbano/rural) entrou em 26/09/2026: ver `ArmazemINSS`.
 CREATE TABLE IF NOT EXISTS negado (
-    mes TEXT NOT NULL, especie INTEGER NOT NULL, motivo TEXT NOT NULL,
-    uf TEXT NOT NULL, aps INTEGER, dias INTEGER NOT NULL,
+    mes TEXT NOT NULL, especie INTEGER NOT NULL, clientela TEXT NOT NULL,
+    motivo TEXT NOT NULL, uf TEXT NOT NULL, aps INTEGER, dias INTEGER NOT NULL,
     quantidade INTEGER NOT NULL);
 CREATE INDEX IF NOT EXISTS idx_negado_mes ON negado (mes, especie);
 
@@ -351,9 +364,30 @@ CREATE TABLE IF NOT EXISTS coleta (
 
 
 class ArmazemINSS:
-    def __init__(self, caminho: str | Path) -> None:
+    """O banco do INSS. Um banco anterior a 26/09/2026 tem negados SEM
+    clientela, e eles não se completam sem reler o arquivo: abrir um desses
+    levanta `ErroINSS`, a menos que `migrar=True` — o que só a ingestão pede,
+    porque vai reler. Migrar apaga os negados e o registro de coleta deles;
+    a fila não é tocada. Fatia faltando se recoleta e aparece na contagem;
+    linha sem clientela misturaria urbano e rural sem aparecer em lugar nenhum."""
+
+    def __init__(self, caminho: str | Path, migrar: bool = False) -> None:
         self.con = sqlite3.connect(str(caminho))
         self.con.row_factory = sqlite3.Row
+        self.migrado = False
+        colunas = {r["name"] for r in self.con.execute("PRAGMA table_info(negado)")}
+        if colunas and "clientela" not in colunas:
+            if not migrar:
+                self.con.close()
+                raise ErroINSS(
+                    f"{caminho}: os negados foram gravados antes da clientela "
+                    "(urbano/rural) e não se completam sem reler o arquivo. Rode "
+                    "`inss-ingerir --conjunto indeferidos` de novo para cada mês: "
+                    "ele apaga os negados antigos e grava com a clientela.")
+            with self.con:
+                self.con.execute("DROP TABLE negado")
+                self.con.execute("DELETE FROM coleta WHERE conjunto = 'indeferidos'")
+            self.migrado = True
         self.con.executescript(ESQUEMA)
 
     def __enter__(self) -> "ArmazemINSS":
@@ -372,10 +406,12 @@ class ArmazemINSS:
                                             "UFs": l["f"]}
         l = self.con.execute(
             "SELECT COUNT(DISTINCT especie) e, COUNT(DISTINCT motivo) m,"
-            " COUNT(DISTINCT aps) a, COUNT(DISTINCT uf) f FROM negado WHERE mes = ?",
+            " COUNT(DISTINCT aps) a, COUNT(DISTINCT uf) f,"
+            " COUNT(DISTINCT clientela) c FROM negado WHERE mes = ?",
             (mes,)).fetchone()
         return None if not l["f"] else {"espécies": l["e"], "motivos": l["m"],
-                                        "agências": l["a"], "UFs": l["f"]}
+                                        "agências": l["a"], "UFs": l["f"],
+                                        "clientelas": l["c"]}
 
     def mes_anterior(self, conjunto: str, mes: str) -> str | None:
         tabela = "pendente" if conjunto == "pendentes" else "negado"
@@ -472,23 +508,25 @@ def gravar_indeferidos(db: ArmazemINSS, mes_pedido: str, nome_arquivo: str,
         if dias < 0:
             negativas += 1
             continue
-        agregado[(l.especie, l.motivo, l.uf, l.aps, dias)] += 1
+        agregado[(l.especie, l.clientela, l.motivo, l.uf, l.aps, dias)] += 1
         especies[l.especie] = l.especie_nome
         if l.aps is not None:
             agencias[l.aps] = (l.aps_nome, l.uf)
     if not lidas:
         raise ErroINSS(f"indeferidos de {mes_pedido}: planilha sem linhas")
     cobertura = {"espécies": len(especies),
-                 "motivos": len({k[1] for k in agregado}),
-                 "agências": len({k[3] for k in agregado}),
-                 "UFs": len({k[2] for k in agregado} & UFS)}
+                 "motivos": len({k[2] for k in agregado}),
+                 "agências": len({k[4] for k in agregado}),
+                 "UFs": len({k[3] for k in agregado} & UFS),
+                 "clientelas": len({k[1] for k in agregado})}
     _trava(db, "indeferidos", mes_pedido, cobertura, permitir_encolher)
 
     total = sum(agregado.values())
     with db.con:
         db.con.execute("DELETE FROM negado WHERE mes = ?", (mes_pedido,))
         db.con.executemany(
-            "INSERT INTO negado VALUES (?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO negado (mes, especie, clientela, motivo, uf, aps, dias,"
+            " quantidade) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             ((mes_pedido, *k, q) for k, q in agregado.items()))
         db.con.executemany("INSERT OR REPLACE INTO especie VALUES (?, ?)",
                            especies.items())
@@ -514,11 +552,17 @@ def fila_por_servico(db: ArmazemINSS, mes: str) -> list[tuple[int, str, dict]]:
     return sorted(saida, key=lambda x: -x[2]["n"])
 
 
-def negados_por_especie(db: ArmazemINSS, mes: str) -> list[tuple[int, str, dict]]:
+def negados_por_especie(db: ArmazemINSS, mes: str,
+                        clientela: str | None = None) -> list[tuple[int, str, dict]]:
+    """Dias do pedido ao "não", por espécie. `clientela` ("urbano" ou "rural")
+    recorta; sem ela, as duas somam."""
+    if clientela is not None and clientela not in CLIENTELA.values():
+        raise ErroINSS(f"clientela {clientela!r}: use {sorted(CLIENTELA.values())}")
     dist: dict[int, Counter] = {}
     for l in db.con.execute(
             "SELECT especie, dias, SUM(quantidade) q FROM negado"
-            " WHERE mes = ? GROUP BY especie, dias", (mes,)):
+            " WHERE mes = ? AND (? IS NULL OR clientela = ?)"
+            " GROUP BY especie, dias", (mes, clientela, clientela)):
         dist.setdefault(l["especie"], Counter())[l["dias"]] += l["q"]
     nomes = dict(db.con.execute("SELECT codigo, nome FROM especie").fetchall())
     saida = [(e, nomes.get(e, "?"), resumo(c)) for e, c in dist.items()]

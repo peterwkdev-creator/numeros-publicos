@@ -672,7 +672,17 @@ def inss_ingerir(args, transporte=None, baixar=_baixar) -> int:
               file=sys.stderr)
         return 2
     falhou = False
-    with inss.ArmazemINSS(args.banco_inss) as db:
+    try:
+        # Só quem vai reler os negados pode migrar o banco anterior à
+        # clientela, que apaga os negados antigos (ver `ArmazemINSS`).
+        db = inss.ArmazemINSS(args.banco_inss, migrar="indeferidos" in conjuntos)
+    except inss.ErroINSS as e:
+        print(e, file=sys.stderr)
+        return 1
+    if db.migrado:
+        print("banco anterior à clientela: os negados antigos foram apagados; "
+              "reingira cada mês de indeferidos")
+    with db:
         for conjunto in conjuntos:
             temporario = None
             try:
@@ -726,7 +736,12 @@ def inss_resumo(args) -> int:
         return (f"  {nome[:52]:<52} {br(r['n']):>9} {r['mediana']:>5} "
                 f"{r['p75']:>5} {100 * r['acima_45']:>6.1f}% {100 * r['acima_90']:>6.1f}%")
 
-    with inss.ArmazemINSS(args.banco_inss) as db:
+    try:
+        db = inss.ArmazemINSS(args.banco_inss)
+    except inss.ErroINSS as e:
+        print(e, file=sys.stderr)
+        return 1
+    with db:
         for titulo, conjunto, por in (
                 ("IDADE DA FILA (pedidos ainda sem decisão, na data de referência)",
                  "pendentes", inss.fila_por_servico),

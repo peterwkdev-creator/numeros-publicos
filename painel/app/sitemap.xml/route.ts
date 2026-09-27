@@ -1,7 +1,8 @@
 import {
   atualizadoEm, caminhosDosFilhos, indiceDeSitemaps, ufsComSitemap,
 } from "../../lib/sitemap";
-import { lerFiscal, lerSnapshot, SITE } from "../../lib/servidor";
+import { dadoAtualizadoEm } from "../../lib/inss";
+import { lerFiscal, lerInss, lerSnapshot, SITE } from "../../lib/servidor";
 
 /**
  * `/sitemap.xml` — o ÍNDICE, e não mais a lista de URLs.
@@ -32,11 +33,15 @@ import { lerFiscal, lerSnapshot, SITE } from "../../lib/servidor";
 export const dynamic = "force-static";
 
 export async function GET() {
-  const [snapshot, fiscal] = await Promise.all([lerSnapshot(), lerFiscal()]);
+  const [snapshot, fiscal, inss] = await Promise.all([
+    lerSnapshot(), lerFiscal(), lerInss(),
+  ]);
+  const dataInss = dadoAtualizadoEm(inss);
   const corpo = indiceDeSitemaps(
     SITE,
     caminhosDosFilhos(ufsComSitemap(snapshot)),
     atualizadoEm(snapshot, fiscal),
+    dataInss ? { "/inss/sitemap.xml": new Date(dataInss) } : {},
   );
   return new Response(corpo, {
     headers: { "Content-Type": "application/xml; charset=utf-8" },

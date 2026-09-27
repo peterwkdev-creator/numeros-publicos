@@ -6,7 +6,8 @@ import {
   faixaDaLinha, FUNCOES_DA_PORTARIA, LIMITE_PLAUSIVEL,
 } from "../../lib/fiscal";
 import { conjuntoDoSite, siteDe, trilha } from "../../lib/jsonld";
-import { lerFiscal, lerIdeb, lerSnapshot, SITE } from "../../lib/servidor";
+import { gruposComPagina } from "../../lib/inss";
+import { lerFiscal, lerIdeb, lerInss, lerSnapshot, SITE } from "../../lib/servidor";
 import estilos from "./ajuda.module.css";
 import { anteriorDeFuncoes, atualDeFuncoes } from "../../lib/fiscal";
 
@@ -53,8 +54,8 @@ export const metadata: Metadata = {
 };
 
 export default async function PaginaAjuda() {
-  const [snapshot, fiscal, ideb] = await Promise.all([
-    lerSnapshot(), lerFiscal(), lerIdeb("anos_iniciais"),
+  const [snapshot, fiscal, ideb, inss] = await Promise.all([
+    lerSnapshot(), lerFiscal(), lerIdeb("anos_iniciais"), lerInss(),
   ]);
   const idebFinais = await lerIdeb("anos_finais");
   const total = expandir(snapshot).length;
@@ -161,6 +162,7 @@ export default async function PaginaAjuda() {
           <li><a href="#funcao">Despesa por função, e o que é “liquidada”</a></li>
           <li><a href="#comparacao">Por que a comparação é entre anos</a></li>
           <li><a href="#ideb">O que é o IDEB, e por que só a rede municipal</a></li>
+          <li><a href="#inss">Quanto tempo o INSS está levando</a></li>
           <li><a href="#inflacao">Os valores estão corrigidos pela inflação?</a></li>
           <li><a href="#quando">De quando são os dados</a></li>
           <li><a href="#faltando">Meu município não aparece</a></li>
@@ -424,6 +426,43 @@ export default async function PaginaAjuda() {
           e a do estado dizem isso onde acontece — ver{" "}
           <a href="#faltando">meu município não aparece</a>.
         </p>
+      </section>
+
+      {/* A porta de entrada das páginas do INSS: sem ela, as dez páginas
+          ficariam órfãs, sem nenhum link interno, e o rastreador só as acharia
+          pelo sitemap. E é aqui que se explica a diferença entre as duas
+          medidas, que cada página repete em uma frase. */}
+      <section className={estilos.bloco} id="inss">
+        <h2>Quanto tempo o INSS está levando</h2>
+        <p>
+          O INSS publica, todo mês, os pedidos que ainda esperam resposta e os
+          que foram negados. Com eles dá para medir{" "}
+          <strong>duas coisas diferentes</strong>, e as páginas nunca as
+          misturam:
+        </p>
+        <ul>
+          <li>
+            <strong>Há quanto tempo esperam os pedidos ainda sem resposta</strong>{" "}
+            numa data. Não é &ldquo;quanto demora&rdquo;: quem foi atendido
+            rápido já saiu da fila, e quem fica é quem está esperando mais.
+          </li>
+          <li>
+            <strong>Quanto tempo levou para chegar o &ldquo;não&rdquo;</strong>,
+            para quem teve o pedido negado no mês. É o único tempo até a decisão
+            que os dados abertos permitem medir: os de benefícios concedidos não
+            trazem a data do pedido.
+          </li>
+        </ul>
+        <p>Por tipo de benefício:</p>
+        <ul>
+          {gruposComPagina(inss).map((g) => (
+            <li key={g.chave}>
+              <Link href={`/inss/${g.chave}/`} prefetch={false}>
+                {g.nomePopular.charAt(0).toUpperCase() + g.nomePopular.slice(1)}
+              </Link>
+            </li>
+          ))}
+        </ul>
       </section>
 
       <section className={estilos.bloco} id="inflacao">

@@ -1449,9 +1449,13 @@ test("o cache devolve o MESMO objeto, pela identidade do snapshot", () => {
 
 // ── O índice de sitemaps ────────────────────────────────────────────────────
 
-test("o índice lista o geral e um arquivo por UF, nessa ordem", () => {
+test("o índice lista o geral, o INSS e um arquivo por UF, nessa ordem", () => {
+  // O INSS tem sitemap próprio porque o Search Console reporta cobertura POR
+  // sitemap enviado: junto do geral, não daria para saber se o Google indexa
+  // as páginas do INSS.
   assert.deepEqual(caminhosDosFilhos(["AC", "MA"]), [
     "/geral/sitemap.xml",
+    "/inss/sitemap.xml",
     "/municipio/sitemap/AC.xml",
     "/municipio/sitemap/MA.xml",
   ]);
@@ -1485,6 +1489,17 @@ test("a data do sitemap é a MAIS RECENTE das duas fontes", () => {
   assert.equal(atualizadoEm(s, f).toISOString(), "2026-09-07T00:03:08.000Z");
   assert.equal(atualizadoEm(f, s).toISOString(), "2026-09-07T00:03:08.000Z",
     "a ordem dos argumentos não pode mudar a resposta");
+});
+
+test("o filho do INSS leva a data dele, e os outros a sua", () => {
+  // Com uma data só, o dia em que só o INSS muda anunciaria 28 sitemaps
+  // mudados. Exagerar a mudança gasta o rastreamento em páginas iguais.
+  const xml = indiceDeSitemaps(
+    "https://x.br", ["/geral/sitemap.xml", "/inss/sitemap.xml"],
+    new Date("2026-09-07T00:03:08Z"),
+    { "/inss/sitemap.xml": new Date("2026-09-26T23:51:21Z") });
+  const datas = [...xml.matchAll(/<lastmod>([^<]+)<\/lastmod>/g)].map((m) => m[1]);
+  assert.deepEqual(datas, ["2026-09-07T00:03:08.000Z", "2026-09-26T23:51:21.000Z"]);
 });
 
 test("fonte sem data não zera a data do sitemap", () => {

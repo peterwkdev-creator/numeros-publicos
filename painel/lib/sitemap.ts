@@ -56,11 +56,14 @@ export function indiceDeSitemaps(
   site: string,
   caminhos: string[],
   atualizado: Date,
+  // Filho com data própria: o do INSS muda por outro calendário. Com uma data
+  // só, o índice anunciaria que os 28 sitemaps do IBGE e do fiscal mudaram no
+  // dia em que só o INSS mudou.
+  porFilho: Record<string, Date> = {},
 ): string {
-  const quando = atualizado.toISOString();
   const linhas = caminhos.map((c) =>
     `  <sitemap>\n    <loc>${escaparXml(site + c)}</loc>\n` +
-    `    <lastmod>${quando}</lastmod>\n  </sitemap>`,
+    `    <lastmod>${(porFilho[c] ?? atualizado).toISOString()}</lastmod>\n  </sitemap>`,
   );
   return '<?xml version="1.0" encoding="UTF-8"?>\n'
     + '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
@@ -69,7 +72,8 @@ export function indiceDeSitemaps(
 
 /** Os caminhos dos sitemaps filhos, na ordem em que entram no índice. */
 export function caminhosDosFilhos(ufs: string[]): string[] {
-  return ["/geral/sitemap.xml", ...ufs.map((uf) => `/municipio/sitemap/${uf}.xml`)];
+  return ["/geral/sitemap.xml", "/inss/sitemap.xml",
+    ...ufs.map((uf) => `/municipio/sitemap/${uf}.xml`)];
 }
 
 export type { MetadataRoute };

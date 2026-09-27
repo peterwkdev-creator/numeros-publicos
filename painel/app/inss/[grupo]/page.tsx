@@ -335,7 +335,7 @@ export default async function Pagina({ params }: Params) {
             portal não declara licença para este conjunto)</>
           )}. A espera de cada pedido é contada da criação da tarefa até{" "}
           {ref}.{" "}
-          <Link href="/ajuda/" prefetch={false}>Como ler estes números</Link>
+          <Link href="/ajuda/#inss" prefetch={false}>Como ler estes números</Link>
         </p>
       </section>
     </main>

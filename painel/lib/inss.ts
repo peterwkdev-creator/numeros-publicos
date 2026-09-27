@@ -125,3 +125,14 @@ export function tendencia(g: GrupoInss, s: SnapshotInss): string | null {
   return `No fim de ${mesPorExtenso(s.fila.mesAnterior)}, a metade esperava ` +
     `havia mais de ${dias(f.medianaAnterior)}.`;
 }
+
+/**
+ * Quando o DADO do INSS mudou: a gravação mais recente dos dois conjuntos, e
+ * não o `geradoEm` do arquivo, que muda a cada exportação mesmo sem dado novo.
+ * É a data que o sitemap anuncia (ver `lib/sitemap.ts`).
+ */
+export function dadoAtualizadoEm(s: SnapshotInss): string | null {
+  const datas = [s.fila?.gravadoEm, s.negados?.gravadoEm]
+    .filter((d): d is string => Boolean(d)).sort();
+  return datas.at(-1) ?? null;
+}

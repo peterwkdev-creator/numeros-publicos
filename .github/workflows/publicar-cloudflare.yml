@@ -1,0 +1,96 @@
+# Publica o site no Cloudflare Pages.
+#
+# Por que o build roda AQUI, e não na Cloudflare: o build do Pages tem teto de
+# 20 minutos, e o mesmo site levou de 9 a 13 minutos na Vercel conforme a
+# máquina. O GitHub Actions compila (repositório público, 6 horas por job) e
+# envia o out/ pronto por Direct Upload, onde o teto não se aplica.
+#
+# Enquanto a Vercel servir o domínio, isto publica em *.pages.dev (marcado
+# noindex pelo cloudflare/_headers), para comparar os dois antes da troca de DNS.
+# Ver especs/numeros-publicos-cloudflare.md no repositório da raiz.
+#
+# Segredos do repositório (criados pelo dono da conta, nunca versionados):
+#   CLOUDFLARE_API_TOKEN   token de conta com permissão Cloudflare Pages: Edit
+#   CLOUDFLARE_ACCOUNT_ID  o ID da conta
+name: Publicar na Cloudflare
+
+on:
+  push:
+    branches: [main]
+    # Só o que muda o site. Commit que só mexe no Python ou nos registros não
+    # publica — a mesma regra do scripts/ignorar-build.sh da Vercel.
+    paths:
+      - "painel/**"
+      - "cloudflare/**"
+      - ".github/workflows/publicar-cloudflare.yml"
+  # O cron semanal faz commit com o token do próprio Actions, e commit feito
+  # por esse token NÃO dispara outro workflow. Sem esta entrada, a atualização
+  # de segunda-feira nunca chegaria à Cloudflare. O custo é republicar o mesmo
+  # site na semana em que o dado não mudou: o wrangler só envia os arquivos que
+  # mudaram, e o Pages não tem limite de armazenamento de deploys.
+  workflow_run:
+    workflows: ["Atualizar dados do IBGE"]
+    types: [completed]
+  workflow_dispatch:
+
+# Um deploy por vez: dois pushes seguidos não podem publicar fora de ordem.
+concurrency:
+  group: publicar-cloudflare
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  # Versão fixada: o deploy não pode mudar de comportamento por baixo.
+  WRANGLER: wrangler@4.141.0
+  PROJETO: numeros-publicos
+
+jobs:
+  publicar:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: painel
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # No workflow_run, o commit a publicar é o último do main (o que o
+          # cron acabou de fazer, se fez), e não o que disparou o cron.
+          ref: main
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: painel/package-lock.json
+
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+
+      - name: Cabeçalhos do Pages
+        run: cp ../cloudflare/_headers out/_headers
+
+      - name: O projeto existe (ou é criado)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if npx --yes "$WRANGLER" pages project list | grep -qw "$PROJETO"; then
+            echo "projeto $PROJETO já existe"
+          else
+            npx --yes "$WRANGLER" pages project create "$PROJETO" --production-branch=main
+          fi
+
+      - name: Enviar o out/
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: >
+          npx --yes "$WRANGLER" pages deploy out
+          --project-name="$PROJETO"
+          --branch=main
+          --commit-hash="$(git rev-parse HEAD)"

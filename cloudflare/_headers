@@ -1,0 +1,18 @@
+# Cabeçalhos do Cloudflare Pages, copiados para o out/ pelo workflow
+# .github/workflows/publicar-cloudflare.yml. Fica FORA de painel/ de propósito:
+# assim ele não vai para o site servido pela Vercel, e mudá-lo não dispara build
+# lá (scripts/ignorar-build.sh compara só painel/).
+
+# O mesmo cache longo que o vercel.json declara: os nomes em /_next/static/ têm
+# o hash do conteúdo, então um arquivo nunca muda sob o mesmo nome.
+/_next/static/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# O endereço *.pages.dev serve o site inteiro, e sem isto o Google o indexaria
+# como cópia do www. O canonical já aponta para o www, mas noindex no host da
+# plataforma é o que a própria Cloudflare recomenda. Não afeta o domínio próprio.
+https://:project.pages.dev/*
+  X-Robots-Tag: noindex
+
+https://:version.:project.pages.dev/*
+  X-Robots-Tag: noindex

@@ -195,6 +195,19 @@ comparing values becomes work.
 free), `aria-sort` only on the active column, and `prefers-reduced-motion`
 honoured.
 
+### Publishing
+
+Today the domain is served by Vercel, which builds `painel/` on every push to
+`main` (`painel/vercel.json`; `scripts/ignorar-build.sh` skips pushes that do
+not change the site). The site is moving to **Cloudflare Pages**:
+`.github/workflows/publicar-cloudflare.yml` builds on GitHub Actions and
+uploads the finished `out/` (Direct Upload), so Pages' 20-minute build limit
+never applies, and it also runs after the weekly data update. Until the DNS
+switch, that deployment lives on `*.pages.dev`, marked `noindex`
+(`cloudflare/_headers`). It needs two repository secrets:
+`CLOUDFLARE_API_TOKEN` (an account token with *Cloudflare Pages: Edit*) and
+`CLOUDFLARE_ACCOUNT_ID`.
+
 ## Telling search engines the site changed
 
 ```bash

@@ -116,6 +116,14 @@ python -m observatorio inss-resumo --mes 2026-07
   A database written before this column existed refuses to open;
   `inss-ingerir --conjunto indeferidos` migrates it by re-reading each month.
 
+The two files share no code: the queue uses *service* codes, the denials use
+*benefit* codes. `observatorio/inss_grupos.py` bridges them into ten groups
+(the unit a page will have), each checked against the 2026 files, and every
+code must fall into exactly one group or an explicit "no page" list — **a new
+code refuses the ingestion** instead of vanishing from every page. A median is
+publishable only with at least 1,000 requests: below ~500 it swung 25–100% from
+one month to the next, in both directions.
+
 The portal's labels are not trusted: in September 2026 the resource labelled
 "August 2026" was July 2025's file. The month is checked **inside** each file,
 and a mismatch is refused. The spreadsheets (60–70 MB) are read by a

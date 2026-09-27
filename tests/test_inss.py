@@ -16,6 +16,7 @@ from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
 from observatorio import inss
+from observatorio import inss_grupos as grupos
 from observatorio.cli import construir_parser, inss_ingerir
 
 CAB_PEND = ('"Código da unidade da criação da tarefa","Nome da unidade da criação '
@@ -207,9 +208,10 @@ class TestTrava(unittest.TestCase):
         self.assertIn("20 UFs", str(ctx.exception))
 
     def test_servicos_caindo_abaixo_de_80_por_cento_e_recusado(self) -> None:
-        cheio = [l for s in range(1000, 1010) for l in todas_as_ufs("30062026", s)]
+        dez = [17437, 1655, 4852, 2772, 1671, 1659, 1675, 3372, 1657, 1674]
+        cheio = [l for s in dez for l in todas_as_ufs("30062026", s)]
         self._gravar("2026-06", cheio)
-        metade = [l for s in range(1000, 1005) for l in todas_as_ufs("31072026", s)]
+        metade = [l for s in dez[:5] for l in todas_as_ufs("31072026", s)]
         with self.assertRaises(inss.ErroINSS) as ctx:
             self._gravar("2026-07", metade)
         self.assertIn("serviços: 10", str(ctx.exception))
@@ -350,6 +352,112 @@ class TestClientela(unittest.TestCase):
         with inss.ArmazemINSS(antigo) as db:           # já migrado: abre normal
             self.assertFalse(db.migrado)
         self.db = inss.ArmazemINSS(self.caminho)       # para o tearDown
+
+
+class TestGrupos(unittest.TestCase):
+    """A ponte serviço × espécie (§10 da especificação) como código."""
+
+    # Todos os códigos presentes nos arquivos reais de jun–ago/2026.
+    SERVICOS_2026 = {17437, 1655, 4852, 2772, 1671, 1659, 1675, 3372, 1657, 1674,
+                     2773, 1658, 2812, 4613, 3653, 14835, 3746, 3743, 3770, 4632,
+                     5852, 5832, 5474, 13995, 5412, 5473, 4633, 14836, 6452, 6492,
+                     4612, 15255, 4614, 3769, 5332, 6266, 15235, 3742, 15256}
+    ESPECIES_2026 = {31, 87, 80, 41, 36, 42, 21, 88, 25, 91, 94, 32, 18, 57, 60,
+                     67, 46, 92, 56, 98, 93, 86, 54, 16, 85}
+
+    def test_todo_codigo_real_esta_classificado(self) -> None:
+        self.assertEqual(len(self.SERVICOS_2026), 39)
+        self.assertEqual(len(self.ESPECIES_2026), 25)
+        self.assertEqual(grupos.codigos_desconhecidos(self.SERVICOS_2026,
+                                                      self.ESPECIES_2026), (set(), set()))
+
+    def test_cada_codigo_em_exatamente_um_lugar(self) -> None:
+        for lado in ("servicos", "especies"):
+            vistos: list[int] = [c for g in grupos.GRUPOS for c in getattr(g, lado)]
+            sem = (grupos.SEM_PAGINA_SERVICOS if lado == "servicos"
+                   else grupos.SEM_PAGINA_ESPECIES)
+            todos = vistos + list(sem)
+            repetidos = {c for c in todos if todos.count(c) > 1}
+            self.assertEqual(repetidos, set(), f"{lado} em dois lugares")
+        chaves = [g.chave for g in grupos.GRUPOS]
+        self.assertEqual(len(chaves), len(set(chaves)))
+
+    def test_prazo_e_marco_andam_juntos(self) -> None:
+        for g in grupos.GRUPOS:
+            self.assertEqual(g.prazo_acordo is None, g.prazo_conta_do_pedido is None, g.chave)
+
+    def test_a_armadilha_do_recluso_nao_move_o_auxilio_doenca(self) -> None:
+        # "Requerente recluso mantido pelo Estado" é motivo da espécie 31: o
+        # grupo sai da espécie, nunca de palavra do motivo.
+        self.assertEqual(grupos.grupo_da_especie(31).chave, "auxilio-doenca")
+        self.assertEqual(grupos.grupo_da_especie(25).chave, "auxilio-reclusao")
+
+    def test_minimo_de_pedidos(self) -> None:
+        self.assertFalse(grupos.publicavel(999))
+        self.assertTrue(grupos.publicavel(1000))
+
+
+class TestCodigoNovoReprova(unittest.TestCase):
+    """Um código que não está na tabela reprova a ingestão: serviço que surge
+    num mês e some calado de todas as páginas é o defeito a impedir."""
+
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory()
+        self.db = inss.ArmazemINSS(Path(self.tmp.name) / "inss.db")
+
+    def tearDown(self) -> None:
+        self.db.con.close()
+        self.tmp.cleanup()
+
+    def test_servico_novo_na_fila(self) -> None:
+        linhas = todas_as_ufs("31072026") + [("99999", 77777, "SP", "15072026", 3)]
+        with self.assertRaises(inss.ErroINSS) as ctx:
+            inss.gravar_pendentes(self.db, "2026-07", "PEND_202607.csv",
+                                  inss.ler_pendentes(io.StringIO(csv_pendentes(linhas))))
+        self.assertIn("77777", str(ctx.exception))
+        self.assertIn("inss_grupos", str(ctx.exception))
+        self.assertEqual(self.db.con.execute("SELECT COUNT(*) FROM pendente").fetchone()[0], 0)
+
+    def test_especie_nova_nos_negados(self) -> None:
+        linhas = negados_do_mes(202607) + [linha_negada(
+            202607, 77, "Motivo", "SP", 9, dt.date(2026, 7, 1), dt.date(2026, 7, 2))]
+        with self.assertRaises(inss.ErroINSS) as ctx:
+            inss.gravar_indeferidos(self.db, "2026-07", "x.xlsx",
+                                    inss.ler_indeferidos([["t"], CAB_NEG, *linhas]))
+        self.assertIn("77", str(ctx.exception))
+        self.assertEqual(self.db.con.execute("SELECT COUNT(*) FROM negado").fetchone()[0], 0)
+
+
+class TestPorGrupo(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory()
+        self.db = inss.ArmazemINSS(Path(self.tmp.name) / "inss.db")
+
+    def tearDown(self) -> None:
+        self.db.con.close()
+        self.tmp.cleanup()
+
+    def test_servicos_do_mesmo_grupo_somam_e_o_minimo_decide(self) -> None:
+        # Urbana (2772) e rural (1671) são o mesmo grupo: 27 + 27 + 1.000.
+        linhas = (todas_as_ufs("31072026", 2772) + todas_as_ufs("31072026", 1671)
+                  + [("99999", 1671, "PI", "01072026", 1000)])
+        inss.gravar_pendentes(self.db, "2026-07", "PEND_202607.csv",
+                              inss.ler_pendentes(io.StringIO(csv_pendentes(linhas))))
+        por = {g.chave: (r, pub) for g, r, pub in inss.fila_por_grupo(self.db, "2026-07")}
+        r, pub = por["aposentadoria-por-idade"]
+        self.assertEqual(r["n"], 1054)
+        self.assertTrue(pub)
+
+    def test_negados_por_grupo_e_clientela(self) -> None:
+        inss.gravar_indeferidos(
+            self.db, "2026-07", "x.xlsx", inss.ler_indeferidos(
+                [["t"], CAB_NEG, *negados_do_mes(202607, 31, ("Urbano", "Rural")),
+                 *negados_do_mes(202607, 91)]))
+        por = {g.chave: (r, pub) for g, r, pub in inss.negados_por_grupo(self.db, "2026-07")}
+        self.assertEqual(por["auxilio-doenca"][0]["n"], 81)   # 31 urbano+rural, 91 urbano
+        self.assertFalse(por["auxilio-doenca"][1])             # 81 < 1.000
+        rural = {g.chave: r for g, r, _ in inss.negados_por_grupo(self.db, "2026-07", "rural")}
+        self.assertEqual(rural["auxilio-doenca"]["n"], 27)
 
 
 class TestLeitorXlsx(unittest.TestCase):

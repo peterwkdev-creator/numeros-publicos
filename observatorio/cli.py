@@ -730,7 +730,7 @@ def inss_ingerir(args, transporte=None, baixar=_baixar) -> int:
 
 
 def inss_resumo(args) -> int:
-    from . import inss
+    from . import inss, inss_grupos
 
     def linha(nome, r):
         return (f"  {nome[:52]:<52} {br(r['n']):>9} {r['mediana']:>5} "
@@ -741,7 +741,26 @@ def inss_resumo(args) -> int:
     except inss.ErroINSS as e:
         print(e, file=sys.stderr)
         return 1
+    def linha_grupo(g, r, pub):
+        prazo = (f"{g.prazo_acordo}d" + ("" if g.prazo_conta_do_pedido else "*")
+                 if g.prazo_acordo else "—")
+        return (linha(g.nome, r) + f" {prazo:>5}"
+                + ("" if pub else f"  abaixo de {br(inss_grupos.MINIMO_PEDIDOS)}"))
+
     with db:
+        for titulo, conjunto, por in (
+                ("POR GRUPO — idade da fila", "pendentes", inss.fila_por_grupo),
+                ("POR GRUPO — dias do pedido ao 'não'", "indeferidos",
+                 inss.negados_por_grupo)):
+            if not inss.total_distribuicao(db, conjunto, args.mes):
+                continue
+            print(f"\n{titulo} — {args.mes}")
+            print(f"  {'':<52} {'n':>9} {'med.':>5} {'p75':>5} {'>45d':>7} "
+                  f"{'>90d':>7} {'prazo':>5}")
+            for g, r, pub in por(db, args.mes):
+                print(linha_grupo(g, r, pub))
+        print("\n  prazo: o do acordo no STF (Tema 1066, 2021, vigência de 24 meses);"
+              "\n  * = conta só depois da perícia/avaliação social, não do pedido")
         for titulo, conjunto, por in (
                 ("IDADE DA FILA (pedidos ainda sem decisão, na data de referência)",
                  "pendentes", inss.fila_por_servico),

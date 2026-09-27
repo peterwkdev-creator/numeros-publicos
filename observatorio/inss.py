@@ -44,6 +44,8 @@ from pathlib import Path
 from typing import Iterable, Iterator
 from xml.etree.ElementTree import iterparse
 
+from . import inss_grupos
+
 PORTAL = "https://dadosabertos.inss.gov.br/api/3/action/package_show?id="
 PACOTE_PENDENTES = ("dados-de-requerimentos-administrativos-pendentes-"
                     "plano-de-dados-abertos-jun-2023-a-jun-2025")
@@ -420,6 +422,19 @@ class ArmazemINSS:
         return l[0]
 
 
+def _recusar_codigo_novo(onde: str, servicos=(), especies=()) -> None:
+    """Código fora da tabela de grupos reprova a gravação: sem isto, um serviço
+    novo entraria no banco e sumiria calado de todas as páginas."""
+    s, e = inss_grupos.codigos_desconhecidos(servicos, especies)
+    if s or e:
+        partes = ([f"serviços {sorted(s)}"] if s else []) + (
+            [f"espécies {sorted(e)}"] if e else [])
+        raise ErroINSS(f"{onde}: código novo, fora da tabela de grupos — "
+                       + " e ".join(partes) + ". Classifique em "
+                       "observatorio/inss_grupos.py (num grupo ou em SEM_PAGINA_*) "
+                       "e rode de novo; nada gravado")
+
+
 def _trava(db: ArmazemINSS, conjunto: str, mes: str, nova: dict[str, int],
            permitir: bool) -> None:
     if nova.get("UFs") != len(UFS):
@@ -460,6 +475,8 @@ def gravar_pendentes(db: ArmazemINSS, mes_pedido: str, nome_arquivo: str,
     if futuras:
         raise ErroINSS(f"pendentes de {mes_pedido}: {len(futuras)} linhas "
                        "criadas depois da data de referência")
+    _recusar_codigo_novo(f"pendentes de {mes_pedido}",
+                         servicos={l.servico for l in lidas})
     cobertura = {"serviços": len({l.servico for l in lidas}),
                  "unidades": len({l.unidade for l in lidas}),
                  "UFs": len({l.uf for l in lidas} & UFS)}
@@ -514,6 +531,7 @@ def gravar_indeferidos(db: ArmazemINSS, mes_pedido: str, nome_arquivo: str,
             agencias[l.aps] = (l.aps_nome, l.uf)
     if not lidas:
         raise ErroINSS(f"indeferidos de {mes_pedido}: planilha sem linhas")
+    _recusar_codigo_novo(f"indeferidos de {mes_pedido}", especies=set(especies))
     cobertura = {"espécies": len(especies),
                  "motivos": len({k[2] for k in agregado}),
                  "agências": len({k[4] for k in agregado}),
@@ -552,12 +570,16 @@ def fila_por_servico(db: ArmazemINSS, mes: str) -> list[tuple[int, str, dict]]:
     return sorted(saida, key=lambda x: -x[2]["n"])
 
 
+def _validar_clientela(clientela: str | None) -> None:
+    if clientela is not None and clientela not in CLIENTELA.values():
+        raise ErroINSS(f"clientela {clientela!r}: use {sorted(CLIENTELA.values())}")
+
+
 def negados_por_especie(db: ArmazemINSS, mes: str,
                         clientela: str | None = None) -> list[tuple[int, str, dict]]:
     """Dias do pedido ao "não", por espécie. `clientela` ("urbano" ou "rural")
     recorta; sem ela, as duas somam."""
-    if clientela is not None and clientela not in CLIENTELA.values():
-        raise ErroINSS(f"clientela {clientela!r}: use {sorted(CLIENTELA.values())}")
+    _validar_clientela(clientela)
     dist: dict[int, Counter] = {}
     for l in db.con.execute(
             "SELECT especie, dias, SUM(quantidade) q FROM negado"
@@ -567,6 +589,44 @@ def negados_por_especie(db: ArmazemINSS, mes: str,
     nomes = dict(db.con.execute("SELECT codigo, nome FROM especie").fetchall())
     saida = [(e, nomes.get(e, "?"), resumo(c)) for e, c in dist.items()]
     return sorted(saida, key=lambda x: -x[2]["n"])
+
+
+def fila_por_grupo(db: ArmazemINSS, mes: str) -> list[tuple]:
+    """A idade da fila por GRUPO (a unidade de página): `(grupo, resumo,
+    publicável)`. Serviços sem página não entram."""
+    dist: dict[str, Counter] = {}
+    for l in db.con.execute(
+            "SELECT servico, idade_dias, SUM(quantidade) q FROM pendente"
+            " WHERE mes = ? GROUP BY servico, idade_dias", (mes,)):
+        g = inss_grupos.grupo_do_servico(l["servico"])
+        if g is not None:
+            dist.setdefault(g.chave, Counter())[l["idade_dias"]] += l["q"]
+    return _por_grupo(dist)
+
+
+def negados_por_grupo(db: ArmazemINSS, mes: str,
+                      clientela: str | None = None) -> list[tuple]:
+    """Dias do pedido ao "não" por GRUPO: `(grupo, resumo, publicável)`.
+    `clientela` recorta como em `negados_por_especie`."""
+    _validar_clientela(clientela)
+    dist: dict[str, Counter] = {}
+    for l in db.con.execute(
+            "SELECT especie, dias, SUM(quantidade) q FROM negado"
+            " WHERE mes = ? AND (? IS NULL OR clientela = ?)"
+            " GROUP BY especie, dias", (mes, clientela, clientela)):
+        g = inss_grupos.grupo_da_especie(l["especie"])
+        if g is not None:
+            dist.setdefault(g.chave, Counter())[l["dias"]] += l["q"]
+    return _por_grupo(dist)
+
+
+def _por_grupo(dist: dict[str, Counter]) -> list[tuple]:
+    saida = []
+    for g in inss_grupos.GRUPOS:
+        if g.chave in dist:
+            r = resumo(dist[g.chave])
+            saida.append((g, r, inss_grupos.publicavel(r["n"])))
+    return sorted(saida, key=lambda x: -x[1]["n"])
 
 
 def total_distribuicao(db: ArmazemINSS, conjunto: str, mes: str) -> dict | None:

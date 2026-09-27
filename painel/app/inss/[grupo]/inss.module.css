@@ -1,0 +1,34 @@
+/* A mesma linguagem visual da pagina de ranking: largura de leitura, cartoes,
+   tabela rolavel. Nao ha componente compartilhado pelo mesmo motivo de la: CSS
+   Module e por rota, e ~50 linhas duplicadas custam menos que uma abstracao. */
+.pagina { max-width: 60rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+.trilha { font-size: .875rem; color: var(--tinta-fraca); margin-bottom: 1rem; }
+.trilha a { color: var(--tinta-fraca); }
+.titulo { font-size: 1.9rem; line-height: 1.15; margin: 0 0 .4rem; }
+.oficial { font-size: .95rem; color: var(--tinta-fraca); margin: 0 0 1.25rem; }
+
+/* A resposta curta: o maior texto da pagina depois do titulo, porque e o que
+   a pessoa veio buscar. Sem cor de alerta: o numero e o fato, nao o julgamento. */
+.resposta { max-width: 46rem; font-size: 1.15rem; line-height: 1.5; margin-bottom: 1.75rem; }
+.resposta p { margin: 0 0 .75rem; }
+
+.grade { display: grid; gap: .75rem; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); margin-bottom: 1rem; }
+.cartao { border: 1px solid var(--borda); border-radius: .5rem; padding: .9rem 1rem; }
+.rotulo { font-size: .8rem; color: var(--tinta-fraca); display: block; margin-bottom: .2rem; }
+.valor { font-size: 1.5rem; font-weight: 600; }
+
+.texto { max-width: 46rem; margin: 2rem 0 0; }
+.texto p { margin: 0 0 1rem; }
+.ressalva { font-size: .875rem; color: var(--tinta-fraca); max-width: 46rem; }
+.ressalva strong { color: var(--tinta); }
+.ressalvas { padding-left: 1.2rem; margin: 0; }
+.ressalvas li { margin-bottom: .6rem; }
+
+.rolagem { overflow-x: auto; margin-bottom: 1rem; }
+.lista { width: 100%; border-collapse: collapse; font-size: .95rem; }
+.lista caption { text-align: left; font-size: .8rem; color: var(--tinta-fraca); padding-bottom: .5rem; }
+.lista th, .lista td { padding: .5rem .6rem; border-bottom: 1px solid var(--borda); text-align: left; }
+.lista th[scope="col"] { font-size: .78rem; text-transform: uppercase; letter-spacing: .03em; color: var(--tinta-fraca); }
+.num { text-align: right; }
+
+@media print { .rolagem { overflow-x: visible; } }

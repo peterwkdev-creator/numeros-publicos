@@ -4,6 +4,7 @@ import path from "node:path";
 import type { Snapshot } from "./dados";
 import type { SnapshotFiscal } from "./fiscal";
 import type { SnapshotIdeb } from "./ideb";
+import type { SnapshotInss } from "./inss";
 
 /**
  * Leitura do snapshot gerado pelo motor Python. **Só no servidor.**
@@ -56,6 +57,20 @@ export async function lerIdeb(
   const lido = JSON.parse(await readFile(arquivo, "utf-8")) as SnapshotIdeb;
   cacheIdeb[etapa] = lido;
   return lido;
+}
+
+/**
+ * O INSS por grupo, escrito por `python -m observatorio inss-exportar`.
+ * Banco próprio (`inss.db`), sem relação com o snapshot do IBGE: são fontes e
+ * ritmos diferentes, e fundi-los convidaria a juntar números que não se somam.
+ */
+let cacheInss: SnapshotInss | null = null;
+
+export async function lerInss(): Promise<SnapshotInss> {
+  if (cacheInss) return cacheInss;
+  const arquivo = path.join(process.cwd(), "dados", "inss.json");
+  cacheInss = JSON.parse(await readFile(arquivo, "utf-8")) as SnapshotInss;
+  return cacheInss;
 }
 
 /**

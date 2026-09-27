@@ -95,10 +95,24 @@ are injected. The fixtures in `tests/fixtures/` are real captured responses from
 the IBGE API: the 75 municipalities of Sergipe, the 2022 Census population of
 Rio Grande do Norte, and the 2021 GDP of Sergipe.
 
-## INSS: the social-security queue (ingestion only, not on the site yet)
+## INSS: the social-security queue
+
+```bash
+python -m observatorio inss-exportar   # writes painel/dados/inss.json, one entry per group
+```
+
+Each group with a publishable queue gets a page at `/inss/<group>/`: how long
+the pending requests have been waiting, how long the denied ones took to get a
+"no", and the 2021 Supreme Court agreement deadline as a *dated reference* —
+with the caveat, where it applies, that the deadline only starts after the
+medical examination, which the open data does not date. Like the snapshot, the
+export refuses to shrink (fewer groups, or an older month) without
+`--permitir-encolher`.
+
+### Ingestion
 
 `observatorio/inss.py` reads two monthly datasets from INSS's open-data portal
-into a separate database (`inss.db`, nothing here touches the site):
+into a separate database (`inss.db`; only `inss-exportar`, above, feeds the site):
 
 ```bash
 python -m observatorio inss-ingerir --mes 2026-07

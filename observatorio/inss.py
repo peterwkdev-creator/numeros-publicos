@@ -629,6 +629,141 @@ def _por_grupo(dist: dict[str, Counter]) -> list[tuple]:
     return sorted(saida, key=lambda x: -x[1]["n"])
 
 
+# ── o retrato que o painel lê (painel/dados/inss.json) ──────────────────────
+# O contrato é `painel/lib/inss.ts`, e `TestRetratoParaOPainel` o cobra:
+# mudou aqui, muda lá.
+
+PORTAL_PUBLICO = "https://dadosabertos.inss.gov.br/dataset/"
+
+
+def _json_da(contagem: Counter, prazo: int | None, anterior: Counter | None = None) -> dict:
+    r = resumo(contagem)
+    n = r["n"]
+    saida = {"n": n, "mediana": r["mediana"], "p75": r["p75"], "p90": r["p90"],
+             "acima45": round(r["acima_45"], 4), "acima90": round(r["acima_90"], 4),
+             "acimaDoPrazo": (None if prazo is None else round(
+                 sum(q for d, q in contagem.items() if d > prazo) / n, 4)),
+             "publicavel": inss_grupos.publicavel(n)}
+    if anterior is not None:
+        saida["medianaAnterior"] = quantil(anterior, .5) if anterior else None
+    return saida
+
+
+def _meses(db: ArmazemINSS, tabela: str) -> list[str]:
+    return [l[0] for l in db.con.execute(
+        f"SELECT DISTINCT mes FROM {tabela} ORDER BY mes DESC")]
+
+
+def retrato(db: ArmazemINSS) -> dict:
+    """A fila do mês mais recente (com o anterior, para a tendência) e os
+    negados do mês mais recente, por grupo. Os meses dos dois lados podem
+    diferir — o INSS publica cada conjunto no seu ritmo —, e cada um sai com
+    o seu. Serviço e espécie sem página não entram."""
+    meses_fila, meses_neg = _meses(db, "pendente"), _meses(db, "negado")
+    if not meses_fila and not meses_neg:
+        raise ErroINSS("banco do INSS vazio: nada para exportar")
+    coleta = {(l["mes"], l["conjunto"]): l for l in db.con.execute("SELECT * FROM coleta")}
+    nomes_serv = dict(db.con.execute("SELECT codigo, nome FROM servico").fetchall())
+
+    def fila_de(mes):
+        por: dict[str, Counter] = {}
+        por_serv: dict[int, Counter] = {}
+        for l in db.con.execute(
+                "SELECT servico, idade_dias, SUM(quantidade) q FROM pendente"
+                " WHERE mes = ? GROUP BY servico, idade_dias", (mes,)):
+            g = inss_grupos.grupo_do_servico(l["servico"])
+            if g is not None:
+                por.setdefault(g.chave, Counter())[l["idade_dias"]] += l["q"]
+                por_serv.setdefault(l["servico"], Counter())[l["idade_dias"]] += l["q"]
+        return por, por_serv
+
+    fila, fila_serv = fila_de(meses_fila[0]) if meses_fila else ({}, {})
+    anterior = fila_de(meses_fila[1])[0] if len(meses_fila) > 1 else {}
+
+    negados: dict[str, dict[str, Counter]] = {}
+    if meses_neg:
+        for l in db.con.execute(
+                "SELECT especie, clientela, dias, SUM(quantidade) q FROM negado"
+                " WHERE mes = ? GROUP BY especie, clientela, dias", (meses_neg[0],)):
+            g = inss_grupos.grupo_da_especie(l["especie"])
+            if g is not None:
+                por_cli = negados.setdefault(g.chave, {})
+                por_cli.setdefault(l["clientela"], Counter())[l["dias"]] += l["q"]
+
+    grupos = []
+    for g in inss_grupos.GRUPOS:
+        f = None
+        if g.chave in fila:
+            f = _json_da(fila[g.chave], g.prazo_acordo, anterior.get(g.chave, Counter()))
+            f["porServico"] = sorted(
+                ({"codigo": s, "nome": nomes_serv.get(s, "?"),
+                  **{k: v for k, v in _json_da(fila_serv[s], g.prazo_acordo).items()
+                     if k in ("n", "mediana", "acima45", "publicavel")}}
+                 for s in g.servicos if s in fila_serv),
+                key=lambda x: -x["n"])
+        n = None
+        if g.chave in negados:
+            total = sum(negados[g.chave].values(), Counter())
+            n = _json_da(total, None)
+            n.pop("acimaDoPrazo")
+            n["porClientela"] = {
+                cli: {k: v for k, v in _json_da(c, None).items()
+                      if k in ("n", "mediana", "acima45", "publicavel")}
+                for cli, c in sorted(negados[g.chave].items())}
+        grupos.append({"chave": g.chave, "nome": g.nome, "nomePopular": g.nome_popular,
+                       "prazoAcordo": g.prazo_acordo,
+                       "prazoContaDoPedido": g.prazo_conta_do_pedido,
+                       "fila": f, "negados": n})
+
+    def meta(mes, conjunto):
+        c = coleta.get((mes, conjunto))
+        return {"arquivo": c["arquivo"] if c else None,
+                "gravadoEm": c["gravado_em"] if c else None}
+
+    mf = meses_fila[0] if meses_fila else None
+    return {
+        "geradoEm": agora(),
+        "fonte": {"nome": "INSS — Portal de Dados Abertos", "url": PORTAL_PUBLICO},
+        "fila": None if mf is None else {
+            "mes": mf, "referencia": ultimo_dia(*mes_de(mf)).isoformat(),
+            "mesAnterior": meses_fila[1] if len(meses_fila) > 1 else None,
+            **meta(mf, "pendentes")},
+        "negados": None if not meses_neg else {
+            "mes": meses_neg[0], **meta(meses_neg[0], "indeferidos")},
+        "minimoPedidos": inss_grupos.MINIMO_PEDIDOS,
+        "grupos": grupos,
+    }
+
+
+def gravar_retrato(r: dict, saida: str | Path, permitir_encolher: bool = False) -> dict:
+    """Escreve o retrato, **comparando com o que vai sobrescrever**: menos
+    grupos com fila ou com negados, ou um mês mais velho que o publicado, é
+    recusado — cobertura não diminui sozinha (`stack.md`, lição 3)."""
+    import json
+    saida = Path(saida)
+
+    def cobertura(x):
+        return {"grupos com fila": sum(1 for g in x["grupos"] if g["fila"]),
+                "grupos com negados": sum(1 for g in x["grupos"] if g["negados"])}
+
+    nova = cobertura(r)
+    if saida.exists() and not permitir_encolher:
+        velho = json.loads(saida.read_text(encoding="utf-8"))
+        antiga = cobertura(velho)
+        caiu = [f"{k}: {antiga[k]} → {nova[k]}" for k in antiga if nova[k] < antiga[k]]
+        for lado in ("fila", "negados"):
+            v, n = (velho.get(lado) or {}).get("mes"), (r.get(lado) or {}).get("mes")
+            if v and (not n or n < v):
+                caiu.append(f"{lado}: o publicado é de {v}, o novo de {n}")
+        if caiu:
+            raise ErroINSS("RECUSADO: o retrato do INSS encolheu — " + "; ".join(caiu)
+                           + ". Se é a intenção, repita com --permitir-encolher. "
+                           "Nada gravado.")
+    saida.parent.mkdir(parents=True, exist_ok=True)
+    saida.write_text(json.dumps(r, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    return nova
+
+
 def total_distribuicao(db: ArmazemINSS, conjunto: str, mes: str) -> dict | None:
     if conjunto == "pendentes":
         sql = ("SELECT idade_dias d, SUM(quantidade) q FROM pendente"

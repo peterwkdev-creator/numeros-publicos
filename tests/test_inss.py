@@ -460,6 +460,76 @@ class TestPorGrupo(unittest.TestCase):
         self.assertEqual(rural["auxilio-doenca"]["n"], 27)
 
 
+class TestRetratoParaOPainel(unittest.TestCase):
+    """O contrato com `painel/lib/inss.ts`: mudou aqui, muda lá."""
+
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory()
+        self.db = inss.ArmazemINSS(Path(self.tmp.name) / "inss.db")
+        for mes, data, q in (("2026-06", "30062026", 2), ("2026-07", "31072026", 1)):
+            ano, m = inss.mes_de(mes)
+            linhas = todas_as_ufs(data, 1675, q) + [("99999", 1675, "SP", f"01{m:02d}{ano}", 1000)]
+            inss.gravar_pendentes(self.db, mes, f"PEND_{ano}{m:02d}.csv",
+                                  inss.ler_pendentes(io.StringIO(csv_pendentes(linhas))))
+        inss.gravar_indeferidos(self.db, "2026-08", "neg.xlsx", inss.ler_indeferidos(
+            [["t"], CAB_NEG, *negados_do_mes(202608, 80, ("Urbano", "Rural"))]))
+        self.r = inss.retrato(self.db)
+
+    def tearDown(self) -> None:
+        self.db.con.close()
+        self.tmp.cleanup()
+
+    def test_chaves_de_topo(self) -> None:
+        self.assertEqual(set(self.r), {"geradoEm", "fonte", "fila", "negados",
+                                       "minimoPedidos", "grupos"})
+        self.assertEqual(self.r["fila"]["mes"], "2026-07")          # o mais recente
+        self.assertEqual(self.r["fila"]["mesAnterior"], "2026-06")
+        self.assertEqual(self.r["negados"]["mes"], "2026-08")
+        self.assertEqual(set(self.r["fila"]), {"mes", "referencia", "mesAnterior",
+                                              "arquivo", "gravadoEm"})
+
+    def test_grupo_carrega_prazo_nome_e_os_dois_lados(self) -> None:
+        g = {x["chave"]: x for x in self.r["grupos"]}["salario-maternidade"]
+        self.assertEqual(set(g), {"chave", "nome", "nomePopular", "prazoAcordo",
+                                  "prazoContaDoPedido", "fila", "negados"})
+        self.assertEqual((g["prazoAcordo"], g["prazoContaDoPedido"]), (30, True))
+        f = g["fila"]
+        self.assertEqual(set(f), {"n", "mediana", "p75", "p90", "acima45", "acima90",
+                                  "acimaDoPrazo", "publicavel", "medianaAnterior",
+                                  "porServico"})
+        self.assertEqual(f["n"], 1027)
+        self.assertTrue(f["publicavel"])
+        # 1.000 pedidos criados em 01/07 têm 30 dias em 31/07: não passam de 30
+        self.assertAlmostEqual(f["acimaDoPrazo"], 0.0)
+        self.assertEqual(f["porServico"][0]["codigo"], 1675)
+        n = g["negados"]
+        self.assertEqual(set(n["porClientela"]), {"urbano", "rural"})
+        self.assertFalse(n["publicavel"])       # 54 negativas < 1.000
+
+    def test_grupo_sem_dado_sai_com_os_dois_lados_nulos(self) -> None:
+        g = {x["chave"]: x for x in self.r["grupos"]}["auxilio-inclusao"]
+        self.assertIsNone(g["fila"])
+        self.assertIsNone(g["negados"])
+
+    def test_trava_do_exportar_recusa_encolher(self) -> None:
+        saida = Path(self.tmp.name) / "inss.json"
+        inss.gravar_retrato(self.r, saida)
+        menor = dict(self.r, grupos=[
+            dict(g, fila=None) for g in self.r["grupos"]])
+        with self.assertRaises(inss.ErroINSS) as ctx:
+            inss.gravar_retrato(menor, saida)
+        self.assertIn("grupos com fila", str(ctx.exception))
+        inss.gravar_retrato(menor, saida, permitir_encolher=True)
+
+    def test_trava_recusa_mes_mais_velho_que_o_publicado(self) -> None:
+        saida = Path(self.tmp.name) / "inss.json"
+        inss.gravar_retrato(self.r, saida)
+        velho = dict(self.r, fila=dict(self.r["fila"], mes="2026-05"))
+        with self.assertRaises(inss.ErroINSS) as ctx:
+            inss.gravar_retrato(velho, saida)
+        self.assertIn("2026-05", str(ctx.exception))
+
+
 class TestLeitorXlsx(unittest.TestCase):
     def test_coluna_depois_do_Z(self) -> None:
         self.assertEqual(inss._coluna("A1"), 0)

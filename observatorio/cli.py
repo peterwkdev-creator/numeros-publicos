@@ -644,7 +644,31 @@ def construir_parser() -> argparse.ArgumentParser:
     ir.add_argument("--banco-inss",
                     default=os.environ.get("INSS_BANCO", "inss.db"))
     ir.set_defaults(func=inss_resumo)
+
+    ie = sub.add_parser("inss-exportar",
+                        help="gera o JSON do INSS que o painel lê, por grupo")
+    ie.add_argument("--saida", default="painel/dados/inss.json")
+    ie.add_argument("--banco-inss",
+                    default=os.environ.get("INSS_BANCO", "inss.db"))
+    ie.add_argument("--permitir-encolher", action="store_true",
+                    help="aceita menos grupos, ou mês mais velho, que o publicado")
+    ie.set_defaults(func=inss_exportar)
     return p
+
+
+def inss_exportar(args) -> int:
+    from . import inss
+    try:
+        with inss.ArmazemINSS(args.banco_inss) as db:
+            r = inss.retrato(db)
+        cob = inss.gravar_retrato(r, args.saida, args.permitir_encolher)
+    except inss.ErroINSS as e:
+        print(e, file=sys.stderr)
+        return 1
+    fila, neg = r["fila"] or {}, r["negados"] or {}
+    print(f"{args.saida}: fila de {fila.get('mes', '—')}, negados de "
+          f"{neg.get('mes', '—')} · " + " · ".join(f"{k} {v}" for k, v in cob.items()))
+    return 0
 
 
 def _baixar(url: str, destino: str) -> None:

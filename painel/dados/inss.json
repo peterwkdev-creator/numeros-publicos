@@ -1,0 +1,708 @@
+{
+ "geradoEm": "2026-09-27T01:42:08+00:00",
+ "fonte": {
+  "nome": "INSS — Portal de Dados Abertos",
+  "url": "https://dadosabertos.inss.gov.br/dataset/"
+ },
+ "fila": {
+  "mes": "2026-07",
+  "referencia": "2026-07-31",
+  "mesAnterior": "2026-06",
+  "arquivo": "PEND_202607.csv",
+  "gravadoEm": "2026-09-26T23:50:18+00:00"
+ },
+ "negados": {
+  "mes": "2026-08",
+  "arquivo": "INDEFERIDOS+DADOS+ABERTOS_AGOSTO+2026.xlsx",
+  "gravadoEm": "2026-09-26T23:51:21+00:00"
+ },
+ "minimoPedidos": 1000,
+ "grupos": [
+  {
+   "chave": "auxilio-doenca",
+   "nome": "Auxílio por incapacidade temporária",
+   "nomePopular": "auxílio-doença",
+   "prazoAcordo": 45,
+   "prazoContaDoPedido": false,
+   "fila": {
+    "n": 418037,
+    "mediana": 15,
+    "p75": 59,
+    "p90": 233,
+    "acima45": 0.2825,
+    "acima90": 0.2056,
+    "acimaDoPrazo": 0.2825,
+    "publicavel": true,
+    "medianaAnterior": 22,
+    "porServico": [
+     {
+      "codigo": 17437,
+      "nome": "Benefício por Incapacidade",
+      "n": 415992,
+      "mediana": 15,
+      "acima45": 0.2797,
+      "publicavel": true
+     },
+     {
+      "codigo": 5852,
+      "nome": "Acordo Internacional - Aposentadoria por Incapacidade Permanente",
+      "n": 528,
+      "mediana": 288,
+      "acima45": 0.911,
+      "publicavel": false
+     },
+     {
+      "codigo": 5832,
+      "nome": "Acordo Internacional - Auxílio por Incapacidade Temporária",
+      "n": 488,
+      "mediana": 323,
+      "acima45": 0.8955,
+      "publicavel": false
+     },
+     {
+      "codigo": 5474,
+      "nome": "Auxílio-Doença - Urbano (Acerto Pós-perícia)",
+      "n": 479,
+      "mediana": 127,
+      "acima45": 0.6764,
+      "publicavel": false
+     },
+     {
+      "codigo": 13995,
+      "nome": "Auxílio por incapacidade temporária - Análise Documental",
+      "n": 285,
+      "mediana": 1718,
+      "acima45": 1.0,
+      "publicavel": false
+     },
+     {
+      "codigo": 5473,
+      "nome": "Auxílio-Doença - Rural (Acerto Pós-perícia)",
+      "n": 214,
+      "mediana": 231,
+      "acima45": 0.8879,
+      "publicavel": false
+     },
+     {
+      "codigo": 4612,
+      "nome": "Aeronauta Gestante - Auxílio-Doença",
+      "n": 45,
+      "mediana": 74,
+      "acima45": 0.6444,
+      "publicavel": false
+     },
+     {
+      "codigo": 6266,
+      "nome": "Auxílio-Doença com Documento Médico (Ação Civil Pública)",
+      "n": 6,
+      "mediana": 2124,
+      "acima45": 1.0,
+      "publicavel": false
+     }
+    ]
+   },
+   "negados": {
+    "n": 343737,
+    "mediana": 10,
+    "p75": 18,
+    "p90": 64,
+    "acima45": 0.1302,
+    "acima90": 0.0735,
+    "publicavel": true,
+    "porClientela": {
+     "rural": {
+      "n": 24513,
+      "mediana": 11,
+      "acima45": 0.2208,
+      "publicavel": true
+     },
+     "urbano": {
+      "n": 319224,
+      "mediana": 10,
+      "acima45": 0.1232,
+      "publicavel": true
+     }
+    }
+   }
+  },
+  {
+   "chave": "bpc-deficiencia",
+   "nome": "Benefício assistencial à pessoa com deficiência",
+   "nomePopular": "BPC LOAS",
+   "prazoAcordo": 90,
+   "prazoContaDoPedido": false,
+   "fila": {
+    "n": 414822,
+    "mediana": 50,
+    "p75": 134,
+    "p90": 281,
+    "acima45": 0.5176,
+    "acima90": 0.3508,
+    "acimaDoPrazo": 0.3508,
+    "publicavel": true,
+    "medianaAnterior": 73,
+    "porServico": [
+     {
+      "codigo": 1655,
+      "nome": "Benefício Assistencial à Pessoa com Deficiência",
+      "n": 414822,
+      "mediana": 50,
+      "acima45": 0.5176,
+      "publicavel": true
+     }
+    ]
+   },
+   "negados": {
+    "n": 212072,
+    "mediana": 46,
+    "p75": 124,
+    "p90": 249,
+    "acima45": 0.5055,
+    "acima90": 0.3188,
+    "publicavel": true,
+    "porClientela": {
+     "rural": {
+      "n": 6072,
+      "mediana": 50,
+      "acima45": 0.5275,
+      "publicavel": true
+     },
+     "urbano": {
+      "n": 206000,
+      "mediana": 46,
+      "acima45": 0.5049,
+      "publicavel": true
+     }
+    }
+   }
+  },
+  {
+   "chave": "bpc-idoso",
+   "nome": "Benefício assistencial ao idoso",
+   "nomePopular": "BPC LOAS do idoso",
+   "prazoAcordo": 90,
+   "prazoContaDoPedido": false,
+   "fila": {
+    "n": 54124,
+    "mediana": 29,
+    "p75": 58,
+    "p90": 129,
+    "acima45": 0.3128,
+    "acima90": 0.1485,
+    "acimaDoPrazo": 0.1485,
+    "publicavel": true,
+    "medianaAnterior": 36,
+    "porServico": [
+     {
+      "codigo": 1657,
+      "nome": "Benefício Assistencial ao Idoso",
+      "n": 54124,
+      "mediana": 29,
+      "acima45": 0.3128,
+      "publicavel": true
+     }
+    ]
+   },
+   "negados": {
+    "n": 19697,
+    "mediana": 44,
+    "p75": 82,
+    "p90": 162,
+    "acima45": 0.4932,
+    "acima90": 0.2148,
+    "publicavel": true,
+    "porClientela": {
+     "rural": {
+      "n": 395,
+      "mediana": 41,
+      "acima45": 0.4608,
+      "publicavel": false
+     },
+     "urbano": {
+      "n": 19302,
+      "mediana": 45,
+      "acima45": 0.4938,
+      "publicavel": true
+     }
+    }
+   }
+  },
+  {
+   "chave": "auxilio-acidente",
+   "nome": "Auxílio-acidente",
+   "nomePopular": "auxílio-acidente",
+   "prazoAcordo": 60,
+   "prazoContaDoPedido": false,
+   "fila": {
+    "n": 124382,
+    "mediana": 100,
+    "p75": 261,
+    "p90": 388,
+    "acima45": 0.6422,
+    "acima90": 0.523,
+    "acimaDoPrazo": 0.5936,
+    "publicavel": true,
+    "medianaAnterior": 125,
+    "porServico": [
+     {
+      "codigo": 4852,
+      "nome": "Auxílio-Acidente",
+      "n": 124382,
+      "mediana": 100,
+      "acima45": 0.6422,
+      "publicavel": true
+     }
+    ]
+   },
+   "negados": {
+    "n": 59402,
+    "mediana": 127,
+    "p75": 291,
+    "p90": 410,
+    "acima45": 0.8011,
+    "acima90": 0.5786,
+    "publicavel": true,
+    "porClientela": {
+     "rural": {
+      "n": 1552,
+      "mediana": 114,
+      "acima45": 0.7957,
+      "publicavel": true
+     },
+     "urbano": {
+      "n": 57850,
+      "mediana": 128,
+      "acima45": 0.8012,
+      "publicavel": true
+     }
+    }
+   }
+  },
+  {
+   "chave": "aposentadoria-por-idade",
+   "nome": "Aposentadoria por idade",
+   "nomePopular": "aposentadoria por idade",
+   "prazoAcordo": 90,
+   "prazoContaDoPedido": true,
+   "fila": {
+    "n": 190410,
+    "mediana": 24,
+    "p75": 47,
+    "p90": 92,
+    "acima45": 0.2587,
+    "acima90": 0.1009,
+    "acimaDoPrazo": 0.1009,
+    "publicavel": true,
+    "medianaAnterior": 28,
+    "porServico": [
+     {
+      "codigo": 2772,
+      "nome": "Aposentadoria por Idade Urbana",
+      "n": 93207,
+      "mediana": 24,
+      "acima45": 0.2467,
+      "publicavel": true
+     },
+     {
+      "codigo": 1671,
+      "nome": "Aposentadoria por Idade Rural",
+      "n": 78867,
+      "mediana": 22,
+      "acima45": 0.1611,
+      "publicavel": true
+     },
+     {
+      "codigo": 2812,
+      "nome": "Aposentadoria da Pessoa com Deficiência por Idade",
+      "n": 15587,
+      "mediana": 98,
+      "acima45": 0.7284,
+      "publicavel": true
+     },
+     {
+      "codigo": 3653,
+      "nome": "Acordo Internacional - Aposentadoria por Idade",
+      "n": 2676,
+      "mediana": 178,
+      "acima45": 0.8042,
+      "publicavel": true
+     },
+     {
+      "codigo": 6492,
+      "nome": "Acordo Internacional - Aposentadoria da Pessoa com Deficiência por Idade",
+      "n": 71,
+      "mediana": 95,
+      "acima45": 0.7746,
+      "publicavel": false
+     },
+     {
+      "codigo": 3742,
+      "nome": "Acordo Internacional - Aposentadoria por Idade Rural",
+      "n": 2,
+      "mediana": 1722,
+      "acima45": 1.0,
+      "publicavel": false
+     }
+    ]
+   },
+   "negados": {
+    "n": 70861,
+    "mediana": 38,
+    "p75": 59,
+    "p90": 87,
+    "acima45": 0.3718,
+    "acima90": 0.0903,
+    "publicavel": true,
+    "porClientela": {
+     "rural": {
+      "n": 20650,
+      "mediana": 39,
+      "acima45": 0.348,
+      "publicavel": true
+     },
+     "urbano": {
+      "n": 50211,
+      "mediana": 38,
+      "acima45": 0.3816,
+      "publicavel": true
+     }
+    }
+   }
+  },
+  {
+   "chave": "aposentadoria-por-tempo-de-contribuicao",
+   "nome": "Aposentadoria por tempo de contribuição",
+   "nomePopular": "aposentadoria por tempo de contribuição",
+   "prazoAcordo": 90,
+   "prazoContaDoPedido": true,
+   "fila": {
+    "n": 107730,
+    "mediana": 46,
+    "p75": 113,
+    "p90": 233,
+    "acima45": 0.5078,
+    "acima90": 0.3092,
+    "acimaDoPrazo": 0.3092,
+    "publicavel": true,
+    "medianaAnterior": 54,
+    "porServico": [
+     {
+      "codigo": 3372,
+      "nome": "Aposentadoria por Tempo de Contribuição",
+      "n": 66109,
+      "mediana": 31,
+      "acima45": 0.3634,
+      "publicavel": true
+     },
+     {
+      "codigo": 2773,
+      "nome": "Aposentadoria da Pessoa com Deficiência por Tempo de Contribuição",
+      "n": 40494,
+      "mediana": 102,
+      "acima45": 0.7341,
+      "publicavel": true
+     },
+     {
+      "codigo": 3743,
+      "nome": "Acordo Internacional - Aposentadoria por Tempo de Contribuição",
+      "n": 1040,
+      "mediana": 289,
+      "acima45": 0.8558,
+      "publicavel": true
+     },
+     {
+      "codigo": 6452,
+      "nome": "Acordo Internacional - Aposentadoria da Pessoa com Deficiência por Tempo de Contribuição",
+      "n": 87,
+      "mediana": 200,
+      "acima45": 0.8276,
+      "publicavel": false
+     }
+    ]
+   },
+   "negados": {
+    "n": 44587,
+    "mediana": 41,
+    "p75": 85,
+    "p90": 185,
+    "acima45": 0.4646,
+    "acima90": 0.2336,
+    "publicavel": true,
+    "porClientela": {
+     "rural": {
+      "n": 387,
+      "mediana": 67,
+      "acima45": 0.6718,
+      "publicavel": false
+     },
+     "urbano": {
+      "n": 44200,
+      "mediana": 40,
+      "acima45": 0.4628,
+      "publicavel": true
+     }
+    }
+   }
+  },
+  {
+   "chave": "pensao-por-morte",
+   "nome": "Pensão por morte",
+   "nomePopular": "pensão por morte",
+   "prazoAcordo": 60,
+   "prazoContaDoPedido": true,
+   "fila": {
+    "n": 103089,
+    "mediana": 27,
+    "p75": 58,
+    "p90": 122,
+    "acima45": 0.3118,
+    "acima90": 0.143,
+    "acimaDoPrazo": 0.232,
+    "publicavel": true,
+    "medianaAnterior": 32,
+    "porServico": [
+     {
+      "codigo": 1659,
+      "nome": "Pensão por Morte Urbana",
+      "n": 76832,
+      "mediana": 25,
+      "acima45": 0.2978,
+      "publicavel": true
+     },
+     {
+      "codigo": 1658,
+      "nome": "Pensão por Morte Rural",
+      "n": 25303,
+      "mediana": 28,
+      "acima45": 0.3345,
+      "publicavel": true
+     },
+     {
+      "codigo": 3770,
+      "nome": "Acordo Internacional - Pensão por Morte",
+      "n": 946,
+      "mediana": 224,
+      "acima45": 0.8404,
+      "publicavel": false
+     },
+     {
+      "codigo": 3769,
+      "nome": "Acordo Internacional - Pensão por Morte Rural",
+      "n": 8,
+      "mediana": 1880,
+      "acima45": 1.0,
+      "publicavel": false
+     }
+    ]
+   },
+   "negados": {
+    "n": 26196,
+    "mediana": 47,
+    "p75": 72,
+    "p90": 102,
+    "acima45": 0.5242,
+    "acima90": 0.1347,
+    "publicavel": true,
+    "porClientela": {
+     "rural": {
+      "n": 6072,
+      "mediana": 46,
+      "acima45": 0.5003,
+      "publicavel": true
+     },
+     "urbano": {
+      "n": 20124,
+      "mediana": 48,
+      "acima45": 0.5314,
+      "publicavel": true
+     }
+    }
+   }
+  },
+  {
+   "chave": "salario-maternidade",
+   "nome": "Salário-maternidade",
+   "nomePopular": "salário-maternidade",
+   "prazoAcordo": 30,
+   "prazoContaDoPedido": true,
+   "fila": {
+    "n": 122117,
+    "mediana": 14,
+    "p75": 29,
+    "p90": 49,
+    "acima45": 0.1094,
+    "acima90": 0.0215,
+    "acimaDoPrazo": 0.222,
+    "publicavel": true,
+    "medianaAnterior": 18,
+    "porServico": [
+     {
+      "codigo": 1675,
+      "nome": "Salário-Maternidade Urbano",
+      "n": 76787,
+      "mediana": 11,
+      "acima45": 0.093,
+      "publicavel": true
+     },
+     {
+      "codigo": 1674,
+      "nome": "Salário-Maternidade Rural",
+      "n": 43890,
+      "mediana": 18,
+      "acima45": 0.1164,
+      "publicavel": true
+     },
+     {
+      "codigo": 3746,
+      "nome": "Acordo Internacional - Salário-Maternidade",
+      "n": 1440,
+      "mediana": 169,
+      "acima45": 0.7715,
+      "publicavel": true
+     }
+    ]
+   },
+   "negados": {
+    "n": 100265,
+    "mediana": 7,
+    "p75": 31,
+    "p90": 51,
+    "acima45": 0.1272,
+    "acima90": 0.0131,
+    "publicavel": true,
+    "porClientela": {
+     "rural": {
+      "n": 20058,
+      "mediana": 19,
+      "acima45": 0.1683,
+      "publicavel": true
+     },
+     "urbano": {
+      "n": 80207,
+      "mediana": 6,
+      "acima45": 0.117,
+      "publicavel": true
+     }
+    }
+   }
+  },
+  {
+   "chave": "auxilio-reclusao",
+   "nome": "Auxílio-reclusão",
+   "nomePopular": "auxílio-reclusão",
+   "prazoAcordo": 60,
+   "prazoContaDoPedido": true,
+   "fila": {
+    "n": 8438,
+    "mediana": 28,
+    "p75": 51,
+    "p90": 80,
+    "acima45": 0.2917,
+    "acima90": 0.0717,
+    "acimaDoPrazo": 0.1927,
+    "publicavel": true,
+    "medianaAnterior": 33,
+    "porServico": [
+     {
+      "codigo": 4613,
+      "nome": "Auxílio-Reclusão Urbano",
+      "n": 7601,
+      "mediana": 25,
+      "acima45": 0.2817,
+      "publicavel": true
+     },
+     {
+      "codigo": 4632,
+      "nome": "Auxílio-Reclusão Rural",
+      "n": 837,
+      "mediana": 35,
+      "acima45": 0.3823,
+      "publicavel": false
+     }
+    ]
+   },
+   "negados": {
+    "n": 4684,
+    "mediana": 46,
+    "p75": 71,
+    "p90": 95,
+    "acima45": 0.5075,
+    "acima90": 0.1149,
+    "publicavel": true,
+    "porClientela": {
+     "rural": {
+      "n": 194,
+      "mediana": 65,
+      "acima45": 0.7165,
+      "publicavel": false
+     },
+     "urbano": {
+      "n": 4490,
+      "mediana": 45,
+      "acima45": 0.4984,
+      "publicavel": true
+     }
+    }
+   }
+  },
+  {
+   "chave": "auxilio-inclusao",
+   "nome": "Auxílio-inclusão à pessoa com deficiência",
+   "nomePopular": "auxílio-inclusão",
+   "prazoAcordo": null,
+   "prazoContaDoPedido": null,
+   "fila": {
+    "n": 2575,
+    "mediana": 186,
+    "p75": 579,
+    "p90": 1607,
+    "acima45": 0.8555,
+    "acima90": 0.727,
+    "acimaDoPrazo": null,
+    "publicavel": true,
+    "medianaAnterior": 207,
+    "porServico": [
+     {
+      "codigo": 14835,
+      "nome": "Auxílio-Inclusão à Pessoa com Deficiência",
+      "n": 2428,
+      "mediana": 178,
+      "acima45": 0.8517,
+      "publicavel": true
+     },
+     {
+      "codigo": 14836,
+      "nome": "Auxílio-Inclusão à Pessoa com Deficiência - AI",
+      "n": 147,
+      "mediana": 249,
+      "acima45": 0.9184,
+      "publicavel": false
+     }
+    ]
+   },
+   "negados": {
+    "n": 611,
+    "mediana": 34,
+    "p75": 151,
+    "p90": 259,
+    "acima45": 0.4583,
+    "acima90": 0.3568,
+    "publicavel": false,
+    "porClientela": {
+     "rural": {
+      "n": 7,
+      "mediana": 0,
+      "acima45": 0.1429,
+      "publicavel": false
+     },
+     "urbano": {
+      "n": 604,
+      "mediana": 34,
+      "acima45": 0.4619,
+      "publicavel": false
+     }
+    }
+   }
+  }
+ ]
+}

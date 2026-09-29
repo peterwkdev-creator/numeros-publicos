@@ -73,8 +73,10 @@ export default function TabelaCenso({
                 >
                   {x.percentual === null ? "—" : `${br(x.percentual, 1)}%`}
                   <span className={estilos.criterio}>
-                    {/* A ausência diz o que é. São 9 municípios sem dado de
-                        água e 26 sem esgoto, e "não sabemos" não é "nenhum". */}
+                    {/* A ausência diz o que é: "não sabemos" não é "nenhum".
+                        Até 29/09/2026 eram 33 casos aqui, e todos eram o `-`
+                        do IBGE, que é ZERO; lido certo, sobram os municípios
+                        novos demais para o Censo. */}
                     {x.parte === null || x.total === null
                       ? "sem dado na fonte"
                       : `${br(x.parte)} de ${br(x.total)}`}

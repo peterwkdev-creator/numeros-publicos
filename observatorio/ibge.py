@@ -212,7 +212,19 @@ class Municipio:
 # a fonte dizer "não se aplica", "não disponível" ou "omitido por sigilo".
 # Guardar `None` preserva a distinção entre "zero" e "não sabemos" -- confundir
 # os dois é como um painel passa a mentir sem ninguém notar.
-AUSENTES = frozenset({"-", "..", "...", "X", "x", ".", ""})
+#
+# **O `-` NÃO está aqui, e esteve até 29/09/2026.** Nos sinais convencionais do
+# IBGE ele é *"dado numérico igual a zero não resultante de arredondamento"* --
+# é um número, o zero. Conferido na fonte: em Castanheiras/RO (1100908) o
+# esgoto por rede veio `-`, e as outras categorias do mesmo agregado (6805)
+# somam 56 + 1.137 + 3 + 2 = 1.198, exatamente o total de domicílios. Lido como
+# ausente, ele fazia 8 páginas dizerem "sem dado na fonte" sobre a água e 25
+# sobre o esgoto, onde a fonte diz zero. Era a confusão que este comentário
+# existe para impedir, feita pelo lado oposto.
+AUSENTES = frozenset({"..", "...", "X", "x", ".", ""})
+
+#: O zero do IBGE. Ver acima.
+ZERO_ABSOLUTO = "-"
 
 
 @dataclass(frozen=True, slots=True)
@@ -232,6 +244,8 @@ class Observacao:
 def _numero(bruto: str) -> float | None:
     """`None` quando a fonte diz que não há número."""
     texto = (bruto or "").strip()
+    if texto == ZERO_ABSOLUTO:
+        return 0.0
     if texto in AUSENTES:
         return None
     try:

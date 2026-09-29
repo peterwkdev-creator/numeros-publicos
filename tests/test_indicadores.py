@@ -60,9 +60,16 @@ class TestValorAusente(unittest.TestCase):
     como um painel passa a mentir sem ninguém notar."""
 
     def test_marcadores_viram_none(self):
-        for marcador in ("-", "...", "..", "X", "x", "", "   "):
+        for marcador in ("...", "..", "X", "x", "", "   "):
             with self.subTest(marcador=marcador):
                 self.assertIsNone(_numero(marcador))
+
+    def test_o_traco_e_o_ZERO_do_ibge_e_nao_ausencia(self):
+        """Até 29/09/2026 o `-` virava `None`, e 33 páginas diziam "sem dado
+        na fonte" sobre água e esgoto onde o IBGE publica zero. Nos sinais
+        convencionais dele, `-` é *"zero não resultante de arredondamento"*."""
+        self.assertEqual(_numero("-"), 0.0)
+        self.assertEqual(_numero(" - "), 0.0)
 
     def test_numero_de_verdade_sobrevive(self):
         self.assertEqual(_numero("10597"), 10597.0)

@@ -1,7 +1,8 @@
 import { expandir } from "../../../lib/dados";
 import { funcoesDe, indexarFiscal, receitaDe, ROTULO_FAIXA } from "../../../lib/fiscal";
 import { trajetoriaDe } from "../../../lib/ideb";
-import { lerFiscal, lerIdeb, lerSnapshot, SITE } from "../../../lib/servidor";
+import { lerCaged, lerFiscal, lerIdeb, lerSnapshot, SITE } from "../../../lib/servidor";
+import { cagedDe, nomeCompetencia } from "../../../lib/caged";
 import { cabecalhosXlsx, xlsx, type Aba } from "../../../lib/xlsx";
 import { rotuloDownload } from "../../../lib/censo";
 
@@ -30,9 +31,12 @@ import { rotuloDownload } from "../../../lib/censo";
 export const dynamic = "force-static";
 
 export async function GET() {
-  const [snapshot, fiscal, ideb, idebFinais] = await Promise.all([
+  const [snapshot, fiscal, ideb, idebFinais, caged] = await Promise.all([
     lerSnapshot(), lerFiscal(), lerIdeb("anos_iniciais"), lerIdeb("anos_finais"),
+    lerCaged(),
   ]);
+  const janelaCaged = `${nomeCompetencia(caged.competencias[0]!)} a ` +
+    nomeCompetencia(caged.competencia);
   const porCodigo = indexarFiscal(fiscal);
   const municipios = expandir(snapshot);
   const ind = snapshot.indicadores;
@@ -52,6 +56,8 @@ export async function GET() {
     "Receita corrente total (R$)", "Transferências correntes (R$)",
     "Impostos, taxas e contribuição de melhoria (R$)",
     "IDEB anos iniciais", "IDEB anos finais",
+    "Caged: admissões em 12 meses", "Caged: desligamentos em 12 meses",
+    "Caged: saldo em 12 meses", "Caged: saldo do último mês",
   ];
 
   const linhas = municipios.map((m) => {
@@ -82,6 +88,9 @@ export async function GET() {
       rc?.tributaria ?? null,
       trajetoriaDe(ideb, m.codigo)?.ultimo.observado ?? null,
       trajetoriaDe(idebFinais, m.codigo)?.ultimo.observado ?? null,
+      ...((cg) => [cg?.admissoes ?? null, cg?.desligamentos ?? null,
+                   cg?.saldo ?? null, cg?.ultimo.saldo ?? null])(
+        cagedDe(caged, m.codigo)),
     ];
   });
 
@@ -91,8 +100,12 @@ export async function GET() {
     linhas: [
       ["Coluna", "O que é", "Unidade", "Fonte"],
       ["Código IBGE", "O identificador do município no IBGE. É a chave que une as três fontes.", "—", "IBGE"],
+      // O MESMO rótulo do cabeçalho: até 29/09/2026 aqui ia `i.nome`, e a
+      // linha do dicionário não casava com a coluna que explica (os dois
+      // indicadores de força de trabalho saíam como "Pessoas de 14 anos ou
+      // mais de idade", duas vezes).
       ...ind.map((i) => [
-        i.nome,
+        rotuloDownload(i.codigo, i.nome),
         `Período ${i.periodo}. Agregado ${i.agregado}, variável ${i.variavel}.`,
         i.unidade,
         "IBGE",
@@ -130,6 +143,16 @@ export async function GET() {
       ["IDEB anos finais",
        "Índice da rede MUNICIPAL, 6º ao 9º ano. NÃO se compara com os anos iniciais: provas e escalas próprias.",
        "índice", "INEP"],
+      ["Caged: admissões em 12 meses",
+       `Contratações com carteira assinada de ${janelaCaged}, no município da empresa, com as declarações fora do prazo e as exclusões já aplicadas (o número "com ajustes" do Ministério do Trabalho). Não entram servidor estatutário nem conta própria.`,
+       "vínculos", "MTE — Novo Caged"],
+      ["Caged: desligamentos em 12 meses", `Demissões, pedidos de demissão e fins de contrato no mesmo período e recorte.`, "vínculos", "MTE — Novo Caged"],
+      ["Caged: saldo em 12 meses",
+       "Admissões menos desligamentos. É FLUXO: o Caged não diz quantos empregados o município tem. Saldo zero pode ser movimento equilibrado; zero admissões E zero desligamentos quer dizer nenhuma movimentação declarada, e não ausência de dado.",
+       "vínculos", "MTE — Novo Caged"],
+      ["Caged: saldo do último mês",
+       `O saldo de ${nomeCompetencia(caged.competencia)} sozinho. É o mês mais recente, e ainda pode mudar com declarações fora do prazo.`,
+       "vínculos", "MTE — Novo Caged"],
       [],
       ["Célula vazia", "Significa AUSÊNCIA, nunca zero. O dado não existe na fonte.", "—", "—"],
     ],
@@ -154,6 +177,9 @@ export async function GET() {
       ]) : []),
       [ideb.fonte, `IDEB da rede municipal, edições ${ideb.edicoes[0]} a ${ideb.edicoes[ideb.edicoes.length - 1]}`,
        ideb.coletadoEm?.slice(0, 10) ?? "—"],
+      [caged.fonte,
+       `Admissões e desligamentos de ${janelaCaged}; conferido contra o sumário executivo do MTE (${caged.conferencia.sumario})`,
+       caged.coletadoEm?.slice(0, 10) ?? "—"],
       [],
       ["Cobertura", "", ""],
       ["Municípios no IBGE", fiscal.cobertura.municipiosIbge, ""],

@@ -3,7 +3,7 @@ import type { MetadataRoute } from "next";
 import { expandir } from "../../lib/dados";
 import { slugDe } from "../../lib/fiscal";
 import { atualizadoEm, ufsComSitemap } from "../../lib/sitemap";
-import { lerFiscal, lerSnapshot, SITE } from "../../lib/servidor";
+import { lerCaged, lerFiscal, lerSnapshot, SITE } from "../../lib/servidor";
 
 /**
  * Um sitemap por estado, com os municípios daquele estado.
@@ -45,8 +45,10 @@ export default async function sitemap(
   // No Next 16 o `id` é uma Promise que resolve para string -- mudou na v16.0,
   // e antes era o valor direto. Está no histórico de versões da documentação.
   const uf = await id;
-  const [snapshot, fiscal] = await Promise.all([lerSnapshot(), lerFiscal()]);
-  const atualizado = atualizadoEm(snapshot, fiscal);
+  const [snapshot, fiscal, caged] = await Promise.all([
+    lerSnapshot(), lerFiscal(), lerCaged(),
+  ]);
+  const atualizado = atualizadoEm(snapshot, fiscal, caged.coletadoEm);
 
   return expandir(snapshot)
     .filter((m) => m.uf === uf)

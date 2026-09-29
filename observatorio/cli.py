@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import os
 import sys
+from pathlib import Path as Path_
 
 from .armazem import Armazem
 from .ibge import (
@@ -780,7 +781,196 @@ def construir_parser() -> argparse.ArgumentParser:
     ie.add_argument("--permitir-encolher", action="store_true",
                     help="aceita menos grupos, ou mês mais velho, que o publicado")
     ie.set_defaults(func=inss_exportar)
+    # --- Novo Caged (29/09/2026). Banco próprio, como o INSS: outra fonte,
+    # outro ritmo (mensal), e nada nele se soma ao do IBGE.
+    banco_caged = os.environ.get("CAGED_BANCO", "caged.db")
+    cg = sub.add_parser("caged-ingerir",
+                        help="baixa e agrega os 12 meses do Novo Caged até o "
+                             "mais recente publicado (ou --ate)")
+    cg.add_argument("--ate", help="último mês da janela, AAAAMM")
+    cg.add_argument("--refazer", action="store_true",
+                    help="relê arquivos já gravados (o MTE republica meses)")
+    cg.add_argument("--banco-caged", default=banco_caged)
+    cg.set_defaults(func=caged_ingerir)
+
+    ce = sub.add_parser("caged-exportar",
+                        help="confere contra o sumário do MTE e gera o "
+                             "caged.json que o painel lê")
+    ce.add_argument("--saida", default="painel/dados/caged.json")
+    ce.add_argument("--snapshot", default="painel/dados/snapshot.json",
+                    help="de onde vêm os 5.571 códigos do IBGE")
+    ce.add_argument("--sumario",
+                    help="texto do sumário já extraído (sem rede); o padrão é "
+                         "buscá-lo na pasta do mês no gov.br")
+    ce.add_argument("--banco-caged", default=banco_caged)
+    ce.add_argument("--permitir-encolher", action="store_true")
+    ce.set_defaults(func=caged_exportar)
+
+    cn = sub.add_parser("caged-novo",
+                        help="diz se há mês novo publicado (arquivos E sumário)")
+    cn.add_argument("--publicado", default="painel/dados/caged.json")
+    cn.set_defaults(func=caged_novo)
     return p
+
+
+def _listar_ftp(url: str) -> str:
+    import urllib.request
+    with urllib.request.urlopen(url, timeout=120) as r:
+        return r.read().decode("latin-1")
+
+
+def _pagina(url: str) -> str:
+    import urllib.request
+    pedido = urllib.request.Request(
+        url, headers={"User-Agent": "Mozilla/5.0 (numeros-publicos)"})
+    with urllib.request.urlopen(pedido, timeout=120) as r:
+        return r.read().decode("utf-8", "replace")
+
+
+def _texto_do_pdf(caminho: str) -> str:
+    """`pdftotext` (poppler). O runner o instala; o Git for Windows o traz."""
+    import shutil
+    import subprocess
+    from . import caged
+    binario = shutil.which("pdftotext")
+    if not binario:
+        raise caged.ErroCaged("sem `pdftotext` no PATH para ler o sumário do MTE "
+                              "(apt-get install poppler-utils)")
+    r = subprocess.run([binario, "-enc", "UTF-8", "-layout", caminho, "-"],
+                       capture_output=True,
+                       creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+    if r.returncode != 0:
+        raise caged.ErroCaged(f"pdftotext falhou: {r.stderr[:300]!r}")
+    return r.stdout.decode("utf-8", "replace")
+
+
+def _sumario_oficial(mes: str, pagina=_pagina, baixar=None,
+                     texto_do_pdf=_texto_do_pdf) -> tuple[str, str]:
+    """`(link, texto)` do sumário executivo do mês, lido da pasta no gov.br."""
+    baixar = baixar or _baixar
+    import tempfile
+    from . import caged
+    link = caged.link_do_sumario(pagina(caged.pasta_do_mes(mes)), mes)
+    with tempfile.TemporaryDirectory() as tmp:
+        destino = os.path.join(tmp, "sumario.pdf")
+        baixar(link, destino)
+        return link, texto_do_pdf(destino)
+
+
+def caged_ingerir(args, listar=_listar_ftp, baixar=None) -> int:
+    """Os três arquivos de cada mês da janela, um de cada vez: baixa, agrega
+    em fluxo, grava a fatia e apaga o `.7z`. Um mês tem ~57 MB comprimido e
+    466 MB aberto, e nada disso fica no disco."""
+    import tempfile
+    import time
+    from . import caged
+    # `_baixar` é definido mais abaixo neste arquivo: resolvido na chamada.
+    baixar = baixar or _baixar
+    try:
+        ultima = args.ate or caged.ultima_no_ftp(listar)
+        print(f"janela: {caged.janela_ate(ultima)[0]} a {ultima}")
+        with caged.ArmazemCaged(args.banco_caged) as db:
+            for mes in caged.janela_ate(ultima):
+                for tipo in caged.TIPOS:
+                    nome = caged.nome_arquivo(tipo, mes)
+                    if not args.refazer and db.gravado(tipo, mes) is not None:
+                        print(f"  {nome}: já gravado")
+                        continue
+                    t = time.time()
+                    with tempfile.TemporaryDirectory() as tmp:
+                        destino = os.path.join(tmp, nome + ".7z")
+                        url = caged.url_arquivo(tipo, mes)
+                        baixar(url, destino)
+                        tamanho = os.path.getsize(destino)
+                        agregado, n = caged.agregar(caged.linhas_do_7z(destino), nome)
+                    db.gravar(tipo, mes, agregado, n, tamanho,
+                              url.replace("%20", " "))
+                    a = sum(x[0] for x in agregado.values())
+                    d = sum(x[1] for x in agregado.values())
+                    print(f"  {nome}: {n} linhas, {a - d:+d} "
+                          f"({tamanho // 1_000_000} MB, {time.time() - t:.0f} s)")
+    except caged.ErroCaged as e:
+        print(f"[!] {e}", file=sys.stderr)
+        return 1
+    return 0
+
+
+def caged_exportar(args, sumario_oficial=_sumario_oficial) -> int:
+    """Confere contra o sumário executivo do MTE e SÓ ENTÃO escreve o
+    `caged.json`. Não há bandeira para pular a conferência: sem ela, o número
+    do site não tem contra o que ser verdadeiro."""
+    import json as _json
+    from . import caged
+    try:
+        with caged.ArmazemCaged(args.banco_caged) as db:
+            ultima = db.ultima()
+            if ultima is None:
+                raise caged.ErroCaged("banco do Caged vazio: rode caged-ingerir")
+            if args.sumario:
+                link = args.sumario
+                texto = Path_(args.sumario).read_text(encoding="utf-8")
+            else:
+                link, texto = sumario_oficial(ultima)
+            oficiais = caged.numeros_do_sumario(texto, ultima)
+            nossos = caged.nossos_numeros(db, ultima)
+            for bloco in ("mes", "ano", "doze"):
+                n, o = nossos[bloco], oficiais[bloco]
+                if o is None:
+                    print(f"  {bloco:<5} o sumário não traz (em janeiro, o ano é o mês)")
+                    continue
+                print(f"  {bloco:<5} nosso {n['saldo']:+,} ({n['admissoes']:,} − "
+                      f"{n['desligamentos']:,}) · oficial {o['saldo']:+,}"
+                      .replace(",", "."))
+            erros = caged.conferir(nossos, oficiais)
+            if erros:
+                raise caged.ErroCaged("DIVERGE do sumário do MTE: " + "; ".join(erros))
+            snap = _json.loads(Path_(args.snapshot).read_text(encoding="utf-8"))
+            r = caged.retrato(db, ultima, (l[0] for l in snap["municipios"]), {
+                "sumario": link,
+                "mes": oficiais["mes"], "ano": oficiais["ano"],
+                "anoPeriodo": oficiais["ano_periodo"],
+                "doze": oficiais["doze"], "dozePeriodo": oficiais["doze_periodo"],
+            })
+        estado = caged.gravar_retrato(r, args.saida, args.permitir_encolher)
+    except caged.ErroCaged as e:
+        print(f"[!] {e}", file=sys.stderr)
+        return 1
+    print(f"{args.saida}: {estado} · competência {r['competencia']} · "
+          f"{len(r['municipios'])} municípios · confere com o sumário do MTE")
+    return 0
+
+
+def caged_novo(args, listar=_listar_ftp, pagina=_pagina) -> int:
+    """`novo` quando o FTP tem mês mais recente que o publicado E o sumário
+    daquele mês já está no gov.br; senão `nada`. Os dois saem no mesmo dia,
+    mas não na mesma hora, e sem o sumário a exportação não confere nada.
+    Escreve `novo=true|false` em `$GITHUB_OUTPUT` quando existir."""
+    import json as _json
+    from . import caged
+    publicado = None
+    if Path_(args.publicado).exists():
+        publicado = _json.loads(
+            Path_(args.publicado).read_text(encoding="utf-8")).get("competencia")
+    novo = False
+    try:
+        ultima = caged.ultima_no_ftp(listar)
+        if publicado is None or ultima > publicado:
+            try:
+                caged.link_do_sumario(pagina(caged.pasta_do_mes(ultima)), ultima)
+                novo = True
+                print(f"novo: {ultima} no FTP e no gov.br (publicado: {publicado})")
+            except (caged.ErroCaged, OSError) as e:
+                print(f"nada: {ultima} está no FTP, e o sumário ainda não ({e})")
+        else:
+            print(f"nada: o FTP vai até {ultima}, e é o publicado")
+    except (caged.ErroCaged, OSError) as e:
+        print(f"[!] {e}", file=sys.stderr)
+        return 1
+    saida = os.environ.get("GITHUB_OUTPUT")
+    if saida:
+        with open(saida, "a", encoding="utf-8") as fh:
+            fh.write(f"novo={'true' if novo else 'false'}\n")
+    return 0
 
 
 def inss_exportar(args) -> int:

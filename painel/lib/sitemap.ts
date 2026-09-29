@@ -26,10 +26,18 @@ import type { SnapshotFiscal } from "./fiscal";
  * O `Math.max` sobre as duas evita a próxima ocorrência: fonte nova entra aqui,
  * e não num lugar que alguém precise lembrar de atualizar.
  */
-export function atualizadoEm(s: Snapshot, f: SnapshotFiscal): Date {
+export function atualizadoEm(
+  s: Snapshot,
+  f: SnapshotFiscal,
+  // Fontes que mudam SÓ as páginas de município (o Caged, desde 29/09/2026).
+  // Quem as passa é o sitemap dos municípios, e não o geral: a capa e os
+  // estados não mudam quando sai um mês novo do Caged.
+  ...outras: (string | null | undefined)[]
+): Date {
   return new Date(Math.max(
     new Date(s.geradoEm).getTime(),
     f.geradoEm ? new Date(f.geradoEm).getTime() : 0,
+    ...outras.map((d) => (d ? new Date(d).getTime() : 0)),
   ));
 }
 

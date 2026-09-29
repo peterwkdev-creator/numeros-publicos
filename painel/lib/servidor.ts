@@ -5,6 +5,7 @@ import type { Snapshot } from "./dados";
 import type { SnapshotFiscal } from "./fiscal";
 import type { SnapshotIdeb } from "./ideb";
 import type { SnapshotInss } from "./inss";
+import type { SnapshotCaged } from "./caged";
 
 /**
  * Leitura do snapshot gerado pelo motor Python. **Só no servidor.**
@@ -71,6 +72,21 @@ export async function lerInss(): Promise<SnapshotInss> {
   const arquivo = path.join(process.cwd(), "dados", "inss.json");
   cacheInss = JSON.parse(await readFile(arquivo, "utf-8")) as SnapshotInss;
   return cacheInss;
+}
+
+/**
+ * O Novo Caged, escrito por `python -m observatorio caged-exportar` depois de
+ * conferido contra o sumário do Ministério do Trabalho. Arquivo próprio, pela
+ * razão do INSS: outra fonte, outro ritmo (mensal), e nada nele se soma ao
+ * snapshot do IBGE.
+ */
+let cacheCaged: SnapshotCaged | null = null;
+
+export async function lerCaged(): Promise<SnapshotCaged> {
+  if (cacheCaged) return cacheCaged;
+  const arquivo = path.join(process.cwd(), "dados", "caged.json");
+  cacheCaged = JSON.parse(await readFile(arquivo, "utf-8")) as SnapshotCaged;
+  return cacheCaged;
 }
 
 /**

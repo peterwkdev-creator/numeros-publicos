@@ -111,6 +111,32 @@ are injected. The fixtures in `tests/fixtures/` are real captured responses from
 the IBGE API: the 75 municipalities of Sergipe, the 2022 Census population of
 Rio Grande do Norte, and the 2021 GDP of Sergipe.
 
+## Novo Caged: formal jobs, month by month
+
+```bash
+python -m observatorio caged-novo       # is there a new month (files AND official summary)?
+python -m observatorio caged-ingerir    # 12 months x 3 files from the Ministry of Labour FTP
+python -m observatorio caged-exportar   # checks against the official summary, then writes painel/dados/caged.json
+```
+
+Hires and separations of formally registered (CLT) jobs, by municipality, for
+the last 12 months, from the Ministry of Labour's public microdata
+(`ftp.mtps.gov.br/pdet/microdados/NOVO CAGED/`). Each month has three files:
+the month's movements, late filings for earlier months, and exclusions — which
+undo a line already filed. The "adjusted" figure the Ministry publishes is
+reproducible: for each month, its own file plus every late filing for that
+month, minus every exclusion. On 2026-09-29 the month (+58,568), the year to
+date (+972,203) and the 12 months (+880,717) matched the Ministry's executive
+summary exactly.
+
+`caged-exportar` has **no flag to skip that check**: it reads the summary PDF
+from the month's folder on gov.br and refuses to write if any of the three
+blocks differ. The December summary is an annual edition whose own figures do
+not add up, so that month is refused and checked by hand. A municipality with
+no line in a month has **zero** movements, not missing data. The files need
+`7z` (or the `py7zr` package) and the summary needs `pdftotext`; the scheduled
+workflow installs both.
+
 ## INSS: the social-security queue
 
 ```bash
@@ -351,6 +377,10 @@ All public, no registration, no token — `https://servicodados.ibge.gov.br`.
 Every endpoint was called and returned real municipal data before being written
 down; two aggregate/variable combinations returned HTTP 500 and were left out
 rather than promised.
+
+The formal-employment figures come from the Ministry of Labour's Novo Caged
+microdata, over public FTP (`ftp.mtps.gov.br`), checked against the monthly
+executive summary published on gov.br.
 
 The fiscal figures come from SICONFI (`https://apidatalake.tesouro.gov.br`),
 equally public and equally token-free. **The percentage of revenue committed to

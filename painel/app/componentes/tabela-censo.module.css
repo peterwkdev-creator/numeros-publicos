@@ -68,3 +68,12 @@
 .semDado {
   border-left: 3px solid var(--borda-forte);
 }
+
+/* A tabela do Caged tem quatro colunas numéricas. Medido em 375 px de tela:
+   419 px com o espaçamento das outras tabelas, 355 com `--e-2`; 0,4rem é o
+   que cabe nos 343 do conteúdo sem rolagem lateral. */
+.compacta th,
+.compacta td {
+  padding-left: 0.4rem;
+  padding-right: 0.4rem;
+}

@@ -45,6 +45,10 @@ import {
 import {
   EMPRESAS, medianaDaColuna, PARES_TRABALHO, RENDA_CENSO,
 } from "../lib/trabalho.ts";
+import {
+  cagedDe, comSinal, competenciaCurta, contagem, nomeCompetencia, totalDoPais,
+  type SnapshotCaged,
+} from "../lib/caged.ts";
 import { xlsx } from "../lib/xlsx.ts";
 
 // ------------------------------------------------------------------ posicao
@@ -2212,4 +2216,66 @@ test("os indicadores de trabalho que a página lê estão NO SNAPSHOT", () => {
     assert.notEqual(rotuloDownload(c, "NOME-DA-FONTE"), "NOME-DA-FONTE",
                     `${c} sem rótulo próprio no download`);
   }
+});
+
+// ------------------------------------------------------------------ caged
+
+const CAGED = (): SnapshotCaged => JSON.parse(
+  fs.readFileSync(new URL("../dados/caged.json", import.meta.url), "utf-8"));
+
+test("a soma dos municípios do caged.json É o número oficial dos 12 meses", () => {
+  // O `caged-exportar` só grava o arquivo depois de conferir o banco contra o
+  // sumário do MTE. Este teste confere o ARQUIVO: se a exportação perdesse ou
+  // duplicasse um município no caminho, o total deixaria de bater aqui.
+  const c = CAGED();
+  assert.deepEqual(totalDoPais(c), c.conferencia.doze);
+  // E o último mês é o número do sumário (que é o sem ajuste: os ajustes de
+  // um mês só chegam nos meses seguintes).
+  let a = c.naoIdentificado[0].at(-1)!;
+  let d = c.naoIdentificado[1].at(-1)!;
+  for (const l of c.municipios) { a += l[1].at(-1)!; d += l[2].at(-1)!; }
+  assert.deepEqual({ saldo: a - d, admissoes: a, desligamentos: d },
+                   c.conferencia.mes);
+});
+
+test("o caged.json tem os mesmos municípios do snapshot do IBGE", () => {
+  const c = CAGED();
+  const snapshot = JSON.parse(
+    fs.readFileSync(new URL("../dados/snapshot.json", import.meta.url), "utf-8"));
+  const ibge = new Set(snapshot.municipios.map((l: number[]) => l[0]));
+  const caged = new Set(c.municipios.map((l) => l[0]));
+  assert.equal(caged.size, ibge.size);
+  for (const x of caged) assert.ok(ibge.has(x), `${x} não está no IBGE`);
+  assert.equal(c.competencias.length, 12);
+  assert.equal(c.competencias.at(-1), c.competencia);
+});
+
+test("cagedDe soma a janela, e município sem movimento é ZERO", () => {
+  const c: SnapshotCaged = {
+    ...CAGED(),
+    competencias: ["202606", "202607"],
+    municipios: [[2800308, [3, 1], [2, 4]], [2802106, [0, 0], [0, 0]]],
+  };
+  const aracaju = cagedDe(c, 2800308)!;
+  assert.equal(aracaju.admissoes, 4);
+  assert.equal(aracaju.desligamentos, 6);
+  assert.equal(aracaju.saldo, -2);
+  assert.equal(aracaju.ultimo.saldo, -3);
+  const parado = cagedDe(c, 2802106)!;
+  assert.equal(parado.saldo, 0);             // zero, e não null
+  assert.equal(cagedDe(c, 1), null);
+});
+
+test("o saldo leva sinal, e o menos é o tipográfico", () => {
+  assert.equal(comSinal(1234), "+1.234");
+  assert.equal(comSinal(-56), "−56");
+  assert.equal(comSinal(0), "0");
+});
+
+test("mês e plural saem do dado", () => {
+  assert.equal(nomeCompetencia("202603"), "março de 2026");
+  assert.equal(competenciaCurta("202512"), "dez/2025");
+  assert.equal(contagem(1, "admissão", "admissões"), "1 admissão");
+  assert.equal(contagem(0, "admissão", "admissões"), "0 admissões");
+  assert.equal(contagem(1500, "admissão", "admissões"), "1.500 admissões");
 });

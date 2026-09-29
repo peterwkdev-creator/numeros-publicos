@@ -3,7 +3,8 @@ import { cabecalhosCsv, paraCsv } from "../../../lib/csv";
 import {
   CODIGO_FAIXA, funcoesDe, indexarFiscal, receitaDe,
 } from "../../../lib/fiscal";
-import { lerFiscal, lerSnapshot } from "../../../lib/servidor";
+import { lerCaged, lerFiscal, lerSnapshot } from "../../../lib/servidor";
+import { cagedDe } from "../../../lib/caged";
 import { atualDeFuncoes, atualDeReceita } from "@/lib/fiscal";
 
 /**
@@ -19,7 +20,9 @@ import { atualDeFuncoes, atualDeReceita } from "@/lib/fiscal";
 export const dynamic = "force-static";
 
 export async function GET() {
-  const [snapshot, fiscal] = await Promise.all([lerSnapshot(), lerFiscal()]);
+  const [snapshot, fiscal, caged] = await Promise.all([
+    lerSnapshot(), lerFiscal(), lerCaged(),
+  ]);
   const porCodigo = indexarFiscal(fiscal);
 
   const indicadores = snapshot.indicadores;
@@ -50,7 +53,14 @@ export async function GET() {
     // no CSV do municipio, que e longo: ali cada linha se explica sozinha.
     "receita_corrente_total", "receita_transferencias", "receita_impostos_taxas",
     "receita_exercicio", "receita_periodo",
+    // O Novo Caged, NO FIM: coluna nova no meio desloca as de quem já baixou.
+    // Os 12 meses com os ajustes, e o último mês à parte. `caged_periodo` diz
+    // a janela, porque o arquivo viaja sem a página. Zero é zero aqui: o
+    // Caged não tem "sem dado", e a célula vazia significaria outra coisa.
+    "caged_periodo", "caged_admissoes_12m", "caged_desligamentos_12m",
+    "caged_saldo_12m", "caged_saldo_ultimo_mes",
   ];
+  const periodoCaged = `${caged.competencias[0]}-${caged.competencia}`;
 
   // `undefined` quando o município não entregou o RREO. Vira campo vazio no
   // CSV, e não zero: "não entregou" e "gastou nada" não podem colapsar na
@@ -66,6 +76,7 @@ export async function GET() {
     // `receitaDe`, nunca `receitaRecenteDe`: numa linha por municipio, recuar
     // publicaria 2024 numa coluna e 2021 na vizinha sem nada avisar.
     const rc = receitaDe(fiscal, m.codigo);
+    const cg = cagedDe(caged, m.codigo);
     return [
       m.codigo, m.nome, m.uf,
       ...indicadores.map((i) => m.valores[i.codigo] ?? null),
@@ -99,6 +110,9 @@ export async function GET() {
       rc?.tributaria ?? null,
       fiscal.receita ? atualDeReceita(fiscal.receita)?.exercicio ?? null : null,
       fiscal.receita?.periodo ?? null,
+      periodoCaged,
+      cg?.admissoes ?? null, cg?.desligamentos ?? null,
+      cg?.saldo ?? null, cg?.ultimo.saldo ?? null,
     ];
   });
 

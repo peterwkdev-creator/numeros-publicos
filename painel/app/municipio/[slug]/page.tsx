@@ -24,10 +24,14 @@ import { contarMetas, medianaGeral, trajetoriaDe } from "../../../lib/ideb";
 import { medianasCache, medidasDe, taxasCache } from "../../../lib/censo";
 import TabelaCenso from "../../componentes/tabela-censo";
 import TabelaValores from "../../componentes/tabela-valores";
+import TabelaCaged from "../../componentes/tabela-caged";
+import { cagedDe, comSinal, contagem, nomeCompetencia } from "../../../lib/caged";
 import {
   EMPRESAS, medianaDaColunaCache, PARES_TRABALHO, RENDA_CENSO,
 } from "../../../lib/trabalho";
-import { cartaoSocial, lerFiscal, lerIdeb, lerSnapshot, SITE } from "../../../lib/servidor";
+import {
+  cartaoSocial, lerCaged, lerFiscal, lerIdeb, lerSnapshot, SITE,
+} from "../../../lib/servidor";
 import ComposicaoBarras from "../../componentes/composicao-barras";
 import DistribuicaoSvg from "../../componentes/distribuicao-svg";
 import IdebSvg from "../../componentes/ideb-svg";
@@ -49,8 +53,9 @@ import SerieFuncoes from "../../componentes/serie-funcoes";
  */
 
 async function carregar() {
-  const [snapshot, fiscal, ideb, idebFinais] = await Promise.all([
+  const [snapshot, fiscal, ideb, idebFinais, caged] = await Promise.all([
     lerSnapshot(), lerFiscal(), lerIdeb("anos_iniciais"), lerIdeb("anos_finais"),
+    lerCaged(),
   ]);
   const porCodigo = indexarFiscal(fiscal);
   const municipios = expandir(snapshot).map((m) => ({
@@ -58,7 +63,7 @@ async function carregar() {
     slug: slugDe(m.nome, m.uf),
     fiscal: porCodigo.get(m.codigo) ?? null,
   }));
-  return { snapshot, fiscal, ideb, idebFinais, municipios };
+  return { snapshot, fiscal, ideb, idebFinais, caged, municipios };
 }
 
 export async function generateStaticParams() {
@@ -157,7 +162,7 @@ export default async function PaginaMunicipio(
   { params }: { params: Promise<{ slug: string }> },
 ) {
   const { slug } = await params;
-  const { snapshot, fiscal, ideb, idebFinais, municipios } = await carregar();
+  const { snapshot, fiscal, ideb, idebFinais, caged, municipios } = await carregar();
   const m = municipios.find((x) => x.slug === slug);
   if (!m) notFound();
 
@@ -199,6 +204,9 @@ export default async function PaginaMunicipio(
   const temCensoTrabalho =
     medidasTrabalho.some((x) => x.percentual !== null) || renda !== null;
   const temEmpresas = EMPRESAS.some((e) => (m.valores[e.codigo] ?? null) !== null);
+  // O Novo Caged: 12 meses, com os ajustes. `null` só se o município não
+  // estiver no arquivo; município sem movimento vem com ZEROS, e é mostrado.
+  const cagedM = cagedDe(caged, m.codigo);
 
   // `?? null` porque o acesso indexado num Record pode devolver `undefined`
   // quando a coluna não existe no snapshot -- e `undefined` e `null` precisam
@@ -1570,7 +1578,7 @@ export default async function PaginaMunicipio(
         </section>
       )}
 
-      {(temCensoTrabalho || temEmpresas) && (
+      {(temCensoTrabalho || temEmpresas || cagedM !== null) && (
         <section className={estilos.texto}>
           <h2>Trabalho e renda em {m.nome}</h2>
           {temCensoTrabalho && (
@@ -1634,6 +1642,49 @@ export default async function PaginaMunicipio(
               )}
             </>
           )}
+          {cagedM && (
+            <>
+              <h3 className={estilos.subtitulo}>
+                Emprego com carteira de {nomeCompetencia(caged.competencias[0]!)} a{" "}
+                {nomeCompetencia(caged.competencia)}
+              </h3>
+              <p>
+                Do <strong>Novo Caged</strong>, do Ministério do Trabalho, que
+                registra cada contratação e cada desligamento com carteira
+                assinada, no município da empresa. Em 12 meses foram{" "}
+                <strong>{contagem(cagedM.admissoes, "admissão", "admissões")}</strong>{" "}
+                e{" "}
+                <strong>
+                  {contagem(cagedM.desligamentos, "desligamento", "desligamentos")}
+                </strong>
+                : saldo de <strong>{comSinal(cagedM.saldo)}</strong>. Só em{" "}
+                {nomeCompetencia(caged.competencia)}, o saldo foi de{" "}
+                <strong>{comSinal(cagedM.ultimo.saldo)}</strong>.
+              </p>
+              <TabelaCaged
+                meses={cagedM.meses}
+                legenda={`${m.nome} (${m.uf}) no Novo Caged, mês a mês`}
+              />
+              <p className={estilos.ressalva}>
+                Só emprego celetista: servidor estatutário e quem trabalha por
+                conta própria não entram. Os meses já incluem as declarações
+                entregues fora do prazo e as exclusões feitas até{" "}
+                {nomeCompetencia(caged.competencia)}, como o número oficial
+                &ldquo;com ajustes&rdquo;, e o mês mais recente ainda pode mudar.
+                Zero admissões e zero desligamentos num mês querem dizer que
+                nenhuma movimentação foi declarada, e não que falta o dado. No
+                país, os mesmos 12 meses somam{" "}
+                <strong>{comSinal(caged.conferencia.doze.saldo)}</strong> vagas,
+                o número que o Ministério do Trabalho publica e que esta base
+                reproduz exatamente.{" "}
+                {/* Do dado conferido, e não do teclado: `caged-exportar` só
+                    grava o arquivo quando o mês, o ano e os 12 meses batem
+                    com o sumário executivo, e um teste cobra que a soma dos
+                    municípios dá este número. */}
+                <a href={caged.conferencia.sumario}>Sumário executivo do MTE</a>.
+              </p>
+            </>
+          )}
           <p className={estilos.ressalva}>
             <strong>
               Não existe taxa de desemprego atual por município
@@ -1645,11 +1696,12 @@ export default async function PaginaMunicipio(
             <strong>{br(taxasTrabalho["desocupacao"] ?? 0, 1)}%</strong>.{" "}
             {/* Do dado, e não do teclado: é a regra que o teste de
                 percentual literal cobra desta página. */}
-            E os dois recortes acima não precisam bater: o Censo conta quem
-            mora aqui, e o cadastro, quem trabalha numa empresa daqui. Numa
-            cidade vizinha de um polo, muita gente trabalha fora. Fontes: IBGE,
-            Censo Demográfico 2022 e Cadastro Central de Empresas, pelas APIs
-            públicas de agregados.
+            E os recortes desta seção não precisam bater: o Censo conta quem
+            mora aqui; o cadastro de empresas e o Caged, quem trabalha numa
+            empresa daqui. Numa cidade vizinha de um polo, muita gente
+            trabalha fora. Fontes: IBGE, Censo Demográfico 2022 e Cadastro
+            Central de Empresas, pelas APIs públicas de agregados; Ministério
+            do Trabalho e Emprego, microdados do Novo Caged.
           </p>
         </section>
       )}

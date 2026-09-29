@@ -1,0 +1,97 @@
+# Traz o mês novo do Novo Caged, confere contra o sumário do Ministério do
+# Trabalho e publica. Escrito em 29/09/2026.
+#
+# ## Por que todo dia, e por que isso quase nunca faz nada
+#
+# O MTE divulga o Caged uma vez por mês, numa data do calendário dele, e os
+# arquivos e o sumário executivo não saem na mesma hora. O primeiro passo
+# (`caged-novo`) só LÊ a listagem do FTP e a pasta do mês no gov.br, em
+# segundos; sem mês novo com sumário publicado, o job termina ali.
+#
+# ## Por que reconstrói a janela inteira, em vez de trazer só o mês novo
+#
+# O banco não é versionado e o runner começa limpo, como no workflow do IBGE.
+# E o MTE REPUBLICA meses antigos (em 16/06/2026 regravou 2025 inteiro), então
+# um banco que guardasse meses baixados antes poderia conferir hoje contra o
+# que o MTE já corrigiu. São ~680 MB de download, uma vez por mês.
+#
+# ## Por que ele aciona a publicação em vez de esperar o `workflow_run`
+#
+# O `publicar-cloudflare.yml` escuta o fim do workflow do IBGE. Se escutasse
+# este também, republicaria o site todo dia, com ou sem mês novo. Aqui a
+# publicação é pedida explicitamente, e só depois de um commit com dado novo.
+# Commit feito com o GITHUB_TOKEN não dispara `push`, mas `workflow_dispatch`
+# disparado por ele dispara: é a exceção documentada pelo GitHub.
+name: Atualizar dados do Caged
+
+on:
+  schedule:
+    # 21:30 UTC, 18:30 em Brasília: depois da divulgação, que é à tarde.
+    - cron: "30 21 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  actions: write
+
+# O mesmo grupo do IBGE: os dois commitam no main, e um não pode empurrar
+# por cima do outro.
+concurrency:
+  group: ingestao
+  cancel-in-progress: false
+
+jobs:
+  caged:
+    runs-on: ubuntu-latest
+    # 36 arquivos de ~57 MB; medido localmente, 20 s cada entre baixar e
+    # agregar. O teto folgado é para o FTP do MTE num dia lento.
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Há mês novo, com o sumário publicado?
+        id: novo
+        run: python -m observatorio caged-novo
+
+      - name: Testes
+        if: steps.novo.outputs.novo == 'true'
+        run: python -m unittest discover -s tests -t .
+
+      # 7z para abrir os arquivos do MTE, pdftotext para ler o sumário.
+      - name: Ferramentas
+        if: steps.novo.outputs.novo == 'true'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq p7zip-full poppler-utils
+
+      - name: Ingerir os 12 meses
+        if: steps.novo.outputs.novo == 'true'
+        run: python -m observatorio caged-ingerir
+
+      # Confere o mês, o ano e os 12 meses contra o sumário executivo, e só
+      # então escreve o caged.json. Sai com 1 se divergir, e o workflow para
+      # ANTES de publicar número errado.
+      - name: Conferir contra o MTE e exportar
+        if: steps.novo.outputs.novo == 'true'
+        run: python -m observatorio caged-exportar
+
+      - name: Commitar e pedir a publicação
+        if: steps.novo.outputs.novo == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet -- painel/dados/caged.json; then
+            echo "O caged.json não mudou. Nada a commitar."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add painel/dados/caged.json
+          git commit -m "atualiza o Novo Caged ($(python -c "import json;print(json.load(open('painel/dados/caged.json'))['competencia'])"))"
+          git push
+          gh workflow run publicar-cloudflare.yml --ref main

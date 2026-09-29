@@ -4,7 +4,8 @@ import {
   CODIGO_FAIXA, funcoesDe, indexarFiscal, slugDe,
 } from "../../../../lib/fiscal";
 import { trajetoriaDe } from "../../../../lib/ideb";
-import { lerFiscal, lerIdeb, lerSnapshot } from "../../../../lib/servidor";
+import { lerCaged, lerFiscal, lerIdeb, lerSnapshot } from "../../../../lib/servidor";
+import { cagedDe } from "../../../../lib/caged";
 import { rotuloDownload } from "../../../../lib/censo";
 
 /**
@@ -30,8 +31,9 @@ export async function GET(
   { params }: { params: Promise<{ slug: string }> },
 ) {
   const { slug } = await params;
-  const [snapshot, fiscal, ideb, idebFinais] = await Promise.all([
+  const [snapshot, fiscal, ideb, idebFinais, caged] = await Promise.all([
     lerSnapshot(), lerFiscal(), lerIdeb("anos_iniciais"), lerIdeb("anos_finais"),
+    lerCaged(),
   ]);
   const m = expandir(snapshot).find((x) => slugDe(x.nome, x.uf) === slug);
   if (!m) return new Response("não encontrado", { status: 404 });
@@ -162,6 +164,19 @@ export async function GET(
           snap.coletadoEm ?? ""]);
       }
     }
+  }
+
+  // O Novo Caged, mês a mês: duas linhas por mês, e NÃO o saldo -- ele é a
+  // diferença das duas, e uma terceira linha convidaria a somá-la com elas.
+  // O período vai como AAAA-MM, e não AAAA/MM: "2024/3" já é quadrimestre do
+  // fiscal neste mesmo arquivo.
+  const cg = cagedDe(caged, m.codigo);
+  for (const mes of cg?.meses ?? []) {
+    const quando = `${mes.competencia.slice(0, 4)}-${mes.competencia.slice(4)}`;
+    linhas.push([...comum, "Novo Caged — admissões com carteira (com ajustes)",
+      quando, mes.admissoes, "vínculos", "MTE", caged.coletadoEm ?? ""]);
+    linhas.push([...comum, "Novo Caged — desligamentos (com ajustes)",
+      quando, mes.desligamentos, "vínculos", "MTE", caged.coletadoEm ?? ""]);
   }
 
   const csv = paraCsv(

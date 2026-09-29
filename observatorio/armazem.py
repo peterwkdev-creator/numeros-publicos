@@ -273,9 +273,27 @@ class Armazem:
             (indicador,)).fetchone()
         return linha["periodo"] if linha else None
 
+    def valores_vigentes(self, indicador: str,
+                         periodo: str | None) -> dict[int, float | None]:
+        """`município → valor` de um período, da coleta mais recente de cada um.
+
+        É a leitura que o site publica: uma revisão do IBGE convive no banco
+        com o valor anterior, e só a última vale. Mora aqui para que o
+        `snapshot` e o `conferir` das médias leiam o MESMO número.
+        """
+        return {l["municipio"]: l["valor"] for l in self.con.execute(
+            "SELECT o.municipio, o.valor FROM observacao o"
+            " WHERE o.indicador = ? AND o.periodo = ?"
+            "   AND o.coletado_em = (SELECT MAX(o2.coletado_em)"
+            "                          FROM observacao o2"
+            "                         WHERE o2.municipio = o.municipio"
+            "                           AND o2.indicador = o.indicador"
+            "                           AND o2.periodo = o.periodo)",
+            (indicador, periodo))}
+
     # ------------------------------------------------------------------ snapshot
 
-    def snapshot(self) -> dict:
+    def snapshot(self, nao_somaveis: frozenset[str] = frozenset()) -> dict:
         """O estado atual, no formato que o painel consome.
 
         **Formato compacto de propósito**: municípios como lista de listas, e não
@@ -285,6 +303,10 @@ class Armazem:
 
         Cada indicador carrega `origem` e o período: **o painel não pode exibir
         um número sem poder dizer de onde ele veio.**
+
+        `nao_somaveis` são os indicadores que são MÉDIA (salário médio, renda
+        média): saem com `totalRegiao` e os totais por UF em `None`. Quem sabe
+        quais são é o registro, em `cli.py`, e é ele que passa a lista.
         """
         # ## Um período por indicador, e TUDO dele sai desse período
         #
@@ -306,19 +328,16 @@ class Armazem:
             # em consultas separadas seria N+1 sobre um banco que cabe na memória.
             soma = 0.0
             algum = False
-            for l in self.con.execute(
-                "SELECT o.municipio, o.valor FROM observacao o"
-                " WHERE o.indicador = ? AND o.periodo = ?"
-                "   AND o.coletado_em = (SELECT MAX(o2.coletado_em)"
-                "                          FROM observacao o2"
-                "                         WHERE o2.municipio = o.municipio"
-                "                           AND o2.indicador = o.indicador"
-                "                           AND o2.periodo = o.periodo)",
-                (codigo, periodo)):
-                valores.setdefault(l["municipio"], {})[codigo] = l["valor"]
-                if l["valor"] is not None:
-                    soma += l["valor"]
+            for municipio, valor in self.valores_vigentes(codigo, periodo).items():
+                valores.setdefault(municipio, {})[codigo] = valor
+                if valor is not None:
+                    soma += valor
                     algum = True
+            # Média não se soma: a soma de 5.570 salários médios é um número
+            # bem formado e sem sentido, e o total da UF logo abaixo seria
+            # outro. `None` é o que a página já entende como "não há total".
+            if codigo in nao_somaveis:
+                algum = False
             procedencia = self.con.execute(
                 "SELECT origem, MAX(coletado_em) AS coletado_em"
                 "  FROM observacao WHERE indicador = ? AND periodo = ?",
@@ -364,6 +383,9 @@ class Armazem:
             daqui = [m["codigo"] for m in todos if m["uf_sigla"] == sigla]
             uf["totais"] = {}
             for c in codigos:
+                if c in nao_somaveis:
+                    uf["totais"][c] = None
+                    continue
                 presentes = [v for v in (valores.get(cod, {}).get(c) for cod in daqui)
                              if v is not None]
                 uf["totais"][c] = sum(presentes) if presentes else None

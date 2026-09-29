@@ -20,7 +20,9 @@ five latent defects it exposed are written up in the design notes below.
 holding every municipality behind a filter — which meant nobody searching for a
 specific town could ever reach it. Each municipality now has its own address,
 title, description and canonical, carrying population, GDP, personnel spending
-against the legal limit and the school index, joined by the shared IBGE code.
+against the legal limit, the school index, and work and income (2022 Census
+unemployment, social-security coverage and earnings; the Central Business
+Register's firms, jobs and average wage), joined by the shared IBGE code.
 
 The fiscal half comes from [painel-fiscal-ne](https://github.com/peterwkdev-creator/painel-fiscal-ne),
 handed over as a versioned snapshot rather than fetched at build time: a build
@@ -67,6 +69,20 @@ own N1 aggregate):
 | Population (2022 Census) | 203,080,756 | **exact** |
 | Estimated population (2026) | 214,211,951 | **exact** |
 | Municipal GDP (2023) | 10,943,345,420 (BRL thousands) | rounding, 19 (1.7e-09) |
+
+**Averages and sample estimates are checked differently, and say so.** The
+average wage and average earnings are IBGE's published means, not ours:
+dividing the published total by the published head count misses by up to
+BRL 2.92, because the count was rounded after IBGE computed the mean. Summing
+means is meaningless, so `conferir` checks each municipality's mean against
+`total ÷ count` within the error IBGE's own rounding allows. And the Census
+labour tables are expanded from a sample, rounded per municipality: the
+unemployed sum to 44 below the national total, which passes only for series
+that declare `amostra=True` (at most half a person per municipality).
+
+**IBGE's `-` means zero, not missing.** Until 2026-09-29 it was read as
+absent, and 33 pages said "no data" on water or sewage where IBGE publishes
+zero.
 
 **The estimate and the GDP follow the latest year IBGE publishes.** Their
 period is not written in the code: ingestion asks the API for the aggregate's

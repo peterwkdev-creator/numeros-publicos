@@ -151,6 +151,8 @@ export const VARIAVEIS = [
   "Despesa com pessoal sobre a receita corrente líquida ajustada",
   "Despesa liquidada por função orçamentária",
   "IDEB da rede municipal",
+  "Taxa de desocupação e rendimento do trabalho (Censo 2022)",
+  "Empresas, pessoal ocupado e salário médio (Cadastro Central de Empresas)",
 ];
 
 /**

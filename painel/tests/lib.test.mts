@@ -39,9 +39,12 @@ import {
 } from "../lib/sitemap.ts";
 import { faixaDoValor, percentuaisPorUf } from "../lib/mapa.ts";
 import {
-  medianasDe, medidasDe, PARES_CENSO, rotuloDownload, taxasDoPais,
-  medidasDoPais,
+  medianasCache, medianasDe, medidasDe, PARES_CENSO, rotuloDownload,
+  taxasCache, taxasDoPais, medidasDoPais,
 } from "../lib/censo.ts";
+import {
+  EMPRESAS, medianaDaColuna, PARES_TRABALHO, RENDA_CENSO,
+} from "../lib/trabalho.ts";
 import { xlsx } from "../lib/xlsx.ts";
 
 // ------------------------------------------------------------------ posicao
@@ -596,8 +599,8 @@ test("medidasDe calcula o percentual do par, e o absoluto sobrevive", () => {
 });
 
 test("ausência de dado vira null, NUNCA zero", () => {
-  // 8 municípios não têm dado de água e 25 não têm de esgoto. Um município sem
-  // dado de esgoto não tem 0% de esgoto: tem 0 de informação. Confundir os dois
+  // Um município sem dado de esgoto não tem 0% de esgoto: tem 0 de informação.
+  // (O `-` do IBGE, que É zero, já chega aqui como 0 desde 29/09/2026.) Confundir os dois
   // é como um painel passa a mentir sem ninguém notar.
   for (const valores of [
     { "esgoto-rede": null, "domicilios-total": 100 },
@@ -2144,4 +2147,69 @@ test("o cartão de população não volta a afirmar 'mais recente' por escrito",
   assert.doesNotMatch(pagina, /Estimativa mais recente/);
   assert.match(pagina, /periodoDe\(snapshot, "populacao-estimada"\)/);
   assert.match(pagina, /periodoDe\(snapshot, "pib-municipal"\)/);
+});
+
+// ------------------------------------------------------------------ trabalho
+
+test("a desocupação é desocupados sobre a FORÇA de trabalho", () => {
+  // Salvador no Censo 2022: 114.533 de 1.180.828, 9,7%. O denominador não é a
+  // população nem os ocupados -- é quem trabalhava ou procurava.
+  const m = medidasDe({
+    "desocupados-14-mais": 114533, "forca-de-trabalho-14-mais": 1180828,
+  }, PARES_TRABALHO).find((x) => x.chave === "desocupacao")!;
+  assert.ok(Math.abs(m.percentual! - 9.70) < 0.01);
+  assert.equal(m.parte, 114533);
+});
+
+test("desocupação ZERO é zero, e ausência continua null", () => {
+  // 29 municípios pequenos têm `-` no IBGE, que é zero: ninguém procurava.
+  const zero = medidasDe({
+    "desocupados-14-mais": 0, "forca-de-trabalho-14-mais": 617,
+  }, PARES_TRABALHO).find((x) => x.chave === "desocupacao")!;
+  assert.equal(zero.percentual, 0);
+  const nada = medidasDe({}, PARES_TRABALHO).find((x) => x.chave === "desocupacao")!;
+  assert.equal(nada.percentual, null);
+});
+
+test("o cache das medianas separa os pares do Censo dos de trabalho", () => {
+  // O defeito que este teste impede: com a chave antiga (só as linhas), a
+  // primeira página a pedir as medianas do Censo as guardaria, e a seção de
+  // trabalho da MESMA página receberia água e esgoto -- `desocupacao` sairia
+  // undefined, e a coluna, um travessão bem formado em 5.571 páginas.
+  const colunas = ["codigo", "esgoto-rede", "domicilios-total",
+                   "desocupados-14-mais", "forca-de-trabalho-14-mais"];
+  const linhas = [[1, 50, 100, 10, 100], [2, 30, 100, 20, 100]];
+  const censo = medianasCache(linhas, colunas);
+  const trabalho = medianasCache(linhas, colunas, PARES_TRABALHO);
+  assert.equal(censo["esgoto"], 40);
+  assert.equal(trabalho["desocupacao"], 15);
+  assert.equal(trabalho["esgoto"], undefined);
+  assert.equal(taxasCache(linhas, colunas, PARES_TRABALHO)["desocupacao"], 15);
+  // E pedir de novo devolve o mesmo objeto: continua sendo cache.
+  assert.equal(medianasCache(linhas, colunas, PARES_TRABALHO), trabalho);
+});
+
+test("a mediana de uma coluna ignora quem não tem valor", () => {
+  const colunas = ["codigo", "salario-medio-empresas"];
+  const linhas = [[1, 2000], [2, null], [3, 3000], [4, 2500]];
+  assert.equal(medianaDaColuna(linhas, colunas, "salario-medio-empresas"), 2500);
+  assert.equal(medianaDaColuna(linhas, colunas, "nao-existe"), null);
+});
+
+test("os indicadores de trabalho que a página lê estão NO SNAPSHOT", () => {
+  // Um código escrito errado aqui faria a linha sair "sem dado na fonte" em
+  // todas as páginas, sem nada acusar. A prova vem do artefato que o motor
+  // Python exporta, e não de uma lista escrita deste lado.
+  const snapshot = JSON.parse(
+    fs.readFileSync(new URL("../dados/snapshot.json", import.meta.url), "utf-8"));
+  const codigos = [
+    ...PARES_TRABALHO.flatMap((p) => [p.numerador, p.denominador]),
+    RENDA_CENSO.codigo,
+    ...EMPRESAS.map((e) => e.codigo),
+  ];
+  for (const c of codigos) {
+    assert.ok(snapshot.colunas.includes(c), `${c} não está no snapshot`);
+    assert.notEqual(rotuloDownload(c, "NOME-DA-FONTE"), "NOME-DA-FONTE",
+                    `${c} sem rótulo próprio no download`);
+  }
 });

@@ -23,6 +23,7 @@ from .ibge import (
     url_serie_regiao,
     REGIAO_NORDESTE,
     municipios as buscar_municipios,
+    Media,
     Serie,
     serie as buscar_serie,
     transporte_http,
@@ -106,6 +107,65 @@ def br(valor: float | None, casas: int = 0) -> str:
 TOLERANCIA_RELATIVA = 1e-6
 
 
+def _com_valor(db: Armazem, codigo: str, periodo: str | None) -> int:
+    return sum(1 for v in db.valores_vigentes(codigo, periodo).values()
+               if v is not None)
+
+
+def conferir_media(db: Armazem, codigo: str, media: Media,
+                   periodo: str | None) -> tuple[bool, str]:
+    """A média publicada contra `total × fator ÷ contagem`, município a
+    município. Devolve `(confere?, texto)`. Ver `Media` para o porquê.
+
+    O limite de cada município é o erro que o arredondamento DA FONTE permite,
+    e nada mais: meio na contagem (`média × 0,5 / n`), meio na unidade do total
+    (`0,5 × fator / n`) e meio centavo na própria média.
+    """
+    medias = db.valores_vigentes(codigo, periodo)
+    p_total = db.periodo_vigente(media.total)
+    p_contagem = db.periodo_vigente(media.contagem)
+    if not medias:
+        return False, "DIVERGE: nenhuma média gravada"
+    if p_total != periodo or p_contagem != periodo:
+        # Média de 2024 contra total de 2023 não confere nada, e passaria.
+        return False, (f"DIVERGE: períodos diferentes -- média {periodo}, "
+                       f"{media.total} {p_total}, {media.contagem} {p_contagem}")
+    totais = db.valores_vigentes(media.total, periodo)
+    contagens = db.valores_vigentes(media.contagem, periodo)
+
+    fora: list[int] = []
+    sem_par: list[int] = []
+    pior = 0.0
+    conferidos = 0
+    for municipio in sorted(set(medias) | set(contagens)):
+        o = medias.get(municipio)
+        t = totais.get(municipio)
+        n = contagens.get(municipio)
+        if not n:
+            # Sem ninguém para dividir, não há média a cobrar -- mas também não
+            # pode haver uma média positiva inventada.
+            if o:
+                sem_par.append(municipio)
+            continue
+        if o is None or t is None:
+            sem_par.append(municipio)
+            continue
+        derivada = t * media.fator / n
+        limite = o * 0.5 / n + 0.5 * media.fator / n + 0.005
+        pior = max(pior, abs(derivada - o) / limite)
+        conferidos += 1
+        if abs(derivada - o) > limite:
+            fora.append(municipio)
+
+    base = (f"média contra {media.total} ÷ {media.contagem} em "
+            f"{br(conferidos)} municípios, pior caso {pior:.0%} do limite")
+    if fora or sem_par:
+        amostra = ", ".join(str(c) for c in (fora + sem_par)[:5])
+        return False, (f"DIVERGE: {len(fora)} fora do limite, {len(sem_par)} "
+                       f"sem o par ({amostra}) · {base}")
+    return True, f"confere ({base})"
+
+
 def conferir(args, transporte=None) -> int:
     """Soma dos municípios × total regional publicado pelo IBGE.
 
@@ -133,6 +193,11 @@ def conferir(args, transporte=None) -> int:
             # registro: com `MAIS_RECENTE` o registro nem tem ano, e conferir
             # outro período aprovaria um número que não é o exibido.
             periodo = db.periodo_vigente(ind["codigo"])
+            if s.media is not None:
+                ok, texto = conferir_media(db, ind["codigo"], s.media, periodo)
+                divergiu = divergiu or not ok
+                print(f"  {ind['codigo']:<24} {periodo}  {texto}")
+                continue
             _, nivel = recorte_de(args)
             # A classificação vai junto, e não é detalhe: sem ela a soma dos
             # municípios (só "Superior completo") seria comparada com o total
@@ -159,6 +224,16 @@ def conferir(args, transporte=None) -> int:
             elif relativa < TOLERANCIA_RELATIVA:
                 veredito = (f"confere (arredondamento: {br(diferenca)} em "
                             f"{br(oficial)}, {relativa:.1e})")
+            elif s.amostra and abs(diferenca) <= 0.5 * (n := _com_valor(
+                    db, ind["codigo"], periodo)):
+                # Só para quem DECLARA ser amostra expandida: cada município
+                # arredondado por conta própria pode afastar a soma do total
+                # em meio por município. Um município inteiro faltando, com
+                # menos de 0,5 × n, passaria aqui -- e é o preço, pago só por
+                # esses indicadores e dito na saída. A falta de município é
+                # também o que a trava do encolhimento mede, por outro lado.
+                veredito = (f"confere (arredondamento da amostra: "
+                            f"{br(diferenca)} ≤ 0,5 × {br(n)} municípios)")
             else:
                 veredito = f"DIVERGE em {br(diferenca)} ({relativa:.2%})"
                 divergiu = True
@@ -249,8 +324,60 @@ INDICADORES: dict[str, Serie] = {
                                     "59[93024]|2[6794]|86[95251]|287[100362]"),
     "alfabetizados-15-mais":  Serie(9542,  "2022",   950,
                                     "59[1023]|2[6794]|86[95251]|287[100362]"),
+
+    # --- Trabalho e renda (29/09/2026) ------------------------------------
+    #
+    # Do Censo 2022, onde a pessoa MORA. É a única taxa de desocupação oficial
+    # para os 5.570 municípios: a PNAD Contínua, que é a atual, só vai até
+    # estados e capitais. Os três agregados são da amostra -- ver `amostra`.
+    # Os totais "Total" das outras classificações vão explícitos pela mesma
+    # razão de sempre: sem eles a resposta cruza sexo, cor e instrução.
+    "forca-de-trabalho-14-mais": Serie(
+        9517, "2022", 1641, "629[32386]|2[6794]|86[95251]|1568[120704]",
+        amostra=True),
+    # `-` aqui é zero, e é real: em 29 municípios pequenos ninguém procurava
+    # trabalho (Aroeiras do Itaim/PI: força de trabalho 617, ocupados 617).
+    "desocupados-14-mais":       Serie(
+        9517, "2022", 1641, "629[32446]|2[6794]|86[95251]|1568[120704]",
+        amostra=True),
+    "ocupados-14-mais":          Serie(
+        10264, "2022", 4090, "526[15349]|2[6794]|86[95251]|12064[100971]",
+        amostra=True),
+    "ocupados-contribuintes":    Serie(
+        10264, "2022", 4090, "526[15350]|2[6794]|86[95251]|12064[100971]",
+        amostra=True),
+    # O denominador da renda NÃO é o de ocupados: é quem tem rendimento de
+    # trabalho (87,8 milhões contra 88,7), e é sobre ele que o IBGE calcula.
+    "ocupados-com-rendimento":   Serie(
+        10281, "2022", 13535, "2[6794]|86[95251]|1568[120704]|526[15349]",
+        amostra=True),
+    "massa-rendimento-trabalho": Serie(
+        10289, "2022", 13424, "2[6794]|86[95251]", amostra=True),
+    "rendimento-medio-trabalho": Serie(
+        10281, "2022", 13536, "2[6794]|86[95251]|1568[120704]|526[15349]",
+        amostra=True,
+        media=Media("massa-rendimento-trabalho", "ocupados-com-rendimento")),
+
+    # Do Cadastro Central de Empresas, onde a EMPRESA está -- numa cidade-
+    # dormitório os dois recortes divergem, e a página diz por quê. O 9509 é a
+    # tabela de todos os municípios; o 9510, vizinho no catálogo, cobre só os
+    # 711 com 50 mil habitantes ou mais. O IBGE publica um ano novo por ano, e
+    # `MAIS_RECENTE` o traz sozinho.
+    "empresas-atuantes":         Serie(9509, MAIS_RECENTE, 367),
+    "pessoal-ocupado-empresas":  Serie(9509, MAIS_RECENTE, 707),
+    "assalariados-empresas":     Serie(9509, MAIS_RECENTE, 708),
+    "assalariado-medio-empresas": Serie(9509, MAIS_RECENTE, 5944),
+    "salarios-empresas":         Serie(9509, MAIS_RECENTE, 662),
+    "salario-medio-empresas":    Serie(
+        9509, MAIS_RECENTE, 10143,
+        media=Media("salarios-empresas", "assalariado-medio-empresas",
+                    1000 / 13)),
 }
 
+
+#: Os indicadores que são MÉDIA: o snapshot não os soma. Derivado do
+#: registro, para não haver uma segunda lista que envelheça.
+NAO_SOMAVEIS = frozenset(c for c, s in INDICADORES.items() if s.media)
 
 TODOS = "todos"
 
@@ -392,7 +519,7 @@ def exportar(args) -> int:
     from pathlib import Path as _P
 
     with Armazem(args.banco) as db:
-        dados = db.snapshot()
+        dados = db.snapshot(nao_somaveis=NAO_SOMAVEIS)
 
     destino = _P(args.saida)
     destino.parent.mkdir(parents=True, exist_ok=True)

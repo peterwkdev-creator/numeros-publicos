@@ -13,9 +13,11 @@
  *
  * ## A ausência é `null`, nunca zero
  *
- * 8 municípios não têm dado de água e 25 não têm de esgoto. "Não sabemos" e
- * "nenhum domicílio" são coisas opostas, e confundi-las é como um painel passa
- * a mentir sem ninguém notar.
+ * "Não sabemos" e "nenhum domicílio" são coisas opostas, e confundi-las é
+ * como um painel passa a mentir sem ninguém notar. **E vale nos dois
+ * sentidos:** até 29/09/2026, 8 municípios apareciam sem dado de água e 25 sem
+ * esgoto, e em todos o IBGE publicava `-`, que no sinal convencional dele é
+ * ZERO. O motor Python lia o traço como ausente; hoje lê como 0.
  */
 
 /** Um par do Censo: o que se conta, sobre o quê, e como a frase se lê. */
@@ -126,6 +128,37 @@ export const ROTULO_DOWNLOAD: Record<string, string> = {
   "alfabetizados-15-mais": "Pessoas de 15 anos ou mais alfabetizadas",
   "pessoas-18-mais": "Pessoas de 18 anos ou mais (total)",
   "superior-completo": "Pessoas de 18 anos ou mais com ensino superior completo",
+
+  // Trabalho e renda (29/09/2026). Aqui o rótulo carrega mais que a
+  // distinção: diz ONDE se conta. O Censo conta onde a pessoa mora e o
+  // Cadastro de Empresas onde a empresa está, e "pessoas ocupadas" existe nos
+  // dois com números diferentes -- lado a lado numa planilha, sem o recorte
+  // escrito, pareceriam o mesmo dado discordando.
+  "forca-de-trabalho-14-mais":
+    "Censo: pessoas de 14 anos ou mais na força de trabalho (total)",
+  "desocupados-14-mais":
+    "Censo: pessoas de 14 anos ou mais desocupadas (sem trabalho, procurando e disponíveis)",
+  "ocupados-14-mais": "Censo: pessoas de 14 anos ou mais ocupadas (total)",
+  "ocupados-contribuintes":
+    "Censo: pessoas ocupadas que contribuíam para instituto de previdência oficial",
+  "ocupados-com-rendimento":
+    "Censo: pessoas ocupadas com rendimento de trabalho (total)",
+  "massa-rendimento-trabalho":
+    "Censo: massa de rendimento mensal de todos os trabalhos",
+  "rendimento-medio-trabalho":
+    "Censo: rendimento médio mensal de todos os trabalhos (média do IBGE; não se soma)",
+  "empresas-atuantes":
+    "Cadastro de Empresas: empresas e outras organizações atuantes",
+  "pessoal-ocupado-empresas":
+    "Cadastro de Empresas: pessoal ocupado total, no município da empresa",
+  "assalariados-empresas":
+    "Cadastro de Empresas: pessoal assalariado, no município da empresa",
+  "assalariado-medio-empresas":
+    "Cadastro de Empresas: pessoal assalariado médio no ano (base do salário médio)",
+  "salarios-empresas":
+    "Cadastro de Empresas: salários e outras remunerações pagos no ano",
+  "salario-medio-empresas":
+    "Cadastro de Empresas: salário médio mensal (média do IBGE; não se soma)",
 };
 
 /**
@@ -156,8 +189,9 @@ export type MedidaCenso = ParCenso & {
  */
 export function medidasDe(
   valores: Record<string, number | null>,
+  pares: ParCenso[] = PARES_CENSO,
 ): MedidaCenso[] {
-  return PARES_CENSO.map((par) => {
+  return pares.map((par) => {
     const parte = valores[par.numerador] ?? null;
     const total = valores[par.denominador] ?? null;
     const percentual =
@@ -185,11 +219,12 @@ export function medidasDe(
 export function medianasDe(
   linhas: (number | string | null)[][],
   colunas: string[],
+  pares: ParCenso[] = PARES_CENSO,
 ): Record<string, number | null> {
   const idx = (codigo: string) => colunas.indexOf(codigo);
   const saida: Record<string, number | null> = {};
 
-  for (const par of PARES_CENSO) {
+  for (const par of pares) {
     const iN = idx(par.numerador);
     const iD = idx(par.denominador);
     if (iN < 0 || iD < 0) {
@@ -222,17 +257,40 @@ export function medianasDe(
  * silenciosamente receber a da outra — que é o erro que um cache de chave fixa
  * cometeria.
  */
-const cacheMedianas = new WeakMap<object, Record<string, number | null>>();
+const cacheMedianas = new WeakMap<object, Map<ParCenso[], Record<string, number | null>>>();
+
+/**
+ * **A chave tem duas partes desde 29/09/2026**, quando os pares de trabalho
+ * entraram ao lado dos seis do Censo: as linhas E a lista de pares. Com a
+ * chave antiga, só as linhas, a seção de trabalho receberia as medianas da
+ * água e do esgoto -- guardadas pela primeira página que pediu --, e as
+ * chaves `desocupacao` e `previdencia` sairiam `undefined`, bem formadas.
+ */
+function memorizado<T>(
+  cache: WeakMap<object, Map<ParCenso[], T>>,
+  linhas: object,
+  pares: ParCenso[],
+  calcular: () => T,
+): T {
+  let porPares = cache.get(linhas);
+  if (!porPares) {
+    porPares = new Map();
+    cache.set(linhas, porPares);
+  }
+  const guardado = porPares.get(pares);
+  if (guardado) return guardado;
+  const calculado = calcular();
+  porPares.set(pares, calculado);
+  return calculado;
+}
 
 export function medianasCache(
   linhas: (number | string | null)[][],
   colunas: string[],
+  pares: ParCenso[] = PARES_CENSO,
 ): Record<string, number | null> {
-  const guardado = cacheMedianas.get(linhas);
-  if (guardado) return guardado;
-  const calculado = medianasDe(linhas, colunas);
-  cacheMedianas.set(linhas, calculado);
-  return calculado;
+  return memorizado(cacheMedianas, linhas, pares,
+                    () => medianasDe(linhas, colunas, pares));
 }
 
 /**
@@ -252,9 +310,10 @@ export function medianasCache(
 export function taxasDoPais(
   linhas: (number | string | null)[][],
   colunas: string[],
+  pares: ParCenso[] = PARES_CENSO,
 ): Record<string, number | null> {
   const saida: Record<string, number | null> = {};
-  for (const par of PARES_CENSO) {
+  for (const par of pares) {
     const iN = colunas.indexOf(par.numerador);
     const iD = colunas.indexOf(par.denominador);
     if (iN < 0 || iD < 0) { saida[par.chave] = null; continue; }
@@ -272,18 +331,16 @@ export function taxasDoPais(
   return saida;
 }
 
-const cacheTaxas = new WeakMap<object, Record<string, number | null>>();
+const cacheTaxas = new WeakMap<object, Map<ParCenso[], Record<string, number | null>>>();
 
-/** `taxasDoPais` memorizado — mesma razão de `medianasCache`. */
+/** `taxasDoPais` memorizado — mesma razão e mesma chave de `medianasCache`. */
 export function taxasCache(
   linhas: (number | string | null)[][],
   colunas: string[],
+  pares: ParCenso[] = PARES_CENSO,
 ): Record<string, number | null> {
-  const guardado = cacheTaxas.get(linhas);
-  if (guardado) return guardado;
-  const calculado = taxasDoPais(linhas, colunas);
-  cacheTaxas.set(linhas, calculado);
-  return calculado;
+  return memorizado(cacheTaxas, linhas, pares,
+                    () => taxasDoPais(linhas, colunas, pares));
 }
 
 /**

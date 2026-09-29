@@ -43,7 +43,13 @@ jobs:
     # minutos só de espera deliberada. O teto antigo foi dimensionado para
     # três indicadores e cortaria a coleta no meio, que é o modo de falhar
     # que este arquivo inteiro existe para evitar.
-    timeout-minutes: 40
+    #
+    # 90 desde 29/09/2026, quando o registro foi de 13 para 26 indicadores. A
+    # coleta de 28/09, com 13, levou 19 min 23 s só no passo de ingestão; o
+    # dobro encosta nos 40, e o teto cortaria a coleta no meio sem que nada
+    # no código tivesse mudado de comportamento. **Ao crescer o registro,
+    # reler este número** -- é a mesma lição dos três indicadores de 14/09.
+    timeout-minutes: 90
 
     steps:
       - uses: actions/checkout@v4

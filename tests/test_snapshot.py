@@ -160,7 +160,7 @@ class TestTravaDoEncolhimento(unittest.TestCase):
             def __init__(self, *a, **k) -> None: ...
             def __enter__(self): return self
             def __exit__(self, *a) -> None: ...
-            def snapshot(self): return falso
+            def snapshot(self, nao_somaveis=frozenset()): return falso
 
         args = SimpleNamespace(banco=":memory:", saida=str(self.destino),
                                permitir_encolher=permitir, regiao="NE")

@@ -23,6 +23,10 @@ import {
 import { contarMetas, medianaGeral, trajetoriaDe } from "../../../lib/ideb";
 import { medianasCache, medidasDe, taxasCache } from "../../../lib/censo";
 import TabelaCenso from "../../componentes/tabela-censo";
+import TabelaValores from "../../componentes/tabela-valores";
+import {
+  EMPRESAS, medianaDaColunaCache, PARES_TRABALHO, RENDA_CENSO,
+} from "../../../lib/trabalho";
 import { cartaoSocial, lerFiscal, lerIdeb, lerSnapshot, SITE } from "../../../lib/servidor";
 import ComposicaoBarras from "../../componentes/composicao-barras";
 import DistribuicaoSvg from "../../componentes/distribuicao-svg";
@@ -175,6 +179,26 @@ export default async function PaginaMunicipio(
   const medianas = medianasCache(snapshot.municipios, snapshot.colunas);
   const serieFuncoes = serieFuncoesDe(fiscal, m.codigo);
   const taxasPais = taxasCache(snapshot.municipios, snapshot.colunas);
+
+  // Trabalho e renda: dois pares do Censo (na mesma tabela dos seis acima) e
+  // as médias do IBGE, que não são conta nossa. Ver `lib/trabalho.ts`.
+  const medidasTrabalho = medidasDe(m.valores, PARES_TRABALHO);
+  const medianasTrabalho = medianasCache(
+    snapshot.municipios, snapshot.colunas, PARES_TRABALHO);
+  const taxasTrabalho = taxasCache(
+    snapshot.municipios, snapshot.colunas, PARES_TRABALHO);
+  const renda = m.valores[RENDA_CENSO.codigo] ?? null;
+  const medianaRenda = medianaDaColunaCache(
+    snapshot.municipios, snapshot.colunas, RENDA_CENSO.codigo);
+  const salario = m.valores["salario-medio-empresas"] ?? null;
+  const medianaSalario = medianaDaColunaCache(
+    snapshot.municipios, snapshot.colunas, "salario-medio-empresas");
+  // O ano vem do snapshot: o cadastro ganha um ano novo por ano, e escrito
+  // aqui ele envelheceria calado, como a "estimativa mais recente" de 2024.
+  const anoEmpresas = periodoDe(snapshot, "empresas-atuantes");
+  const temCensoTrabalho =
+    medidasTrabalho.some((x) => x.percentual !== null) || renda !== null;
+  const temEmpresas = EMPRESAS.some((e) => (m.valores[e.codigo] ?? null) !== null);
 
   // `?? null` porque o acesso indexado num Record pode devolver `undefined`
   // quando a coluna não existe no snapshot -- e `undefined` e `null` precisam
@@ -1542,6 +1566,90 @@ export default async function PaginaMunicipio(
                 nem era a exibida -- e a tabela ao lado mostrava 32,6%. */}
             Fonte: IBGE, Censo Demográfico 2022, pelas APIs públicas de
             agregados.
+          </p>
+        </section>
+      )}
+
+      {(temCensoTrabalho || temEmpresas) && (
+        <section className={estilos.texto}>
+          <h2>Trabalho e renda em {m.nome}</h2>
+          {temCensoTrabalho && (
+            <>
+              <p>
+                Do <strong>Censo de 2022</strong>, que conta as pessoas onde
+                elas <strong>moram</strong>, trabalhem ali ou numa cidade
+                vizinha.
+              </p>
+              <TabelaCenso
+                medidas={medidasTrabalho}
+                comparacao={{
+                  rotulo: "Mediana dos municípios",
+                  valores: medianasTrabalho,
+                }}
+                legenda={`${m.nome} (${m.uf}) no Censo 2022, com a mediana dos ` +
+                         `${br(snapshot.municipios.length)} municípios do país`}
+              />
+              {renda !== null && (
+                <p>
+                  Quem trabalhava e tinha rendimento recebia, em média,{" "}
+                  <strong>{"R$ "}{br(renda)} por mês</strong>, somados todos os
+                  trabalhos
+                  {medianaRenda !== null && (
+                    <>
+                      {" "}(a mediana dos municípios é {"R$ "}{br(medianaRenda)})
+                    </>
+                  )}
+                  . É a média que o IBGE publica, e uma média se move com
+                  poucos rendimentos altos.
+                  {/* NÃO dizer "a maioria recebe menos que a média": medido
+                      em 29/09/2026, em 92 municípios a mediana é igual ou
+                      maior (é o salário mínimo, R$ 1.212, e a média fica logo
+                      abaixo). A frase seria falsa em 92 páginas. */}
+                </p>
+              )}
+            </>
+          )}
+          {temEmpresas && (
+            <>
+              <h3 className={estilos.subtitulo}>
+                Empresas e empregos em {anoEmpresas}
+              </h3>
+              <p>
+                Do <strong>Cadastro Central de Empresas</strong> do IBGE, que
+                conta os empregos onde a <strong>empresa</strong> está. Inclui
+                prefeitura, câmara e outros órgãos públicos, e não inclui quem
+                trabalha por conta própria sem CNPJ.
+              </p>
+              <TabelaValores
+                linhas={EMPRESAS}
+                valores={m.valores}
+                legenda={`${m.nome} (${m.uf}) no Cadastro Central de ` +
+                         `Empresas de ${anoEmpresas}`}
+              />
+              {salario !== null && medianaSalario !== null && (
+                <p>
+                  A mediana do salário médio entre os municípios do país é{" "}
+                  <strong>{"R$ "}{br(medianaSalario)}</strong>.
+                </p>
+              )}
+            </>
+          )}
+          <p className={estilos.ressalva}>
+            <strong>
+              Não existe taxa de desemprego atual por município
+            </strong>{" "}
+            em nenhuma fonte oficial. A do Censo é de 2022; a PNAD Contínua,
+            que o IBGE publica a cada trimestre, vai só até os estados e as
+            capitais, e mede de outro jeito — as duas não se comparam. No
+            Censo, a desocupação do país inteiro foi de{" "}
+            <strong>{br(taxasTrabalho["desocupacao"] ?? 0, 1)}%</strong>.{" "}
+            {/* Do dado, e não do teclado: é a regra que o teste de
+                percentual literal cobra desta página. */}
+            E os dois recortes acima não precisam bater: o Censo conta quem
+            mora aqui, e o cadastro, quem trabalha numa empresa daqui. Numa
+            cidade vizinha de um polo, muita gente trabalha fora. Fontes: IBGE,
+            Censo Demográfico 2022 e Cadastro Central de Empresas, pelas APIs
+            públicas de agregados.
           </p>
         </section>
       )}

@@ -269,6 +269,49 @@ class Serie(NamedTuple):
     variavel: int
     #: O recorte dentro do agregado, ou `None`. Ver `_sufixo_classificacao`.
     classificacao: str | None = None
+    #: Estimativa expandida da **amostra** do Censo: o IBGE arredonda cada
+    #: município separadamente, então a soma pode se afastar do total nacional
+    #: em até meio por município. Medido em 29/09/2026 nos desocupados (9517):
+    #: 44 em 5.328.323, acima da tolerância relativa e abaixo de 0,5 × 5.570.
+    #: Não afrouxa nada para quem não declara -- ver `conferir`.
+    amostra: bool = False
+    #: Quando o valor é uma MÉDIA publicada pela fonte, e não um absoluto.
+    #: Média não se soma, então `conferir` a cobra de outro jeito. Ver `Media`.
+    media: Media | None = None
+
+
+class Media(NamedTuple):
+    """Uma média publicada, e os dois absolutos que a explicam.
+
+    ## Por que publicar a média da fonte, e não a nossa conta
+
+    Medido em 29/09/2026: dividir a massa de rendimento pelo número de pessoas
+    dá a média do IBGE **com erro de até R$ 2,92**, e em 961 dos 5.570
+    municípios o real inteiro sai diferente. A contagem publicada é arredondada
+    (uma expansão de amostra), e a média do IBGE foi calculada antes disso. Um
+    leitor que conferisse no IBGE Cidades acharia outro número.
+
+    ## Como ela se confere, então
+
+    `conferir` não soma médias. Cobra, **município a município**, que
+    `total × fator ÷ contagem` caia a menos do erro que o arredondamento da
+    fonte permite -- meio na contagem, meio na unidade do total, meio centavo
+    na média --, e que a média exista onde a contagem existe. Os dois absolutos
+    são somados contra o total nacional como qualquer outro indicador, então a
+    média fica presa a duas coisas conferidas por fora dela.
+
+    O limite é derivado, não calibrado: nos 5.570 municípios a renda usou
+    99,8% dele e o salário 70%. Uma média trocada pela mediana, ou lida da
+    categoria errada, estoura por ordens de grandeza.
+    """
+
+    #: Código do indicador que é o total (a massa de rendimento, os salários).
+    total: str
+    #: Código do indicador que é a contagem (pessoas, assalariados).
+    contagem: str
+    #: O que leva o total à unidade da média. Salários vêm em MIL reais e a
+    #: média é mensal sobre 13 salários: 1000 / 13.
+    fator: float = 1.0
 
 
 def _sufixo_classificacao(classificacao: str | None) -> str:

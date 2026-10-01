@@ -1,10 +1,9 @@
 # Cabeçalhos do Cloudflare Pages, copiados para o out/ pelo workflow
-# .github/workflows/publicar-cloudflare.yml. Fica FORA de painel/ de propósito:
-# assim ele não vai para o site servido pela Vercel, e mudá-lo não dispara build
-# lá (scripts/ignorar-build.sh compara só painel/).
+# .github/workflows/publicar-cloudflare.yml. Fica FORA de painel/ porque é
+# configuração do Pages, não página: só o workflow o põe no out/.
 
-# O mesmo cache longo que o vercel.json declara: os nomes em /_next/static/ têm
-# o hash do conteúdo, então um arquivo nunca muda sob o mesmo nome.
+# Cache longo: os nomes em /_next/static/ têm o hash do conteúdo, então um
+# arquivo nunca muda sob o mesmo nome.
 /_next/static/*
   Cache-Control: public, max-age=31536000, immutable
 

@@ -239,14 +239,13 @@ honoured.
 
 ### Publishing
 
-Today the domain is served by Vercel, which builds `painel/` on every push to
-`main` (`painel/vercel.json`; `scripts/ignorar-build.sh` skips pushes that do
-not change the site). The site is moving to **Cloudflare Pages**:
-`.github/workflows/publicar-cloudflare.yml` builds on GitHub Actions and
-uploads the finished `out/` (Direct Upload), so Pages' 20-minute build limit
-never applies, and it also runs after the weekly data update. Until the DNS
-switch, that deployment lives on `*.pages.dev`, marked `noindex`
-(`cloudflare/_headers`). It needs two repository secrets:
+The site is served by **Cloudflare Pages** (since 27 September 2026; it was
+on Vercel before). `.github/workflows/publicar-cloudflare.yml` builds
+`painel/` on GitHub Actions on every push to `main` that changes the site,
+and after the weekly data update, then uploads the finished `out/` (Direct
+Upload), so Pages' 20-minute build limit never applies.
+`cloudflare/_headers` sets the long cache for `/_next/static/` and marks the
+`*.pages.dev` hosts `noindex`. It needs two repository secrets:
 `CLOUDFLARE_API_TOKEN` (an account token with *Cloudflare Pages: Edit*) and
 `CLOUDFLARE_ACCOUNT_ID`.
 

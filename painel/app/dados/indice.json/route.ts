@@ -67,8 +67,8 @@ export async function GET() {
       // do host. Um cabeçalho que não chega a lugar nenhum é pior que nenhum:
       // ele faz quem lê o código parar de procurar onde a decisão mora.
       //
-      // O cache destes arquivos se decide em `vercel.json`, que é a camada que
-      // realmente os serve. Hoje só `/_next/static/` tem regra própria — o
+      // O cache destes arquivos se decide em `cloudflare/_headers` (na raiz do
+      // repositório), que é a camada que realmente os serve. Hoje só `/_next/static/` tem regra própria — o
       // resto revalida a cada visita, que é o lado seguro para um arquivo de
       // URL estável cujo conteúdo muda a cada build.
     },

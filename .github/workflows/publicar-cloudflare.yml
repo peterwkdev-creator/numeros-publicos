@@ -5,9 +5,10 @@
 # máquina. O GitHub Actions compila (repositório público, 6 horas por job) e
 # envia o out/ pronto por Direct Upload, onde o teto não se aplica.
 #
-# Enquanto a Vercel servir o domínio, isto publica em *.pages.dev (marcado
-# noindex pelo cloudflare/_headers), para comparar os dois antes da troca de DNS.
-# Ver especs/numeros-publicos-cloudflare.md no repositório da raiz.
+# Desde 27/09/2026 isto publica a produção (www.numerospublicos.com.br); a
+# Vercel não serve mais o site. O noindex do cloudflare/_headers vale só
+# para os endereços *.pages.dev. Ver especs/numeros-publicos-cloudflare.md
+# no repositório da raiz.
 #
 # Segredos do repositório (criados pelo dono da conta, nunca versionados):
 #   CLOUDFLARE_API_TOKEN   token de conta com permissão Cloudflare Pages: Edit
@@ -18,7 +19,7 @@ on:
   push:
     branches: [main]
     # Só o que muda o site. Commit que só mexe no Python ou nos registros não
-    # publica — a mesma regra do scripts/ignorar-build.sh da Vercel.
+    # publica.
     paths:
       - "painel/**"
       - "cloudflare/**"

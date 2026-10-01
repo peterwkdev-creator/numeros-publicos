@@ -14,8 +14,9 @@
  * E o único componente de cliente daquelas páginas era a busca do cabeçalho,
  * que passou a ser HTML do servidor mais `public/busca.js` (sem React). Sem
  * nada para hidratar, o payload e o runtime não servem a ninguém — e custam
- * duas vezes: peso no celular do visitante, e Deployment Storage na Vercel,
- * onde cada deploy guarda o site inteiro de novo (`hospedagem-armazenamento.md`).
+ * duas vezes: peso no celular do visitante e, enquanto o site esteve na
+ * Vercel (até 27/09/2026), Deployment Storage, onde cada deploy guardava o
+ * site inteiro de novo (`hospedagem-armazenamento.md`).
  *
  * ## Quem PODE hidratar é uma lista, e um teste a amarra ao código
  *

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Atkinson_Hyperlegible_Next } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import BuscaCabecalho from "./componentes/busca-cabecalho";
 
@@ -11,20 +11,25 @@ import BuscaCabecalho from "./componentes/busca-cabecalho";
 // E resolve o único sinal genérico que a medição de 08/09 achou no desenho:
 // a pilha de fonte de sistema era a única coisa herdada em vez de decidida.
 //
-// `subsets: ["latin"]` basta para o português: o `unicode-range` do subconjunto
-// latin é U+0000-00FF, que cobre ã, õ, ç, â, ê e ô. Conferido contra o CSS que
-// o Google serve, não suposto -- `latin-ext` seria peso sem uso.
+// **O arquivo mora no repositório (`app/fontes/`), e não vem do Google no
+// build.** Com `next/font/google`, o build baixava a fonte a cada vez, e em
+// 30/09/2026 o download falhou no runner: o build caiu em 4 s, e o Caged de
+// agosto, já conferido e commitado, ficou 24 h fora do ar sem aviso. O
+// arquivo é o mesmo que o Google servia (sha256 1e4cea71...), o subconjunto
+// latin da fonte variável (eixo `wght` de 200 a 800), sob a OFL, cujo texto
+// está ao lado. Basta para o português: varridas as 5.614 páginas, o único
+// caractere fora dele é a seta →, que nenhum subconjunto da família tem.
 //
 // **Os dígitos são proporcionais por padrão nesta família** (ao contrário de
 // IBM Plex e Source Sans, que já nascem tabulares). Ela TEM `tnum`, e é a
 // classe `.tabular` do globals.css que o liga -- sem ela, número em tabela
 // dança de largura entre as linhas.
-const fonte = Atkinson_Hyperlegible_Next({
-  subsets: ["latin"],
-  weight: ["400", "600"],
+const fonte = localFont({
+  src: "./fontes/atkinson-hyperlegible-next-latin.woff2",
+  weight: "200 800",
   display: "swap",
-  // Auto-hospedada pelo next/font: nenhuma requisição ao Google em produção,
-  // e nada de `preconnect` para um terceiro.
+  // Servida com o site: nenhuma requisição ao Google, nem no build nem em
+  // produção, e nada de `preconnect` para um terceiro.
   variable: "--fonte-texto",
 });
 

@@ -810,6 +810,20 @@ def construir_parser() -> argparse.ArgumentParser:
                         help="diz se há mês novo publicado (arquivos E sumário)")
     cn.add_argument("--publicado", default="painel/dados/caged.json")
     cn.set_defaults(func=caged_novo)
+    # --- Emendas parlamentares pagas a prefeituras (02/10/2026). Banco
+    # próprio: outra fonte (CGU), e o arquivo inteiro é refeito a cada extração.
+    em = sub.add_parser("emendas-ingerir",
+                        help="grava os pagamentos de emendas a prefeituras e "
+                             "fundos municipais, conferindo o total ao centavo")
+    em.add_argument("--arquivo",
+                    help="zip já baixado do Portal da Transparência "
+                         "(sem ele, baixa de --url)")
+    em.add_argument("--url", default=None, help="origem do zip")
+    em.add_argument("--snapshot", default="painel/dados/snapshot.json",
+                    help="os municípios do site, para casar o nome com o IBGE")
+    em.add_argument("--banco-emendas",
+                    default=os.environ.get("EMENDAS_BANCO", "emendas.db"))
+    em.set_defaults(func=emendas_ingerir)
     return p
 
 
@@ -892,6 +906,37 @@ def caged_ingerir(args, listar=_listar_ftp, baixar=None) -> int:
     except caged.ErroCaged as e:
         print(f"[!] {e}", file=sys.stderr)
         return 1
+    return 0
+
+
+def emendas_ingerir(args, baixar=None) -> int:
+    """Baixa (ou lê) o zip da CGU, casa os favorecidos municipais com o IBGE,
+    confere o total contra o CSV ao centavo e só então grava."""
+    import json as _json
+    import tempfile
+    from . import emendas
+    baixar = baixar or _baixar
+    try:
+        snapshot = _json.loads(Path_(args.snapshot).read_text(encoding="utf-8"))
+        with tempfile.TemporaryDirectory() as tmp:
+            origem = args.url or emendas.URL
+            if args.arquivo:
+                zip_ = args.arquivo
+                origem = args.url or f"{emendas.URL} (arquivo local)"
+            else:
+                zip_ = os.path.join(tmp, "emendas.zip")
+                baixar(origem, zip_)
+            r = emendas.ingerir(zip_, snapshot, args.banco_emendas, origem=origem)
+    except emendas.ErroEmendas as e:
+        print(f"[!] {e}", file=sys.stderr)
+        return 1
+    print(f"arquivo da CGU de {r['data_arquivo']}, último mês {r['ultimo_mes']}")
+    print(f"{r['lidas']} linhas lidas, {r['gravadas']} pagamentos municipais "
+          f"gravados, {r['municipios']} municípios, "
+          f"R$ {r['centavos'] / 100:_.2f}".replace(".", ",").replace("_", ".")
+          + " (confere com o CSV ao centavo)")
+    print(f"tabela de apelidos: {r['apelidos']} nomes antigos, todos conferidos "
+          "contra o snapshot")
     return 0
 
 

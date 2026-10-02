@@ -72,6 +72,23 @@ jobs:
       - run: npm test
       - run: npm run build
 
+      # Os dois conferidores que leem o out/ inteiro e não pedem navegador.
+      # Antes só rodavam à mão (atualizar-painel.py), e os crons do IBGE e do
+      # Caged publicavam sem eles. Se um reprovar, o deploy não acontece.
+      - name: Links internos do out/
+        run: npm run conferir-links
+
+      # O conferir-xlsx abre a planilha no LibreOffice, que é quem prova que
+      # ela abre fora do nosso gerador. O runner não o traz instalado.
+      - name: LibreOffice para abrir a planilha
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q --no-install-recommends libreoffice-calc-nogui
+      - name: A planilha abre e bate com o CSV
+        env:
+          SOFFICE: soffice
+        run: npm run conferir-xlsx
+
       - name: Cabeçalhos do Pages
         run: cp ../cloudflare/_headers out/_headers
 

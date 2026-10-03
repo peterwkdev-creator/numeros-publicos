@@ -7,7 +7,7 @@
  * a descrição errada.
  *
  *     npm run build
- *     npx serve out -l 8791          (ou qualquer servidor estático)
+ *     npm run start                  (ou qualquer servidor estático em :8791)
  *     node scripts/auditar.mjs http://127.0.0.1:8791 / /ajuda/ /municipio/xxx/
  *
  * ## Por que os critérios têm exceções codificadas

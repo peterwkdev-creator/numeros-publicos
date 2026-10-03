@@ -520,6 +520,9 @@ for (const caminho of caminhos) {
   flag(r.descQuebrados.length, `aria-describedby órfão: ${r.descQuebrados}`);
   flag(r.saltos.length, `salto de título: ${r.saltos.join(" | ")}`);
   flag(r.h1 !== 1, `h1 = ${r.h1}`);
+  // WCAG 3.1.1. Antes de 02/10/2026 o lang só era impresso: uma página com
+  // lang="" saía "sem achados" (o canário que ligou a auditoria ao CI).
+  flag(r.lang !== "pt-BR", `lang "${r.lang}" (esperado "pt-BR")`);
   flag(r.navSemRotulo, `nav sem rótulo: ${r.navSemRotulo}`);
   flag(r.svgSemNome, `svg sem nome: ${r.svgSemNome}`);
   flag(r.imgSemAlt, `img sem alt: ${r.imgSemAlt}`);

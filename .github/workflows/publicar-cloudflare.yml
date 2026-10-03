@@ -89,6 +89,25 @@ jobs:
           SOFFICE: soffice
         run: npm run conferir-xlsx
 
+      # A auditoria (acessibilidade, 13 páginas em três modos) e a latência do
+      # filtro da capa num navegador de verdade. Até 02/10/2026 só rodavam à
+      # mão, e nada as chamava. O Chrome é o que o runner já traz; o
+      # puppeteer-core e o serve vêm fixados no package-lock. O sysctl é o que
+      # o Ubuntu 24.04 pede para o Chrome criar a sandbox sem ser root.
+      - name: Auditoria e latência no navegador
+        env:
+          CHROME: /usr/bin/google-chrome
+        run: |
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          npx serve out -l 8791 > /tmp/serve.log 2>&1 &
+          for i in $(seq 1 30); do
+            curl -sf -o /dev/null http://127.0.0.1:8791/ && break
+            sleep 1
+          done
+          curl -sf -o /dev/null http://127.0.0.1:8791/ || { cat /tmp/serve.log; exit 1; }
+          npm run auditar
+          npm run medir-inp
+
       - name: Cabeçalhos do Pages
         run: cp ../cloudflare/_headers out/_headers
 

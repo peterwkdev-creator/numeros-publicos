@@ -17,7 +17,7 @@
     "auditar": "node scripts/auditar.mjs http://127.0.0.1:8791 / /ajuda/ /ranking/gasto-com-pessoal/ /estado/ce/ /estado/rs/ /estado/df/ /municipio/presidente-medici-ro/ /municipio/imperatriz-ma/ /municipio/guaratinga-ba/ /municipio/apiai-sp/ /municipio/aparecida-sp/ /municipio/volta-redonda-rj/ /municipio/brasilia-df/"
   },
   "dependencies": {
-    "next": "16.3.4",
+    "next": "16.3.8",
     "react": "19.1.1",
     "react-dom": "19.1.1"
   },

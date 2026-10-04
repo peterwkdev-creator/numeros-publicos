@@ -694,7 +694,7 @@ def listar_coletas(args) -> int:
 def construir_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="observatorio",
-        description="Dados abertos dos municípios do Nordeste (IBGE).")
+        description="Dados abertos oficiais dos municípios brasileiros.")
     p.add_argument("--banco",
                    default=os.environ.get("OBS_BANCO", "observatorio.db"),
                    help="arquivo SQLite (padrão: observatorio.db)")

@@ -1,4 +1,4 @@
-"""Observatório NE — dados abertos dos municípios do Nordeste.
+"""Números Públicos — dados abertos oficiais dos municípios brasileiros.
 
 Copyright (C) 2026 Peter Wilhelm Kretzschmar
 

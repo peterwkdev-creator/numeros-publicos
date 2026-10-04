@@ -13,12 +13,12 @@
 [project]
 name = "numeros-publicos"
 version = "0.1.0"
-description = "Dados abertos dos 1.794 municípios do Nordeste, do IBGE, com procedência."
+description = "Coleta e conferência de dados abertos oficiais dos municípios brasileiros, com procedência."
 readme = "README.md"
 requires-python = ">=3.10"
 license = "AGPL-3.0-or-later"
 authors = [{ name = "Peter Wilhelm Kretzschmar" }]
-keywords = ["open-data", "ibge", "brazil", "northeast", "municipalities"]
+keywords = ["open-data", "ibge", "brazil", "municipalities"]
 
 # Vazio de propósito: só biblioteca padrão. Cada dependência nova é código de
 # terceiro que passa a ser responsabilidade nossa — ver `stack.md`.

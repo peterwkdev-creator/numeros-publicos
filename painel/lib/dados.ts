@@ -281,6 +281,21 @@ export function dataCurta(iso: string | null | undefined): string {
 }
 
 /**
+ * `"2026-09-30T00:57:43+00:00"` → `"29 de setembro de 2026"`: a data que abre
+ * a página, logo abaixo do título. Por extenso porque ali ela é frase, não
+ * célula; no mesmo fuso de `dataCurta`, pela mesma razão.
+ */
+export function dataPorExtenso(quando: string | Date | null | undefined): string {
+  if (!quando) return "—";
+  const iso = typeof quando === "string" ? quando : quando.toISOString();
+  const dia = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  const data = dia ? new Date(`${iso}T12:00:00-03:00`) : new Date(iso);
+  return data.toLocaleDateString("pt-BR", {
+    dateStyle: "long", timeZone: "America/Sao_Paulo",
+  });
+}
+
+/**
  * Um valor em reais na grandeza em que uma pessoa fala dele.
  *
  * Existe porque o painel estava publicando **"R$ 62.981.326 mil"** para o PIB

@@ -6,9 +6,10 @@ import ComposicaoBarras from "../../componentes/composicao-barras";
 import TiraEstados from "../../componentes/tira-estados";
 import Termo from "../../componentes/termo";
 import {
-  br, concorda, dataCurta, descricaoDe, escala, expandir, fracaoDe, milReaisParaReais,
-  periodoDe,
+  br, concorda, dataCurta, dataPorExtenso, descricaoDe, escala, expandir, fracaoDe,
+  milReaisParaReais, periodoDe,
 } from "../../../lib/dados";
+import { atualizadoEm } from "../../../lib/sitemap";
 import { resumirEstado, slugUf } from "../../../lib/estado";
 import { ROTULO_FAIXA } from "../../../lib/fiscal";
 import { medianaUltimaEdicao } from "../../../lib/ideb";
@@ -112,6 +113,8 @@ export default async function PaginaEstado(
   const { snapshot, fiscal, ideb, idebFinais, expandidos } = await carregar();
   const r = resumirEstado(snapshot, fiscal, expandidos, uf.toUpperCase());
   if (!r) notFound();
+  // Os mesmos argumentos do sitemap geral, que é o que lista os estados.
+  const atualizado = atualizadoEm(snapshot, fiscal);
   // Quem presta contas como estado sai da conta de ausentes: ele entregou, na
   // esfera onde de fato presta contas. Somá-lo aqui seria repetir, uma casa
   // adiante, o erro que a faixa `como-estado` existe para corrigir.
@@ -246,7 +249,12 @@ export default async function PaginaEstado(
           </strong>{" "}
           {de}, com
           população, PIB, gasto com pessoal e despesa por função — cada número
-          com a sua fonte e a data em que foi coletado.
+          com a sua fonte ao lado.
+        </p>
+        {/* Mesma data e mesma função do sitemap; ver a página do município. */}
+        <p className={estilos.atualizado}>
+          Dados atualizados em{" "}
+          <time dateTime={atualizado.toISOString()}>{dataPorExtenso(atualizado)}</time>.
         </p>
       </header>
 

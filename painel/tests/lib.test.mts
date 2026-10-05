@@ -15,7 +15,7 @@ import { inflateRawSync } from "node:zlib";
 
 import {
   concorda, descricaoDe, escala, fracaoDe, INDICADORES_DA_CAPA, periodoDe,
-  dataCurta, inteiroImpresso, projetar,
+  dataCurta, dataPorExtenso, inteiroImpresso, projetar,
   COLUNA_DA_CAPA, rotuloCurto, unidadeDaColuna, type Snapshot,
 } from "../lib/dados.ts";
 import {
@@ -2002,6 +2002,49 @@ test("busca.js: o anúncio e a dica dizem o total quando a lista corta", async (
   assert.equal(dicaDeCorte(54), `Mostrando ${MAXIMO} de 54. Continue digitando o nome.`);
 });
 
+test("busca.js: apóstrofo, hífen e espaço não separam o nome", async () => {
+  // Medido na auditoria de 05/10: "santana do livramento" não achava
+  // Sant'Ana do Livramento, e "embu guacu" não achava Embu-Guaçu.
+  const { chave, procurar } = await import("../public/busca.js");
+  const k = chave("Sant'Ana do Livramento");
+  assert.equal(chave("santana do livramento"), k);
+  assert.equal(chave("sant ana do livramento"), k);
+  assert.equal(chave("SANT’ANA DO LIVRAMENTO"), k);
+  const indice = [["Embu-Guaçu", "SP"], ["Sant'Ana do Livramento", "RS"], ["Olho d'Água", "AL"]];
+  const nomes = (alvo: string) => procurar(indice, chave(alvo)).achados.map((x: string[]) => x[0]);
+  assert.deepEqual(nomes("embu guacu"), ["Embu-Guaçu"]);
+  assert.deepEqual(nomes("santana"), ["Sant'Ana do Livramento"]);
+  assert.deepEqual(nomes("olho dagua"), ["Olho d'Água"]);
+});
+
+test("busca.js: sem resultado, sugere pela distância de edição", async () => {
+  const { sugerir, chave, SUGESTOES } = await import("../public/busca.js");
+  // Na ordem do índice, que é a da população.
+  const indice = [
+    ["Fortaleza", "CE"], ["Belém", "PA"], ["Belém", "PB"], ["Betim", "MG"],
+    ["Belo Horizonte", "MG"], ["Bezerros", "PE"], ["Fortaleza dos Valos", "RS"],
+  ];
+  const nomes = (alvo: string) => sugerir(indice, chave(alvo)).map((x: string[]) => `${x[0]}/${x[1]}`);
+  // Uma troca de letra, e o nome mais longo que começa igual também serve.
+  assert.deepEqual(nomes("fortalesa"), ["Fortaleza/CE", "Fortaleza dos Valos/RS"]);
+  // Empate de distância: o mais populoso (o primeiro no índice) na frente.
+  assert.deepEqual(nomes("belen"), ["Belém/PA", "Belém/PB"]);
+  // E no máximo SUGESTOES, mesmo com mais candidatos à mesma distância.
+  const varios = Array.from({ length: 5 }, (_, i) => [`Lagoa ${i}`, "MG"]);
+  assert.deepEqual(sugerir(varios, chave("lagia")).map((x: string[]) => x[0]),
+    ["Lagoa 0", "Lagoa 1", "Lagoa 2"].slice(0, SUGESTOES));
+  // Com menos de quatro letras, palpite seria ruído.
+  assert.deepEqual(nomes("bel"), []);
+  // Longe demais de tudo: nada, em vez de um palpite qualquer.
+  assert.deepEqual(nomes("xyzwq"), []);
+});
+
+test("busca.js: o anúncio da sugestão diz que nada casou", async () => {
+  const { anuncioSugestao } = await import("../public/busca.js");
+  assert.equal(anuncioSugestao("fortalesa", [["Fortaleza", "CE"]]),
+    "Nenhum município encontrado para fortalesa. Você quis dizer: Fortaleza (CE)?");
+});
+
 test("só hidrata quem tem componente de cliente — e a lista é a do código", async () => {
   // Tirar o React de uma página que precisa dele a quebra EM SILÊNCIO. Os
   // arquivos "use client" têm de ser exatamente os que `HIDRATAM` cobre: hoje,
@@ -2309,4 +2352,12 @@ test("dataCurta: dia no fuso de Brasília, não o dia do UTC", () => {
   assert.equal(dataCurta("2026-07-31"), "31/07/2026");
   assert.equal(dataCurta(null), "—");
   assert.equal(dataCurta(undefined), "—");
+});
+
+test("dataPorExtenso: a data do topo da página, no mesmo fuso", () => {
+  assert.equal(dataPorExtenso("2026-09-30T00:57:43+00:00"), "29 de setembro de 2026");
+  assert.equal(dataPorExtenso(new Date("2026-09-30T00:57:43Z")), "29 de setembro de 2026");
+  // Sem hora: o dia que está escrito, e não o anterior pelo fuso.
+  assert.equal(dataPorExtenso("2026-07-01"), "1 de julho de 2026");
+  assert.equal(dataPorExtenso(null), "—");
 });

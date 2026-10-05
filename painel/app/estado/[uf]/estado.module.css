@@ -42,6 +42,17 @@
   margin: 0 0 var(--e-8);
 }
 
+/* A chamada perde a margem de baixo quando a data vem logo depois. */
+.chamada:has(+ .atualizado) {
+  margin-bottom: var(--e-2);
+}
+
+.atualizado {
+  font-size: var(--texto-sm);
+  color: var(--tinta-fraca);
+  margin: 0 0 var(--e-8);
+}
+
 .grade {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));

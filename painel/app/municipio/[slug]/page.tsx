@@ -3,8 +3,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import {
-  br, dataCurta, descricaoDe, escala, expandir, milReaisParaReais, periodoDe,
+  br, dataCurta, dataPorExtenso, descricaoDe, escala, expandir, milReaisParaReais,
+  periodoDe,
 } from "../../../lib/dados";
+import { atualizadoEm } from "../../../lib/sitemap";
 import { aberturaFiscalDe, tituloFiscalDe } from "../../../lib/titulo";
 import { deEstado, slugUf, vizinhosDe } from "../../../lib/estado";
 import { medianasSaudeCache, rankingCache } from "../../../lib/nacional";
@@ -145,6 +147,8 @@ export default async function PaginaMunicipio(
   const { snapshot, fiscal, ideb, idebFinais, caged, municipios } = await carregar();
   const m = municipios.find((x) => x.slug === slug);
   if (!m) notFound();
+  // Os mesmos argumentos de `app/municipio/sitemap.ts`.
+  const atualizado = atualizadoEm(snapshot, fiscal, caged.coletadoEm);
 
   const uf = snapshot.ufs.find((u) => u.sigla === m.uf);
   // **Vizinhos na ordem alfabética do estado, não os 12 maiores.** A versão
@@ -457,8 +461,15 @@ export default async function PaginaMunicipio(
         </h1>
         <p className={estilos.chamada}>
           Código IBGE {m.codigo}. Todos os números abaixo vêm das APIs públicas
-          do IBGE e do Tesouro Nacional, com a fonte e a data de coleta ao lado
-          de cada um.
+          do IBGE e do Tesouro Nacional, com a fonte ao lado de cada um.
+        </p>
+        {/* A data que o sitemap anuncia para esta página, com a mesma função:
+            quem volta vê de cara se há coisa nova, e a página e o buscador
+            não discordam sobre quando ela mudou. A data de cada fonte segue
+            na sua seção e no rodapé. */}
+        <p className={estilos.atualizado}>
+          Dados atualizados em{" "}
+          <time dateTime={atualizado.toISOString()}>{dataPorExtenso(atualizado)}</time>.
         </p>
       </header>
 

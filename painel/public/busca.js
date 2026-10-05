@@ -17,8 +17,9 @@
  * Combobox *Editable With List Autocomplete* da WAI-ARIA APG, como antes: o foco
  * do DOM nunca sai do campo (`aria-activedescendant` indica a opção), Alt+Seta
  * abre sem mover a seleção, Escape fecha e o segundo Escape limpa, Enter sem
- * opção destacada leva ao primeiro resultado, `pointerdown` e não `click` na
- * opção. O índice chega sob demanda, no primeiro foco.
+ * opção destacada leva ao primeiro resultado (mas não a uma sugestão),
+ * `pointerdown` e não `click` na opção. O índice chega sob demanda, no
+ * primeiro foco.
  *
  * ## `slugDe` e `procurar` são exportados de propósito
  *
@@ -30,8 +31,16 @@
 
 export const MAXIMO = 8;
 
-const normalizar = (s) =>
-  s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().trim();
+/**
+ * A chave que se compara: sem acento, sem caixa e só com letra e número.
+ *
+ * "Sant'Ana", "Santana" e "sant ana" viram a mesma chave, e "embu guacu" acha
+ * Embu-Guaçu. Medido na auditoria de usabilidade de 05/10/2026:
+ * "santana do livramento" não achava Sant'Ana do Livramento, porque o
+ * apóstrofo ficava na chave do nome e não na do que se digitou.
+ */
+export const chave = (s) =>
+  s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().replace(/[^a-z0-9]/g, "");
 
 /** Cópia de `slugDe` em `lib/fiscal.ts`. O teste cobra a igualdade. */
 export function slugDe(nome, uf) {
@@ -45,8 +54,17 @@ export function slugDe(nome, uf) {
   return `${base}-${uf.toLowerCase()}`;
 }
 
-/** Os nomes já normalizados, uma vez por índice e não a cada tecla. */
+/** As chaves dos nomes, uma vez por índice e não a cada tecla. */
 const normalizados = new WeakMap();
+
+function chaves(indice) {
+  let nomes = normalizados.get(indice);
+  if (!nomes) {
+    nomes = indice.map((x) => chave(x[0]));
+    normalizados.set(indice, nomes);
+  }
+  return nomes;
+}
 
 /**
  * Prefixo antes de "contém", numa passada só — sem `sort` a cada tecla.
@@ -56,11 +74,7 @@ const normalizados = new WeakMap();
  * isso a passada vai até o fim, sobre nomes normalizados uma vez só.
  */
 export function procurar(indice, alvo) {
-  let nomes = normalizados.get(indice);
-  if (!nomes) {
-    nomes = indice.map((x) => normalizar(x[0]));
-    normalizados.set(indice, nomes);
-  }
+  const nomes = chaves(indice);
   const prefixo = [];
   const meio = [];
   let total = 0;
@@ -77,6 +91,54 @@ export function procurar(indice, alvo) {
   return { achados: [...prefixo, ...meio].slice(0, MAXIMO), total };
 }
 
+/**
+ * A menor distância de edição entre `a` e algum COMEÇO de `b`: quem digita
+ * "fortales" ainda não terminou, e o nome inteiro estaria a duas letras.
+ * Para assim que a linha inteira passa do teto, que é o caso de quase todo
+ * nome, então a passada sobre os 5.571 custa pouco mais que a do `procurar`.
+ */
+function distanciaAoComeco(a, b, teto) {
+  if (b.length < a.length - teto) return teto + 1;
+  let anterior = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const atual = [i];
+    let menor = i;
+    for (let j = 1; j <= b.length; j++) {
+      const v = Math.min(
+        anterior[j] + 1,
+        atual[j - 1] + 1,
+        anterior[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1),
+      );
+      atual.push(v);
+      if (v < menor) menor = v;
+    }
+    if (menor > teto) return teto + 1;
+    anterior = atual;
+  }
+  return Math.min(...anterior);
+}
+
+export const SUGESTOES = 3;
+
+/**
+ * Quando nada casa, os nomes a uma ou duas letras do que se digitou:
+ * "fortalesa" acha Fortaleza. Abaixo de 4 letras não sugere (com 3, tudo
+ * fica perto de tudo); até 5 aceita uma letra errada, a partir de 6, duas.
+ * Na mesma distância vale a ordem do índice, que é a população.
+ */
+export function sugerir(indice, alvo) {
+  if (alvo.length < 4) return [];
+  const teto = alvo.length < 6 ? 1 : 2;
+  const nomes = chaves(indice);
+  const perto = [];
+  nomes.forEach((n, i) => {
+    const d = distanciaAoComeco(alvo, n, teto);
+    if (d <= teto) perto.push([d, i]);
+  });
+  perto.sort((x, y) => x[0] - y[0] || x[1] - y[1]);
+  return perto.slice(0, SUGESTOES).map(([, i]) => indice[i]);
+}
+
 const inteiro = new Intl.NumberFormat("pt-BR");
 
 /** O que o leitor de tela ouve. Com corte, diz o total e o que fazer. */
@@ -87,6 +149,12 @@ export function anuncio(total, termo) {
   return total > MAXIMO
     ? `${frase}; a lista mostra os ${MAXIMO} primeiros. Continue digitando para filtrar.`
     : `${frase}.`;
+}
+
+/** O anúncio quando nada casa e há nomes parecidos. */
+export function anuncioSugestao(termo, sugestoes) {
+  const nomes = sugestoes.map((x) => `${x[0]} (${x[1]})`).join(", ");
+  return `Nenhum município encontrado para ${termo}. Você quis dizer: ${nomes}?`;
 }
 
 /** A última linha da lista quando há mais do que cabe nela. */
@@ -128,6 +196,8 @@ function iniciar() {
   let carregando = false;
   let achados = [];
   let total = 0;
+  // `achados` são sugestões aproximadas, e não resultados: nada casou.
+  let sugestao = false;
   let ativo = -1;
   let aberto = false;
 
@@ -140,7 +210,7 @@ function iniciar() {
 
   /** A lista está à vista — a mesma condição que a desenha. */
   function visivel(p) {
-    return aberto && !!normalizar(p.campo.value) && !!indice;
+    return aberto && !!chave(p.campo.value) && !!indice;
   }
 
   function desenhar() {
@@ -164,6 +234,18 @@ function iniciar() {
       li.textContent = "Nenhum município com esse nome";
       lista.append(li);
       return;
+    }
+    // Sem `data-i` e sem `id`, como a dica de corte abaixo: só avisa que o que
+    // vem depois é palpite, para ninguém ler "Fortaleza" como resultado de
+    // "fortalesa" sem perceber a troca.
+    if (sugestao) {
+      const li = document.createElement("li");
+      li.className = c.classeVazio ?? "";
+      li.setAttribute("role", "option");
+      li.setAttribute("aria-selected", "false");
+      li.setAttribute("aria-disabled", "true");
+      li.textContent = "Nenhum município com esse nome. Você quis dizer:";
+      lista.append(li);
     }
     achados.forEach((x, i) => {
       const li = document.createElement("li");
@@ -198,13 +280,18 @@ function iniciar() {
   function atualizar() {
     const p = partes();
     if (!p) return;
-    const alvo = normalizar(p.campo.value);
+    const alvo = chave(p.campo.value);
     ({ achados, total } = !alvo || !indice
       ? { achados: [], total: 0 } : procurar(indice, alvo));
+    sugestao = false;
+    if (indice && alvo && !total) {
+      achados = sugerir(indice, alvo);
+      sugestao = achados.length > 0;
+    }
     ativo = -1;
     desenhar();
     if (indice && alvo) {
-      anunciar(anuncio(total, p.campo.value));
+      anunciar(sugestao ? anuncioSugestao(p.campo.value, achados) : anuncio(total, p.campo.value));
     } else if (!carregando) {
       anunciar("");
     }
@@ -308,7 +395,9 @@ function iniciar() {
         // continua cheio; sem esta guarda o Enter seguinte navegava para o
         // primeiro resultado sem nada na tela, e o Escape é o "desisto".
         if (!visivel(p)) break;
-        const x = achados[ativo >= 0 ? ativo : 0];
+        // Sugestão só se aceita escolhendo: o Enter direto levaria a um
+        // município que a pessoa não digitou.
+        const x = ativo >= 0 ? achados[ativo] : sugestao ? undefined : achados[0];
         if (x) {
           ev.preventDefault();
           ir(x);

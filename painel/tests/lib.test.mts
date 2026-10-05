@@ -15,7 +15,7 @@ import { inflateRawSync } from "node:zlib";
 
 import {
   concorda, descricaoDe, escala, fracaoDe, INDICADORES_DA_CAPA, periodoDe,
-  inteiroImpresso, projetar,
+  dataCurta, inteiroImpresso, projetar,
   COLUNA_DA_CAPA, rotuloCurto, unidadeDaColuna, type Snapshot,
 } from "../lib/dados.ts";
 import {
@@ -32,7 +32,7 @@ import {
   type PontoSerie, type Receita,
 } from "../lib/fiscal.ts";
 import { posicaoEntre, posicaoNoEstado } from "../lib/posicao.ts";
-import { emContracao } from "../lib/estado.ts";
+import { deEstado, emContracao } from "../lib/estado.ts";
 import { trilha } from "../lib/jsonld.ts";
 import {
   atualizadoEm, caminhosDosFilhos, escaparXml, indiceDeSitemaps,
@@ -784,19 +784,38 @@ test("emContracao cobre as três preposições, e as 27 UFs", () => {
   assert.equal(emContracao("Sergipe"), "Sergipe");
 });
 
-test("toda contração da página de estado é derivável", () => {
-  // Sentinela: se alguém acrescentar uma UF com contração fora de de/do/da, a
-  // frase "Como se vive ..." sai sem preposição e ninguém percebe -- ela
-  // continua sendo uma frase.
-  const pagina = fs.readFileSync(
-    new URL("../app/estado/[uf]/page.tsx", import.meta.url), "utf-8");
-  const bloco = pagina.slice(pagina.indexOf("const CONTRACAO"),
-                             pagina.indexOf("function crase"));
-  const valores = [...bloco.matchAll(/"((?:de|do|da) [^"]+)"/g)].map((m) => m[1]);
-  assert.equal(valores.length, 27, `esperava 27 contrações, achei ${valores.length}`);
-  for (const v of valores) {
-    assert.notEqual(emContracao(v), v, `contração não derivável: "${v}"`);
+test("deEstado: as 27 UFs do snapshot, com a preposição do nome", () => {
+  // A tabela é escrita à mão; o snapshot é quem diz quais UFs existem. Uma UF
+  // sem linha sairia "de CE", e uma contração fora de de/do/da quebraria a
+  // derivação do emContracao ("Como se vive ...") sem que ninguém percebesse.
+  const snapshot = JSON.parse(
+    fs.readFileSync(new URL("../dados/snapshot.json", import.meta.url), "utf-8"),
+  );
+  assert.equal(snapshot.ufs.length, 27);
+  for (const uf of snapshot.ufs as { sigla: string; nome: string }[]) {
+    const de = deEstado(uf.sigla);
+    assert.match(de, /^(de|do|da) /, `${uf.sigla}: "${de}"`);
+    assert.ok(de.endsWith(` ${uf.nome}`), `${uf.sigla}: "${de}" não termina em ${uf.nome}`);
+    assert.notEqual(emContracao(de), de, `contração não derivável: "${de}"`);
   }
+  assert.equal(deEstado("CE"), "do Ceará");
+  assert.equal(deEstado("ba"), "da Bahia");
+  assert.equal(deEstado("SE"), "de Sergipe");
+});
+
+test("nenhuma página escreve 'de' colado ao nome do estado", () => {
+  // "Outros municípios de Ceará" ficou no ar porque a frase montava a
+  // preposição à mão, ao lado de duas tabelas que a resolviam. A preposição
+  // antes do nome de UF sai de `deEstado`, e esta varredura cobra isso.
+  const raiz = new URL("../app/", import.meta.url);
+  const achados: string[] = [];
+  const colado = /\b(?:de|em)(?:\{" "\})?\s*(?:\{|\$\{)\s*(?:r\.)?(?:uf|estado)\??\.nome/g;
+  for (const nome of fs.readdirSync(raiz, { recursive: true }) as string[]) {
+    if (!nome.endsWith(".tsx") && !nome.endsWith(".ts")) continue;
+    const texto = fs.readFileSync(new URL(nome.replaceAll("\\", "/"), raiz), "utf-8");
+    for (const m of texto.matchAll(colado)) achados.push(`${nome}: ${m[0]}`);
+  }
+  assert.deepEqual(achados, []);
 });
 
 test("os totais do país pareiam as pontas, como taxasDoPais", () => {
@@ -1954,12 +1973,33 @@ test("busca.js: o slug é o MESMO do build nos 5.571 municípios", async () => {
 test("busca.js: prefixo antes de 'contém', até oito", async () => {
   const { procurar, MAXIMO } = await import("../public/busca.js");
   const indice = [["Conceição do Coité", "BA"], ["São Paulo", "SP"], ["São Luís", "MA"]];
-  assert.deepEqual(procurar(indice, "sao").map((x: string[]) => x[0]),
-    ["São Paulo", "São Luís"]);
-  assert.deepEqual(procurar(indice, "coite").map((x: string[]) => x[0]),
-    ["Conceição do Coité"]);
-  const muitos = Array.from({ length: 20 }, (_, i) => [`Santa ${i}`, "SC"]);
-  assert.equal(procurar(muitos, "santa").length, MAXIMO);
+  const nomes = (alvo: string) =>
+    procurar(indice, alvo).achados.map((x: string[]) => x[0]);
+  assert.deepEqual(nomes("sao"), ["São Paulo", "São Luís"]);
+  assert.deepEqual(nomes("coite"), ["Conceição do Coité"]);
+  // O total conta os que ficaram fora do corte: prefixo E "contém".
+  const muitos = [
+    ...Array.from({ length: 20 }, (_, i) => [`Santa ${i}`, "SC"]),
+    ["Vila Santa", "PR"],
+  ];
+  const r = procurar(muitos, "santa");
+  assert.equal(r.achados.length, MAXIMO);
+  assert.equal(r.total, 21);
+  assert.equal(procurar(muitos, "xyz").total, 0);
+});
+
+test("busca.js: o anúncio e a dica dizem o total quando a lista corta", async () => {
+  // "8 municípios encontrados" quando há 54 fazia supor que o nome procurado
+  // não existe. A contagem carrega o total (`ux-padroes.md`).
+  const { anuncio, dicaDeCorte, MAXIMO } = await import("../public/busca.js");
+  assert.equal(anuncio(0, "xyz"), "Nenhum município encontrado para xyz.");
+  assert.equal(anuncio(1, "Coité"), "1 município encontrado para Coité.");
+  assert.equal(anuncio(3, "sao"), "3 municípios encontrados para sao.");
+  assert.equal(anuncio(1234, "a"),
+    `1.234 municípios encontrados para a; a lista mostra os ${MAXIMO} primeiros. `
+    + "Continue digitando para filtrar.");
+  assert.equal(dicaDeCorte(MAXIMO), null);
+  assert.equal(dicaDeCorte(54), `Mostrando ${MAXIMO} de 54. Continue digitando o nome.`);
 });
 
 test("só hidrata quem tem componente de cliente — e a lista é a do código", async () => {
@@ -2258,4 +2298,15 @@ test("mês e plural saem do dado", () => {
   assert.equal(contagem(1, "admissão", "admissões"), "1 admissão");
   assert.equal(contagem(0, "admissão", "admissões"), "0 admissões");
   assert.equal(contagem(1500, "admissão", "admissões"), "1.500 admissões");
+});
+
+test("dataCurta: dia no fuso de Brasília, não o dia do UTC", () => {
+  // O Caged foi coletado na noite de 29/09 em Brasília, já 30/09 no UTC; o
+  // `slice(0, 10)` de antes publicava o dia seguinte.
+  assert.equal(dataCurta("2026-09-30T00:57:43+00:00"), "29/09/2026");
+  assert.equal(dataCurta("2026-09-30T15:00:00+00:00"), "30/09/2026");
+  // Data sem hora não tem fuso: só reordena, sem passar por `Date`.
+  assert.equal(dataCurta("2026-07-31"), "31/07/2026");
+  assert.equal(dataCurta(null), "—");
+  assert.equal(dataCurta(undefined), "—");
 });

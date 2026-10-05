@@ -33,7 +33,9 @@
      norma. */
   min-height: 2.25rem;
   font: inherit;
-  font-size: 0.875rem;
+  /* 16px, não 14: abaixo disso o Safari do iPhone amplia a página ao focar
+     o campo, e ela não volta sozinha. */
+  font-size: 1rem;
   color: var(--tinta);
   background: var(--fundo);
   border: 1px solid var(--borda-forte);

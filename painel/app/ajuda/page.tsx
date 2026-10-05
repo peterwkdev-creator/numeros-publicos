@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { br, expandir, inteiroImpresso, periodoDe } from "../../lib/dados";
+import { br, dataCurta, expandir, inteiroImpresso, periodoDe } from "../../lib/dados";
 import {
   faixaDaLinha, FUNCOES_DA_PORTARIA, LIMITE_PLAUSIVEL,
 } from "../../lib/fiscal";
@@ -498,7 +498,7 @@ export default async function PaginaAjuda() {
           <li>
             <strong>Despesa com pessoal:</strong> SICONFI/Tesouro Nacional, RGF
             Anexo 01, {quadrimestre}
-            {fiscal.coletadoEm ? `, coletado em ${fiscal.coletadoEm.slice(0, 10)}` : ""}.
+            {fiscal.coletadoEm ? `, coletado em ${dataCurta(fiscal.coletadoEm)}` : ""}.
           </li>
           {f && (
             <li>
@@ -511,7 +511,7 @@ export default async function PaginaAjuda() {
                   `${f.exercicios[0]!.exercicio}`
                 : f.exercicios[0]?.exercicio}
               {atualDeFuncoes(f)?.coletadoEm
-                ? `, coletado em ${atualDeFuncoes(f)!.coletadoEm!.slice(0, 10)}`
+                ? `, coletado em ${dataCurta(atualDeFuncoes(f)!.coletadoEm)}`
                 : ""}.
             </li>
           )}

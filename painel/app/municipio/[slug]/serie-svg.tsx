@@ -137,6 +137,7 @@ export default function SerieSvg({
 
   return (
     <svg
+      className="grafico-svg"
       viewBox={`0 0 ${L} ${A}`}
       role="img"
       aria-label={rotulo}
@@ -146,18 +147,23 @@ export default function SerieSvg({
       // automática -- o traço perde nada e o texto continua legível.
       style={{ width: "100%", height: "auto", display: "block" }}
     >
-      {/* As duas réguas. Tracejadas para não competir com o dado. */}
+      {/* As duas réguas. Tracejadas para não competir com o dado.
+          Os rótulos vão para pontas OPOSTAS: as réguas distam 2,7 pontos,
+          que na escala costumam ser ~7 unidades, e os dois rótulos alinhados
+          à direita se sobrepunham inteiros (no telefone, com a fonte de 11,
+          em toda página medida). */}
       {[
-        { v: legal, cor: "var(--alerta)", texto: "teto legal" },
-        { v: prudencial, cor: "var(--atencao)", texto: "prudencial" },
-      ].map(({ v, cor, texto }) => (
+        { v: legal, cor: "var(--alerta)", texto: "teto legal", direita: true },
+        { v: prudencial, cor: "var(--atencao)", texto: "prudencial", direita: false },
+      ].map(({ v, cor, texto, direita }) => (
         <g key={texto}>
           <line
             x1={M.esq} x2={L - M.dir} y1={y(v)} y2={y(v)}
             stroke={cor} strokeWidth="1" strokeDasharray="3 3" opacity="0.75"
           />
           <text
-            x={L - M.dir} y={y(v) - 3} textAnchor="end"
+            x={direita ? L - M.dir : M.esq} y={y(v) - 3}
+            textAnchor={direita ? "end" : "start"}
             fontSize="8" fill={cor} opacity="0.9"
           >
             {texto} {br(v, 1)}%

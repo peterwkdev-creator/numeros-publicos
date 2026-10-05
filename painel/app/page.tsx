@@ -121,7 +121,7 @@ export default async function Pagina() {
         name: "Dados abertos dos municípios brasileiros",
         description:
           `População, PIB, despesa com pessoal, despesa por função e IDEB dos ` +
-          `${capa.linhas.length} municípios dos 27 estados do Brasil, a ` +
+          `${br(capa.linhas.length)} municípios dos 27 estados do Brasil, a ` +
           `partir das APIs públicas do IBGE, do SICONFI/Tesouro Nacional e do ` +
           `INEP, com a fonte e a data de coleta ao lado de cada número.`,
         url: `${SITE}/`,
@@ -149,7 +149,7 @@ export default async function Pagina() {
             "@type": "DataDownload",
             encodingFormat: "text/csv",
             contentUrl: `${SITE}/dados/municipios.csv`,
-            name: `Base completa: ${capa.linhas.length} municípios em CSV`,
+            name: `Base completa: ${br(capa.linhas.length)} municípios em CSV`,
           },
         ],
         isBasedOn: FONTES,

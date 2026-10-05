@@ -23,7 +23,9 @@
 .campo input,
 .campo select {
   font: inherit;
-  font-size: var(--texto-sm);
+  /* 16px, não 14: abaixo disso o Safari do iPhone amplia a página ao focar
+     o campo, e ela não volta sozinha. */
+  font-size: var(--texto-base);
   padding: var(--e-2) var(--e-3);
   border: 1px solid var(--borda-forte);
   border-radius: var(--raio);

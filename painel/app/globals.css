@@ -175,6 +175,23 @@ a {
   font-feature-settings: "tnum";
 }
 
+/* Rótulo de gráfico em tela estreita. O texto de um SVG mede em unidades do
+   viewBox (320 de largura), e o desenho encolhe junto com a tela: 7 unidades
+   são 12px no computador, onde o gráfico tem 34rem, e 7,5px num telefone de
+   375px. Aqui a fonte cresce só onde o gráfico encolhe. `font-size` do CSS
+   vence o atributo `fontSize`, e no SVG o `px` vale unidade do viewBox: 11
+   unidades dão 12px a 375px de tela; 9,5 dão de 10 a 13px entre 384 e 480. */
+@media (max-width: 30rem) {
+  .grafico-svg text {
+    font-size: 9.5px;
+  }
+}
+@media (max-width: 24rem) {
+  .grafico-svg text {
+    font-size: 11px;
+  }
+}
+
 /* Texto só para leitor de tela. `display:none` NÃO serve: leitor de tela
    também não lê o que está escondido assim. A receita é tirar da tela sem
    tirar da árvore de acessibilidade — 1px recortado, sem quebra de linha. */

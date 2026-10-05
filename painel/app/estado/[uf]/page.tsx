@@ -6,14 +6,14 @@ import ComposicaoBarras from "../../componentes/composicao-barras";
 import TiraEstados from "../../componentes/tira-estados";
 import Termo from "../../componentes/termo";
 import {
-  br, concorda, descricaoDe, escala, expandir, fracaoDe, milReaisParaReais,
+  br, concorda, dataCurta, descricaoDe, escala, expandir, fracaoDe, milReaisParaReais,
   periodoDe,
 } from "../../../lib/dados";
 import { resumirEstado, slugUf } from "../../../lib/estado";
 import { ROTULO_FAIXA } from "../../../lib/fiscal";
 import { medianaUltimaEdicao } from "../../../lib/ideb";
 import { panoramaEstados, posicaoNaLista } from "../../../lib/nacional";
-import { emContracao } from "../../../lib/estado";
+import { deEstado, emContracao } from "../../../lib/estado";
 import { camadasPadrao } from "../../../lib/mapa";
 import { medidasDe, taxasCache } from "../../../lib/censo";
 import MapaUf from "../../componentes/mapa-uf";
@@ -81,7 +81,7 @@ export async function generateMetadata(
     description: descricaoDe(
       (r.uf.municipios === 1
         ? `${r.uf.nome}: `
-        : `Os ${r.uf.municipios} municípios ${crase(r.uf.nome)}: `) +
+        : `Os ${r.uf.municipios} municípios ${deEstado(r.uf.sigla)}: `) +
         (r.mediaPessoal !== null
           ? `${r.publicaram} entregaram relatório fiscal, ` +
             `média de ${br(r.mediaPessoal, 2)}% da receita em pessoal e ` +
@@ -99,52 +99,10 @@ export async function generateMetadata(
       `${r.uf.nome} — dados abertos`,
       r.uf.municipios === 1
         ? `${r.uf.nome}, com procedência.`
-        : `Os ${r.uf.municipios} municípios ${crase(r.uf.nome)}, com procedência.`,
+        : `Os ${r.uf.municipios} municípios ${deEstado(r.uf.sigla)}, com procedência.`,
       `/estado/${slugUf(r.uf.sigla)}/`,
     ),
   };
-}
-
-/**
- * "do Maranhão", "da Bahia", "de Alagoas" — a preposição que o nome pede.
- *
- * Escrito à mão porque **não há regra**: é o gênero e o artigo que cada nome
- * carrega, e "de Sergipe" ao lado de "do Ceará" na mesma frase denuncia texto
- * gerado. Vinte e sete nomes cabem numa tabela; uma heurística por terminação
- * erraria em Alagoas, Goiás, Sergipe, Roraima e no Distrito Federal.
- */
-const CONTRACAO: Record<string, string> = {
-  AC: "do Acre",
-  AL: "de Alagoas",
-  AM: "do Amazonas",
-  AP: "do Amapá",
-  BA: "da Bahia",
-  CE: "do Ceará",
-  DF: "do Distrito Federal",
-  ES: "do Espírito Santo",
-  GO: "de Goiás",
-  MA: "do Maranhão",
-  MG: "de Minas Gerais",
-  MS: "de Mato Grosso do Sul",
-  MT: "de Mato Grosso",
-  PA: "do Pará",
-  PB: "da Paraíba",
-  PE: "de Pernambuco",
-  PI: "do Piauí",
-  PR: "do Paraná",
-  RJ: "do Rio de Janeiro",
-  RN: "do Rio Grande do Norte",
-  RO: "de Rondônia",
-  RR: "de Roraima",
-  RS: "do Rio Grande do Sul",
-  SC: "de Santa Catarina",
-  SE: "de Sergipe",
-  SP: "de São Paulo",
-  TO: "do Tocantins",
-};
-function crase(nome: string): string {
-  const achado = Object.values(CONTRACAO).find((v) => v.endsWith(nome));
-  return achado ?? `de ${nome}`;
 }
 
 export default async function PaginaEstado(
@@ -191,7 +149,7 @@ export default async function PaginaEstado(
   const semRedeFinais = r.municipios.filter(
     (m) => !idebFinais.municipios[String(m.codigo)]).length;
 
-  const de = CONTRACAO[r.uf.sigla] ?? `de ${r.uf.nome}`;
+  const de = deEstado(r.uf.sigla);
 
   // O Censo somado no estado, contra a mesma conta no pais. As duas sao
   // taxa ponderada (soma sobre soma), entao comparam diretamente -- ao
@@ -583,7 +541,7 @@ export default async function PaginaEstado(
               então são 26 e não 27. Escrever "27" aqui seria a mesma mentira
               silenciosa que a mediana regional cravada já custou. */}
           <h2>
-            {r.uf.nome} e {br(panorama.length - 1)} outras unidades da federação
+            {r.uf.nome} e os outros {br(panorama.length - 1)} estados
           </h2>
 
           <h3 className={estilos.subtitulo}>Quantos prestam contas</h3>
@@ -796,7 +754,7 @@ export default async function PaginaEstado(
         <p>
           Fontes: {snapshot.fonte} e {fiscal.fonte}
           {fiscal.coletadoEm
-            ? ` · coleta fiscal em ${fiscal.coletadoEm.slice(0, 10)}`
+            ? ` · coleta fiscal em ${dataCurta(fiscal.coletadoEm)}`
             : ""}
           . Dados sob a{" "}
           <a href="/ajuda/#licenca">licença de cada fonte</a>; os do SICONFI,

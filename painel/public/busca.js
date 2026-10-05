@@ -45,20 +45,55 @@ export function slugDe(nome, uf) {
   return `${base}-${uf.toLowerCase()}`;
 }
 
-/** Prefixo antes de "contém", numa passada só — sem `sort` a cada tecla. */
+/** Os nomes já normalizados, uma vez por índice e não a cada tecla. */
+const normalizados = new WeakMap();
+
+/**
+ * Prefixo antes de "contém", numa passada só — sem `sort` a cada tecla.
+ *
+ * Devolve também o **total**: "8 municípios" quando há 54 diz à pessoa que o
+ * nome que ela procura não existe, quando ele só ficou fora do corte. Por
+ * isso a passada vai até o fim, sobre nomes normalizados uma vez só.
+ */
 export function procurar(indice, alvo) {
+  let nomes = normalizados.get(indice);
+  if (!nomes) {
+    nomes = indice.map((x) => normalizar(x[0]));
+    normalizados.set(indice, nomes);
+  }
   const prefixo = [];
   const meio = [];
-  for (const x of indice) {
-    const n = normalizar(x[0]);
+  let total = 0;
+  indice.forEach((x, i) => {
+    const n = nomes[i];
     if (n.startsWith(alvo)) {
-      prefixo.push(x);
-      if (prefixo.length >= MAXIMO) return prefixo;
-    } else if (meio.length < MAXIMO && n.includes(alvo)) {
-      meio.push(x);
+      total += 1;
+      if (prefixo.length < MAXIMO) prefixo.push(x);
+    } else if (n.includes(alvo)) {
+      total += 1;
+      if (meio.length < MAXIMO) meio.push(x);
     }
-  }
-  return [...prefixo, ...meio].slice(0, MAXIMO);
+  });
+  return { achados: [...prefixo, ...meio].slice(0, MAXIMO), total };
+}
+
+const inteiro = new Intl.NumberFormat("pt-BR");
+
+/** O que o leitor de tela ouve. Com corte, diz o total e o que fazer. */
+export function anuncio(total, termo) {
+  if (!total) return `Nenhum município encontrado para ${termo}.`;
+  if (total === 1) return `1 município encontrado para ${termo}.`;
+  const frase = `${inteiro.format(total)} municípios encontrados para ${termo}`;
+  return total > MAXIMO
+    ? `${frase}; a lista mostra os ${MAXIMO} primeiros. Continue digitando para filtrar.`
+    : `${frase}.`;
+}
+
+/** A última linha da lista quando há mais do que cabe nela. */
+export function dicaDeCorte(total) {
+  return total > MAXIMO
+    ? `Mostrando ${MAXIMO} de ${inteiro.format(total)}. Continue digitando o nome.`
+    : null;
 }
 
 /*
@@ -92,6 +127,7 @@ function iniciar() {
   let indice = null;
   let carregando = false;
   let achados = [];
+  let total = 0;
   let ativo = -1;
   let aberto = false;
 
@@ -145,18 +181,30 @@ function iniciar() {
       li.append(nome, uf);
       lista.append(li);
     });
+    // Sem `data-i` e sem `id`: as setas e o ponteiro não chegam a ela, e
+    // `aria-disabled` diz ao leitor de tela que não é um destino.
+    const dica = dicaDeCorte(total);
+    if (dica) {
+      const li = document.createElement("li");
+      li.className = c.classeVazio ?? "";
+      li.setAttribute("role", "option");
+      li.setAttribute("aria-selected", "false");
+      li.setAttribute("aria-disabled", "true");
+      li.textContent = dica;
+      lista.append(li);
+    }
   }
 
   function atualizar() {
     const p = partes();
     if (!p) return;
     const alvo = normalizar(p.campo.value);
-    achados = !alvo || !indice ? [] : procurar(indice, alvo);
+    ({ achados, total } = !alvo || !indice
+      ? { achados: [], total: 0 } : procurar(indice, alvo));
     ativo = -1;
     desenhar();
     if (indice && alvo) {
-      anunciar(`${achados.length} ${achados.length === 1
-        ? "município encontrado" : "municípios encontrados"} para ${p.campo.value}.`);
+      anunciar(anuncio(total, p.campo.value));
     } else if (!carregando) {
       anunciar("");
     }

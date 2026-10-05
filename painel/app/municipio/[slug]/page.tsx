@@ -3,10 +3,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import {
-  br, descricaoDe, escala, expandir, milReaisParaReais, periodoDe,
+  br, dataCurta, descricaoDe, escala, expandir, milReaisParaReais, periodoDe,
 } from "../../../lib/dados";
 import { aberturaFiscalDe, tituloFiscalDe } from "../../../lib/titulo";
-import { slugUf, vizinhosDe } from "../../../lib/estado";
+import { deEstado, slugUf, vizinhosDe } from "../../../lib/estado";
 import { medianasSaudeCache, rankingCache } from "../../../lib/nacional";
 import { posicaoEntre, posicaoNoEstado } from "../../../lib/posicao";
 import {
@@ -136,26 +136,6 @@ export async function generateMetadata(
       `/municipio/${m.slug}/`,
     ),
   };
-}
-
-/**
- * "do Maranhão", "da Bahia", "de Alagoas".
- *
- * Sem regra possível: é o artigo que cada nome carrega. A tabela completa mora
- * em `app/estado/[uf]/page.tsx`; aqui basta o caso geral e as exceções que
- * denunciariam texto gerado.
- */
-const ARTIGO: Record<string, string> = {
-  Alagoas: "de", Goiás: "de", Sergipe: "de", Roraima: "de", Rondônia: "de",
-  Pernambuco: "de", "Mato Grosso": "de", "Mato Grosso do Sul": "de",
-  "Minas Gerais": "de", "São Paulo": "de", "Santa Catarina": "de",
-  "Espírito Santo": "do", Bahia: "da", Paraíba: "da",
-};
-function de(estado: string): string {
-  const a = ARTIGO[estado];
-  if (a) return `${a} ${estado}`;
-  // O padrão é masculino: Maranhão, Ceará, Piauí, Paraná, Acre, Amazonas...
-  return `do ${estado}`;
 }
 
 export default async function PaginaMunicipio(
@@ -606,7 +586,7 @@ export default async function PaginaMunicipio(
             <p>
               Em população, {m.nome} tem <strong>mais habitantes que{" "}
               {br(posPop.abaixo)}</strong> dos <strong>{br(posPop.de)}</strong>{" "}
-              municípios {de(uf.nome)} — a mediana do estado é{" "}
+              municípios {deEstado(m.uf)} — a mediana do estado é{" "}
               <strong>{br(posPop.mediana, 0)}</strong> habitantes.
             </p>
           )}
@@ -616,7 +596,7 @@ export default async function PaginaMunicipio(
               <strong>
                 {perCapita >= posPerCapita.mediana ? "acima" : "abaixo"}
               </strong>{" "}
-              da mediana {de(uf.nome)}, que é{" "}
+              da mediana {deEstado(m.uf)}, que é{" "}
               <strong>R$ {br(posPerCapita.mediana, 0)}</strong>.
             </p>
           )}
@@ -749,7 +729,7 @@ export default async function PaginaMunicipio(
                 Não é um caso isolado:{" "}
                 <strong>{br(naoEntregaramNoEstado)}</strong> dos{" "}
                 <strong>{br(consultadosNoEstado)}</strong> municípios{" "}
-                {de(uf.nome)} consultados também não entregaram —{" "}
+                {deEstado(m.uf)} consultados também não entregaram —{" "}
                 <strong>
                   {br((naoEntregaramNoEstado * 100) / consultadosNoEstado, 0)}%
                 </strong>
@@ -785,7 +765,7 @@ export default async function PaginaMunicipio(
           </p>
           <p>
             Entre os <strong>{br(posicao.base)}</strong> municípios{" "}
-            {de(uf?.nome ?? m.uf)} que entregaram o relatório com valor
+            {deEstado(m.uf)} que entregaram o relatório com valor
             plausível, {m.nome} está{" "}
             <strong>
               acima de {br(posicao.percentil, 0)}%
@@ -801,7 +781,7 @@ export default async function PaginaMunicipio(
               prudencial={f.limitePrudencial ?? fiscal.limites.prudencial}
               legal={fiscal.limites.legal}
               municipio={m.nome}
-              conjunto={de(uf?.nome ?? m.uf)}
+              conjunto={deEstado(m.uf)}
             />
           </div>
 
@@ -985,7 +965,7 @@ export default async function PaginaMunicipio(
             {saude.medianaUf !== null && uf && (
               <>
                 {" "}
-                A mediana {de(uf.nome)} no mesmo ano foi{" "}
+                A mediana {deEstado(m.uf)} no mesmo ano foi{" "}
                 <strong className="tabular">{br(saude.medianaUf, 2)}%</strong>,
                 então {m.nome} aplica{" "}
                 <strong>
@@ -1013,7 +993,7 @@ export default async function PaginaMunicipio(
           </div>
           <p className={estilos.ressalva}>
             {saude.rotulo}. Fonte: {saude.fonte}
-            {saude.coletadoEm ? `, coleta de ${saude.coletadoEm.slice(0, 10)}` : ""}.
+            {saude.coletadoEm ? `, coleta de ${dataCurta(saude.coletadoEm)}` : ""}.
           </p>
         </section>
       )}
@@ -1536,7 +1516,7 @@ export default async function PaginaMunicipio(
             porque um explique o outro. Quanto um município gasta e o que os
             seus alunos aprendem dependem de muita coisa que não está nesta
             página. Fonte: {ideb.fonte}
-            {ideb.coletadoEm ? `, coletado em ${ideb.coletadoEm.slice(0, 10)}` : ""}.{" "}
+            {ideb.coletadoEm ? `, coletado em ${dataCurta(ideb.coletadoEm)}` : ""}.{" "}
             <Link href="/ajuda/#ideb">O que é o IDEB?</Link>
           </p>
         </section>
@@ -1708,7 +1688,7 @@ export default async function PaginaMunicipio(
 
       {vizinhos.length > 0 && (
         <section className={estilos.texto}>
-          <h2>Outros municípios de {uf?.nome ?? m.uf}</h2>
+          <h2>Outros municípios {deEstado(m.uf)}</h2>
           <ul className={estilos.vizinhos}>
             {vizinhos.map((v) => (
               <li key={v.codigo}>
@@ -1726,8 +1706,7 @@ export default async function PaginaMunicipio(
           </ul>
           <p>
             <Link href={`/estado/${slugUf(m.uf)}/`} prefetch={false}>
-              Ver os {br(uf?.municipios ?? 0)} municípios de{" "}
-              {uf?.nome ?? m.uf}
+              Ver os {br(uf?.municipios ?? 0)} municípios {deEstado(m.uf)}
             </Link>{" "}
             ·{" "}
             <Link href="/" prefetch={false}>
@@ -1758,7 +1737,7 @@ export default async function PaginaMunicipio(
               Base completa em planilha
             </a>{" "}
             <span className={estilos.fonte}>
-              — os {snapshot.municipios.length} municípios, com dicionário de
+              — os {br(snapshot.municipios.length)} municípios, com dicionário de
               colunas e procedência em abas separadas
             </span>
           </li>
@@ -1778,7 +1757,7 @@ export default async function PaginaMunicipio(
       <footer className={estilos.rodape}>
         <p>
           Fontes: {snapshot.fonte} e {fiscal.fonte}
-          {fiscal.coletadoEm ? ` · coleta fiscal em ${fiscal.coletadoEm.slice(0, 10)}` : ""}.
+          {fiscal.coletadoEm ? ` · coleta fiscal em ${dataCurta(fiscal.coletadoEm)}` : ""}.
           Dados sob a{" "}
           <a href="/ajuda/#licenca">licença de cada fonte</a>; os do SICONFI,
           e as planilhas deste site, sob ODbL.

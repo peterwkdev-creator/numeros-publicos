@@ -265,6 +265,22 @@ export function dataLegivel(iso: string | null | undefined): string {
 }
 
 /**
+ * `"2026-09-30T00:57:43+00:00"` → `"29/09/2026"`: a data de coleta no meio de
+ * uma frase. ISO fica para o CSV e o XLSX, onde quem lê é programa.
+ *
+ * **No fuso de São Paulo, e não pelo `slice(0, 10)`** que as páginas usavam:
+ * a coleta roda de madrugada em UTC, e o recorte publicava o dia seguinte ao
+ * do Brasil (o Caged de 29/09 saía "2026-09-30"). Data sem hora é dia civil e
+ * passa direto, sem fuso que a desloque.
+ */
+export function dataCurta(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  const dia = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (dia) return `${dia[3]}/${dia[2]}/${dia[1]}`;
+  return new Date(iso).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
+}
+
+/**
  * Um valor em reais na grandeza em que uma pessoa fala dele.
  *
  * Existe porque o painel estava publicando **"R$ 62.981.326 mil"** para o PIB

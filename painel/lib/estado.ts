@@ -207,6 +207,53 @@ export function vizinhosDe(
   return saida;
 }
 
+/**
+ * "do Maranhão", "da Bahia", "de Alagoas" — a preposição que o nome pede.
+ *
+ * Escrito à mão porque **não há regra**: é o gênero e o artigo que cada nome
+ * carrega, e "de Sergipe" ao lado de "do Ceará" na mesma frase denuncia texto
+ * gerado. Vinte e sete nomes cabem numa tabela; uma heurística por terminação
+ * erraria em Alagoas, Goiás, Sergipe, Roraima e no Distrito Federal.
+ *
+ * Mora aqui, e só aqui, desde 05/10/2026: a página do estado e a do município
+ * tinham cada uma a sua tabela, e uma terceira frase ("Outros municípios de
+ * Ceará") não usava nenhuma das duas.
+ */
+const CONTRACAO: Record<string, string> = {
+  AC: "do Acre",
+  AL: "de Alagoas",
+  AM: "do Amazonas",
+  AP: "do Amapá",
+  BA: "da Bahia",
+  CE: "do Ceará",
+  DF: "do Distrito Federal",
+  ES: "do Espírito Santo",
+  GO: "de Goiás",
+  MA: "do Maranhão",
+  MG: "de Minas Gerais",
+  MS: "de Mato Grosso do Sul",
+  MT: "de Mato Grosso",
+  PA: "do Pará",
+  PB: "da Paraíba",
+  PE: "de Pernambuco",
+  PI: "do Piauí",
+  PR: "do Paraná",
+  RJ: "do Rio de Janeiro",
+  RN: "do Rio Grande do Norte",
+  RO: "de Rondônia",
+  RR: "de Roraima",
+  RS: "do Rio Grande do Sul",
+  SC: "de Santa Catarina",
+  SE: "de Sergipe",
+  SP: "de São Paulo",
+  TO: "do Tocantins",
+};
+
+/** `"CE"` → `"do Ceará"`. Sigla fora da tabela volta crua, sem preposição
+ * inventada: o texto fica estranho e visível, em vez de errado e discreto. */
+export function deEstado(sigla: string): string {
+  return CONTRACAO[sigla.toUpperCase()] ?? `de ${sigla}`;
+}
 
 /**
  * De `"do Rio Grande do Sul"` para `"no Rio Grande do Sul"`.

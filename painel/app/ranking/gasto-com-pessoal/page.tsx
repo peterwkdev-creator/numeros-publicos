@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { br } from "../../../lib/dados";
+import { br, dataCurta } from "../../../lib/dados";
 import { rankingPessoal } from "../../../lib/nacional";
 import { LIMITE_PLAUSIVEL } from "../../../lib/fiscal";
 import {
@@ -205,6 +205,18 @@ export default async function Pagina() {
           <strong>{br(r.naFaixaPrudencial)}</strong> estão entre o limite
           prudencial e o teto — faixa em que a lei já exige medidas, mas em que
           não há infração.
+          {/* O resto do site diz 5.571, e um número diferente sem explicação
+              parece erro. A frase só sai quando a diferença é exatamente a
+              conhecida; se um dia for outra, some, em vez de explicar errado. */}
+          {fiscal.cobertura.municipiosIbge - fiscal.cobertura.universo === 1 &&
+            r.comoEstado === 1 && (
+            <>
+              {" "}São {br(r.universo)}, e não os{" "}
+              {br(fiscal.cobertura.municipiosIbge)} do IBGE, porque Fernando de
+              Noronha é distrito estadual de Pernambuco e o Distrito Federal
+              presta contas como estado.
+            </>
+          )}
         </p>
         <p>
           <strong>
@@ -230,7 +242,7 @@ export default async function Pagina() {
             corrente líquida, do maior para o menor. Dado do{" "}
             <strong>{fiscal.periodo}º quadrimestre de {fiscal.exercicio}</strong>.
             Fonte: {fiscal.fonte}, coleta de{" "}
-            {fiscal.coletadoEm?.slice(0, 10) ?? "data não registrada"}.
+            {fiscal.coletadoEm ? dataCurta(fiscal.coletadoEm) : "data não registrada"}.
           </caption>
           <thead>
             <tr>

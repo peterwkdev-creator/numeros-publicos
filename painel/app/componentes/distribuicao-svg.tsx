@@ -30,10 +30,14 @@ import type { Posicao } from "../../lib/posicao";
  */
 
 const L = 320;
-const A = 96;
+const A = 112;
 //: `base` reserva espaço para DUAS linhas de rótulo escalonadas mais a
-//: escala do eixo. Ver a nota dos rótulos, mais abaixo.
-const M = { topo: 6, base: 28, esq: 4, dir: 4 };
+//: escala do eixo. Ver a nota dos rótulos, mais abaixo. O degrau de 16 e a
+//: base de 44 cabem o rótulo de 11 unidades que o telefone usa
+//: (`.grafico-svg` em `globals.css`), cuja caixa mede ~15 em 375px: com
+//: degrau de 12 as caixas se sobrepunham 2,9px. Com 7 o vão sobra.
+const M = { topo: 6, base: 44, esq: 4, dir: 4 };
+const DEGRAU = 16;
 const FAIXAS = 24;
 
 export default function DistribuicaoSvg({
@@ -70,6 +74,7 @@ export default function DistribuicaoSvg({
   const larguraFaixa = (L - M.esq - M.dir) / FAIXAS;
   const alturaUtil = A - M.topo - M.base;
   const y = (n: number) => M.topo + alturaUtil - (n / pico) * alturaUtil;
+  const esquerda = x(legal) > L * 0.75;
 
   const rotulo =
     `Distribuição do gasto com pessoal ${conjunto}: ${base} municípios com ` +
@@ -80,6 +85,7 @@ export default function DistribuicaoSvg({
 
   return (
     <svg
+      className="grafico-svg"
       viewBox={`0 0 ${L} ${A}`}
       role="img"
       aria-label={rotulo}
@@ -105,20 +111,28 @@ export default function DistribuicaoSvg({
           Os dois limites distam 2,7 pontos percentuais (51,30 e 54,00), então
           numa escala que costuma cobrir 30 pontos eles caem a poucos pixels um
           do outro — e "prudencial" colidia com "teto legal" em **toda** página.
-          Escalonar resolve sem encurtar o texto nem esconder um deles. */}
+          Escalonar resolve sem encurtar o texto nem esconder um deles.
+          Os dois rótulos vão para o MESMO lado das réguas: à esquerda quando
+          o teto legal cai no último quarto da escala (quando ele é o máximo,
+          o rótulo à direita sairia do desenho), à direita no resto. Em cima fica o rótulo que se afasta da outra
+          régua; o de baixo, se ficasse em cima, seria cortado por ela, que
+          desce até o seu próprio rótulo. */}
       {[
-        { v: prudencial, texto: "prudencial", linha: 0 },
-        { v: legal, texto: "teto legal", linha: 1 },
+        { v: prudencial, texto: "prudencial", linha: esquerda ? 0 : 1 },
+        { v: legal, texto: "teto legal", linha: esquerda ? 1 : 0 },
       ].map(({ v, texto, linha }) =>
         v < min || v > max ? null : (
           <g key={texto}>
             <line
-              x1={x(v)} x2={x(v)} y1={M.topo} y2={M.topo + alturaUtil + linha * 7}
+              x1={x(v)} x2={x(v)} y1={M.topo}
+              y2={M.topo + alturaUtil + 10 + linha * DEGRAU}
               stroke="var(--tinta-fraca)" strokeWidth="1" strokeDasharray="3 3"
             />
             <text
-              x={x(v) + 2} y={M.topo + alturaUtil + 6 + linha * 7}
-              textAnchor="start" fontSize="7" fill="var(--tinta-fraca)"
+              x={esquerda ? x(v) - 2 : x(v) + 2}
+              y={M.topo + alturaUtil + 10 + linha * DEGRAU}
+              textAnchor={esquerda ? "end" : "start"}
+              fontSize="7" fill="var(--tinta-fraca)"
             >
               {texto}
             </text>

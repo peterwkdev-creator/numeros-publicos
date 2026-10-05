@@ -97,6 +97,7 @@ export default function SaudeSvg({
 
   return (
     <svg
+      className="grafico-svg"
       viewBox={`0 0 ${L} ${A}`}
       role="img"
       aria-label={rotulo}

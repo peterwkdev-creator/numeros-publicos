@@ -26,8 +26,10 @@ import type { PanoramaUf } from "../../lib/nacional";
  */
 
 const L = 320;
-const A = 42;
-const M = { esq: 8, dir: 8, topo: 14, base: 14 };
+const A = 44;
+// `topo` de 16: o rótulo do estado, com a fonte de 11 do telefone, encostava
+// na borda de cima com 14.
+const M = { esq: 8, dir: 8, topo: 16, base: 14 };
 
 export default function TiraEstados({
   panorama,
@@ -61,6 +63,7 @@ export default function TiraEstados({
 
   return (
     <svg
+      className="grafico-svg"
       viewBox={`0 0 ${L} ${A}`}
       role="img"
       aria-label={descricao}
@@ -101,10 +104,13 @@ export default function TiraEstados({
             d={`M ${x(meu.v)} ${y - 5} L ${x(meu.v) + 5} ${y} L ${x(meu.v)} ${y + 5} L ${x(meu.v) - 5} ${y} Z`}
             fill="var(--acento)"
           />
+          {/* Centrado sobre o losango, menos perto das pontas: ali o rótulo
+              começa ou termina no losango, senão metade dele sairia do
+              desenho (com a fonte de 11 do telefone, "MA 51,3%" tem ~45). */}
           <text
-            x={Math.min(Math.max(x(meu.v), 12), L - 12)}
+            x={x(meu.v) < 30 ? x(meu.v) - 5 : x(meu.v) > L - 30 ? x(meu.v) + 5 : x(meu.v)}
             y={y - 11}
-            textAnchor="middle"
+            textAnchor={x(meu.v) < 30 ? "start" : x(meu.v) > L - 30 ? "end" : "middle"}
             fontSize="8"
             fontWeight="600"
             fill="var(--acento)"

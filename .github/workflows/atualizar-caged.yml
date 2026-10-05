@@ -21,7 +21,8 @@
 # ou sem mês novo (o do IBGE fazia isso toda semana, até 05/10/2026). Aqui a
 # publicação é pedida explicitamente, e só depois de um commit com dado novo.
 # Commit feito com o GITHUB_TOKEN não dispara `push`, mas `workflow_dispatch`
-# disparado por ele dispara: é a exceção documentada pelo GitHub.
+# disparado por ele dispara: é a exceção documentada pelo GitHub. E o pedido
+# espera o resultado (job `publicar`, desde 05/10/2026).
 name: Atualizar dados do Caged
 
 on:
@@ -43,6 +44,8 @@ concurrency:
 jobs:
   caged:
     runs-on: ubuntu-latest
+    outputs:
+      commitou: ${{ steps.commit.outputs.commitou }}
     # 36 arquivos de ~57 MB; medido localmente, 20 s cada entre baixar e
     # agregar. O teto folgado é para o FTP do MTE num dia lento.
     timeout-minutes: 60
@@ -80,10 +83,9 @@ jobs:
         if: steps.novo.outputs.novo == 'true'
         run: python -m numeros_publicos caged-exportar
 
-      - name: Commitar e pedir a publicação
+      - name: Commitar apenas se o dado mudou
+        id: commit
         if: steps.novo.outputs.novo == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
           if git diff --quiet -- painel/dados/caged.json; then
             echo "O caged.json não mudou. Nada a commitar."
@@ -94,4 +96,35 @@ jobs:
           git add painel/dados/caged.json
           git commit -m "atualiza o Novo Caged ($(python -c "import json;print(json.load(open('painel/dados/caged.json'))['competencia'])"))"
           git push
+          echo "commitou=true" >> "$GITHUB_OUTPUT"
+
+  # Job próprio, como no workflow do IBGE: a publicação leva de 9 a 44 min e
+  # não cabe no teto da ingestão. E quem pede espera o resultado: em 30/09 a
+  # publicação caiu em 4 s, este workflow terminou verde e o mês ficou 24 h
+  # fora do ar sem aviso (stack.md). Agora a queda deixa o Caged vermelho.
+  publicar:
+    needs: caged
+    if: needs.caged.outputs.commitou == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Pedir a publicação e esperar o resultado
+        run: |
+          desde=$(date -u +%Y-%m-%dT%H:%M:%SZ)
           gh workflow run publicar-cloudflare.yml --ref main
+          id=
+          for _ in $(seq 1 30); do
+            id=$(gh run list --workflow publicar-cloudflare.yml --event workflow_dispatch \
+                 --created ">=$desde" -L 1 --json databaseId -q '.[0].databaseId')
+            [ -n "$id" ] && break
+            sleep 10
+          done
+          if [ -z "$id" ]; then
+            echo "::error::a publicação pedida não apareceu em 5 min"
+            exit 1
+          fi
+          echo "Publicação: $GITHUB_SERVER_URL/$GH_REPO/actions/runs/$id"
+          gh run watch "$id" --exit-status --interval 60

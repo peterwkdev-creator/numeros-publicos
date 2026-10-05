@@ -61,7 +61,7 @@ export async function lerIdeb(
 }
 
 /**
- * O INSS por grupo, escrito por `python -m observatorio inss-exportar`.
+ * O INSS por grupo, escrito por `python -m numeros_publicos inss-exportar`.
  * Banco próprio (`inss.db`), sem relação com o snapshot do IBGE: são fontes e
  * ritmos diferentes, e fundi-los convidaria a juntar números que não se somam.
  */
@@ -75,7 +75,7 @@ export async function lerInss(): Promise<SnapshotInss> {
 }
 
 /**
- * O Novo Caged, escrito por `python -m observatorio caged-exportar` depois de
+ * O Novo Caged, escrito por `python -m numeros_publicos caged-exportar` depois de
  * conferido contra o sumário do Ministério do Trabalho. Arquivo próprio, pela
  * razão do INSS: outra fonte, outro ritmo (mensal), e nada nele se soma ao
  * snapshot do IBGE.

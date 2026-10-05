@@ -25,7 +25,7 @@
  * IBGE**, e não conta nossa: dividir a massa pelas pessoas erra até R$ 2,92,
  * porque a contagem publicada já vem arredondada. O motor Python as confere
  * município a município contra os dois absolutos (ver `Media` em
- * `observatorio/ibge.py`), e o snapshot não as soma.
+ * `numeros_publicos/ibge.py`), e o snapshot não as soma.
  */
 
 import { mediana, type ParCenso } from "./censo";

@@ -15,8 +15,8 @@ import unittest
 import zipfile
 from pathlib import Path
 
-from observatorio import emendas
-from observatorio.emendas import (
+from numeros_publicos import emendas
+from numeros_publicos.emendas import (
     ArmazemEmendas, ErroEmendas, carregar_apelidos, centavos, ingerir,
     municipios_do_snapshot, pagamentos,
 )

@@ -431,7 +431,7 @@ def _recusar_codigo_novo(onde: str, servicos=(), especies=()) -> None:
             [f"espécies {sorted(e)}"] if e else [])
         raise ErroINSS(f"{onde}: código novo, fora da tabela de grupos — "
                        + " e ".join(partes) + ". Classifique em "
-                       "observatorio/inss_grupos.py (num grupo ou em SEM_PAGINA_*) "
+                       "numeros_publicos/inss_grupos.py (num grupo ou em SEM_PAGINA_*) "
                        "e rode de novo; nada gravado")
 
 

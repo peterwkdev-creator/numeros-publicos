@@ -15,8 +15,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from observatorio.armazem import Armazem
-from observatorio.ibge import Municipio, Observacao, Resposta, serie
+from numeros_publicos.armazem import Armazem
+from numeros_publicos.ibge import Municipio, Observacao, Resposta, serie
 
 FIXTURES = Path(__file__).parent / "fixtures"
 SERGIPE = (FIXTURES / "municipios_se.json").read_text(encoding="utf-8")
@@ -136,7 +136,7 @@ class TestTravaDoEncolhimento(unittest.TestCase):
         from types import SimpleNamespace
         from unittest.mock import patch
 
-        from observatorio import cli
+        from numeros_publicos import cli
 
         falso = {
             "geradoEm": carimbo,
@@ -357,7 +357,7 @@ class TestPeriodoVigente(unittest.TestCase):
 
 class TestPeriodoMaisRecente(unittest.TestCase):
     def _resolver(self, corpo):
-        from observatorio.ibge import periodo_mais_recente
+        from numeros_publicos.ibge import periodo_mais_recente
         return periodo_mais_recente(lambda u: Resposta(200, corpo), 6579,
                                     dormir=lambda _: None)
 
@@ -366,12 +366,12 @@ class TestPeriodoMaisRecente(unittest.TestCase):
             self._resolver('[{"id":"2026"},{"id":"2020"},{"id":"2025"}]'), "2026")
 
     def test_periodo_que_nao_e_ano_e_recusado(self) -> None:
-        from observatorio.ibge import ErroIBGE
+        from numeros_publicos.ibge import ErroIBGE
         with self.assertRaises(ErroIBGE):
             self._resolver('[{"id":"2024"},{"id":"202403"},{"id":"2024-T1"}]')
 
     def test_lista_vazia_e_recusada(self) -> None:
-        from observatorio.ibge import ErroIBGE
+        from numeros_publicos.ibge import ErroIBGE
         with self.assertRaises(ErroIBGE):
             self._resolver("[]")
 
@@ -384,7 +384,7 @@ class TestPadraoDoRecorte(unittest.TestCase):
         continuou NE. Ninguém percebeu porque ninguém mais digitava o comando —
         até o cron semanal digitá-lo, sem bandeira.
         """
-        from observatorio import cli
+        from numeros_publicos import cli
         self.assertEqual(cli.PADRAO_RECORTE, "BR")
         ufs, nivel = cli.recorte_de(object())
         self.assertEqual(len(ufs), 27, "sem bandeira, o recorte é o país")

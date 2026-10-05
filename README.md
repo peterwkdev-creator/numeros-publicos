@@ -42,16 +42,16 @@ not a bid, proposal or deliverable for that contract.
 Python 3.10+ and nothing else — standard library only, no install step.
 
 ```bash
-python -m observatorio ingerir-municipios
+python -m numeros_publicos ingerir-municipios
 ```
 
 Then:
 
 ```bash
-python -m observatorio ingerir-indicador populacao-censo-2022
-python -m observatorio observacoes pib-municipal --uf SE
-python -m observatorio conferir             # integrity, against the source
-python -m observatorio coletas              # ingestion history
+python -m numeros_publicos ingerir-indicador populacao-censo-2022
+python -m numeros_publicos observacoes pib-municipal --uf SE
+python -m numeros_publicos conferir             # integrity, against the source
+python -m numeros_publicos coletas              # ingestion history
 ```
 
 ## Integrity: checked against the source, not against itself
@@ -114,9 +114,9 @@ Rio Grande do Norte, and the 2021 GDP of Sergipe.
 ## Novo Caged: formal jobs, month by month
 
 ```bash
-python -m observatorio caged-novo       # is there a new month (files AND official summary)?
-python -m observatorio caged-ingerir    # 12 months x 3 files from the Ministry of Labour FTP
-python -m observatorio caged-exportar   # checks against the official summary, then writes painel/dados/caged.json
+python -m numeros_publicos caged-novo       # is there a new month (files AND official summary)?
+python -m numeros_publicos caged-ingerir    # 12 months x 3 files from the Ministry of Labour FTP
+python -m numeros_publicos caged-exportar   # checks against the official summary, then writes painel/dados/caged.json
 ```
 
 Hires and separations of formally registered (CLT) jobs, by municipality, for
@@ -140,7 +140,7 @@ workflow installs both.
 ## INSS: the social-security queue
 
 ```bash
-python -m observatorio inss-exportar   # writes painel/dados/inss.json, one entry per group
+python -m numeros_publicos inss-exportar   # writes painel/dados/inss.json, one entry per group
 ```
 
 Each group with a publishable queue gets a page at `/inss/<group>/`: how long
@@ -153,12 +153,12 @@ export refuses to shrink (fewer groups, or an older month) without
 
 ### Ingestion
 
-`observatorio/inss.py` reads two monthly datasets from INSS's open-data portal
+`numeros_publicos/inss.py` reads two monthly datasets from INSS's open-data portal
 into a separate database (`inss.db`; only `inss-exportar`, above, feeds the site):
 
 ```bash
-python -m observatorio inss-ingerir --mes 2026-07
-python -m observatorio inss-resumo --mes 2026-07
+python -m numeros_publicos inss-ingerir --mes 2026-07
+python -m numeros_publicos inss-resumo --mes 2026-07
 ```
 
 - **Pending requests** measure the *age of the queue*: how long the requests
@@ -173,7 +173,7 @@ python -m observatorio inss-resumo --mes 2026-07
   `inss-ingerir --conjunto indeferidos` migrates it by re-reading each month.
 
 The two files share no code: the queue uses *service* codes, the denials use
-*benefit* codes. `observatorio/inss_grupos.py` bridges them into ten groups
+*benefit* codes. `numeros_publicos/inss_grupos.py` bridges them into ten groups
 (the unit a page will have), each checked against the 2026 files, and every
 code must fall into exactly one group or an explicit "no page" list — **a new
 code refuses the ingestion** instead of vanishing from every page. A median is
@@ -189,7 +189,7 @@ dependency-free XLSX reader, checked cell by cell against `openpyxl` on a real
 ## The panel
 
 ```bash
-python -m observatorio exportar     # writes painel/dados/snapshot.json
+python -m numeros_publicos exportar     # writes painel/dados/snapshot.json
 cd painel && npm install && npm run build
 ```
 
@@ -329,7 +329,7 @@ have a number.
 
 **Provenance is a column, not a comment.** Every observation records when it was
 collected and which endpoint it came from. A number with no traceable origin is
-worthless in an observatory — that is what separates this from a scraper.
+worthless here — that is what separates this from a scraper.
 
 **Revisions do not overwrite.** IBGE revises GDP retroactively; a new collection
 with a different value becomes another row, never a silent overwrite.

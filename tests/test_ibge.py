@@ -15,7 +15,7 @@ import urllib.error
 from pathlib import Path
 from unittest.mock import patch
 
-from observatorio.ibge import (
+from numeros_publicos.ibge import (
     ErroIBGE,
     FALHA_DE_REDE,
     Municipio,

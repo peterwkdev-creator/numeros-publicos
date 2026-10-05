@@ -16,14 +16,14 @@ from pathlib import Path
 
 from unittest.mock import patch
 
-from observatorio.armazem import Armazem
-from observatorio.cli import (
+from numeros_publicos.armazem import Armazem
+from numeros_publicos.cli import (
     INDICADORES,
     conferir,
     construir_parser,
     ingerir_indicador,
 )
-from observatorio.ibge import (
+from numeros_publicos.ibge import (
     ErroIBGE,
     Serie,
     url_serie,
@@ -304,7 +304,7 @@ class TestConferenciaContraAFonte(unittest.TestCase):
     """
 
     def test_le_o_total_da_resposta_regional(self):
-        from observatorio.ibge import total_da_regiao, url_serie_regiao
+        from numeros_publicos.ibge import total_da_regiao, url_serie_regiao
         regional = json.dumps([{
             "id": "93", "variavel": "População residente", "unidade": "Pessoas",
             "resultados": [{"series": [{
@@ -315,12 +315,12 @@ class TestConferenciaContraAFonte(unittest.TestCase):
         self.assertIn("N2[2]", url_serie_regiao(4714, "2022", 93))
 
     def test_regional_sem_serie_falha_com_mensagem(self):
-        from observatorio.ibge import total_da_regiao
+        from numeros_publicos.ibge import total_da_regiao
         with self.assertRaises(ErroIBGE):
             total_da_regiao([{"resultados": []}])
 
     def test_marcador_de_ausente_no_total_regional_vira_none(self):
-        from observatorio.ibge import total_da_regiao
+        from numeros_publicos.ibge import total_da_regiao
         regional = [{"resultados": [{"series": [{"serie": {"2022": "..."}}]}]}]
         self.assertIsNone(total_da_regiao(regional))
 
@@ -330,18 +330,18 @@ class TestFormatoBrasileiro(unittest.TestCase):
     milhar e nenhum decimal. Saiu na primeira execução real."""
 
     def test_milhar_com_ponto_e_decimal_com_virgula(self):
-        from observatorio.cli import br
+        from numeros_publicos.cli import br
         self.assertEqual(br(30663.6, 1), "30.663,6")
         self.assertEqual(br(54658515), "54.658.515")
         self.assertEqual(br(10597), "10.597")
 
     def test_numero_pequeno_sem_separador(self):
-        from observatorio.cli import br
+        from numeros_publicos.cli import br
         self.assertEqual(br(75), "75")
         self.assertEqual(br(9.5, 1), "9,5")
 
     def test_ausente_nao_vira_zero(self):
-        from observatorio.cli import br
+        from numeros_publicos.cli import br
         self.assertEqual(br(None), "—")
 
 
@@ -356,14 +356,14 @@ class TestToleranciaDaConferencia(unittest.TestCase):
     """
 
     def test_a_tolerancia_aceita_o_caso_real_do_pib(self):
-        from observatorio.cli import TOLERANCIA_RELATIVA
+        from numeros_publicos.cli import TOLERANCIA_RELATIVA
         diferenca, total = 5, 1_243_103_280
         self.assertLess(diferenca / total, TOLERANCIA_RELATIVA)
 
     def test_e_recusa_um_municipio_faltando(self):
         # Um município médio do Nordeste tem PIB na casa das centenas de
         # milhares (em mil reais). Some um e a diferença relativa explode.
-        from observatorio.cli import TOLERANCIA_RELATIVA
+        from numeros_publicos.cli import TOLERANCIA_RELATIVA
         total = 1_243_103_280
         for pib_de_um_municipio in (100_000, 10_000, 2_000):
             with self.subTest(municipio=pib_de_um_municipio):

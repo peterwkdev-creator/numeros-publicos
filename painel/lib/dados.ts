@@ -205,7 +205,7 @@ export function projetar(
       throw new Error(
         `indicador "${codigo}" não está no snapshot (tem: ` +
         `${snapshot.indicadores.map((x) => x.codigo).join(", ")}). ` +
-        "Rodar `python -m observatorio exportar` depois de ingeri-lo.",
+        "Rodar `python -m numeros_publicos exportar` depois de ingeri-lo.",
       );
     }
     indices.push(i);

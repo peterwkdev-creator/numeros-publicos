@@ -15,10 +15,10 @@
 # um banco que guardasse meses baixados antes poderia conferir hoje contra o
 # que o MTE já corrigiu. São ~680 MB de download, uma vez por mês.
 #
-# ## Por que ele aciona a publicação em vez de esperar o `workflow_run`
+# ## Por que ele aciona a publicação em vez de um `workflow_run`
 #
-# O `publicar-cloudflare.yml` escuta o fim do workflow do IBGE. Se escutasse
-# este também, republicaria o site todo dia, com ou sem mês novo. Aqui a
+# Um `workflow_run` no fim deste workflow republicaria o site todo dia, com
+# ou sem mês novo (o do IBGE fazia isso toda semana, até 05/10/2026). Aqui a
 # publicação é pedida explicitamente, e só depois de um commit com dado novo.
 # Commit feito com o GITHUB_TOKEN não dispara `push`, mas `workflow_dispatch`
 # disparado por ele dispara: é a exceção documentada pelo GitHub.
@@ -56,7 +56,7 @@ jobs:
 
       - name: Há mês novo, com o sumário publicado?
         id: novo
-        run: python -m observatorio caged-novo
+        run: python -m numeros_publicos caged-novo
 
       - name: Testes
         if: steps.novo.outputs.novo == 'true'
@@ -71,14 +71,14 @@ jobs:
 
       - name: Ingerir os 12 meses
         if: steps.novo.outputs.novo == 'true'
-        run: python -m observatorio caged-ingerir
+        run: python -m numeros_publicos caged-ingerir
 
       # Confere o mês, o ano e os 12 meses contra o sumário executivo, e só
       # então escreve o caged.json. Sai com 1 se divergir, e o workflow para
       # ANTES de publicar número errado.
       - name: Conferir contra o MTE e exportar
         if: steps.novo.outputs.novo == 'true'
-        run: python -m observatorio caged-exportar
+        run: python -m numeros_publicos caged-exportar
 
       - name: Commitar e pedir a publicação
         if: steps.novo.outputs.novo == 'true'

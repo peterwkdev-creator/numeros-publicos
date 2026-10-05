@@ -14,9 +14,9 @@ import unittest
 from contextlib import redirect_stdout, redirect_stderr
 from pathlib import Path
 
-from observatorio.armazem import Armazem
-from observatorio.cli import construir_parser, ingerir_municipios
-from observatorio.ibge import Municipio, Resposta
+from numeros_publicos.armazem import Armazem
+from numeros_publicos.cli import construir_parser, ingerir_municipios
+from numeros_publicos.ibge import Municipio, Resposta
 
 FIXTURES = Path(__file__).parent / "fixtures"
 SERGIPE = (FIXTURES / "municipios_se.json").read_text(encoding="utf-8")

@@ -24,14 +24,10 @@ on:
       - "painel/**"
       - "cloudflare/**"
       - ".github/workflows/publicar-cloudflare.yml"
-  # O cron semanal faz commit com o token do próprio Actions, e commit feito
-  # por esse token NÃO dispara outro workflow. Sem esta entrada, a atualização
-  # de segunda-feira nunca chegaria à Cloudflare. O custo é republicar o mesmo
-  # site na semana em que o dado não mudou: o wrangler só envia os arquivos que
-  # mudaram, e o Pages não tem limite de armazenamento de deploys.
-  workflow_run:
-    workflows: ["Atualizar dados do IBGE"]
-    types: [completed]
+  # Commit feito com o token do próprio Actions NÃO dispara `push`: as coletas
+  # (IBGE e Caged) pedem a publicação por `workflow_dispatch`, e só quando
+  # commitaram dado novo. Até 05/10/2026 havia aqui um `workflow_run` no fim
+  # da coleta do IBGE, que republicava o mesmo site toda semana.
   workflow_dispatch:
 
 # Um deploy por vez: dois pushes seguidos não podem publicar fora de ordem.
@@ -49,7 +45,6 @@ env:
 
 jobs:
   publicar:
-    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     defaults:
@@ -58,8 +53,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          # No workflow_run, o commit a publicar é o último do main (o que o
-          # cron acabou de fazer, se fez), e não o que disparou o cron.
+          # Sempre o último do main: a coleta pede a publicação depois do
+          # commit dela, e o que se publica é esse commit.
           ref: main
 
       - uses: actions/setup-node@v4

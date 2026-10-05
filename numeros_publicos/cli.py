@@ -1,8 +1,8 @@
 """Linha de comando do Observatório NE.
 
-    python -m observatorio ingerir-municipios
-    python -m observatorio municipios --uf SE
-    python -m observatorio coletas
+    python -m numeros_publicos ingerir-municipios
+    python -m numeros_publicos municipios --uf SE
+    python -m numeros_publicos coletas
 """
 
 from __future__ import annotations
@@ -693,7 +693,7 @@ def listar_coletas(args) -> int:
 
 def construir_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        prog="observatorio",
+        prog="numeros_publicos",
         description="Dados abertos oficiais dos municípios brasileiros.")
     p.add_argument("--banco",
                    default=os.environ.get("OBS_BANCO", "observatorio.db"),
@@ -1045,7 +1045,7 @@ def _baixar(url: str, destino: str) -> None:
 
 def inss_ingerir(args, transporte=None, baixar=_baixar) -> int:
     """Grava um mês do INSS. O mês do rótulo é só o candidato: quem decide é
-    o que está dentro do arquivo (ver `observatorio/inss.py`)."""
+    o que está dentro do arquivo (ver `numeros_publicos/inss.py`)."""
     import json as _json
     import tempfile
     import urllib.parse

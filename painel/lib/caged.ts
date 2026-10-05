@@ -1,7 +1,7 @@
 /**
  * O Novo Caged na página do município. **Módulo puro.**
  *
- * O arquivo (`dados/caged.json`) vem de `python -m observatorio
+ * O arquivo (`dados/caged.json`) vem de `python -m numeros_publicos
  * caged-exportar`, que só o escreve depois de conferir o mês, o ano e os 12
  * meses contra o sumário executivo do Ministério do Trabalho. Aqui não se
  * recalcula nada da fonte: só se soma a janela e se escreve.

@@ -20,8 +20,8 @@ from contextlib import redirect_stdout
 from pathlib import Path
 from unittest.mock import patch
 
-from observatorio.armazem import Armazem
-from observatorio.cli import (
+from numeros_publicos.armazem import Armazem
+from numeros_publicos.cli import (
     INDICADORES,
     MAIS_RECENTE,
     NAO_SOMAVEIS,
@@ -29,7 +29,7 @@ from observatorio.cli import (
     conferir_media,
     construir_parser,
 )
-from observatorio.ibge import Media, Municipio, Observacao, Resposta, Serie
+from numeros_publicos.ibge import Media, Municipio, Observacao, Resposta, Serie
 
 FIXTURES = Path(__file__).parent / "fixtures"
 SERGIPE = json.loads((FIXTURES / "municipios_se.json").read_text(encoding="utf-8"))

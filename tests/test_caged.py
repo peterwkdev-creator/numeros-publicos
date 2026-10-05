@@ -15,13 +15,13 @@ import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
-from observatorio import caged
-from observatorio.caged import (
+from numeros_publicos import caged
+from numeros_publicos.caged import (
     ArmazemCaged, ErroCaged, agregar, conferir, gravar_retrato, janela_ate,
     link_do_sumario, mes_anterior, nossos_numeros, numeros_do_sumario, retrato,
     ultima_no_ftp,
 )
-from observatorio.cli import caged_novo, construir_parser
+from numeros_publicos.cli import caged_novo, construir_parser
 
 FIXTURES = Path(__file__).parent / "fixtures"
 SUMARIO = (FIXTURES / "caged_sumario_202607.txt").read_text(encoding="utf-8")

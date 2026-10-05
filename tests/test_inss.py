@@ -15,9 +15,9 @@ import zipfile
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
-from observatorio import inss
-from observatorio import inss_grupos as grupos
-from observatorio.cli import construir_parser, inss_ingerir
+from numeros_publicos import inss
+from numeros_publicos import inss_grupos as grupos
+from numeros_publicos.cli import construir_parser, inss_ingerir
 
 CAB_PEND = ('"Código da unidade da criação da tarefa","Nome da unidade da criação '
             'da tarefa","Código do serviço","Nome do serviço","UF da unidade da '

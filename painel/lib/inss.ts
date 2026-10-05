@@ -1,5 +1,5 @@
 /**
- * O INSS no painel: o retrato por grupo que `python -m observatorio
+ * O INSS no painel: o retrato por grupo que `python -m numeros_publicos
  * inss-exportar` escreve em `dados/inss.json`.
  *
  * O contrato é este tipo, e `TestRetratoParaOPainel` (Python) o cobra do outro

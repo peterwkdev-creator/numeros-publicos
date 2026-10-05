@@ -30,6 +30,8 @@ on:
 
 permissions:
   contents: write
+  # Para pedir a publicação (`gh workflow run`) quando o dado muda.
+  actions: write
 
 concurrency:
   group: ingestao
@@ -38,6 +40,8 @@ concurrency:
 jobs:
   ingerir:
     runs-on: ubuntu-latest
+    outputs:
+      commitou: ${{ steps.commit.outputs.commitou }}
     # 40 e não 20: com os treze indicadores do registro são ~13 × 27 = 351
     # requisições a `--pausa 2`, mais as 27 dos municípios — perto de 13
     # minutos só de espera deliberada. O teto antigo foi dimensionado para
@@ -94,8 +98,8 @@ jobs:
       # lá o automático herdava um padrão velho, aqui carregava uma cópia.
       - name: Ingerir municípios e TODOS os indicadores do registro
         run: |
-          python -m observatorio ingerir-municipios --regiao BR --pausa 2
-          python -m observatorio ingerir-indicador todos --regiao BR --pausa 2
+          python -m numeros_publicos ingerir-municipios --regiao BR --pausa 2
+          python -m numeros_publicos ingerir-indicador todos --regiao BR --pausa 2
 
       # Integridade contra a própria fonte. Sai com código 1 se a soma dos
       # municípios divergir do agregado regional do IBGE — e aí o workflow
@@ -107,12 +111,13 @@ jobs:
       # **Verificação que herda o parâmetro daquilo que deveria verificar não
       # verifica nada** — ela confirma a premissa em vez de testá-la.
       - name: Conferir contra o agregado NACIONAL do IBGE
-        run: python -m observatorio conferir --regiao BR
+        run: python -m numeros_publicos conferir --regiao BR
 
       - name: Exportar o snapshot
-        run: python -m observatorio exportar
+        run: python -m numeros_publicos exportar
 
       - name: Commitar apenas se o dado mudou
+        id: commit
         run: |
           if git diff --quiet -- painel/dados/snapshot.json; then
             echo "Nenhuma mudança no dado do IBGE. Nada a commitar."
@@ -123,3 +128,39 @@ jobs:
           git add painel/dados/snapshot.json
           git commit -m "atualiza o snapshot do IBGE ($(date -u +%Y-%m-%d))"
           git push
+          echo "commitou=true" >> "$GITHUB_OUTPUT"
+
+  # Publica só quando a coleta commitou. Até 05/10/2026 o "Publicar na
+  # Cloudflare" escutava o fim desta coleta (`workflow_run`) e republicava o
+  # mesmo site toda segunda-feira, dado novo ou não (em 05/10, 9 min de
+  # build para nada). Commit do GITHUB_TOKEN não dispara `push`, mas
+  # `workflow_dispatch` disparado por ele dispara. E quem pede espera o
+  # resultado: se a publicação cair, esta coleta fica vermelha, em vez de
+  # verde com o dado fora do ar (stack.md, a lição do Caged de 30/09).
+  publicar:
+    needs: ingerir
+    if: needs.ingerir.outputs.commitou == 'true'
+    runs-on: ubuntu-latest
+    # A publicação leva de 9 a 44 min e pode esperar outra na fila.
+    timeout-minutes: 120
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Pedir a publicação e esperar o resultado
+        run: |
+          desde=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          gh workflow run publicar-cloudflare.yml --ref main
+          id=
+          for _ in $(seq 1 30); do
+            id=$(gh run list --workflow publicar-cloudflare.yml --event workflow_dispatch \
+                 --created ">=$desde" -L 1 --json databaseId -q '.[0].databaseId')
+            [ -n "$id" ] && break
+            sleep 10
+          done
+          if [ -z "$id" ]; then
+            echo "::error::a publicação pedida não apareceu em 5 min"
+            exit 1
+          fi
+          echo "Publicação: $GITHUB_SERVER_URL/$GH_REPO/actions/runs/$id"
+          gh run watch "$id" --exit-status --interval 60

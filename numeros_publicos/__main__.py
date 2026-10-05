@@ -1,4 +1,4 @@
-"""Ponto de entrada: `python -m observatorio`.
+"""Ponto de entrada: `python -m numeros_publicos`.
 
 ## As duas linhas de `reconfigure`, e por que elas moram aqui
 

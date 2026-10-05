@@ -1,7 +1,7 @@
 import { lerSnapshot } from "@/lib/servidor";
 
 /**
- * O índice de busca do site: nome, UF e slug de cada município.
+ * O índice de busca do site: nome e UF de cada município e de cada estado.
  *
  * ## Por que um arquivo, e não o índice embutido em cada página
  *
@@ -21,12 +21,17 @@ import { lerSnapshot } from "@/lib/servidor";
  * `nome`/`uf` repetidas 5.571 vezes custariam mais que os dados. É a mesma
  * lição do payload da capa, que caiu 57% ao parar de repetir chave.
  *
+ * **Os 27 estados entram como `[nome, sigla, 1]`**, desde 05/10/2026 (item M3
+ * da auditoria de usabilidade): quem digitava "ceara" achava Ceará-Mirim/RN e
+ * nunca a página do Ceará. O terceiro campo só existe nos estados, e o
+ * `busca.js` o lê para mandar a `/estado/<uf>/`. Custa 27 linhas no arquivo.
+ *
  * **O slug NÃO vai gravado.** A primeira versão o gravava, com o argumento de
  * que derivá-lo no navegador exigiria reproduzir a regra do build e uma
- * divergência quebraria links em silêncio. O argumento estava errado: o
- * navegador importa a **mesma** `slugDe`, então não há regra a reproduzir nem
- * divergência possível. Gravá-lo custava o dobro do arquivo — medido:
- * **78 KB comprimidos contra 30 KB** — por uma segurança imaginária.
+ * divergência quebraria links em silêncio. Gravá-lo custava o dobro do
+ * arquivo — medido: **78 KB comprimidos contra 30 KB**. A cópia de `slugDe`
+ * que o `busca.js` tem desde 22/09/2026 é conferida por um teste nos 5.571
+ * nomes do snapshot, e é ele que impede a divergência.
  */
 export const dynamic = "force-static";
 
@@ -42,19 +47,43 @@ export async function GET() {
   // Quem digita "sao" quer São Paulo, São Luís, São Gonçalo. Ordenar aqui, uma
   // vez, no build, custa **zero byte** e dispensa carregar a população para o
   // navegador só para ordenar lá. A ordem do arquivo É a ordem de relevância.
+  //
+  // Os estados entram NA MESMA ordem, pela população deles, e não no fim: no
+  // fim, medido em 05/10/2026, doze estados não apareciam nas 8 opções com as
+  // quatro primeiras letras, e "parana" digitado inteiro nem mostrava o
+  // Paraná. Pela população, São Paulo estado vem antes da cidade, e Roraima
+  // depois das cidades maiores que ele, que é o que o tamanho diz. O nome exato ainda passa
+  // na frente de tudo, no `procurar` do `busca.js`.
   const iPop = snapshot.colunas.indexOf("populacao-censo-2022");
   const iEst = snapshot.colunas.indexOf("populacao-estimada");
-  const indice = [...snapshot.municipios]
+  type Entrada = { nome: string; uf: string; pop: number; estado: boolean };
+  const entradas: Entrada[] = [
+    ...snapshot.municipios.map(
+      (m): Entrada => ({
+        nome: String(m[1]),
+        uf: String(m[2]),
+        pop: (m[iPop] as number | null) ?? (m[iEst] as number | null) ?? -1,
+        estado: false,
+      }),
+    ),
+    ...snapshot.ufs.map(
+      (u): Entrada => ({
+        nome: u.nome,
+        uf: u.sigla,
+        pop: u.totais["populacao-censo-2022"] ?? -1,
+        estado: true,
+      }),
+    ),
+  ];
+  const indice = entradas
     .sort((a, b) => {
       // Sem população conhecida vai para o fim: ausência não é município
       // pequeno. Empate desfeito pelo nome, para a ordem ser determinística —
       // senão dois builds do mesmo dado gerariam arquivos diferentes.
-      const pa = (a[iPop] as number | null) ?? (a[iEst] as number | null) ?? -1;
-      const pb = (b[iPop] as number | null) ?? (b[iEst] as number | null) ?? -1;
-      if (pa !== pb) return pb - pa;
-      return String(a[1]).localeCompare(String(b[1]), "pt-BR");
+      if (a.pop !== b.pop) return b.pop - a.pop;
+      return a.nome.localeCompare(b.nome, "pt-BR");
     })
-    .map(([, nome, uf]) => [nome, uf]);
+    .map((x) => (x.estado ? [x.nome, x.uf, 1] : [x.nome, x.uf]));
 
   return new Response(JSON.stringify(indice), {
     headers: {

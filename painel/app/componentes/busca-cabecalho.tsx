@@ -40,7 +40,7 @@ export default function BuscaCabecalho() {
     <search className={e.raiz} data-busca="">
       <div className={e.caixa}>
         <label htmlFor={idCampo} className="so-leitor">
-          Buscar município
+          Buscar município ou estado
         </label>
         <svg
           className={e.lupa}
@@ -77,20 +77,28 @@ export default function BuscaCabecalho() {
           aria-describedby={`${idCampo}-ajuda`}
           autoComplete="off"
           spellCheck={false}
-          placeholder="Buscar município"
+          placeholder="Município ou estado"
         />
 
-        <ul
-          id={idLista}
-          role="listbox"
-          aria-label="Municípios encontrados"
-          className={e.lista}
-          hidden
-          data-classe-ativa={e.ativa}
-          data-classe-nome={e.nome}
-          data-classe-uf={e.uf}
-          data-classe-vazio={e.vazio}
-        />
+        {/* A janela leva a lista e, quando nada casa, a saída para a lista
+            por estado. A saída é link fora do listbox (que só pode ter
+            `option`) e vem logo depois do campo na ordem do Tab. */}
+        <div className={e.janela} data-janela="" hidden>
+          <ul
+            id={idLista}
+            role="listbox"
+            aria-label="Resultados da busca"
+            className={e.lista}
+            hidden
+            data-classe-ativa={e.ativa}
+            data-classe-nome={e.nome}
+            data-classe-uf={e.uf}
+            data-classe-vazio={e.vazio}
+          />
+          <p className={e.saida} data-saida="" hidden>
+            <a href="/#por-estado">Ver a lista por estado</a>
+          </p>
+        </div>
       </div>
 
       {/* A contagem é anunciada, não só desenhada. `aria-atomic` explícito
@@ -99,8 +107,8 @@ export default function BuscaCabecalho() {
       <p className="so-leitor" role="status" aria-atomic="true" />
 
       <p id={`${idCampo}-ajuda`} className="so-leitor">
-        Digite o nome e use as setas para escolher. Enter abre a página do
-        município.
+        Digite o nome de um município ou estado e use as setas para escolher.
+        Enter abre a página.
       </p>
 
       <p className={e.erro} role="alert" data-erro="" hidden>

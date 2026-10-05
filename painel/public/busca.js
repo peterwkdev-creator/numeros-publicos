@@ -67,20 +67,41 @@ function chaves(indice) {
 }
 
 /**
- * Prefixo antes de "contém", numa passada só — sem `sort` a cada tecla.
+ * O endereço de uma entrada do índice. Estado tem um terceiro campo e vai à
+ * página dele (`slugUf` em `lib/estado.ts`, que o teste compara); município
+ * vai pelo slug.
+ */
+export function destino(x) {
+  return x[2] ? `/estado/${x[1].toLowerCase()}/` : `/municipio/${slugDe(x[0], x[1])}/`;
+}
+
+/** O que vai ao lado do nome: a UF do município, ou "estado". */
+export const onde = (x) => (x[2] ? "estado" : x[1]);
+
+/**
+ * Nome exato, depois prefixo, depois "contém", numa passada só — sem `sort`
+ * a cada tecla.
  *
- * Devolve também o **total**: "8 municípios" quando há 54 diz à pessoa que o
+ * A faixa do nome exato entrou com os estados (05/10/2026): "parana" casa
+ * por prefixo com dezenas de nomes, e sem ela o Paraná e Paranã/TO dependiam
+ * de a população os pôr entre os 8.
+ *
+ * Devolve também o **total**: "8 resultados" quando há 54 diz à pessoa que o
  * nome que ela procura não existe, quando ele só ficou fora do corte. Por
  * isso a passada vai até o fim, sobre nomes normalizados uma vez só.
  */
 export function procurar(indice, alvo) {
   const nomes = chaves(indice);
+  const exato = [];
   const prefixo = [];
   const meio = [];
   let total = 0;
   indice.forEach((x, i) => {
     const n = nomes[i];
-    if (n.startsWith(alvo)) {
+    if (n === alvo) {
+      total += 1;
+      if (exato.length < MAXIMO) exato.push(x);
+    } else if (n.startsWith(alvo)) {
       total += 1;
       if (prefixo.length < MAXIMO) prefixo.push(x);
     } else if (n.includes(alvo)) {
@@ -88,7 +109,7 @@ export function procurar(indice, alvo) {
       if (meio.length < MAXIMO) meio.push(x);
     }
   });
-  return { achados: [...prefixo, ...meio].slice(0, MAXIMO), total };
+  return { achados: [...exato, ...prefixo, ...meio].slice(0, MAXIMO), total };
 }
 
 /**
@@ -141,11 +162,17 @@ export function sugerir(indice, alvo) {
 
 const inteiro = new Intl.NumberFormat("pt-BR");
 
-/** O que o leitor de tela ouve. Com corte, diz o total e o que fazer. */
+/**
+ * O que o leitor de tela ouve. Com corte, diz o total e o que fazer; sem
+ * nada, diz onde está a saída (o link para a lista por estado, que vem
+ * logo depois do campo na ordem do Tab).
+ */
 export function anuncio(total, termo) {
-  if (!total) return `Nenhum município encontrado para ${termo}.`;
-  if (total === 1) return `1 município encontrado para ${termo}.`;
-  const frase = `${inteiro.format(total)} municípios encontrados para ${termo}`;
+  if (!total) {
+    return `Nenhum município ou estado encontrado para ${termo}. Tab leva à lista por estado.`;
+  }
+  if (total === 1) return `1 resultado para ${termo}.`;
+  const frase = `${inteiro.format(total)} resultados para ${termo}`;
   return total > MAXIMO
     ? `${frase}; a lista mostra os ${MAXIMO} primeiros. Continue digitando para filtrar.`
     : `${frase}.`;
@@ -153,8 +180,8 @@ export function anuncio(total, termo) {
 
 /** O anúncio quando nada casa e há nomes parecidos. */
 export function anuncioSugestao(termo, sugestoes) {
-  const nomes = sugestoes.map((x) => `${x[0]} (${x[1]})`).join(", ");
-  return `Nenhum município encontrado para ${termo}. Você quis dizer: ${nomes}?`;
+  const nomes = sugestoes.map((x) => `${x[0]} (${onde(x)})`).join(", ");
+  return `Nenhum município ou estado encontrado para ${termo}. Você quis dizer: ${nomes}?`;
 }
 
 /** A última linha da lista quando há mais do que cabe nela. */
@@ -188,7 +215,17 @@ function partes() {
   const lista = raiz?.querySelector('[role="listbox"]');
   const status = raiz?.querySelector('[role="status"]');
   if (!campo || !lista || !status) return null;
-  return { campo, lista, status, caixa: campo.parentElement, erro: raiz.querySelector("[data-erro]") };
+  return {
+    campo,
+    lista,
+    status,
+    caixa: campo.parentElement,
+    erro: raiz.querySelector("[data-erro]"),
+    // A janela que envolve a lista e a saída; as duas são opcionais, para o
+    // script novo não quebrar sobre uma página guardada com a marcação velha.
+    janela: raiz.querySelector("[data-janela]"),
+    saida: raiz.querySelector("[data-saida]"),
+  };
 }
 
 function iniciar() {
@@ -221,6 +258,11 @@ function iniciar() {
     const c = lista.dataset;
     const mostrar = visivel(p);
     lista.hidden = !mostrar;
+    if (p.janela) p.janela.hidden = !mostrar;
+    // Sem resultado (com ou sem sugestão), a saída: "Ver a lista por estado".
+    // É link FORA da lista, e não opção dela: listbox só tem `option`, e uma
+    // opção que navega para outro lugar mentiria sobre o que o Enter faz.
+    if (p.saida) p.saida.hidden = !(mostrar && !total);
     campo.setAttribute("aria-expanded", String(mostrar));
     if (mostrar && ativo >= 0) campo.setAttribute("aria-activedescendant", opcaoId(lista, ativo));
     else campo.removeAttribute("aria-activedescendant");
@@ -231,7 +273,7 @@ function iniciar() {
       li.className = c.classeVazio ?? "";
       li.setAttribute("role", "option");
       li.setAttribute("aria-selected", "false");
-      li.textContent = "Nenhum município com esse nome";
+      li.textContent = "Nenhum município ou estado com esse nome";
       lista.append(li);
       return;
     }
@@ -244,7 +286,7 @@ function iniciar() {
       li.setAttribute("role", "option");
       li.setAttribute("aria-selected", "false");
       li.setAttribute("aria-disabled", "true");
-      li.textContent = "Nenhum município com esse nome. Você quis dizer:";
+      li.textContent = "Nenhum município ou estado com esse nome. Você quis dizer:";
       lista.append(li);
     }
     achados.forEach((x, i) => {
@@ -259,7 +301,7 @@ function iniciar() {
       nome.textContent = x[0];
       const uf = document.createElement("span");
       uf.className = c.classeUf ?? "";
-      uf.textContent = x[1];
+      uf.textContent = onde(x);
       li.append(nome, uf);
       lista.append(li);
     });
@@ -329,7 +371,7 @@ function iniciar() {
       p.campo.blur();
     }
     desenhar();
-    location.assign(`/municipio/${slugDe(x[0], x[1])}/`);
+    location.assign(destino(x));
   }
 
   const doCampo = (ev) => ev.target instanceof Element && ev.target.matches(CAMPO);
@@ -424,6 +466,16 @@ function iniciar() {
       aberto = false;
       desenhar();
     }
+  });
+  // A saída fecha a janela no `click`, e não no `pointerdown`: esconder o
+  // link antes de o botão subir cancelaria o próprio clique. Na capa o link
+  // só rola até a seção, e sem isto a janela ficava aberta por cima dela.
+  document.addEventListener("click", (ev) => {
+    const p = partes();
+    if (!p?.saida || !(ev.target instanceof Element) || !p.saida.contains(ev.target)) return;
+    aberto = false;
+    p.campo.value = "";
+    atualizar();
   });
   document.addEventListener("mouseover", (ev) => {
     const p = partes();

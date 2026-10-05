@@ -1992,11 +1992,13 @@ test("busca.js: o anúncio e a dica dizem o total quando a lista corta", async (
   // "8 municípios encontrados" quando há 54 fazia supor que o nome procurado
   // não existe. A contagem carrega o total (`ux-padroes.md`).
   const { anuncio, dicaDeCorte, MAXIMO } = await import("../public/busca.js");
-  assert.equal(anuncio(0, "xyz"), "Nenhum município encontrado para xyz.");
-  assert.equal(anuncio(1, "Coité"), "1 município encontrado para Coité.");
-  assert.equal(anuncio(3, "sao"), "3 municípios encontrados para sao.");
+  // Desde 05/10 o índice tem estados, e "municípios" deixou de ser verdade.
+  assert.equal(anuncio(0, "xyz"),
+    "Nenhum município ou estado encontrado para xyz. Tab leva à lista por estado.");
+  assert.equal(anuncio(1, "Coité"), "1 resultado para Coité.");
+  assert.equal(anuncio(3, "sao"), "3 resultados para sao.");
   assert.equal(anuncio(1234, "a"),
-    `1.234 municípios encontrados para a; a lista mostra os ${MAXIMO} primeiros. `
+    `1.234 resultados para a; a lista mostra os ${MAXIMO} primeiros. `
     + "Continue digitando para filtrar.");
   assert.equal(dicaDeCorte(MAXIMO), null);
   assert.equal(dicaDeCorte(54), `Mostrando ${MAXIMO} de 54. Continue digitando o nome.`);
@@ -2042,7 +2044,39 @@ test("busca.js: sem resultado, sugere pela distância de edição", async () => 
 test("busca.js: o anúncio da sugestão diz que nada casou", async () => {
   const { anuncioSugestao } = await import("../public/busca.js");
   assert.equal(anuncioSugestao("fortalesa", [["Fortaleza", "CE"]]),
-    "Nenhum município encontrado para fortalesa. Você quis dizer: Fortaleza (CE)?");
+    "Nenhum município ou estado encontrado para fortalesa. Você quis dizer: Fortaleza (CE)?");
+  assert.equal(anuncioSugestao("cearra", [["Ceará", "CE", 1]]),
+    "Nenhum município ou estado encontrado para cearra. Você quis dizer: Ceará (estado)?");
+});
+
+test("busca.js: o nome exato vem antes do prefixo", async () => {
+  // Medido em 05/10 no índice real: com os estados no fim e sem esta faixa,
+  // "parana" digitado inteiro não mostrava o Paraná entre os 8.
+  const { procurar, chave, MAXIMO } = await import("../public/busca.js");
+  const prefixos = Array.from({ length: MAXIMO + 2 }, (_, i) => [`Paranaguá ${i}`, "PR"]);
+  const indice = [...prefixos, ["Paraná", "PR", 1], ["Paranã", "TO"]];
+  const r = procurar(indice, chave("parana"));
+  assert.deepEqual(r.achados.slice(0, 2), [["Paraná", "PR", 1], ["Paranã", "TO"]]);
+  assert.equal(r.achados.length, MAXIMO);
+  // O total conta as três faixas, uma vez cada.
+  assert.equal(r.total, MAXIMO + 4);
+});
+
+test("busca.js: estado vai à página do estado, município ao slug", async () => {
+  // O endereço do estado é o de `slugUf`, nas 27 UFs do snapshot; o do
+  // município continua sendo o de `slugDe` (o teste dos 5.571 nomes, acima).
+  const { destino, onde } = await import("../public/busca.js");
+  const { slugUf } = await import("../lib/estado.ts");
+  const snap = JSON.parse(
+    fs.readFileSync(new URL("../dados/snapshot.json", import.meta.url), "utf-8"),
+  );
+  assert.equal(snap.ufs.length, 27);
+  for (const u of snap.ufs) {
+    assert.equal(destino([u.nome, u.sigla, 1]), `/estado/${slugUf(u.sigla)}/`);
+  }
+  assert.equal(destino(["Embu-Guaçu", "SP"]), "/municipio/embu-guacu-sp/");
+  assert.equal(onde(["Ceará", "CE", 1]), "estado");
+  assert.equal(onde(["Fortaleza", "CE"]), "CE");
 });
 
 test("só hidrata quem tem componente de cliente — e a lista é a do código", async () => {

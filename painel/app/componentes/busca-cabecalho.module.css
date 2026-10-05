@@ -54,21 +54,41 @@
   outline-offset: 1px;
 }
 
-.lista {
+/* A janela leva a lista e a saída. Sem `display` aqui: o atributo `hidden`
+   é o que a esconde, e um `display` declarado o venceria. */
+.janela {
   position: absolute;
   z-index: 40;
   top: calc(100% + 0.25rem);
   left: 0;
   right: 0;
-  margin: 0;
-  padding: 0.25rem;
-  list-style: none;
   background: var(--fundo);
   border: 1px solid var(--borda-forte);
   border-radius: 0.25rem;
   box-shadow: 0 6px 20px rgb(0 0 0 / 0.14);
+}
+
+.lista {
+  margin: 0;
+  padding: 0.25rem;
+  list-style: none;
   max-height: 60vh;
   overflow-y: auto;
+}
+
+.saida {
+  margin: 0;
+  padding: 0.5rem 0.75rem 0.6rem;
+  border-top: 1px solid var(--borda);
+  font-size: 0.875rem;
+}
+
+/* 24px de alvo (critério 2.5.8 do WCAG) sem depender da exceção de link
+   no meio de frase: aqui ele está sozinho. */
+.saida a {
+  display: inline-block;
+  min-height: 1.5rem;
+  line-height: 1.5rem;
 }
 
 .lista li {
@@ -163,7 +183,7 @@
     color: HighlightText;
     forced-color-adjust: none;
   }
-  .lista {
+  .janela {
     border: 1px solid CanvasText;
   }
 }

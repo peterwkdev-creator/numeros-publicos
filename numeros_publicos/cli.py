@@ -824,6 +824,17 @@ def construir_parser() -> argparse.ArgumentParser:
     em.add_argument("--banco-emendas",
                     default=os.environ.get("EMENDAS_BANCO", "emendas.db"))
     em.set_defaults(func=emendas_ingerir)
+    # --- O Brasil ao longo do tempo (05/10/2026). Banco próprio: séries do
+    # país, do IBGE e do Banco Central, cada uma lida por dois caminhos.
+    bi = sub.add_parser("brasil-ingerir",
+                        help="grava as séries do país, cada uma conferida "
+                             "por uma segunda leitura da fonte")
+    bi.add_argument("--banco-brasil",
+                    default=os.environ.get("BRASIL_BANCO", "brasil.db"))
+    bi.add_argument("--permitir-encolher", action="store_true",
+                    help="aceita série com menos pontos ou período mais curto "
+                         "que o já gravado")
+    bi.set_defaults(func=brasil_ingerir)
     return p
 
 
@@ -937,6 +948,32 @@ def emendas_ingerir(args, baixar=None) -> int:
           + " (confere com o CSV ao centavo)")
     print(f"tabela de apelidos: {r['apelidos']} nomes antigos, todos conferidos "
           "contra o snapshot")
+    return 0
+
+
+def brasil_ingerir(args, transporte=None, dormir=None) -> int:
+    """Valida a tabela de mandatos, lê cada série pelos dois caminhos e só
+    grava se todas baterem: ou entram todas, ou nenhuma."""
+    import time
+    from . import brasil
+    try:
+        mandatos = brasil.carregar_mandatos()
+        leituras = brasil.ingerir(
+            args.banco_brasil, transporte or transporte_http(),
+            dormir or time.sleep, permitir_encolher=args.permitir_encolher)
+    except brasil.ErroBrasil as e:
+        print(f"[!] {e}", file=sys.stderr)
+        return 1
+    for leitura in leituras:
+        ps = sorted(leitura.pontos)
+        vao = brasil.buracos(leitura.serie.periodicidade, leitura.pontos)
+        print(f"{leitura.serie.codigo}: {len(ps)} pontos, {ps[0]} a {ps[-1]}, "
+              "iguais na segunda leitura"
+              + (f"; sem dado na fonte: {', '.join(vao)}" if vao else ""))
+    atual = mandatos[-1]
+    print(f"mandatos: {len(mandatos)} períodos, de {mandatos[0].inicio} até "
+          f"hoje ({atual.nome}, desde {atual.inicio}), com fonte oficial em "
+          "todos, sem sobreposição nem buraco")
     return 0
 
 

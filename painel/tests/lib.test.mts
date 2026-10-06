@@ -2079,6 +2079,40 @@ test("busca.js: estado vai à página do estado, município ao slug", async () =
   assert.equal(onde(["Fortaleza", "CE"]), "CE");
 });
 
+test("busca.js: iniciais do nome, sem as palavras de ligação", async () => {
+  const { iniciais } = await import("../public/busca.js");
+  assert.equal(iniciais("Belo Horizonte"), "bh");
+  assert.equal(iniciais("São José dos Campos"), "sjc");
+  assert.equal(iniciais("Ceará-Mirim"), "cm");
+  assert.equal(iniciais("Sant'Ana do Livramento"), "sl");
+  assert.equal(iniciais("Rio de Janeiro"), "rj");
+  // Uma palavra só não tem iniciais: "f" acharia toda cidade com F.
+  assert.equal(iniciais("Fortaleza"), "");
+});
+
+test("busca.js: sigla do estado como nome exato, iniciais entre prefixo e 'contém'", async () => {
+  // Auditoria de 05/10/2026: "bh" não achava nada.
+  const { procurar, chave } = await import("../public/busca.js");
+  const indice = [
+    ["São Paulo", "SP", 1],
+    ["São Paulo", "SP"],
+    ["Espírito Santo", "ES", 1],
+    ["Sapucaia", "PA"],
+    ["Belo Horizonte", "MG"],
+    ["Boa Hora", "PI"],
+    ["Paraná", "PR", 1],
+  ];
+  const sp = procurar(indice, chave("SP"));
+  assert.deepEqual(sp.achados, [["São Paulo", "SP", 1], ["São Paulo", "SP"], ["Espírito Santo", "ES", 1]]);
+  assert.equal(sp.total, 3);
+  // Prefixo, depois iniciais, depois "contém", mesmo com a ordem do índice
+  // (a população) dizendo o contrário: quem digita "ba" quer Bauru primeiro.
+  const ba = procurar([["Itaba", "SE"], ["Boa Aventura", "PB"], ["Bauru", "SP"]], chave("ba"));
+  assert.deepEqual(ba.achados.map((x) => x[0]), ["Bauru", "Boa Aventura", "Itaba"]);
+  assert.deepEqual(procurar(indice, chave("B.H.")).achados, [["Belo Horizonte", "MG"], ["Boa Hora", "PI"]]);
+  assert.deepEqual(procurar(indice, chave("pr")).achados, [["Paraná", "PR", 1]]);
+});
+
 test("só hidrata quem tem componente de cliente — e a lista é a do código", async () => {
   // Tirar o React de uma página que precisa dele a quebra EM SILÊNCIO. Os
   // arquivos "use client" têm de ser exatamente os que `HIDRATAM` cobre: hoje,

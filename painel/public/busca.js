@@ -66,6 +66,40 @@ function chaves(indice) {
   return nomes;
 }
 
+const LIGACOES = new Set(["de", "da", "do", "das", "dos", "e"]);
+
+/**
+ * As iniciais das palavras do nome, sem as de ligação: "bh" para Belo
+ * Horizonte, "sjc" para São José dos Campos, "cm" para Ceará-Mirim. O
+ * apóstrofo não separa palavra ("Sant'Ana do Livramento" dá "sl"). Nome de
+ * uma palavra só não tem iniciais: "f" acharia toda cidade com F.
+ *
+ * Sai do próprio nome, e não de uma lista de apelidos: "poa" ou "bsb" não
+ * são iniciais, e uma lista feita à mão seria escolha editorial. Medido na
+ * auditoria de 05/10/2026: "bh" não achava nada.
+ */
+export function iniciais(nome) {
+  const palavras = nome
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .replace(/['’]/g, "")
+    .split(/[^a-z0-9]+/)
+    .filter((p) => p && !LIGACOES.has(p));
+  return palavras.length < 2 ? "" : palavras.map((p) => p[0]).join("");
+}
+
+const abreviados = new WeakMap();
+
+function iniciaisDe(indice) {
+  let lista = abreviados.get(indice);
+  if (!lista) {
+    lista = indice.map((x) => iniciais(x[0]));
+    abreviados.set(indice, lista);
+  }
+  return lista;
+}
+
 /**
  * O endereço de uma entrada do índice. Estado tem um terceiro campo e vai à
  * página dele (`slugUf` em `lib/estado.ts`, que o teste compara); município
@@ -79,12 +113,17 @@ export function destino(x) {
 export const onde = (x) => (x[2] ? "estado" : x[1]);
 
 /**
- * Nome exato, depois prefixo, depois "contém", numa passada só — sem `sort`
- * a cada tecla.
+ * Nome exato, depois prefixo, depois iniciais, depois "contém", numa passada
+ * só — sem `sort` a cada tecla.
  *
  * A faixa do nome exato entrou com os estados (05/10/2026): "parana" casa
  * por prefixo com dezenas de nomes, e sem ela o Paraná e Paranã/TO dependiam
- * de a população os pôr entre os 8.
+ * de a população os pôr entre os 8. A sigla do estado conta como nome exato
+ * dele: "pr" abre com o Paraná.
+ *
+ * As iniciais vêm depois do prefixo: quem digita "sa" quer Salvador e
+ * Santos antes de Santo André. E antes do "contém", que com duas ou três
+ * letras é quase só ruído.
  *
  * Devolve também o **total**: "8 resultados" quando há 54 diz à pessoa que o
  * nome que ela procura não existe, quando ele só ficou fora do corte. Por
@@ -92,24 +131,29 @@ export const onde = (x) => (x[2] ? "estado" : x[1]);
  */
 export function procurar(indice, alvo) {
   const nomes = chaves(indice);
+  const abreviaturas = iniciaisDe(indice);
   const exato = [];
   const prefixo = [];
+  const sigla = [];
   const meio = [];
   let total = 0;
   indice.forEach((x, i) => {
     const n = nomes[i];
-    if (n === alvo) {
+    if (n === alvo || (x[2] && x[1].toLowerCase() === alvo)) {
       total += 1;
       if (exato.length < MAXIMO) exato.push(x);
     } else if (n.startsWith(alvo)) {
       total += 1;
       if (prefixo.length < MAXIMO) prefixo.push(x);
+    } else if (abreviaturas[i] === alvo) {
+      total += 1;
+      if (sigla.length < MAXIMO) sigla.push(x);
     } else if (n.includes(alvo)) {
       total += 1;
       if (meio.length < MAXIMO) meio.push(x);
     }
   });
-  return { achados: [...exato, ...prefixo, ...meio].slice(0, MAXIMO), total };
+  return { achados: [...exato, ...prefixo, ...sigla, ...meio].slice(0, MAXIMO), total };
 }
 
 /**

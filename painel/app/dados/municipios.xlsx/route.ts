@@ -1,5 +1,5 @@
 import { expandir } from "../../../lib/dados";
-import { funcoesDe, indexarFiscal, receitaDe, ROTULO_FAIXA } from "../../../lib/fiscal";
+import { funcoesDe, indexarFiscal, naoInstaladosEm, receitaDe, ROTULO_FAIXA } from "../../../lib/fiscal";
 import { trajetoriaDe } from "../../../lib/ideb";
 import { lerCaged, lerFiscal, lerIdeb, lerSnapshot, SITE } from "../../../lib/servidor";
 import { cagedDe, nomeCompetencia } from "../../../lib/caged";
@@ -185,6 +185,11 @@ export async function GET() {
       ["Municípios no IBGE", fiscal.cobertura.municipiosIbge, ""],
       ["Consultados no SICONFI", fiscal.cobertura.consultados, ""],
       ["Entregaram o relatório fiscal", fiscal.cobertura.publicaram, ""],
+      // Consultados sem relatório por não existirem ainda: sem esta linha, a
+      // diferença entre as duas de cima os contaria como "não entregaram".
+      ...(naoInstaladosEm(fiscal.exercicio) > 0
+        ? [["Ainda não instalados no período", naoInstaladosEm(fiscal.exercicio), ""]]
+        : []),
       ["Com rede municipal (anos iniciais)", ideb.cobertura.municipios, ""],
       [],
       // Até 23/09/2026 dizia "AGPL-3.0", que é a licença do CÓDIGO. A planilha

@@ -26,7 +26,7 @@ import {
   compararFuncoes, faixaDaLinha, faixaDe, faixasEmLinha, FAIXA_DA_LETRA, funcoesDe,
   indexarFiscal, saltoSobreAHistoria, type LinhaFiscal,
   funcoesRecentesDe, LETRA_FAIXA, parDeFuncoes,
-  contiguos, indiceQuadrimestre, INSTALADO_EM, interrupcoes, pontoPlausivel, PRESTA_COMO_ESTADO,
+  contiguos, indiceQuadrimestre, INSTALADO_EM, interrupcoes, naoInstaladosEm, pontoPlausivel, PRESTA_COMO_ESTADO,
   receitaDe, receitaRecenteDe, rotuloReceita, ROTULO_FAIXA, saudeDe,
   serieFuncoesDe, serieDePessoal, CODIGO_FAIXA, variacao, slugDe,
   type PontoSerie, type Receita,
@@ -281,6 +281,13 @@ test("quem ainda não estava instalado NÃO é marcado como faltoso", () => {
   assert.equal(faixaDe(null, null, LIMITES, false, ben), "sem-dado");
   // E a exceção não alcança um município comum no mesmo exercício.
   assert.equal(faixaDe(null, null, LIMITES, false, 3550308, 2024), "sem-dado");
+});
+
+test("a cobertura desconta o não instalado só antes da instalação", () => {
+  // A ajuda e o XLSX fazem `consultados - publicaram`; sem este desconto, BEN
+  // voltaria a ser contado entre os que não entregaram o de 2024.
+  assert.equal(naoInstaladosEm(2024), 1);
+  assert.equal(naoInstaladosEm(2025), 0);
 });
 
 test("o não instalado sai com a sua letra na string, e só no exercício anterior", () => {

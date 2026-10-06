@@ -788,6 +788,16 @@ export const PRESTA_COMO_ESTADO: ReadonlySet<number> = new Set([5300108]);
  */
 export const INSTALADO_EM: ReadonlyMap<number, number> = new Map([[5101837, 2025]]);
 
+/** Quantos municípios de `INSTALADO_EM` ainda não existiam como prefeitura no
+ *  exercício. O SICONFI os consulta e não acha relatório, então a conta
+ *  `cobertura.consultados - cobertura.publicaram` os poria entre os que não
+ *  entregaram: quem lê a cobertura desconta estes. A regra é a de `faixaDe`. */
+export function naoInstaladosEm(exercicio: number): number {
+  let n = 0;
+  for (const ano of INSTALADO_EM.values()) if (exercicio < ano) n++;
+  return n;
+}
+
 /** Onde o município cai em relação aos dois limites da Lei de
  *  Responsabilidade Fiscal. Sem percentual, a resposta é "não sei" — e "não
  *  sei" nunca pode virar "está abaixo". */

@@ -9,7 +9,7 @@ import { conjuntoDoSite, siteDe, trilha } from "../../lib/jsonld";
 import { gruposComPagina } from "../../lib/inss";
 import { lerFiscal, lerIdeb, lerInss, lerSnapshot, SITE } from "../../lib/servidor";
 import estilos from "./ajuda.module.css";
-import { anteriorDeFuncoes, atualDeFuncoes } from "../../lib/fiscal";
+import { anteriorDeFuncoes, atualDeFuncoes, naoInstaladosEm } from "../../lib/fiscal";
 
 /**
  * A página de ajuda — o que fazer quando o número não se explica sozinho.
@@ -60,7 +60,11 @@ export default async function PaginaAjuda() {
   const idebFinais = await lerIdeb("anos_finais");
   const total = expandir(snapshot).length;
   const c = fiscal.cobertura;
-  const naoPublicaram = c.consultados - c.publicaram;
+  // Quem ainda não estava instalado foi consultado e não tinha relatório, mas
+  // não "deixou de entregar": sai das duas pontas da frase do travessão.
+  const naoInstalados = naoInstaladosEm(fiscal.exercicio);
+  const obrigados = c.consultados - naoInstalados;
+  const naoPublicaram = obrigados - c.publicaram;
   const quadrimestre = `${fiscal.periodo}º quadrimestre de ${fiscal.exercicio}`;
   const f = fiscal.funcoes;
 
@@ -182,7 +186,8 @@ export default async function PaginaAjuda() {
         </p>
         <p>
           No {quadrimestre}, <strong>{br(naoPublicaram)}</strong> dos{" "}
-          {br(c.consultados)} municípios consultados não entregaram o Relatório
+          {br(obrigados)} municípios consultados
+          {naoInstalados > 0 && " que já estavam instalados"} não entregaram o Relatório
           de Gestão Fiscal ao SICONFI. Isso não significa que gastem zero com
           pessoal: significa que ninguém sabe quanto gastam, porque o relatório
           não foi publicado.

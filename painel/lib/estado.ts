@@ -68,6 +68,12 @@ export type ResumoEstado = {
    * na esfera onde de fato presta contas. Ver `PRESTA_COMO_ESTADO`.
    */
   comoEstado: number;
+  /**
+   * Quantos municípios do estado ainda não estavam instalados no exercício do
+   * período em destaque. Saem da conta de "não entregaram" pelo mesmo motivo
+   * do Distrito Federal: não havia prefeitura para entregar. Ver `INSTALADO_EM`.
+   */
+  naoInstalados: number;
   /** A despesa por função somada no estado, da maior para a menor. */
   funcoes: { total: number; fatias: FatiaFuncao[]; municipios: number } | null;
 };
@@ -80,6 +86,7 @@ const FAIXAS_ZERADAS = (): Record<Faixa, number> => ({
   "sem-dado": 0,
   "nao-consultado": 0,
   "como-estado": 0,
+  "nao-instalado": 0,
 });
 
 export function resumirEstado(
@@ -140,6 +147,8 @@ export function resumirEstado(
     publicaram: municipios.filter((m) => m.fiscal?.publicou).length,
     comoEstado: municipios.filter(
       (m) => m.fiscal?.faixa === "como-estado").length,
+    naoInstalados: municipios.filter(
+      (m) => m.fiscal?.faixa === "nao-instalado").length,
     funcoes: somarFuncoes(fiscal, municipios),
   };
 }

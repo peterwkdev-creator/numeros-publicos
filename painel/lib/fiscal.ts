@@ -20,7 +20,9 @@ export type Faixa =
   /** **Ainda não perguntamos.** Ver `ROTULO_FAIXA`. */
   | "nao-consultado"
   /** Presta contas como ESTADO, não como município. Ver `PRESTA_COMO_ESTADO`. */
-  | "como-estado";
+  | "como-estado"
+  /** O município ainda não existia como prefeitura no período. Ver `INSTALADO_EM`. */
+  | "nao-instalado";
 
 /**
  * A faixa do plausivel: **entre 0 e 100%**.
@@ -717,6 +719,7 @@ export const ROTULO_FAIXA: Record<Faixa, string> = {
   "sem-dado": "Sem relatório entregue",
   "nao-consultado": "Ainda não consultado",
   "como-estado": "Presta contas como estado, não como município",
+  "nao-instalado": "Ainda não instalado no período",
 };
 
 /**
@@ -741,6 +744,7 @@ export const CODIGO_FAIXA: Record<Faixa, string> = {
   "sem-dado": "sem_relatorio",
   "nao-consultado": "nao_consultado",
   "como-estado": "presta_contas_como_estado",
+  "nao-instalado": "nao_instalado_no_periodo",
 };
 
 /**
@@ -764,6 +768,26 @@ export const CODIGO_FAIXA: Record<Faixa, string> = {
  */
 export const PRESTA_COMO_ESTADO: ReadonlySet<number> = new Set([5300108]);
 
+/**
+ * Municípios instalados DEPOIS de algum exercício que o snapshot cobre: o ano
+ * em que a prefeitura passou a existir.
+ *
+ * Hoje só Boa Esperança do Norte/MT (5101837). Criado pela Lei Estadual 7.264,
+ * de 29/03/2000, e **instalado em 01/01/2025**, com o primeiro prefeito eleito
+ * em 06/10/2024 — conferido em 06/10/2026 na agência do IBGE ("IBGE atualiza
+ * estruturas territoriais do país", notícia 43213). Até 31/12/2024 não havia
+ * prefeitura para entregar o RGF de 2024.
+ *
+ * **Sem esta distinção o site dizia que ele "não entregou o Relatório de
+ * Gestão Fiscal do 3º quadrimestre de 2024"**, e o contava entre os que não
+ * entregaram em Mato Grosso. É o erro de `PRESTA_COMO_ESTADO` no eixo do
+ * tempo: lá se perguntava na esfera errada, aqui no ano errado.
+ *
+ * Lista literal, pelo mesmo motivo daquela: é um ente, e a data vem de uma
+ * fonte conferida, não de uma regra inferida.
+ */
+export const INSTALADO_EM: ReadonlyMap<number, number> = new Map([[5101837, 2025]]);
+
 /** Onde o município cai em relação aos dois limites da Lei de
  *  Responsabilidade Fiscal. Sem percentual, a resposta é "não sei" — e "não
  *  sei" nunca pode virar "está abaixo". */
@@ -773,14 +797,22 @@ export function faixaDe(
   limites: SnapshotFiscal["limites"],
   /** `null` = ainda não consultado; `false` = consultado e não entregou. */
   publicou: boolean | null = false,
-  /** O código IBGE, só para reconhecer quem presta contas como estado. */
+  /** O código IBGE, para reconhecer quem presta contas como estado e quem
+   *  ainda não estava instalado. */
   codigo?: number,
+  /** O exercício do período em destaque; sem ele, não se testa a instalação. */
+  exercicio?: number,
 ): Faixa {
   // Antes de tudo: quem não é município não deixou de entregar relatório de
   // município. Perguntar na esfera errada e registrar a ausência como falta
   // é acusação sem lastro -- ver `PRESTA_COMO_ESTADO`.
   if (codigo !== undefined && PRESTA_COMO_ESTADO.has(codigo)) {
     return "como-estado";
+  }
+  // Nem quem ainda não existia como prefeitura -- ver `INSTALADO_EM`.
+  const instalado = codigo !== undefined ? INSTALADO_EM.get(codigo) : undefined;
+  if (instalado !== undefined && exercicio !== undefined && exercicio < instalado) {
+    return "nao-instalado";
   }
   // A ordem importa: "não perguntamos" vem ANTES de qualquer leitura do
   // percentual, porque sem consulta não há percentual para interpretar.
@@ -925,7 +957,7 @@ export function razaoReceitaRcl(
  */
 export function faixaDaLinha(s: SnapshotFiscal, linha: LinhaFiscal): Faixa {
   const [codigo, , , , publicou, percentual, limitePrudencial, , rclAjustada] = linha;
-  const f = faixaDe(percentual, limitePrudencial, s.limites, publicou, codigo);
+  const f = faixaDe(percentual, limitePrudencial, s.limites, publicou, codigo, s.exercicio);
   const leuOPercentual =
     f === "abaixo" || f === "acima-prudencial" || f === "acima-legal";
   return leuOPercentual && rclDesmentida(s, codigo, rclAjustada, percentual)
@@ -1024,6 +1056,7 @@ export const LETRA_FAIXA: Record<Faixa, string> = {
   "sem-dado": "s",
   "nao-consultado": "n",
   "como-estado": "e",
+  "nao-instalado": "d",
 };
 
 /** O inverso de `LETRA_FAIXA`, para o navegador voltar da letra à faixa. */

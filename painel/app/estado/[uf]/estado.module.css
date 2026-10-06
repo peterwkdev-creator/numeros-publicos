@@ -252,7 +252,8 @@
 }
 /* Nem alerta nem ausência: o ente presta contas, na esfera dele. Traço-ponto,
    que nenhuma outra faixa usa, e nenhuma cor da escala de alerta. */
-.faixas li.como-estado {
+.faixas li.como-estado,
+.faixas li.nao-instalado {
   border-left: 3px dashed var(--borda-forte);
   border-left-style: dashed;
 }
@@ -335,7 +336,8 @@
 .lista .implausivel { background: #f1eef7; color: #4c3d66; }
 .lista .sem-dado { background: transparent; color: var(--tinta-fraca); }
 .lista .nao-consultado { background: transparent; color: var(--tinta-fraca); font-style: italic; }
-.lista .como-estado { background: transparent; color: var(--tinta-fraca); font-style: italic; }
+.lista .como-estado,
+.lista .nao-instalado { background: transparent; color: var(--tinta-fraca); font-style: italic; }
 
 @media (prefers-color-scheme: dark) {
   .lista .acima-legal { background: #35201b; color: #f0a693; }
@@ -443,14 +445,17 @@
   border-left-style: dotted;
 }
 
-.como-estado {
+.como-estado,
+.nao-instalado {
   border-left-width: 3px;
   border-left-style: dashed;
 }
-.como-estado .valor {
+.como-estado .valor,
+.nao-instalado .valor {
   color: var(--tinta-fraca);
 }
-.como-estado .selo {
+.como-estado .selo,
+.nao-instalado .selo {
   background: transparent;
   color: var(--tinta-fraca);
   font-style: italic;
@@ -473,7 +478,8 @@
   .abaixo,
   .sem-dado,
   .nao-consultado,
-  .como-estado {
+  .como-estado,
+  .nao-instalado {
     border-left-color: #000 !important;
   }
 
@@ -483,7 +489,8 @@
   .abaixo .valor,
   .sem-dado .valor,
   .nao-consultado .valor,
-  .como-estado .valor {
+  .como-estado .valor,
+  .nao-instalado .valor {
     color: #000 !important;
   }
 
@@ -494,7 +501,8 @@
   .abaixo .selo,
   .sem-dado .selo,
   .nao-consultado .selo,
-  .como-estado .selo {
+  .como-estado .selo,
+  .nao-instalado .selo {
     background: transparent !important;
     color: #000 !important;
     border: 1px solid #000;
@@ -506,7 +514,8 @@
   .lista .implausivel,
   .lista .sem-dado,
   .lista .nao-consultado,
-  .lista .como-estado {
+  .lista .como-estado,
+  .lista .nao-instalado {
     background: transparent !important;
     color: #000 !important;
   }

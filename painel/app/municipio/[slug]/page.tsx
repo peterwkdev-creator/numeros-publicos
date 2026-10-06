@@ -17,7 +17,7 @@ import {
 } from "../../../lib/jsonld";
 import {
   compararFuncoes, DESLOCAMENTO_MINIMO, FUNCOES_DA_PORTARIA, funcoesRecentesDe,
-  indexarFiscal, interrupcoes, rclDesmentida, receitaDe, receitaRecenteDe,
+  indexarFiscal, INSTALADO_EM, interrupcoes, rclDesmentida, receitaDe, receitaRecenteDe,
   SALTO_MINIMO, saltoSobreAHistoria,
   ROTULO_FAIXA, rotuloPeriodo, saudeDe, serieDePessoal,
   slugDe, variacao,
@@ -222,12 +222,20 @@ export default async function PaginaMunicipio(
   );
   // Quantos municípios do estado também não entregaram. Só faz sentido na
   // página de quem não entregou: ali transforma um vazio isolado num padrão.
+  //
+  // Pela FAIXA, e não pelo `publicou` cru: quem presta contas como estado ou
+  // ainda não estava instalado no exercício também traz `publicou === false`,
+  // e contá-lo aqui seria repetir a acusação que essas faixas existem para
+  // impedir. Até 06/10/2026 Boa Esperança do Norte, instalado em 2025, entrava
+  // nos "64 dos 142" de Mato Grosso que não entregaram o RGF de 2024.
   const naoEntregaramNoEstado = doEstado.filter(
-    (x) => x.fiscal && x.fiscal.publicou === false).length;
+    (x) => x.fiscal?.faixa === "sem-dado").length;
   const consultadosNoEstado = doEstado.filter(
-    (x) => x.fiscal?.publicou !== null && x.fiscal?.publicou !== undefined).length;
+    (x) => x.fiscal?.publicou !== null && x.fiscal?.publicou !== undefined &&
+      x.fiscal.faixa !== "como-estado" && x.fiscal.faixa !== "nao-instalado").length;
 
   const f = m.fiscal;
+  const instaladoEm = INSTALADO_EM.get(m.codigo);
   // A receita corrente que DESMENTE a RCL, quando desmente — `null` nos
   // outros casos. Vem de `receitaDe` (exercício da coleta, sem recuar), o
   // mesmo recorte que `rclDesmentida` usou para marcar o município: se os
@@ -570,6 +578,14 @@ export default async function PaginaMunicipio(
               >
                 {ROTULO_FAIXA["como-estado"]}
               </Termo>
+            ) : f?.faixa === "nao-instalado" ? (
+              <Termo
+                ancora="nao-instalado"
+                bloco
+                dica="O município só passou a ter prefeitura depois do exercício deste relatório. Não havia quem o entregasse, e por isso não há número aqui: o que falta é o município no período, não a prestação de contas."
+              >
+                {ROTULO_FAIXA["nao-instalado"]}
+              </Termo>
             ) : (
               ROTULO_FAIXA[f?.faixa ?? "nao-consultado"]
             )}
@@ -747,6 +763,16 @@ export default async function PaginaMunicipio(
             painel cobre municípios: por isso o número não aparece aqui.{" "}
             <em>Ausência de dado municipal não é ausência de prestação de
             contas.</em>
+          </p>
+        ) : f?.faixa === "nao-instalado" && instaladoEm !== undefined ? (
+          // Não é ausência: até o ano da instalação não havia prefeitura para
+          // entregar. Conferido no IBGE em 06/10/2026. Ver `INSTALADO_EM`.
+          <p>
+            <strong>{m.nome} só foi instalado em {instaladoEm}</strong>: até lá
+            não havia prefeitura, e por isso não havia quem entregasse o
+            Relatório de Gestão Fiscal do {quadrimestre}. O número não aparece
+            aqui porque o relatório não lhe cabia.{" "}
+            <em>Ausência de dado não é ausência de prestação de contas.</em>
           </p>
         ) : f?.publicou === false ? (
           <>

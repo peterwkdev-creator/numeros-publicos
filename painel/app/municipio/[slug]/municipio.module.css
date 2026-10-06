@@ -422,13 +422,16 @@
 /* Presta contas como estado. Nem alerta nem ausência: há relatório, só não na
    esfera municipal. Tracejado, para não se confundir com o pontilhado da
    ausência nem com nenhuma cor da escala. */
-.como-estado {
+.como-estado,
+.nao-instalado {
   border-left: 3px dashed var(--borda-forte);
 }
-.como-estado .valor {
+.como-estado .valor,
+.nao-instalado .valor {
   color: var(--tinta-fraca);
 }
-.como-estado .selo {
+.como-estado .selo,
+.nao-instalado .selo {
   background: transparent;
   color: var(--tinta-fraca);
   font-style: italic;

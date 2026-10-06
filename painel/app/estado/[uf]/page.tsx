@@ -118,7 +118,9 @@ export default async function PaginaEstado(
   // Quem presta contas como estado sai da conta de ausentes: ele entregou, na
   // esfera onde de fato presta contas. Somá-lo aqui seria repetir, uma casa
   // adiante, o erro que a faixa `como-estado` existe para corrigir.
-  const ausentes = r.uf.municipios - r.publicaram - r.comoEstado;
+  // E quem ainda não estava instalado no exercício, pelo mesmo motivo no eixo
+  // do tempo: não havia prefeitura para entregar. Ver `INSTALADO_EM`.
+  const ausentes = r.uf.municipios - r.publicaram - r.comoEstado - r.naoInstalados;
 
   // Os 27 estados, para situar este entre eles — o que só ficou possível com
   // a varredura nacional fechada. Ver a nota de desenho em `lib/nacional.ts`.
@@ -364,6 +366,14 @@ export default async function PaginaEstado(
                 contas como estado
               </>
             )}
+            {r.naoInstalados > 0 && (
+              <>
+                <br />
+                {r.naoInstalados === 1
+                  ? "Outro município ainda não estava instalado"
+                  : `Outros ${br(r.naoInstalados)} municípios ainda não estavam instalados`}
+              </>
+            )}
           </p>
         </article>
         )}
@@ -428,7 +438,7 @@ export default async function PaginaEstado(
         </p>
         <ul className={estilos.faixas}>
           {(["acima-legal", "acima-prudencial", "abaixo", "implausivel",
-            "sem-dado", "nao-consultado", "como-estado"] as const)
+            "sem-dado", "nao-consultado", "como-estado", "nao-instalado"] as const)
             // Faixa vazia não vira linha: "0 ainda não consultado" é ruído
             // depois que a varredura fecha, e some sozinho quando fecha.
             .filter((f) => r.porFaixa[f] > 0)
@@ -555,7 +565,10 @@ export default async function PaginaEstado(
           <h3 className={estilos.subtitulo}>Quantos prestam contas</h3>
           <p>
             <strong>{br(meu.publicaram)}</strong> dos{" "}
-            <strong>{br(meu.municipios)}</strong> municípios {de} entregaram o
+            <strong>{br(meu.municipios)}</strong> municípios {de}
+            {/* `meu.municipios` não conta quem ainda não estava instalado:
+                sem estas palavras, MT diria "dos 141" e tem 142. */}
+            {r.naoInstalados > 0 && " já instalados"} entregaram o
             Relatório de Gestão Fiscal do {quadrimestre} —{" "}
             <strong>{br(meu.taxa, 0)}%</strong>. Entre as{" "}
             {br(panorama.length)} com relatório municipal,{" "}
@@ -648,7 +661,8 @@ export default async function PaginaEstado(
                 ) : (
                   <>
                     A mediana descreve os {br(meu.base)} municípios que
-                    entregaram, não os {br(meu.municipios)} do estado. Sobre os
+                    entregaram, não os {br(meu.municipios)}{" "}
+                    {r.naoInstalados > 0 ? "já instalados" : "do estado"}. Sobre os
                     que não entregaram não se sabe nada.
                   </>
                 )}

@@ -26,7 +26,7 @@ import {
   compararFuncoes, faixaDaLinha, faixaDe, faixasEmLinha, FAIXA_DA_LETRA, funcoesDe,
   indexarFiscal, saltoSobreAHistoria, type LinhaFiscal,
   funcoesRecentesDe, LETRA_FAIXA, parDeFuncoes,
-  contiguos, indiceQuadrimestre, interrupcoes, pontoPlausivel, PRESTA_COMO_ESTADO,
+  contiguos, indiceQuadrimestre, INSTALADO_EM, interrupcoes, pontoPlausivel, PRESTA_COMO_ESTADO,
   receitaDe, receitaRecenteDe, rotuloReceita, ROTULO_FAIXA, saudeDe,
   serieFuncoesDe, serieDePessoal, CODIGO_FAIXA, variacao, slugDe,
   type PontoSerie, type Receita,
@@ -263,6 +263,32 @@ test("o Distrito Federal sai como 'como-estado' também na string", () => {
     ])),
     LETRA_FAIXA["como-estado"],
   );
+});
+
+test("quem ainda não estava instalado NÃO é marcado como faltoso", () => {
+  // Boa Esperança do Norte/MT foi instalado em 01/01/2025 (IBGE, conferido em
+  // 06/10/2026). Até essa data o site dizia que ele "não entregou o RGF de
+  // 2024" -- um relatório que não tinha prefeitura para entregá-lo.
+  const ben = 5101837;
+  assert.equal(INSTALADO_EM.get(ben), 2025);
+  assert.equal(faixaDe(null, null, LIMITES, false, ben, 2024), "nao-instalado");
+  assert.equal(faixaDe(null, null, LIMITES, null, ben, 2024), "nao-instalado");
+  // A partir do ano da instalação, ele é um município como os outros: se não
+  // entregar o de 2025, aí sim é "sem relatório entregue".
+  assert.equal(faixaDe(null, null, LIMITES, false, ben, 2025), "sem-dado");
+  assert.equal(faixaDe(45, 51.3, LIMITES, true, ben, 2025), "abaixo");
+  // Sem exercício não se testa a instalação: nada de adivinhar o ano.
+  assert.equal(faixaDe(null, null, LIMITES, false, ben), "sem-dado");
+  // E a exceção não alcança um município comum no mesmo exercício.
+  assert.equal(faixaDe(null, null, LIMITES, false, 3550308, 2024), "sem-dado");
+});
+
+test("o não instalado sai com a sua letra na string, e só no exercício anterior", () => {
+  const linha = [5101837, "", "", null, false, null, null, null, null];
+  const comExercicio = (exercicio: number) =>
+    ({ limites: LIMITES, exercicio, municipios: [linha] }) as never;
+  assert.equal(faixasEmLinha([[5101837]], comExercicio(2024)), LETRA_FAIXA["nao-instalado"]);
+  assert.equal(faixasEmLinha([[5101837]], comExercicio(2025)), LETRA_FAIXA["sem-dado"]);
 });
 
 test("toda faixa tem uma letra, e toda letra volta à sua faixa", () => {
@@ -1175,6 +1201,34 @@ test("quem presta contas como estado sai das DUAS contas", () => {
   assert.equal(r.universo + r.comoEstado, 7);
 });
 
+test("quem ainda não estava instalado sai do universo, e vai nomeado", () => {
+  // Contá-lo entre os que não entregaram é a acusação que `INSTALADO_EM`
+  // impede. E ele sai com nome e endereço do IBGE, para a página dizer quem é.
+  const base = fiscalParaRanking() as unknown as { municipios: unknown[][] };
+  const fiscal = {
+    ...base,
+    exercicio: 2024,
+    municipios: [...base.municipios,
+      [5101837, "Boa Esperanca do Norte", "MT", 7000, false, null, 51.3, 0, 0]],
+  } as never;
+  const ibge = ibgeParaRanking() as unknown as { colunas: string[]; municipios: unknown[][] };
+  const identidade = {
+    ...ibge,
+    municipios: [...ibge.municipios, [5101837, "Boa Esperança do Norte", "MT"]],
+  } as never;
+  const r = rankingPessoal(fiscal, identidade);
+  assert.equal(r.universo, 6, "nem o DF nem o não instalado entram");
+  assert.equal(r.naoEntregaram, 1, "só o que não entregou de fato");
+  assert.deepEqual(r.naoInstalados, [{
+    nome: "Boa Esperança do Norte", uf: "MT",
+    slug: "boa-esperanca-do-norte-mt", instaladoEm: 2025,
+  }]);
+  // No exercício da instalação ele volta a ser um município comum.
+  const r2025 = rankingPessoal({ ...(fiscal as object), exercicio: 2025 } as never, identidade);
+  assert.equal(r2025.naoInstalados.length, 0);
+  assert.equal(r2025.naoEntregaram, 2);
+});
+
 test("a faixa prudencial é alerta, e não entra na lista de infração", () => {
   const r = rankingPessoal(fiscalParaRanking(), ibgeParaRanking());
   assert.equal(r.naFaixaPrudencial, 1);
@@ -1947,6 +2001,8 @@ test("CODIGO_FAIXA: um código por faixa, distinto e filtrável", () => {
   for (const c of codigos) assert.match(c, /^[a-z_]+$/);
   assert.equal(CODIGO_FAIXA["como-estado"], "presta_contas_como_estado",
     "o mesmo código que `pessoal_publicou` já publica para Brasília");
+  assert.equal(CODIGO_FAIXA["nao-instalado"], "nao_instalado_no_periodo",
+    "o mesmo código que `pessoal_publicou` publica para quem não estava instalado");
 });
 
 // ---------------------- a busca sem React, e quem ainda pode hidratar

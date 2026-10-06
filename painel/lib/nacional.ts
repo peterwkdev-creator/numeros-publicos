@@ -1,6 +1,6 @@
 import type { Snapshot } from "./dados";
 import {
-  atualDeFuncoes, faixaDaLinha, type FatiaFuncao, type SnapshotFiscal, slugDe } from "./fiscal";
+  atualDeFuncoes, faixaDaLinha, type FatiaFuncao, INSTALADO_EM, type SnapshotFiscal, slugDe } from "./fiscal";
 
 /**
  * O panorama dos 27 estados — o que só a varredura nacional tornou possível.
@@ -88,7 +88,9 @@ export function panoramaEstados(fiscal: SnapshotFiscal): PanoramaUf[] {
     // Quem presta contas como estado sai das DUAS contas: não entregou como
     // município porque não é um, e contá-lo como faltoso é a acusação que a
     // faixa `como-estado` existe para impedir. Ver `PRESTA_COMO_ESTADO`.
-    if (faixa === "como-estado") {
+    // E quem ainda não estava instalado, pelo mesmo motivo no eixo do tempo:
+    // não havia prefeitura para entregar. Ver `INSTALADO_EM`.
+    if (faixa === "como-estado" || faixa === "nao-instalado") {
       linha.total -= 1;
       por.set(chave, linha);
       continue;
@@ -228,6 +230,12 @@ export type RankingPessoal = {
   publicaram: number;
   naoEntregaram: number;
   comoEstado: number;
+  /**
+   * Municípios que ainda não estavam instalados no exercício. Saem do universo
+   * como o Distrito Federal: não havia prefeitura para entregar o relatório.
+   * Ver `INSTALADO_EM`.
+   */
+  naoInstalados: { nome: string; uf: string; slug: string | null; instaladoEm: number }[];
   /** Acima do teto legal, do maior para o menor. Sem os implausíveis. */
   acimaDoTeto: LinhaRanking[];
   /** Entre o prudencial e o teto — alerta, não infração. */
@@ -311,6 +319,7 @@ export function rankingPessoal(
   const acima: LinhaRanking[] = [];
   const fora: LinhaRanking[] = [];
   const plausiveis: number[] = [];
+  const naoInstalados: RankingPessoal["naoInstalados"] = [];
   let universo = 0, publicaram = 0, comoEstado = 0, prudencial = 0;
 
   for (const registro of fiscal.municipios) {
@@ -321,6 +330,16 @@ export function rankingPessoal(
     // receita do próprio município desmentia por um fator de 2 a 5.
     const faixa = faixaDaLinha(fiscal, registro);
     if (faixa === "como-estado") { comoEstado += 1; continue; }
+    if (faixa === "nao-instalado") {
+      const id = nomes.get(codigo as number);
+      naoInstalados.push({
+        nome: id?.nome ?? (nome as string),
+        uf: id?.uf ?? (uf as string),
+        slug: id ? slugDe(id.nome, id.uf) : null,
+        instaladoEm: INSTALADO_EM.get(codigo as number) as number,
+      });
+      continue;
+    }
     universo += 1;
     if (!publicou || typeof percentual !== "number") continue;
     publicaram += 1;
@@ -365,6 +384,7 @@ export function rankingPessoal(
     publicaram,
     naoEntregaram: universo - publicaram,
     comoEstado,
+    naoInstalados,
     acimaDoTeto: acima.sort(ordenar),
     naFaixaPrudencial: prudencial,
     implausiveis: fora.sort(ordenar),

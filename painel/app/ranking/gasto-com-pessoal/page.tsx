@@ -213,8 +213,19 @@ export default async function Pagina() {
             <>
               {" "}São {br(r.universo)}, e não os{" "}
               {br(fiscal.cobertura.municipiosIbge)} do IBGE, porque Fernando de
-              Noronha é distrito estadual de Pernambuco e o Distrito Federal
-              presta contas como estado.
+              Noronha é distrito estadual de Pernambuco
+              {r.naoInstalados.length === 0 ? " e o" : ", o"} Distrito Federal
+              presta contas como estado
+              {r.naoInstalados.map((x, i) => (
+                <span key={x.nome}>
+                  {i === r.naoInstalados.length - 1 ? " e " : ", "}
+                  {x.slug
+                    ? <Link href={`/municipio/${x.slug}/`} prefetch={false}>{x.nome} ({x.uf})</Link>
+                    : `${x.nome} (${x.uf})`}{" "}
+                  só foi instalado em {x.instaladoEm}
+                </span>
+              ))}
+              .
             </>
           )}
         </p>
@@ -327,6 +338,13 @@ export default async function Pagina() {
               O Distrito Federal fica fora da lista porque presta contas na
               esfera estadual — não é município, e contá-lo como faltoso seria
               uma acusação falsa.
+            </>
+          )}
+          {r.naoInstalados.length > 0 && (
+            <>
+              {" "}Também fica fora quem ainda não estava instalado em{" "}
+              {fiscal.exercicio}: sem prefeitura, não havia quem entregasse o
+              relatório.
             </>
           )}
         </p>

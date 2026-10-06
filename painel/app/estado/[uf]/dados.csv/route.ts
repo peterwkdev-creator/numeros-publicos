@@ -71,9 +71,12 @@ export async function GET(
       // A mesma distinção da base completa: "não entregou", "não consultado" e
       // "presta contas como estado" não podem colapsar num campo vazio nem
       // num `nao` — o último seria acusar de não prestar contas quem presta,
-      // num arquivo que viaja sem a explicação da página.
+      // num arquivo que viaja sem a explicação da página. O mesmo para quem
+      // ainda não estava instalado no exercício (`INSTALADO_EM`).
       m.fiscal?.faixa === "como-estado"
         ? "presta_contas_como_estado"
+        : m.fiscal?.faixa === "nao-instalado"
+        ? "nao_instalado_no_periodo"
         : m.fiscal?.publicou === null || m.fiscal?.publicou === undefined
           ? "nao_consultado"
           : m.fiscal.publicou ? "sim" : "nao",

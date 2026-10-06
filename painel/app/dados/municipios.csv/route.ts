@@ -94,8 +94,13 @@ export async function GET() {
       // contas COMO ESTADO. Escrever `nao` ali é afirmar que o ente não
       // prestou contas — falso, e num arquivo que viaja sem a explicação da
       // página, o que é pior que na tela. Ver `PRESTA_COMO_ESTADO`.
+      //
+      // E um quarto, pelo mesmo motivo: quem ainda não estava instalado no
+      // exercício não tinha prefeitura para entregar. Ver `INSTALADO_EM`.
       f?.faixa === "como-estado"
         ? "presta_contas_como_estado"
+        : f?.faixa === "nao-instalado"
+        ? "nao_instalado_no_periodo"
         : f?.publicou === null || f?.publicou === undefined
           ? "nao_consultado"
           : f.publicou ? "sim" : "nao",

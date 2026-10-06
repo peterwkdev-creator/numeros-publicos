@@ -213,6 +213,14 @@ export default async function PaginaAjuda() {
             Fiscal como estado. Marcá-lo como “não entregou” seria acusar de
             não prestar contas quem presta.
           </li>
+          <li>
+            <strong>Ainda não instalado no período</strong> — o município
+            existe na lista do IBGE, mas só passou a ter prefeitura depois do
+            exercício do relatório. É o caso de{" "}
+            <strong>Boa Esperança do Norte (MT)</strong>, instalado em
+            1º de janeiro de 2025: o relatório de 2024 não tinha quem o
+            entregasse.
+          </li>
         </ul>
       </section>
 

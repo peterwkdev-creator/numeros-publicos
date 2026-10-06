@@ -476,13 +476,32 @@ export default async function PaginaMunicipio(
       <section className={estilos.grade} aria-label="Indicadores">
         <article className={estilos.cartao}>
           <h2 className={estilos.rotulo}>População</h2>
+          {/* Sem Censo (hoje só Boa Esperança do Norte/MT), o número principal
+              é a estimativa, com o ano dela, e a frase diz o que falta: um
+              travessão sozinho não diz se o dado não existe ou se a página
+              quebrou. A frase descreve o dado, não a causa: a causa não está
+              na fonte. Mudou aqui, muda o `conferir-numeros.py`. */}
           <p className={`${estilos.valor} tabular`}>
-            {pop === null ? "—" : br(pop, 0)}
+            {pop !== null ? br(pop, 0) : estimada !== null ? br(estimada, 0) : "—"}
           </p>
-          <p className={estilos.fonte}>Censo 2022 · IBGE</p>
-          {estimada !== null && (
+          {pop !== null ? (
+            <>
+              <p className={estilos.fonte}>Censo 2022 · IBGE</p>
+              {estimada !== null && (
+                <p className={estilos.fonte}>
+                  Estimativa do IBGE para {anoEstimada}: {br(estimada, 0)}
+                </p>
+              )}
+            </>
+          ) : (
             <p className={estilos.fonte}>
-              Estimativa do IBGE para {anoEstimada}: {br(estimada, 0)}
+              {estimada !== null && (
+                <>
+                  Estimativa do IBGE para {anoEstimada}
+                  <br />
+                </>
+              )}
+              O IBGE não publicou a população do Censo 2022 para este município.
             </p>
           )}
         </article>
@@ -493,12 +512,14 @@ export default async function PaginaMunicipio(
             {escala(pibReais).curto}
           </p>
           <p className={estilos.fonte}>
-            {anoPib}, a preços correntes · IBGE
-            {pibReais !== null && (
+            {pibReais !== null ? (
               <>
+                {anoPib}, a preços correntes · IBGE
                 <br />
                 {escala(pibReais).exato}
               </>
+            ) : (
+              <>O IBGE não publicou o PIB de {anoPib} para este município.</>
             )}
           </p>
         </article>
@@ -509,7 +530,11 @@ export default async function PaginaMunicipio(
             {perCapita === null ? "—" : `R$ ${br(perCapita, 0)}`}
           </p>
           <p className={estilos.fonte}>
-            PIB de {anoPib} dividido pela população do Censo 2022
+            {pibReais === null
+              ? `Depende do PIB de ${anoPib}, que o IBGE não publicou para este município.`
+              : pop === null
+                ? "Depende da população do Censo 2022, que o IBGE não publicou para este município."
+                : `PIB de ${anoPib} dividido pela população do Censo 2022`}
           </p>
         </article>
 

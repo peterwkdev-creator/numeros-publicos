@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { br, dataCurta } from "../../../lib/dados";
 import { rankingPessoal } from "../../../lib/nacional";
+import { deEstado } from "../../../lib/estado";
 import { LIMITE_PLAUSIVEL } from "../../../lib/fiscal";
 import {
   catalogoDe, coberturaTemporal, FONTES, palavrasChave, trilha, LICENCA_DADOS,
@@ -52,6 +53,14 @@ export default async function Pagina() {
   const r = rankingPessoal(fiscal, snapshot);
   const legal = fiscal.limites.legal;
   const prudencial = fiscal.limites.prudencial;
+  // As UFs do filtro são só as que têm município na lista: uma opção que
+  // esvazia a tabela seria um beco sem saída. Pelo nome, que é o que se procura
+  // numa lista de estados; a sigla é o valor, a mesma da coluna "UF".
+  const porUf = new Map<string, number>();
+  for (const m of r.acimaDoTeto) porUf.set(m.uf, (porUf.get(m.uf) ?? 0) + 1);
+  const ufs = [...porUf]
+    .map(([uf, n]) => ({ uf, n, nome: deEstado(uf).replace(/^d[aeo]s? /, "") }))
+    .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
 
   // A auditoria reprovou a primeira versão desta página com "sem JSON-LD" --
   // e o achado é irônico, porque "os números não estão estruturados" era um
@@ -246,8 +255,32 @@ export default async function Pagina() {
         </p>
       </section>
 
+      {/* Filtro por estado (M8 da auditoria de usabilidade, 06/10/2026). Nasce
+          escondido e `public/filtro-uf.js` o mostra: sem o script, a tabela
+          inteira continua aqui e o controle não promete o que não faria. O
+          padrão é o do GOV.UK (`ux-padroes.md`): atualiza sozinho, o filtro
+          aplicado se vê e se remove, e a contagem é anunciada com o total. */}
+      {ufs.length > 1 && (<>
+        <div className={estilos.filtro} data-filtro-uf hidden>
+          <label htmlFor="filtro-uf">Estado</label>
+          <select id="filtro-uf" defaultValue="">
+            <option value="">Todos os estados</option>
+            {ufs.map((x) => (
+              <option key={x.uf} value={x.uf} data-de={deEstado(x.uf)}>
+                {x.nome} ({br(x.n)})
+              </option>
+            ))}
+          </select>
+          <button type="button" data-limpar hidden>Mostrar todos os estados</button>
+          <p role="status" aria-atomic="true" className={estilos.contagem}>
+            {br(r.acimaDoTeto.length)} municípios
+          </p>
+        </div>
+        <script type="module" src="/filtro-uf.js" />
+      </>)}
+
       <div className={estilos.rolagem}>
-        <table className={estilos.lista}>
+        <table className={estilos.lista} data-filtro-alvo>
           <caption>
             Municípios com gasto com pessoal acima de {br(legal, 0)}% da receita
             corrente líquida, do maior para o menor. Dado do{" "}

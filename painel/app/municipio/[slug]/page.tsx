@@ -38,6 +38,7 @@ import ComposicaoBarras from "../../componentes/composicao-barras";
 import DistribuicaoSvg from "../../componentes/distribuicao-svg";
 import IdebSvg from "../../componentes/ideb-svg";
 import Termo from "../../componentes/termo";
+import NestaPagina from "../../componentes/nesta-pagina";
 import SerieSvg from "./serie-svg";
 import SaudeSvg from "./saude-svg";
 import estilos from "./municipio.module.css";
@@ -626,13 +627,40 @@ export default async function PaginaMunicipio(
         </article>
       </section>
 
+      {/* Cada item repete a condição que mostra a sua seção: um item sem seção
+          seria link para lugar nenhum. O `conferir-links` reprova, nas 5.571
+          páginas, âncora sem alvo e seção com `id` fora daqui. */}
+      <NestaPagina itens={[
+        !!((posPop || posPerCapita) && uf) && { id: "no-estado", titulo: "No estado" },
+        { id: "gasto-com-pessoal", titulo: "Gasto com pessoal" },
+        !!(posicao && f?.percentual !== null && f?.percentual !== undefined) &&
+          { id: "isso-e-muito", titulo: "Isso é muito?" },
+        serie.length > 1 && { id: "ao-longo-do-tempo", titulo: "Ao longo do tempo" },
+        !!saude && { id: "saude", titulo: "Saúde" },
+        !!(funcoes && funcoes.fatias.length > 0) &&
+          { id: "para-onde-vai", titulo: "Para onde vai o dinheiro" },
+        !!(receita && receita.total !== null && receita.total > 0) &&
+          { id: "de-onde-vem", titulo: "De onde vem o dinheiro" },
+        !!(comparacao || serieFuncoes.length >= 3) && {
+          id: "o-que-mudou",
+          titulo: comparacao ? "O que mudou" : "A composição ao longo dos anos",
+        },
+        { id: "educacao", titulo: "Educação" },
+        medidas.some((x) => x.percentual !== null) &&
+          { id: "como-se-vive", titulo: "Como se vive" },
+        (temCensoTrabalho || temEmpresas || cagedM !== null) &&
+          { id: "trabalho-e-renda", titulo: "Trabalho e renda" },
+        vizinhos.length > 0 && { id: "outros-municipios", titulo: "Outros municípios" },
+        { id: "baixar", titulo: "Baixar os dados" },
+      ]} />
+
       {/* Um número sozinho não responde a pergunta que a pessoa tem, que é se
           aquilo é grande ou pequeno. Esta seção põe a régua do estado ao lado —
           e vai em todas as páginas, não só nas curtas: contexto que só aparece
           onde falta texto é enchimento, e é o que a política de conteúdo em
           escala do Google chama de abuso. Ver `posicaoNoEstado`. */}
       {(posPop || posPerCapita) && uf && (
-        <section className={estilos.texto}>
+        <section className={estilos.texto} id="no-estado">
           <h2>{m.nome} no seu estado</h2>
           {posPop && (
             <p>
@@ -661,7 +689,7 @@ export default async function PaginaMunicipio(
         </section>
       )}
 
-      <section className={estilos.texto}>
+      <section className={estilos.texto} id="gasto-com-pessoal">
         <h2>O que o gasto com pessoal significa aqui</h2>
         {f?.faixa === "implausivel" ? (
           <p>
@@ -817,7 +845,7 @@ export default async function PaginaMunicipio(
       </section>
 
       {posicao && f?.percentual !== null && f?.percentual !== undefined && (
-        <section className={estilos.texto}>
+        <section className={estilos.texto} id="isso-e-muito">
           <h2>Isso é muito?</h2>
           <p>
             O limite legal responde <em>se está dentro da lei</em>. Não responde
@@ -883,7 +911,7 @@ export default async function PaginaMunicipio(
       )}
 
       {serie.length > 1 && (
-        <section className={estilos.texto}>
+        <section className={estilos.texto} id="ao-longo-do-tempo">
           <h2>Como isso mudou ao longo do tempo</h2>
           <p>
             {delta === null ? (
@@ -984,7 +1012,7 @@ export default async function PaginaMunicipio(
       )}
 
       {saude && (
-        <section className={estilos.texto}>
+        <section className={estilos.texto} id="saude">
           {/* A série mais longa do site: 26 exercícios, contra 15 quadrimestres
               do gasto com pessoal e 6 exercícios da despesa por função.
               O que esta fonte dá é NÍVEL e TRAJETÓRIA, não denúncia -- medido
@@ -1061,7 +1089,7 @@ export default async function PaginaMunicipio(
       )}
 
       {funcoes && funcoes.fatias.length > 0 && (
-        <section className={estilos.texto}>
+        <section className={estilos.texto} id="para-onde-vai">
           {/* O título carrega a PERGUNTA, e não só a promessa.
               Medido em 07/09/2026: "quanto a prefeitura de X gasta com
               educação" é a única consulta desta família que ninguém responde
@@ -1133,7 +1161,7 @@ export default async function PaginaMunicipio(
           gasto, e "de onde vem" é a explicação que faz aquele número mudar de
           sentido -- o município mediano do país custeia 7% do que gasta. */}
       {receita && receita.total !== null && receita.total > 0 && (
-        <section className={estilos.texto}>
+        <section className={estilos.texto} id="de-onde-vem">
           <h2>De onde vem o dinheiro que {m.nome} gasta</h2>
           {/* Declaração incompleta NÃO vira composição. Apiaí/SP estava no ar
               dizendo "79,0% de impostos" com transferência zero -- e nenhum
@@ -1238,7 +1266,7 @@ export default async function PaginaMunicipio(
           pontos quaisquer — e amarrá-los fazia o mais exigente mandar nos
           dois. */}
       {(comparacao || serieFuncoes.length >= 3) && (
-        <section className={estilos.texto}>
+        <section className={estilos.texto} id="o-que-mudou">
           {comparacao && (
             <>
               <h2>O que mudou de {comparacao.exercicioAnterior} para{" "}
@@ -1373,7 +1401,7 @@ export default async function PaginaMunicipio(
           eles não se sabe — por isso o texto diz "quase sempre" e não afirma o
           caso específico. */}
       {!iniciais && (
-        <section className={estilos.texto}>
+        <section className={estilos.texto} id="educacao">
           <h2>Educação</h2>
           <p>
             O INEP publica o IDEB <strong>por rede</strong>, e não há rede
@@ -1393,7 +1421,7 @@ export default async function PaginaMunicipio(
       )}
 
       {iniciais && (
-        <section className={estilos.texto}>
+        <section className={estilos.texto} id="educacao">
           <h2>Educação: o que o dinheiro encontrou pela frente</h2>
           <p>
             {educacao && educacao.percentual !== null ? (
@@ -1585,7 +1613,7 @@ export default async function PaginaMunicipio(
       )}
 
       {medidas.some((x) => x.percentual !== null) && (
-        <section className={estilos.texto}>
+        <section className={estilos.texto} id="como-se-vive">
           <h2>Como se vive em {m.nome}</h2>
           <p>
             Do <strong>Censo de 2022</strong>. Cada linha traz{" "}
@@ -1621,7 +1649,7 @@ export default async function PaginaMunicipio(
       )}
 
       {(temCensoTrabalho || temEmpresas || cagedM !== null) && (
-        <section className={estilos.texto}>
+        <section className={estilos.texto} id="trabalho-e-renda">
           <h2>Trabalho e renda em {m.nome}</h2>
           {temCensoTrabalho && (
             <>
@@ -1749,7 +1777,7 @@ export default async function PaginaMunicipio(
       )}
 
       {vizinhos.length > 0 && (
-        <section className={estilos.texto}>
+        <section className={estilos.texto} id="outros-municipios">
           <h2>Outros municípios {deEstado(m.uf)}</h2>
           <ul className={estilos.vizinhos}>
             {vizinhos.map((v) => (
@@ -1778,7 +1806,7 @@ export default async function PaginaMunicipio(
         </section>
       )}
 
-      <section className={estilos.texto}>
+      <section className={estilos.texto} id="baixar">
         <h2>Baixar estes dados</h2>
         <p>
           Todo número desta página pode ser baixado e conferido. Um painel de

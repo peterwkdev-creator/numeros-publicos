@@ -24,6 +24,7 @@ import {
 } from "../../../lib/jsonld";
 import { lerFiscal, lerIdeb, lerSnapshot, SITE, cartaoSocial } from "../../../lib/servidor";
 import estilos from "./estado.module.css";
+import NestaPagina from "../../componentes/nesta-pagina";
 import { atualDeFuncoes } from "../../../lib/fiscal";
 
 /**
@@ -379,6 +380,22 @@ export default async function PaginaEstado(
         )}
       </section>
 
+      {/* Cada item repete a condição que mostra a sua seção; o
+          `conferir-links` reprova âncora sem alvo e seção com `id` fora daqui.
+          Ver `componentes/nesta-pagina.tsx`. */}
+      <NestaPagina itens={[
+        { id: "no-pais", titulo: "No país" },
+        medidasCenso.some((x) => x.percentual !== null) &&
+          { id: "como-se-vive", titulo: "Como se vive" },
+        { id: "limite-de-pessoal", titulo: "Limite de pessoal" },
+        !!r.funcoes && { id: "para-onde-vai", titulo: "Para onde vai o dinheiro" },
+        (semRede > 0 || semRedeFinais > 0) && { id: "ideb", titulo: "IDEB" },
+        !!(meu && posTaxa) && { id: "comparacao", titulo: "Entre os estados" },
+        { id: "municipios", titulo: r.uf.municipios === 1 ? "O município" : "Os municípios" },
+        { id: "baixar", titulo: "Baixar os dados" },
+        { id: "outros-estados", titulo: "Outros estados" },
+      ]} />
+
       {/* O mesmo mapa da capa, com a UF contornada. Ele responde a pergunta
           que a página do município levanta e não fecha — "e o meu estado, como
           está?" — sem custar coleta nova nem componente novo. As camadas vêm de
@@ -397,7 +414,7 @@ export default async function PaginaEstado(
       </section>
 
       {medidasCenso.some((x) => x.percentual !== null) && (
-        <section className={estilos.texto}>
+        <section className={estilos.texto} id="como-se-vive">
           <h2>Como se vive {emContracao(de)}</h2>
           <p>
             Do <strong>Censo de 2022</strong>, somando os municípios do estado.
@@ -423,7 +440,7 @@ export default async function PaginaEstado(
         </section>
       )}
 
-      <section className={estilos.texto}>
+      <section className={estilos.texto} id="limite-de-pessoal">
         <h2>
           {r.comoEstado === r.uf.municipios
             ? `O limite de pessoal ${de}`
@@ -486,7 +503,7 @@ export default async function PaginaEstado(
       </section>
 
       {r.funcoes && (
-        <section className={estilos.texto}>
+        <section className={estilos.texto} id="para-onde-vai">
           <h2>Para onde vai o dinheiro {de}</h2>
           <p>
             No {bimestre}, os <strong>{br(r.funcoes.municipios)}</strong>{" "}
@@ -511,7 +528,7 @@ export default async function PaginaEstado(
           prefeitura não administra as escolas não há linha municipal.
           Verificado, não suposto — ver a nota em `semRede`. */}
       {(semRede > 0 || semRedeFinais > 0) && (
-        <section className={estilos.texto}>
+        <section className={estilos.texto} id="ideb">
           <h2>Por que nem todo município {de} tem IDEB aqui</h2>
           <p>
             O INEP publica o IDEB <strong>por rede</strong>, e este site mostra
@@ -732,7 +749,7 @@ export default async function PaginaEstado(
         </table>
       </div>
 
-      <section className={estilos.texto}>
+      <section className={estilos.texto} id="baixar">
         <h2>Baixar estes dados</h2>
         <ul className={estilos.downloads}>
           <li>
@@ -757,7 +774,7 @@ export default async function PaginaEstado(
         </ul>
       </section>
 
-      <section className={estilos.texto}>
+      <section className={estilos.texto} id="outros-estados">
         <h2>Outros estados</h2>
         <ul className={estilos.estados}>
           {snapshot.ufs

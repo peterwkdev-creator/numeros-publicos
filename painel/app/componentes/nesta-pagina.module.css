@@ -1,0 +1,44 @@
+/* O mesmo desenho do sumario da /ajuda/, mas em linha: aqui sao uma dezena de
+   rotulos curtos, e uma coluna deles empurraria o conteudo uma tela inteira
+   para baixo no celular -- o contrario do que o sumario veio resolver. */
+.sumario {
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  padding: var(--e-4) var(--e-6);
+  margin-bottom: var(--e-12);
+  box-shadow: var(--sombra);
+}
+
+.sumario h2 {
+  font-size: var(--texto-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--tinta-fraca);
+  margin: 0 0 var(--e-3);
+}
+
+.sumario ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e-2) var(--e-6);
+}
+
+.sumario a {
+  font-size: var(--texto-sm);
+  /* Ver a nota do WCAG 2.5.8 em `globals.css`: navegacao isolada, nao link
+     no meio de uma frase, entao a excecao do criterio nao vale. */
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+}
+
+/* No papel o link nao leva a lugar nenhum: o sumario so ocuparia a folha. */
+@media print {
+  .sumario {
+    display: none;
+  }
+}

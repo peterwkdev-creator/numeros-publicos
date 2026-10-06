@@ -127,6 +127,12 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
+/* O alvo do "Nesta página" (`componentes/nesta-pagina.tsx`): sem folga, o
+   título da seção encosta no topo da janela e parece cortado ao chegar. */
+main [id] {
+  scroll-margin-top: var(--e-6);
+}
+
 body {
   margin: 0;
   background: var(--fundo);

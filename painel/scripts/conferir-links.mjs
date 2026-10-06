@@ -76,6 +76,35 @@ function destinos(html) {
   return achados;
 }
 
+/**
+ * As âncoras da própria página sem alvo, e as seções com `id` que o "Nesta
+ * página" deixou de fora. Devolve os achados e quantas âncoras conferiu.
+ *
+ * O sumário (`componentes/nesta-pagina.tsx`, desde 06/10/2026) repete a
+ * condição de cada seção, e as seções são condicionais: se as duas
+ * divergirem, o item vira link para lugar nenhum ou a seção some do sumário.
+ * Nenhum dos dois é erro de build, e a auditoria só vê quando a seção que
+ * diverge está numa das páginas dela. Aqui se vê nas 5.571.
+ */
+function ancorasOrfas(html) {
+  const ids = new Set([...html.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1]));
+  const achados = [];
+  let conferidas = 0;
+  for (const [, alvo] of html.matchAll(/<a\b[^>]*?href="#([^"]+)"/gs)) {
+    conferidas += 1;
+    if (!ids.has(alvo)) achados.push(`#${alvo} sem alvo`);
+  }
+  const nav = html.match(/<nav\b[^>]*aria-label="Nesta página"[^>]*>([\s\S]*?)<\/nav>/);
+  if (nav) {
+    const listados = new Set([...nav[1].matchAll(/href="#([^"]+)"/g)].map((m) => m[1]));
+    for (const [, id] of html.matchAll(/<section\b[^>]*?\sid="([^"]+)"/g)) {
+      conferidas += 1;
+      if (!listados.has(id)) achados.push(`seção #${id} fora do "Nesta página"`);
+    }
+  }
+  return { achados, conferidas };
+}
+
 const rotas = rotasGeradas();
 if (rotas.size === 0) {
   console.error("out/ não existe ou está vazio — rode `npm run build` antes.");
@@ -83,22 +112,44 @@ if (rotas.size === 0) {
 } else {
   // destino quebrado -> páginas que apontam para ele
   const quebrados = new Map();
+  // achado de âncora -> páginas onde ele ocorre
+  const orfas = new Map();
   let links = 0;
+  let ancoras = 0;
 
   for (const [, arquivo] of rotas) {
     const html = readFileSync(arquivo, "utf8");
+    const rota = `/${path.relative(OUT, path.dirname(arquivo))
+      .split(path.sep).join("/")}/`.replace("//", "/");
     for (const destino of destinos(html)) {
       links += 1;
       if (!rotas.has(destino)) {
-        const rota = `/${path.relative(OUT, path.dirname(arquivo))
-          .split(path.sep).join("/")}/`.replace("//", "/");
         if (!quebrados.has(destino)) quebrados.set(destino, []);
         quebrados.get(destino).push(rota);
       }
     }
+    const { achados, conferidas } = ancorasOrfas(html);
+    ancoras += conferidas;
+    for (const achado of achados) {
+      if (!orfas.has(achado)) orfas.set(achado, []);
+      orfas.get(achado).push(rota);
+    }
   }
 
-  console.log(`páginas: ${rotas.size} · destinos internos distintos: ${links}`);
+  console.log(`páginas: ${rotas.size} · destinos internos distintos: ${links}` +
+    ` · âncoras na própria página: ${ancoras}`);
+
+  if (orfas.size === 0) {
+    console.log("âncoras: nenhuma sem alvo, nenhuma seção fora do sumário");
+  } else {
+    console.error(`\nÂNCORAS ÓRFÃS: ${orfas.size}\n`);
+    for (const [achado, paginas] of [...orfas].sort((a, b) => b[1].length - a[1].length)) {
+      console.error(`  ${achado}`);
+      console.error(`     em ${paginas.length} página(s): ` +
+        `${paginas.slice(0, 3).join(", ")}${paginas.length > 3 ? " …" : ""}`);
+    }
+    process.exitCode = 1;
+  }
 
   if (quebrados.size === 0) {
     console.log("links internos: nenhum quebrado");

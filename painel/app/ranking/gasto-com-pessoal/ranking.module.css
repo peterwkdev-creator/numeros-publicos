@@ -48,3 +48,17 @@
 .ressalva strong { color: var(--tinta); }
 
 @media print { .rolagem { overflow-x: visible; } }
+
+/* O filtro por estado. `display: flex` venceria o `[hidden]` da folha do
+   navegador, que tem especificidade menor que uma classe: sem a segunda regra
+   o controle apareceria sem o script que o faz funcionar. */
+.filtro { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1rem; margin-bottom: 1rem; }
+.filtro[hidden], .filtro [hidden] { display: none; }
+.filtro label { font-weight: 600; }
+.filtro select, .filtro button { font: inherit; min-height: 44px; padding: 0 .75rem; color: var(--tinta); background: var(--superficie); border: 1px solid var(--borda); border-radius: .375rem; }
+.filtro button { cursor: pointer; text-decoration: underline; }
+.contagem { margin: 0; color: var(--tinta-fraca); flex-basis: 100%; }
+
+/* No papel fica a contagem, que diz que a lista impressa pode estar filtrada;
+   o controle nao serve para nada ali. */
+@media print { .filtro label, .filtro select, .filtro button { display: none; } }

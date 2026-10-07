@@ -189,6 +189,20 @@ export const APRESENTACAO: Record<string, Apresentacao> = {
       "(Lei Complementar 179). Cada ponto é a meta em vigor no último dia " +
       "do mês. Desde março de 1999, quando a meta começou.",
   },
+  "salario-minimo": {
+    titulo: "Salário mínimo real",
+    fiscal: false,
+    como:
+      "Quanto vale o salário mínimo, descontada a inflação. Mínimo mais alto " +
+      "aumenta a renda de quem o recebe e o piso das aposentadorias; também " +
+      "pesa mais na folha das empresas e nas contas da Previdência.",
+    melhor: "nenhum",
+    nota:
+      "O valor nominal é fixado a cada ano por lei ou medida provisória. O " +
+      "Ipea desconta a inflação (INPC) e refaz a série inteira em reais do " +
+      "último mês. Desde agosto de 1994: em julho, o mês da troca da moeda, " +
+      "o Ipea ajusta a inflação, e o valor não se compara com os seguintes.",
+  },
 };
 
 /** O selo de leitura, acima do gráfico. */

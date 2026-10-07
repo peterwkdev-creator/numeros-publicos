@@ -7,8 +7,8 @@ página lê do banco.
 
 ## As séries
 
-Quatro do IBGE (API de agregados) e quatro do Banco Central (SGS), todas no
-nível do país. Cada uma vem com o histórico inteiro que a fonte publica
+Quatro do IBGE (API de agregados), quatro do Banco Central (SGS) e uma do
+Ipea (Ipeadata), todas no nível do país. Cada uma vem com o histórico inteiro que a fonte publica
 (`periodos/all` no IBGE, a janela desde 1990 no SGS): o site mostra a série
 inteira, nunca um recorte, e recorte escolhido aqui seria escolha editorial.
 A única exceção é técnica e está escrita na própria série: o IPCA começa em
@@ -26,7 +26,9 @@ mesmos pontos com os mesmos valores:
   segunda leitura é esse caminho: o câmbio mensal (3698) contra a média da
   PTAX diária (SGS 1), e a meta da Selic contra o histórico das decisões do
   Copom (a página "Histórico das taxas de juros"), que dá o início e o fim
-  de vigência de cada meta.
+  de vigência de cada meta;
+- Ipea: o salário mínimo real, refeito mês a mês com o nominal e o INPC
+  que o Banco Central publica no SGS.
 
 Ponto que falta num lado, sobra no outro ou difere em valor é ERRO, com a
 lista, e o banco fica como estava.
@@ -90,6 +92,24 @@ SGS_PTAX = 1
 #: O histórico das decisões do Copom, com o início e o fim de vigência de
 #: cada meta da Selic: o que a página "Histórico das taxas de juros" lê.
 API_COPOM = "https://www.bcb.gov.br/api/servico/sitebcb/historicotaxasjuros"
+#: O Ipeadata (Ipea, fundação pública federal): a série inteira, em OData.
+IPEADATA = ("https://www.ipeadata.gov.br/api/odata4/"
+            "ValoresSerie(SERCODIGO='{codigo}')")
+#: O salário mínimo nominal (R$) e o INPC do mês (%), do SGS: com os dois se
+#: refaz a variação de cada mês do salário mínimo real do Ipea.
+SGS_SALARIO_MINIMO = 1619
+SGS_INPC = 188
+#: Quanto a variação do mês pode diferir na conta refeita. O INPC sai com
+#: duas casas no SGS, então (1 + INPC) carrega até meio centésimo de ponto
+#: percentual de arredondamento: 0,00005 relativo. Medido em 07/10/2026:
+#: 385 meses, o maior desvio 0,000004.
+FOLGA_INPC = 0.00005
+#: Quantos meses o INPC pode estar à frente do salário mínimo real: o Ipea
+#: atualiza alguns dias depois do IBGE. Mais que isso é a série parada.
+INPC_ADIANTADO = 2
+#: A unidade de série refeita a cada mês em reais do último (o salário mínimo
+#: real do Ipea). Na página sai com o mês escrito: "R$ de agosto de 2026".
+REAIS_DO_ULTIMO_MES = "R$ do último mês"
 
 
 class ErroBrasil(RuntimeError):
@@ -107,7 +127,7 @@ class SerieBrasil(NamedTuple):
     codigo: str
     nome: str
     unidade: str
-    fonte: str  # "IBGE" ou "Banco Central"
+    fonte: str  # "IBGE", "Banco Central" ou "Ipea"
     periodicidade: str  # "trimestral" ou "mensal"
     agregado: int | None = None
     variavel: int | None = None
@@ -118,8 +138,12 @@ class SerieBrasil(NamedTuple):
     desde: str | None = None
     #: A segunda leitura de uma série do SGS: `janelas` (a mesma série em
     #: duas janelas), `ptax` (a média mensal da PTAX diária) ou `copom` (a
-    #: série diária do SGS contra o histórico das decisões do Copom).
+    #: série diária do SGS contra o histórico das decisões do Copom) ou
+    #: `inpc` (a variação de cada mês contra o salário mínimo nominal e o
+    #: INPC do SGS).
     conferencia: str = "janelas"
+    #: O código da série no Ipeadata, quando a fonte é o Ipea.
+    ipeadata: str | None = None
 
 
 # Os nomes do IBGE são os dos metadados de cada tabela, lidos em 05/10/2026.
@@ -176,6 +200,16 @@ SERIES: tuple[SerieBrasil, ...] = (
         "selic", "Meta da taxa Selic definida pelo Copom", "% ao ano",
         "Banco Central", "mensal", sgs=432, desde="1999-03",
         conferencia="copom"),
+    # Nome no Ipeadata: "Salário mínimo real", em "R$ (do último mês)": o Ipea
+    # deflaciona o nominal pelo INPC e refaz a série inteira a cada mês, então
+    # o nível muda e a variação de um mês para o outro não. Desde 08/1994: em
+    # 07/1994, o mês da troca da moeda, o Ipea multiplica a variação do
+    # deflator por 1,2225 (nota da própria série), e a variação de 07 para 08
+    # sai +20,8% com o nominal parado e INPC de 1,85% (medido em 07/10/2026).
+    SerieBrasil(
+        "salario-minimo", "Salário mínimo real", REAIS_DO_ULTIMO_MES, "Ipea",
+        "mensal", desde="1994-08", conferencia="inpc",
+        ipeadata="GAC12_SALMINRE12"),
 )
 
 TRIMESTRE = re.compile(r"(\d{4})0([1-4])")
@@ -298,21 +332,105 @@ def ler_sgs(s: SerieBrasil, dados: object) -> Pontos:
     O SGS não tem marcador de ausência (mês sem dado não vem na lista), então
     valor que não é número é erro. O `_numero` do IBGE, que trata marcador
     desconhecido como ausente, abriria aqui um buraco calado."""
+    return _cortar(s, ler_sgs_mensal(s.codigo, dados))
+
+
+def ler_sgs_mensal(rotulo: str, dados: object) -> Pontos:
+    """Uma série mensal do SGS inteira, sem o corte de `desde`."""
     try:
         pontos: Pontos = {}
         for linha in dados or []:
             p = periodo_sgs(linha["data"])
             if p in pontos:
-                raise ErroBrasil(f"{s.codigo}: {p} repetido no SGS")
+                raise ErroBrasil(f"{rotulo}: {p} repetido no SGS")
             try:
                 pontos[p] = float(linha["valor"])
             except ValueError as e:
-                raise ErroBrasil(f"{s.codigo}: {p} veio com valor "
+                raise ErroBrasil(f"{rotulo}: {p} veio com valor "
                                  f"{linha['valor']!r}, que não é número") from e
     except (KeyError, TypeError) as e:
-        raise ErroBrasil(f"{s.codigo}: a resposta do SGS mudou de forma "
+        raise ErroBrasil(f"{rotulo}: a resposta do SGS mudou de forma "
+                         f"({type(e).__name__}: {e})") from e
+    return pontos
+
+
+def url_ipeadata(s: SerieBrasil) -> str:
+    return IPEADATA.format(codigo=s.ipeadata)
+
+
+#: `1994-08-01T00:00:00-03:00`, ou `-02:00` no horário de verão: o dia 1 de
+#: cada mês, à meia-noite de Brasília. Medido em 07/10/2026: só esses dois.
+DATA_IPEADATA = re.compile(r"(\d{4})-(0[1-9]|1[0-2])-01T00:00:00-0[23]:00")
+
+
+def ler_ipeadata(s: SerieBrasil, dados: object) -> Pontos:
+    """A resposta do Ipeadata: `{"value": [{"VALDATA": ..., "VALVALOR":
+    1621.0}, ...]}`. Valor que não é número (o Ipeadata devolve `null` em
+    mês sem dado) é erro, e não buraco calado."""
+    try:
+        pontos: Pontos = {}
+        for x in dados["value"]:
+            if x["SERCODIGO"] != s.ipeadata:
+                raise ErroBrasil(f"{s.codigo}: o Ipeadata devolveu a série "
+                                 f"{x['SERCODIGO']!r}")
+            m = DATA_IPEADATA.fullmatch(x["VALDATA"])
+            if not m:
+                raise ErroBrasil(f"{s.codigo}: data {x['VALDATA']!r} não é o "
+                                 "dia 1 de um mês")
+            p = f"{m.group(1)}-{m.group(2)}"
+            if p in pontos:
+                raise ErroBrasil(f"{s.codigo}: {p} repetido no Ipeadata")
+            v = x["VALVALOR"]
+            if not isinstance(v, (int, float)) or isinstance(v, bool):
+                raise ErroBrasil(f"{s.codigo}: {p} veio com valor {v!r}, que "
+                                 "não é número")
+            pontos[p] = float(v)
+    except (KeyError, TypeError) as e:
+        raise ErroBrasil(f"{s.codigo}: a resposta do Ipeadata mudou de forma "
                          f"({type(e).__name__}: {e})") from e
     return _cortar(s, pontos)
+
+
+def comparar_razao(codigo: str, real: Pontos, nominal: Pontos,
+                   inpc: Pontos) -> None:
+    """O salário mínimo real contra o nominal e o INPC do SGS.
+
+    O Ipea refaz a série inteira em reais do último mês, então o nível não se
+    confere contra nada fixo; a variação de cada mês, sim: real(m) / real(m-1)
+    tem de ser nominal(m) / nominal(m-1) / (1 + INPC(m)), até `FOLGA_INPC`.
+    E o último mês, que está em reais dele mesmo, tem de ser o nominal ao
+    centavo. Com as variações e a âncora, todo nível fica conferido."""
+    if not real:
+        raise ErroBrasil(f"{codigo}: o Ipeadata não devolveu nenhum ponto")
+    meses = sorted(real)
+    primeiro, ultimo = meses[0], meses[-1]
+    adiante = sorted(m for m in inpc if m > ultimo)
+    if len(adiante) > INPC_ADIANTADO:
+        raise ErroBrasil(f"{codigo}: o salário mínimo real para em {ultimo}, "
+                         f"e o INPC já tem {', '.join(adiante)}")
+    partes = []
+    vazios = sorted(m for m in nominal.keys() | inpc.keys()
+                      if primeiro <= m <= ultimo and m not in real)
+    if vazios:
+        partes.append(f"meses que faltam no Ipeadata: {', '.join(vazios[:5])}")
+    faltam = sorted(m for m in meses if m not in nominal or m not in inpc)
+    if faltam:
+        partes.append(f"meses sem nominal ou INPC no SGS: "
+                      f"{', '.join(faltam[:5])}")
+    elif abs(real[ultimo] - nominal[ultimo]) > 0.005:
+        partes.append(f"o último mês ({ultimo}) é {real[ultimo]} no Ipea e "
+                      f"{nominal[ultimo]} de nominal")
+    if not faltam:
+        difs = []
+        for a, b in zip(meses, meses[1:]):
+            refeita = nominal[b] / nominal[a] / (1 + inpc[b] / 100)
+            if abs(real[b] / real[a] / refeita - 1) > FOLGA_INPC:
+                difs.append(f"{b} ({real[b] / real[a]:.6f} e {refeita:.6f})")
+        if difs:
+            partes.append("variações diferentes: " + ", ".join(difs[:5]))
+    if partes:
+        raise ErroBrasil(f"{codigo}: o nominal e o INPC não conferem; "
+                         + "; ".join(partes))
 
 
 DATA_DIARIA = re.compile(r"(\d{2})/(\d{2})/(\d{4})")
@@ -543,6 +661,17 @@ def coletar(s: SerieBrasil, transporte: Transporte,
                   if m >= s.desde}
         comparar_media(s.codigo, a, medias)
         return Leitura(s, a, u1, u2)
+    elif s.conferencia == "inpc":
+        u1 = url_ipeadata(s)
+        a = ler_ipeadata(s, obter(u1))
+        de = int(s.desde[:4])
+        un, ui = (_url_sgs(SGS_SALARIO_MINIMO, de, ano),
+                  _url_sgs(SGS_INPC, de, ano))
+        nominal = ler_sgs_mensal(f"{s.codigo} (SGS {SGS_SALARIO_MINIMO})",
+                                 obter(un))
+        inpc = ler_sgs_mensal(f"{s.codigo} (SGS {SGS_INPC})", obter(ui))
+        comparar_razao(s.codigo, a, nominal, inpc)
+        return Leitura(s, a, u1, f"{un} + {ui}")
     elif s.conferencia == "copom":
         u1 = API_COPOM
         a = ler_copom(s, obter(u1), hoje)
@@ -994,6 +1123,18 @@ def coletar_metas(transporte: Transporte,
 
 # ---------------------------------------------------------------- exportação
 
+MESES = ("janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho",
+         "agosto", "setembro", "outubro", "novembro", "dezembro")
+
+
+def unidade_exportada(s: SerieBrasil, ultimo: str) -> str:
+    """A unidade como a página a imprime. "R$ do último mês" diria a quem lê
+    só que existe um último mês; o retrato escreve qual."""
+    if s.unidade != REAIS_DO_ULTIMO_MES:
+        return s.unidade
+    return f"R$ de {MESES[int(ultimo[5:]) - 1]} de {ultimo[:4]}"
+
+
 def retrato(db: ArmazemBrasil, mandatos: list[Mandato],
             series: tuple[SerieBrasil, ...] = SERIES) -> dict:
     """O que a página `/brasil/` lê: as séries na ordem de `SERIES`, inteiras,
@@ -1013,7 +1154,8 @@ def retrato(db: ArmazemBrasil, mandatos: list[Mandato],
                              "brasil-ingerir antes de exportar")
         origem, conferida, coletado = linha
         saida.append({
-            "codigo": s.codigo, "nome": s.nome, "unidade": s.unidade,
+            "codigo": s.codigo, "nome": s.nome,
+            "unidade": unidade_exportada(s, max(pontos)),
             "fonte": s.fonte, "periodicidade": s.periodicidade,
             "origem": origem, "conferida": conferida, "coletadoEm": coletado,
             "pontos": [[p, v] for p, v in sorted(pontos.items())],

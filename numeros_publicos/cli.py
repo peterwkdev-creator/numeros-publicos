@@ -958,6 +958,15 @@ def emendas_ingerir(args, baixar=None) -> int:
     return 0
 
 
+#: O que `brasil-ingerir` diz da segunda leitura, quando ela não dá os
+#: mesmos valores e sim outra coisa que tem de bater.
+CONFERIDA = {
+    "ptax": "iguais à média da PTAX diária, até meia unidade da 4ª casa",
+    "inpc": ("cada variação mensal igual à do nominal e do INPC do SGS, até o "
+             "arredondamento do INPC, e o último mês igual ao nominal"),
+}
+
+
 def brasil_ingerir(args, transporte=None, dormir=None) -> int:
     """Valida a tabela de mandatos, lê cada série pelos dois caminhos, confere
     a meta de inflação contra o SGS e a página do Banco Central, e só grava se
@@ -976,9 +985,8 @@ def brasil_ingerir(args, transporte=None, dormir=None) -> int:
         ps = sorted(leitura.pontos)
         vao = brasil.buracos(leitura.serie.periodicidade, leitura.pontos)
         print(f"{leitura.serie.codigo}: {len(ps)} pontos, {ps[0]} a {ps[-1]}, "
-              + ("iguais à média da PTAX diária, até meia unidade da 4ª casa"
-                 if leitura.serie.conferencia == "ptax"
-                 else "iguais na segunda leitura")
+              + CONFERIDA.get(leitura.serie.conferencia,
+                              "iguais na segunda leitura")
               + (f"; sem dado na fonte: {', '.join(vao)}" if vao else ""))
     anos = [m.ano for m in metas.metas]
     print(f"meta de inflação: {len(anos)} anos, {anos[0]} a {anos[-1]}, o "

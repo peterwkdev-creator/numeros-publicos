@@ -27,9 +27,9 @@ export async function generateMetadata(): Promise<Metadata> {
   const b = await lerBrasil();
   // Até 160 caracteres, que é onde o Google corta (a auditoria cobra).
   const descricao =
-    "PIB, desemprego, renda, inflação, dólar, juros, dívida pública e " +
-    `resultado primário desde ${anoInicial(b)}, com quem ocupava a Presidência. ` +
-    "Fonte: IBGE e Banco Central.";
+    "PIB, desemprego, renda, inflação, dólar, juros, salário mínimo, dívida " +
+    `pública e resultado primário desde ${anoInicial(b)}, com quem ocupava a ` +
+    "Presidência. Dados oficiais.";
   return {
     title: `${TITULO}: economia e contas públicas`,
     description: descricao,
@@ -187,7 +187,9 @@ export default async function Pagina() {
             em dois recortes de datas; no dólar, a média mensal contra a
             cotação de cada dia, até o arredondamento da quarta casa; na
             Selic, o histórico das decisões do Copom contra a série diária da
-            meta), e só entra se os dois concordarem em todos os{" "}
+            meta; no salário mínimo do Ipea, a variação de cada mês contra o
+            valor nominal e o INPC publicados pelo Banco Central), e só entra
+            se os dois concordarem em todos os{" "}
             {br(b.series.reduce((n, s) => n + s.pontos.length, 0))} pontos.
             Nenhum valor é calculado aqui: o que o gráfico mostra é o que a
             fonte publica.

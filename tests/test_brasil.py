@@ -300,6 +300,106 @@ class TestSelic(unittest.TestCase):
                          {"2011-11": 11.5, "2011-12": 11.0})
 
 
+SALARIO = next(s for s in brasil.SERIES if s.codigo == "salario-minimo")
+
+
+def ipeadata(pontos: dict[str, object], codigo="GAC12_SALMINRE12"):
+    return {"value": [{"SERCODIGO": codigo, "VALDATA": f"{p}-01T00:00:00-03:00",
+                       "VALVALOR": v, "NIVNOME": "", "TERCODIGO": ""}
+                      for p, v in pontos.items()]}
+
+
+class TestSalarioMinimo(unittest.TestCase):
+    HOJE = brasil.dt.date(1994, 11, 15)
+    # 07/1994 é o mês da troca da moeda e fica de fora (desde 08/1994). Em
+    # setembro o nominal sobe de 64,79 para 70,00 com INPC de 1,40%; em
+    # outubro fica parado com INPC de 2,00%. Outubro, o último, em reais dele.
+    NOMINAL = {"1994-07": "64.79", "1994-08": "64.79", "1994-09": "70.00",
+               "1994-10": "70.00", "1994-11": "70.00", "1994-12": "70.00"}
+    INPC = {"1994-07": "7.75", "1994-08": "1.85", "1994-09": "1.40",
+            "1994-10": "2.00"}
+    REAL = {"1994-07": 444.45,
+            "1994-08": 70.0 * 1.02 * 1.014 * 64.79 / 70.0,
+            "1994-09": 70.0 * 1.02, "1994-10": 70.0}
+
+    def transporte(self, real=None, inpc=None):
+        return Transporte({
+            brasil.url_ipeadata(SALARIO): ipeadata(real or self.REAL),
+            brasil._url_sgs(1619, 1994, 1994): sgs(self.NOMINAL),
+            brasil._url_sgs(188, 1994, 1994): sgs(inpc or self.INPC)})
+
+    def coletar(self, **k):
+        return coletar(SALARIO, self.transporte(**k), sem_pausa, hoje=self.HOJE)
+
+    def test_confere_pela_variacao_e_corta_a_troca_da_moeda(self):
+        lida = self.coletar()
+        self.assertEqual(sorted(lida.pontos), ["1994-08", "1994-09", "1994-10"])
+        self.assertEqual(lida.origem, brasil.url_ipeadata(SALARIO))
+        self.assertIn("bcdata.sgs.1619/", lida.conferida)
+        self.assertIn("bcdata.sgs.188/", lida.conferida)
+
+    def test_nivel_refeito_inteiro_tambem_confere(self):
+        # No mês seguinte o Ipea refaz tudo em reais de novembro: o nível
+        # muda, a variação não, e a âncora passa a ser novembro.
+        real = {p: v * 1.01 for p, v in self.REAL.items()}
+        real["1994-11"] = 70.0
+        lida = self.coletar(real=real, inpc=dict(self.INPC, **{"1994-11": "1.00"}))
+        self.assertEqual(lida.pontos["1994-11"], 70.0)
+
+    def test_variacao_fora_da_folga_reprova(self):
+        # Setembro 0,1% acima da conta refeita: vinte vezes o que o
+        # arredondamento do INPC explica (0,005%).
+        real = dict(self.REAL, **{"1994-08": self.REAL["1994-08"] / 1.001})
+        with self.assertRaisesRegex(ErroBrasil, r"variações diferentes: 1994-09"):
+            self.coletar(real=real)
+
+    def test_dentro_do_arredondamento_do_inpc_passa(self):
+        real = dict(self.REAL, **{"1994-08": self.REAL["1994-08"] / 1.00004})
+        self.assertEqual(len(self.coletar(real=real).pontos), 3)
+
+    def test_ultimo_mes_fora_do_nominal_reprova(self):
+        real = {p: v * 1.01 for p, v in self.REAL.items()}
+        with self.assertRaisesRegex(ErroBrasil, r"último mês \(1994-10\)"):
+            self.coletar(real=real)
+
+    def test_mes_faltando_no_ipea_reprova(self):
+        real = {p: v for p, v in self.REAL.items() if p != "1994-09"}
+        with self.assertRaisesRegex(ErroBrasil, "faltam no Ipeadata: 1994-09"):
+            self.coletar(real=real)
+
+    def test_inpc_que_falta_reprova(self):
+        inpc = {p: v for p, v in self.INPC.items() if p != "1994-09"}
+        with self.assertRaisesRegex(ErroBrasil, "sem nominal ou INPC no SGS: "
+                                                "1994-09"):
+            self.coletar(inpc=inpc)
+
+    def test_serie_parada_reprova(self):
+        inpc = dict(self.INPC, **{"1994-11": "1", "1994-12": "1",
+                                  "1995-01": "1"})
+        with self.assertRaisesRegex(ErroBrasil, "para em 1994-10"):
+            self.coletar(inpc=inpc)
+
+    def test_valor_nulo_e_outra_serie_reprovam(self):
+        with self.assertRaisesRegex(ErroBrasil, "1994-09 veio com valor None"):
+            brasil.ler_ipeadata(SALARIO, ipeadata({"1994-09": None}))
+        with self.assertRaisesRegex(ErroBrasil, "devolveu a série 'OUTRA'"):
+            brasil.ler_ipeadata(SALARIO, ipeadata({"1994-09": 1.0}, "OUTRA"))
+
+    def test_unidade_exportada_escreve_o_mes(self):
+        self.assertEqual(brasil.unidade_exportada(SALARIO, "2026-08"),
+                         "R$ de agosto de 2026")
+        self.assertEqual(brasil.unidade_exportada(CAMBIO, "2026-08"),
+                         "R$ por dólar")
+
+    def test_data_fora_do_dia_1_reprova_e_horario_de_verao_passa(self):
+        dados = ipeadata({"1994-09": 1.0})
+        dados["value"][0]["VALDATA"] = "1994-10-01T00:00:00-02:00"
+        self.assertEqual(brasil.ler_ipeadata(SALARIO, dados), {"1994-10": 1.0})
+        dados["value"][0]["VALDATA"] = "1994-10-02T00:00:00-03:00"
+        with self.assertRaisesRegex(ErroBrasil, "não é o dia 1"):
+            brasil.ler_ipeadata(SALARIO, dados)
+
+
 def leitura(s: SerieBrasil, pontos: dict[str, float]) -> Leitura:
     return Leitura(s, pontos, "https://origem", "https://conferida")
 
@@ -617,6 +717,13 @@ class TestComando(unittest.TestCase):
         self.assertIn(f"até hoje ({atual.nome}, desde {atual.inicio})", saida)
         self.assertIn("meta de inflação: 2 anos, 1999 a 2000", saida)
 
+    def test_salario_minimo_diz_que_conferiu_a_variacao(self):
+        pontos = {"2026-07": 1630.0, "2026-08": 1621.0}
+        _, saida, _ = self.rodar(
+            lambda *a, **k: ([leitura(SALARIO, pontos)], metas(1999)))
+        self.assertIn("salario-minimo: 2 pontos, 2026-07 a 2026-08, cada "
+                      "variação mensal igual à do nominal e do INPC", saida)
+
     def test_erro_sai_com_1_e_diz_por_que(self):
         def falha(*a, **k):
             raise ErroBrasil("pib: as duas leituras divergem")
@@ -634,9 +741,13 @@ class TestRegistro(unittest.TestCase):
             with self.subTest(s.codigo):
                 if s.fonte == "IBGE":
                     self.assertTrue(s.agregado and s.variavel and not s.sgs)
+                elif s.fonte == "Ipea":
+                    self.assertTrue(s.ipeadata and not s.sgs and not s.agregado)
+                    self.assertEqual(s.conferencia, "inpc")
                 else:
                     self.assertTrue(s.sgs and not s.agregado)
-                self.assertIn(s.conferencia, ("janelas", "ptax", "copom"))
+                self.assertIn(s.conferencia,
+                              ("janelas", "ptax", "copom", "inpc"))
                 if s.conferencia != "janelas":
                     # As janelas diárias começam no ano de `desde`.
                     self.assertTrue(s.desde)

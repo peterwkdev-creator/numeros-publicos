@@ -31,7 +31,7 @@ export interface SerieBrasil {
   nome: string;
   unidade: string;
   fonte: string;
-  periodicidade: "trimestral" | "mensal";
+  periodicidade: "trimestral" | "mensal" | "anual";
   /** A leitura gravada e a segunda, que a conferiu ponto a ponto. */
   origem: string;
   conferida: string;
@@ -130,6 +130,20 @@ export const APRESENTACAO: Record<string, Apresentacao> = {
       "Valor real: o IBGE desconta a inflação antes de publicar, então um " +
       "ano se compara com outro.",
   },
+  "extrema-pobreza": {
+    titulo: "Pessoas em extrema pobreza",
+    fiscal: false,
+    como:
+      "De cada 100 pessoas, quantas vivem com menos de US$ 3,00 por dia, a " +
+      "linha internacional de pobreza extrema do Banco Mundial.",
+    melhor: "baixo",
+    nota:
+      "Pela PNAD Contínua, que começa em 2012, um valor por ano. O dólar é " +
+      "convertido em reais pela paridade de poder de compra de 2021 e " +
+      "corrigido pela inflação. Outras publicações do IBGE usam outra linha " +
+      "e dão outro percentual; quando o Banco Mundial troca a linha, o IBGE " +
+      "refaz a série inteira.",
+  },
   ipca: {
     titulo: "Inflação (IPCA) em 12 meses",
     fiscal: false,
@@ -217,19 +231,23 @@ export const SELO: Record<Melhor, string> = {
 
 const TRIMESTRE = /^(\d{4})T([1-4])$/;
 const MES = /^(\d{4})-(0[1-9]|1[0-2])$/;
+const ANO = /^\d{4}$/;
 
-/** O começo de um período, em anos: `1996T2` → 1996,25; `1995-07` → 1995,5. */
+/** O começo de um período, em anos: `1996T2` → 1996,25; `1995-07` → 1995,5;
+ *  `2012` → 2012. */
 export function inicioPeriodo(p: string): number {
+  if (ANO.test(p)) return Number(p);
   const t = TRIMESTRE.exec(p);
   if (t) return Number(t[1]) + (Number(t[2]) - 1) / 4;
   const m = MES.exec(p);
   if (m) return Number(m[1]) + (Number(m[2]) - 1) / 12;
-  throw new Error(`período ${JSON.stringify(p)} não é trimestre nem mês`);
+  throw new Error(`período ${JSON.stringify(p)} não é trimestre, mês nem ano`);
 }
 
 /** O fim do período (o começo do seguinte), em anos. */
 export function fimPeriodo(p: string): number {
-  return inicioPeriodo(p) + (TRIMESTRE.test(p) ? 1 / 4 : 1 / 12);
+  const tamanho = ANO.test(p) ? 1 : TRIMESTRE.test(p) ? 1 / 4 : 1 / 12;
+  return inicioPeriodo(p) + tamanho;
 }
 
 /** Onde o ponto se desenha: no meio do período que ele resume. */
@@ -248,7 +266,7 @@ export function anoDecimal(data: string): number {
   return ano + (dia - comeco) / tamanho;
 }
 
-/** `1996T1` → "1º tri. 1996"; `1995-07` → "jul. 1995". */
+/** `1996T1` → "1º tri. 1996"; `1995-07` → "jul. 1995"; `2012` → "2012". */
 const MESES = ["jan.", "fev.", "mar.", "abr.", "maio", "jun.", "jul.", "ago.",
   "set.", "out.", "nov.", "dez."];
 export function rotuloPeriodo(p: string): string {

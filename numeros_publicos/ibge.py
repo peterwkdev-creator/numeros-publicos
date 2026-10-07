@@ -96,6 +96,10 @@ def transporte_http(timeout: float = 30.0) -> Transporte:
     return buscar
 
 
+#: Quantos caracteres do corpo inválido entram na mensagem de erro.
+CORPO_NA_MENSAGEM = 200
+
+
 def buscar_json(
     transporte: Transporte,
     url: str,
@@ -117,7 +121,13 @@ def buscar_json(
             try:
                 return json.loads(r.corpo)
             except json.JSONDecodeError as e:
-                raise ErroIBGE(f"200 com corpo que não é JSON em {url}") from e
+                # O começo do corpo vai na mensagem: em 07/10/2026 o SGS
+                # respondeu assim duas vezes seguidas, no meio de uma coleta,
+                # e a mesma URL sozinha devolveu JSON. Sem o trecho, não há
+                # como saber se era limite de ritmo, manutenção ou outra coisa.
+                trecho = " ".join(r.corpo[:CORPO_NA_MENSAGEM].split())
+                raise ErroIBGE(f"200 com corpo que não é JSON em {url}: "
+                               f"{trecho!r}") from e
         if r.status == 204 or (r.status == 200 and not r.corpo.strip()):
             return None
         if r.status in REPETIVEIS:

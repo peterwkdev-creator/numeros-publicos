@@ -27,9 +27,9 @@ export async function generateMetadata(): Promise<Metadata> {
   const b = await lerBrasil();
   // Até 160 caracteres, que é onde o Google corta (a auditoria cobra).
   const descricao =
-    "PIB, desemprego, renda, inflação, dólar, juros, salário mínimo, dívida " +
-    `pública e resultado primário desde ${anoInicial(b)}, com quem ocupava a ` +
-    "Presidência. Dados oficiais.";
+    "PIB, desemprego, renda, pobreza, inflação, dólar, juros, salário " +
+    `mínimo, dívida e resultado primário desde ${anoInicial(b)}, com quem ` +
+    "ocupava a Presidência. Dados oficiais.";
   return {
     title: `${TITULO}: economia e contas públicas`,
     description: descricao,

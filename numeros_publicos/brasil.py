@@ -7,7 +7,7 @@ página lê do banco.
 
 ## As séries
 
-Quatro do IBGE (API de agregados), quatro do Banco Central (SGS) e uma do
+Cinco do IBGE (API de agregados), quatro do Banco Central (SGS) e uma do
 Ipea (Ipeadata), todas no nível do país. Cada uma vem com o histórico inteiro que a fonte publica
 (`periodos/all` no IBGE, a janela desde 1990 no SGS): o site mostra a série
 inteira, nunca um recorte, e recorte escolhido aqui seria escolha editorial.
@@ -128,7 +128,7 @@ class SerieBrasil(NamedTuple):
     nome: str
     unidade: str
     fonte: str  # "IBGE", "Banco Central" ou "Ipea"
-    periodicidade: str  # "trimestral" ou "mensal"
+    periodicidade: str  # "trimestral", "mensal" ou "anual"
     agregado: int | None = None
     variavel: int | None = None
     classificacao: str | None = None  # "11255[90707]", como na API
@@ -166,6 +166,15 @@ SERIES: tuple[SerieBrasil, ...] = (
         "mais de idade ocupadas na semana de referência com rendimento de "
         "trabalho, habitualmente recebido em todos os trabalhos", "R$",
         "IBGE", "trimestral", agregado=6472, variavel=5933),
+    # A linha internacional de pobreza extrema do Banco Mundial: US$ 3,00 por
+    # dia em paridade de poder de compra de 2021, convertidos pelo fator de
+    # R$ 2,4498 por dólar e corrigidos pelo IPCA (ficha do indicador 1.1.1 no
+    # odsbrasil.gov.br, do IBGE, lida em 07/10/2026). A Síntese de
+    # Indicadores Sociais usa outra linha (US$ 2,15 em PPC de 2017) e dá 3,47%
+    # em 2024, contra 4,7 aqui; o IBGE refaz a série a cada troca de linha.
+    SerieBrasil(
+        "extrema-pobreza", "Proporção da população abaixo da linha de pobreza "
+        "internacional", "%", "IBGE", "anual", agregado=5817, variavel=9617),
     SerieBrasil(
         "ipca", "IPCA: variação acumulada em 12 meses", "%", "IBGE", "mensal",
         agregado=1737, variavel=2265, desde="1995-07"),
@@ -214,6 +223,7 @@ SERIES: tuple[SerieBrasil, ...] = (
 
 TRIMESTRE = re.compile(r"(\d{4})0([1-4])")
 MES = re.compile(r"(\d{4})(0[1-9]|1[0-2])")
+ANO = re.compile(r"\d{4}")
 DATA_SGS = re.compile(r"01/(0[1-9]|1[0-2])/(\d{4})")
 
 Pontos = dict[str, float]
@@ -224,7 +234,12 @@ def agora() -> str:
 
 
 def periodo_ibge(codigo: str, periodicidade: str) -> str:
-    """`199601` vira `1996T1` (trimestre) e `199507` vira `1995-07` (mês)."""
+    """`199601` vira `1996T1` (trimestre), `199507` vira `1995-07` (mês) e
+    `2012` continua `2012` (ano)."""
+    if periodicidade == "anual":
+        if not ANO.fullmatch(codigo):
+            raise ErroBrasil(f"período {codigo!r} não é anual do IBGE")
+        return codigo
     m = (TRIMESTRE if periodicidade == "trimestral" else MES).fullmatch(codigo)
     if not m:
         raise ErroBrasil(f"período {codigo!r} não é {periodicidade} do IBGE")
@@ -591,7 +606,9 @@ def comparar(codigo: str, a: Pontos, b: Pontos) -> None:
 
 
 def _seguinte(periodicidade: str, p: str) -> str:
-    """`1996T4` → `1997T1`; `2019-12` → `2020-01`."""
+    """`1996T4` → `1997T1`; `2019-12` → `2020-01`; `2019` → `2020`."""
+    if periodicidade == "anual":
+        return str(int(p) + 1)
     if periodicidade == "trimestral":
         a, t = int(p[:4]), int(p[5])
         return f"{a + t // 4}T{t % 4 + 1}"

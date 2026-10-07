@@ -126,6 +126,10 @@ test("brasil: começo, fim e meio do período", () => {
   perto(inicioPeriodo("1995-07"), 1995.5);
   perto(fimPeriodo("2026-12"), 2027);
   perto(meioPeriodo("1996T1"), 1996.125);
+  perto(inicioPeriodo("2012"), 2012);
+  perto(fimPeriodo("2024"), 2025);
+  perto(meioPeriodo("2016"), 2016.5);
+  assert.throws(() => inicioPeriodo("96"));
   assert.throws(() => inicioPeriodo("1996-13"));
   assert.throws(() => inicioPeriodo("1996T5"));
 });
@@ -140,6 +144,7 @@ test("brasil: rótulo do período", () => {
   assert.equal(rotuloPeriodo("1996T1"), "1º tri. 1996");
   assert.equal(rotuloPeriodo("1995-07"), "jul. 1995");
   assert.equal(rotuloPeriodo("2026-05"), "maio 2026");
+  assert.equal(rotuloPeriodo("2024"), "2024");
 });
 
 test("brasil: vizinhos no tempo, inclusive na virada do ano", () => {
@@ -147,6 +152,8 @@ test("brasil: vizinhos no tempo, inclusive na virada do ano", () => {
   assert.ok(contiguos("2026-12", "2027-01"));
   assert.ok(!contiguos("1996T1", "1996T3"), "buraco de um trimestre");
   assert.ok(!contiguos("2020-01", "2020-03"), "buraco de um mês");
+  assert.ok(contiguos("2023", "2024"));
+  assert.ok(!contiguos("2019", "2021"), "buraco de um ano");
 });
 
 test("brasil: o eixo é COMUM, do começo mais antigo ao fim mais recente", () => {

@@ -136,6 +136,16 @@ class TestBackoff(unittest.TestCase):
             buscar_json(t, "https://exemplo/x", dormir=RelogioFalso())
         self.assertIn("agregado/variável inexistente", str(ctx.exception))
 
+    def test_corpo_que_nao_e_json_sai_na_mensagem(self):
+        html = "<html>\n  <title>Muitas   requisições</title>" + "x" * 500
+        t = TransporteRoteirizado(Resposta(200, html))
+        with self.assertRaises(ErroIBGE) as ctx:
+            buscar_json(t, "https://exemplo/x", dormir=RelogioFalso())
+        msg = str(ctx.exception)
+        self.assertIn("'<html> <title>Muitas requisições</title>xxx", msg)
+        self.assertNotIn("x" * 200, msg)  # só o começo, não o corpo inteiro
+        self.assertEqual(len(t.urls), 1)
+
     def test_404_nao_e_repetido(self):
         t = TransporteRoteirizado(Resposta(404, "nao existe"))
         with self.assertRaises(ErroIBGE):

@@ -84,6 +84,12 @@ class TestPeriodos(unittest.TestCase):
         self.assertEqual(periodo_ibge("199507", "mensal"), "1995-07")
         self.assertEqual(periodo_sgs("01/08/2026"), "2026-08")
 
+    def test_ano(self):
+        self.assertEqual(periodo_ibge("2012", "anual"), "2012")
+        for codigo in ("201201", "12", "2012T1"):
+            with self.assertRaises(ErroBrasil):
+                periodo_ibge(codigo, "anual")
+
     def test_forma_inesperada_e_erro(self):
         for codigo, per in (("199605", "trimestral"), ("199513", "mensal"),
                             ("1996", "mensal")):
@@ -98,6 +104,9 @@ class TestPeriodos(unittest.TestCase):
         self.assertEqual(buracos("mensal", {"2019-11": 1, "2020-02": 1}),
                          ["2019-12", "2020-01"])
         self.assertEqual(buracos("mensal", {"2019-11": 1, "2019-12": 1}), [])
+        self.assertEqual(buracos("anual", {"2019": 1, "2022": 1}),
+                         ["2020", "2021"])
+        self.assertEqual(buracos("anual", {"2023": 1, "2024": 1}), [])
 
 
 class TestDuasLeituras(unittest.TestCase):

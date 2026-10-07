@@ -15,21 +15,21 @@ const CAMINHO = "/brasil/";
 const TITULO = "O Brasil ao longo do tempo";
 
 /**
- * Seis séries do país, com quem ocupava a Presidência ao fundo.
+ * As séries do país, com quem ocupava a Presidência ao fundo.
  *
  * A espec é `especs/numeros-publicos-brasil-no-tempo.md`, no repositório de
  * trabalho; as regras de neutralidade (seção 4) moram em `lib/brasil.ts` e no
  * componente do gráfico, e viram teste em `tests/brasil.test.mts`. A página
- * só as junta: o mesmo eixo para os seis, a nota que diz o que as faixas NÃO
+ * só as junta: o mesmo eixo para todas, a nota que diz o que as faixas NÃO
  * medem, e a tabela de quem ocupou o cargo com a fonte de cada data.
  */
 export async function generateMetadata(): Promise<Metadata> {
   const b = await lerBrasil();
   // Até 160 caracteres, que é onde o Google corta (a auditoria cobra).
   const descricao =
-    "PIB, desocupação, rendimento, inflação, dívida pública e resultado " +
-    `primário desde ${anoInicial(b)}, com quem ocupava a Presidência. ` +
-    "Dados do IBGE e do Banco Central.";
+    "PIB, desemprego, renda, inflação, dólar, juros, dívida pública e " +
+    `resultado primário desde ${anoInicial(b)}, com quem ocupava a Presidência. ` +
+    "Fonte: IBGE e Banco Central.";
   return {
     title: `${TITULO}: economia e contas públicas`,
     description: descricao,
@@ -105,7 +105,7 @@ export default async function Pagina() {
 
       <h1 className={estilos.titulo}>{TITULO}</h1>
       <p className={estilos.chamada}>
-        Seis séries do país, de {fontes.join(" e de ")}, cada uma inteira desde
+        São {b.series.length} séries do país, de {fontes.join(" e de ")}, cada uma inteira desde
         o primeiro dado que a fonte publica nesta forma. Ao fundo, quem ocupava
         a Presidência da República em cada período.
       </p>
@@ -120,7 +120,7 @@ export default async function Pagina() {
           página não soma, não tira média e não compara mandatos.
         </p>
         <p>
-          Os seis gráficos usam o mesmo eixo de tempo, de{" "}
+          Os {b.series.length} gráficos usam o mesmo eixo de tempo, de{" "}
           {Math.floor(eixo[0])} a {Math.floor(eixo[1])}: uma série que começa
           depois mostra o espaço vazio antes dela, em vez de esticar.
         </p>
@@ -184,10 +184,13 @@ export default async function Pagina() {
           <p>
             Cada série é lida por dois caminhos da própria fonte (no IBGE, a
             API de agregados e o SIDRA; no Banco Central, a mesma série pedida
-            em dois recortes de datas), e só entra se os dois concordarem em
-            todos os {br(b.series.reduce((n, s) => n + s.pontos.length, 0))}{" "}
-            pontos. Nenhum valor é calculado aqui: o que o gráfico mostra é o
-            que a fonte publica.
+            em dois recortes de datas; no dólar, a média mensal contra a
+            cotação de cada dia, até o arredondamento da quarta casa; na
+            Selic, o histórico das decisões do Copom contra a série diária da
+            meta), e só entra se os dois concordarem em todos os{" "}
+            {br(b.series.reduce((n, s) => n + s.pontos.length, 0))} pontos.
+            Nenhum valor é calculado aqui: o que o gráfico mostra é o que a
+            fonte publica.
           </p>
           <p>
             A meta de inflação de {b.metaInflacao.anos.length} anos, de{" "}

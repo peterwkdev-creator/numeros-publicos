@@ -1,4 +1,4 @@
-"""O Brasil ao longo do tempo: seis séries do país, inteiras, e quem ocupava
+"""O Brasil ao longo do tempo: as séries do país, inteiras, e quem ocupava
 a Presidência em cada período.
 
 A espec é `especs/numeros-publicos-brasil-no-tempo.md`, no repositório de
@@ -7,7 +7,7 @@ página lê do banco.
 
 ## As séries
 
-Quatro do IBGE (API de agregados) e duas do Banco Central (SGS), todas no
+Quatro do IBGE (API de agregados) e quatro do Banco Central (SGS), todas no
 nível do país. Cada uma vem com o histórico inteiro que a fonte publica
 (`periodos/all` no IBGE, a janela desde 1990 no SGS): o site mostra a série
 inteira, nunca um recorte, e recorte escolhido aqui seria escolha editorial.
@@ -22,7 +22,11 @@ mesmos pontos com os mesmos valores:
 - IBGE: a API de agregados (`servicodados`) e a do SIDRA (`apisidra`), que
   são serviços diferentes do instituto;
 - Banco Central: a série inteira numa consulta, e de novo em duas janelas
-  que se emendam.
+  que se emendam. Onde o BC publica a mesma informação por outro caminho, a
+  segunda leitura é esse caminho: o câmbio mensal (3698) contra a média da
+  PTAX diária (SGS 1), e a meta da Selic contra o histórico das decisões do
+  Copom (a página "Histórico das taxas de juros"), que dá o início e o fim
+  de vigência de cada meta.
 
 Ponto que falta num lado, sobra no outro ou difere em valor é ERRO, com a
 lista, e o banco fica como estava.
@@ -52,6 +56,7 @@ atual: pela EC 111/2021, o sucessor toma posse em 5/1/2027.
 
 from __future__ import annotations
 
+import calendar
 import csv
 import datetime as dt
 import html
@@ -60,6 +65,7 @@ import re
 import sqlite3
 import time
 from collections.abc import Callable
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import NamedTuple
 from urllib.parse import urlparse
@@ -76,6 +82,14 @@ MANDATOS = Path(__file__).with_name("brasil_mandatos.csv")
 SGS_DESDE = 1990
 #: Onde a segunda leitura do SGS corta a série em duas janelas.
 SGS_CORTE = 2015
+#: Série DIÁRIA do SGS não aceita janela de mais de 10 anos (medido em
+#: 06/10/2026: "no máximo, 10 anos em séries de periodicidade diária").
+SGS_JANELA_DIARIA = 10
+#: A PTAX de venda, diária: a média do mês confere o câmbio mensal.
+SGS_PTAX = 1
+#: O histórico das decisões do Copom, com o início e o fim de vigência de
+#: cada meta da Selic: o que a página "Histórico das taxas de juros" lê.
+API_COPOM = "https://www.bcb.gov.br/api/servico/sitebcb/historicotaxasjuros"
 
 
 class ErroBrasil(RuntimeError):
@@ -99,8 +113,13 @@ class SerieBrasil(NamedTuple):
     variavel: int | None = None
     classificacao: str | None = None  # "11255[90707]", como na API
     sgs: int | None = None
-    #: Primeiro período que entra, quando há critério técnico (só o IPCA).
+    #: Primeiro período que entra, quando há critério técnico (o IPCA e o
+    #: câmbio, pelo Real; a Selic, pelo começo da meta).
     desde: str | None = None
+    #: A segunda leitura de uma série do SGS: `janelas` (a mesma série em
+    #: duas janelas), `ptax` (a média mensal da PTAX diária) ou `copom` (a
+    #: série diária do SGS contra o histórico das decisões do Copom).
+    conferencia: str = "janelas"
 
 
 # Os nomes do IBGE são os dos metadados de cada tabela, lidos em 05/10/2026.
@@ -139,6 +158,24 @@ SERIES: tuple[SerieBrasil, ...] = (
         "nfsp-primario", "Necessidades de financiamento do setor público, "
         "resultado primário, acumulado em 12 meses", "% do PIB",
         "Banco Central", "mensal", sgs=5793),
+    # Nome no SGS: "Taxa de câmbio - Livre - Dólar americano (venda) - Média
+    # de período - mensal". Desde 07/1994, o primeiro mês do Real: antes, a
+    # série está em cruzeiro real (06/1994 = 2.296,2562). É a média da PTAX
+    # de venda do mês, arredondada a quatro casas (medido em 06/10/2026: 384
+    # de 387 meses iguais; os três outros são empates na quinta casa).
+    SerieBrasil(
+        "cambio", "Taxa de câmbio, dólar americano (venda), média do mês",
+        "R$ por dólar", "Banco Central", "mensal", sgs=3698, desde="1994-07",
+        conferencia="ptax"),
+    # A meta da Selic que o Copom fixa, em vigor no último dia de cada mês.
+    # Desde 03/1999, quando o regime da meta começou (05/03/1999): antes, o
+    # histórico do Copom traz a TBC, taxa mensal de outro regime. O SGS 432
+    # ("Taxa de juros - Meta Selic definida pelo Copom", diária) é a segunda
+    # leitura: 331 de 331 meses iguais em 06/10/2026.
+    SerieBrasil(
+        "selic", "Meta da taxa Selic definida pelo Copom", "% ao ano",
+        "Banco Central", "mensal", sgs=432, desde="1999-03",
+        conferencia="copom"),
 )
 
 TRIMESTRE = re.compile(r"(\d{4})0([1-4])")
@@ -241,9 +278,19 @@ def ler_sidra(s: SerieBrasil, dados: object) -> Pontos:
     return _cortar(s, pontos)
 
 
-def url_sgs(s: SerieBrasil, de: int, ate: int) -> str:
-    return (SGS.format(codigo=s.sgs) + "?formato=json"
+def _url_sgs(codigo: int, de: int, ate: int) -> str:
+    return (SGS.format(codigo=codigo) + "?formato=json"
             f"&dataInicial=01/01/{de}&dataFinal=31/12/{ate}")
+
+
+def url_sgs(s: SerieBrasil, de: int, ate: int) -> str:
+    return _url_sgs(s.sgs, de, ate)
+
+
+def janelas_diarias(de: int, ate: int) -> list[tuple[int, int]]:
+    """Os anos de `de` a `ate` em janelas de até `SGS_JANELA_DIARIA` anos."""
+    return [(a, min(a + SGS_JANELA_DIARIA - 1, ate))
+            for a in range(de, ate + 1, SGS_JANELA_DIARIA)]
 
 
 def ler_sgs(s: SerieBrasil, dados: object) -> Pontos:
@@ -266,6 +313,145 @@ def ler_sgs(s: SerieBrasil, dados: object) -> Pontos:
         raise ErroBrasil(f"{s.codigo}: a resposta do SGS mudou de forma "
                          f"({type(e).__name__}: {e})") from e
     return _cortar(s, pontos)
+
+
+DATA_DIARIA = re.compile(r"(\d{2})/(\d{2})/(\d{4})")
+
+
+def ler_sgs_diaria(rotulo: str, dados: object) -> dict[dt.date, Decimal]:
+    """Uma série DIÁRIA do SGS (`"data": "05/03/1999"`), em `Decimal` para a
+    média não herdar o erro do ponto flutuante."""
+    dias: dict[dt.date, Decimal] = {}
+    try:
+        for linha in dados or []:
+            m = DATA_DIARIA.fullmatch(linha["data"])
+            if not m:
+                raise ErroBrasil(f"{rotulo}: data {linha['data']!r} não é "
+                                 "dd/mm/aaaa")
+            d = dt.date(int(m.group(3)), int(m.group(2)), int(m.group(1)))
+            if d in dias:
+                raise ErroBrasil(f"{rotulo}: {d} repetido no SGS")
+            try:
+                dias[d] = Decimal(linha["valor"])
+            except InvalidOperation as e:
+                raise ErroBrasil(f"{rotulo}: {d} veio com valor "
+                                 f"{linha['valor']!r}, que não é número") from e
+    except (KeyError, TypeError, ValueError) as e:
+        raise ErroBrasil(f"{rotulo}: a resposta do SGS mudou de forma "
+                         f"({type(e).__name__}: {e})") from e
+    return dias
+
+
+def _mes(d: dt.date) -> str:
+    return f"{d.year}-{d.month:02d}"
+
+
+def fim_de_mes(dias: dict[dt.date, Decimal], hoje: dt.date) -> Pontos:
+    """O valor do último dia do calendário de cada mês, até `hoje`. Mês sem
+    esse dia fica de fora, e a comparação o acusa."""
+    return {_mes(d): float(v) for d, v in dias.items()
+            if d <= hoje and d.day == calendar.monthrange(d.year, d.month)[1]}
+
+
+def medias_mensais(dias: dict[dt.date, Decimal],
+                   hoje: dt.date) -> dict[str, Decimal]:
+    """A média de cada mês já encerrado (o mês de `hoje` fica de fora)."""
+    grupos: dict[str, list[Decimal]] = {}
+    for d, v in dias.items():
+        if _mes(d) < _mes(hoje):
+            grupos.setdefault(_mes(d), []).append(v)
+    return {m: sum(vs) / len(vs) for m, vs in grupos.items()}
+
+
+#: Quantos meses a média da PTAX pode estar à frente do câmbio mensal: o BC
+#: publica a média do mês alguns dias depois de ele fechar. Mais que isso é
+#: a série mensal parada, e o gráfico mostraria um câmbio velho como atual.
+PTAX_ADIANTADA = 2
+
+
+def comparar_media(codigo: str, publicado: Pontos,
+                   medias: dict[str, Decimal], casas: int = 4) -> None:
+    """O valor mensal publicado contra a média calculada da série diária.
+
+    A tolerância é meia unidade da última casa publicada: o BC arredonda a
+    média, e nos empates exatos (0,99025) às vezes para baixo. Os meses da
+    média depois do último publicado saem da conta, até `PTAX_ADIANTADA`."""
+    if not publicado:
+        raise ErroBrasil(f"{codigo}: a série mensal veio vazia")
+    ultimo = max(publicado)
+    adiante = sorted(m for m in medias if m > ultimo)
+    if len(adiante) > PTAX_ADIANTADA:
+        raise ErroBrasil(f"{codigo}: a série mensal para em {ultimo}, e a "
+                         f"diária já tem {', '.join(adiante)}")
+    folga = Decimal(5) / Decimal(10) ** (casas + 1)
+    b = {m: v for m, v in medias.items() if m <= ultimo}
+    so_a = sorted(publicado.keys() - b.keys())
+    so_b = sorted(b.keys() - publicado.keys())
+    difs = sorted(m for m in publicado.keys() & b.keys()
+                  if abs(Decimal(repr(publicado[m])) - b[m]) > folga)
+    partes = []
+    if so_a:
+        partes.append(f"só na série mensal: {', '.join(so_a[:5])}")
+    if so_b:
+        partes.append(f"só na média da diária: {', '.join(so_b[:5])}")
+    if difs:
+        partes.append("valores diferentes: " + ", ".join(
+            f"{m} ({publicado[m]} e {b[m]:.6f})" for m in difs[:5]))
+    if partes:
+        raise ErroBrasil(f"{codigo}: a média da diária não confere; "
+                         + "; ".join(partes))
+
+
+#: A meia-noite de Brasília em UTC: 03:00, e 02:00 no horário de verão (até
+#: 2019). Medido em 06/10/2026: 425 datas às 03:00 e 152 às 02:00, nenhuma
+#: outra. Um fuso fixo em UTC-3 lia 30/11/2011 como 29/11, e a meta de
+#: novembro de 2011 e de 2016 saía a do mês seguinte (o SGS 432 acusou).
+MEIA_NOITE_BRASILIA = ("T03:00:00Z", "T02:00:00Z")
+
+
+def _data_copom(texto: str) -> dt.date:
+    """`2026-09-18T03:00:00Z` e `2011-11-30T02:00:00Z` são meia-noite em
+    Brasília: o dia é o da própria data. Outra hora é erro, e não um dia
+    adivinhado."""
+    if texto[10:] not in MEIA_NOITE_BRASILIA:
+        raise ValueError(f"data do Copom fora da meia-noite de Brasília: "
+                         f"{texto!r}")
+    return dt.date.fromisoformat(texto[:10])
+
+
+def ler_copom(s: SerieBrasil, dados: object, hoje: dt.date) -> Pontos:
+    """O histórico do Copom: cada meta com o início e o fim de vigência (o
+    fim é inclusivo; `null` é a meta atual). Cada mês recebe a meta em vigor
+    no seu último dia, e só meses cujo último dia já passou."""
+    try:
+        vigencias = []
+        for x in dados["conteudo"]:
+            meta = x["MetaSelic"]
+            if not isinstance(meta, (int, float)) or isinstance(meta, bool):
+                raise ErroBrasil(f"{s.codigo}: a reunião "
+                                 f"{x.get('NumeroReuniaoCopom')} veio com a "
+                                 f"meta {meta!r}, que não é número")
+            fim = x["DataFimVigencia"]
+            vigencias.append((_data_copom(x["DataInicioVigencia"]),
+                              _data_copom(fim) if fim else None, float(meta)))
+    except (KeyError, TypeError, ValueError) as e:
+        raise ErroBrasil(f"{s.codigo}: a resposta do Copom mudou de forma "
+                         f"({type(e).__name__}: {e})") from e
+    pontos: Pontos = {}
+    a, m = int(s.desde[:4]), int(s.desde[5:])
+    while True:
+        dia = dt.date(a, m, calendar.monthrange(a, m)[1])
+        if dia > hoje:
+            break
+        metas = [v for i, f, v in vigencias
+                 if i <= dia and (f is None or dia <= f)]
+        if len(metas) > 1:
+            raise ErroBrasil(f"{s.codigo}: {dia} cai em {len(metas)} "
+                             "vigências do Copom")
+        if metas:
+            pontos[_mes(dia)] = metas[0]
+        a, m = (a + 1, 1) if m == 12 else (a, m + 1)
+    return pontos
 
 
 def comparar(codigo: str, a: Pontos, b: Pontos) -> None:
@@ -321,7 +507,8 @@ def coletar(s: SerieBrasil, transporte: Transporte,
             dormir: Callable[[float], None] = time.sleep,
             hoje: dt.date | None = None) -> Leitura:
     """Lê a série pelos dois caminhos e só devolve se baterem."""
-    ano = (hoje or dt.date.today()).year
+    hoje = hoje or dt.date.today()
+    ano = hoje.year
 
     def obter(url: str) -> object:
         try:
@@ -329,10 +516,38 @@ def coletar(s: SerieBrasil, transporte: Transporte,
         except ErroIBGE as e:  # o nome é do IBGE; a repetição serve aos dois
             raise ErroBrasil(f"{s.codigo}: {e}") from e
 
+    def diaria(codigo: int) -> tuple[str, dict[dt.date, Decimal]]:
+        """A série diária inteira desde o ano de `s.desde`, em janelas."""
+        urls = [_url_sgs(codigo, de, ate)
+                for de, ate in janelas_diarias(int(s.desde[:4]), ano)]
+        dias: dict[dt.date, Decimal] = {}
+        for u in urls:
+            parte = ler_sgs_diaria(f"{s.codigo} (SGS {codigo})", obter(u))
+            if parte.keys() & dias.keys():
+                raise ErroBrasil(f"{s.codigo}: as janelas diárias do SGS "
+                                 "se sobrepõem")
+            dias |= parte
+        return " + ".join(urls), dias
+
     if s.fonte == "IBGE":
         u1, u2 = url_agregados(s), url_sidra(s)
         a = ler_agregados(s, obter(u1))
         b = ler_sidra(s, obter(u2))
+    elif s.conferencia == "ptax":
+        u1 = url_sgs(s, SGS_DESDE, ano)
+        a = ler_sgs(s, obter(u1))
+        u2, dias = diaria(SGS_PTAX)
+        if not a:
+            raise ErroBrasil(f"{s.codigo}: a fonte não devolveu nenhum ponto")
+        medias = {m: v for m, v in medias_mensais(dias, hoje).items()
+                  if m >= s.desde}
+        comparar_media(s.codigo, a, medias)
+        return Leitura(s, a, u1, u2)
+    elif s.conferencia == "copom":
+        u1 = API_COPOM
+        a = ler_copom(s, obter(u1), hoje)
+        u2, dias = diaria(s.sgs)
+        b = _cortar(s, fim_de_mes(dias, hoje))
     else:
         u1 = url_sgs(s, SGS_DESDE, ano)
         janelas = (url_sgs(s, SGS_DESDE, SGS_CORTE - 1),
@@ -784,8 +999,8 @@ def retrato(db: ArmazemBrasil, mandatos: list[Mandato],
     """O que a página `/brasil/` lê: as séries na ordem de `SERIES`, inteiras,
     cada uma com as duas leituras e a data de coleta, e a tabela de mandatos.
 
-    Série ausente do banco é ERRO, e não série a menos: a página promete as
-    seis, e um retrato com cinco seria bem formado e incompleto. O mesmo
+    Série ausente do banco é ERRO, e não série a menos: a página promete
+    todas, e um retrato com uma a menos seria bem formado e incompleto. O mesmo
     vale para a meta de inflação, que o gráfico do IPCA desenha."""
     saida = []
     for s in series:

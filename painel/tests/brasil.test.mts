@@ -291,7 +291,7 @@ test("neutralidade: a nota de que as faixas não medem efeito, na página e em c
   assert.match(PAGINA, /não medem\s+efeito/);
 });
 
-test("neutralidade: os seis gráficos recebem o MESMO eixo", () => {
+test("neutralidade: todos os gráficos recebem o MESMO eixo", () => {
   const usos = [...PAGINA.matchAll(/<SerieBrasilSvg[^>]*>/gs)].map((x) => x[0]);
   assert.equal(usos.length, 1, "um uso só, dentro do map das séries");
   assert.match(usos[0]!, /dominio=\{eixo\}/);

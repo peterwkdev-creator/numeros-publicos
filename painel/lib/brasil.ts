@@ -1,5 +1,5 @@
 /**
- * O Brasil ao longo do tempo: seis séries do país e quem ocupava a
+ * O Brasil ao longo do tempo: as séries do país e quem ocupava a
  * Presidência. **Módulo puro**: sem I/O, testável sem build.
  *
  * O arquivo (`dados/brasil.json`) vem de `python -m numeros_publicos
@@ -9,7 +9,7 @@
  *
  * ## As regras de neutralidade que moram aqui
  *
- * - **O mesmo eixo de tempo nos seis gráficos**: `dominio` sai de todas as
+ * - **O mesmo eixo de tempo em todos os gráficos**: `dominio` sai de todas as
  *   séries juntas, e não de cada uma. Recortar por série deixaria cada gráfico
  *   começar onde convém.
  * - **A faixa só existe onde a série tem dado**: `faixas` recorta pela
@@ -75,8 +75,10 @@ export interface SnapshotBrasil {
 /**
  * Como se lê a série, para quem não é economista: para que lado é melhor.
  * `meta` diz que o melhor é ficar dentro de uma faixa, e não num extremo.
+ * `nenhum` diz que os dois lados têm ganho e custo (o câmbio, os juros):
+ * marcar um deles como melhor seria tomar partido numa escolha de política.
  */
-export type Melhor = "alto" | "baixo" | "meta";
+export type Melhor = "alto" | "baixo" | "meta" | "nenhum";
 
 export interface Apresentacao {
   titulo: string;
@@ -161,6 +163,32 @@ export const APRESENTACAO: Record<string, Apresentacao> = {
       "O Banco Central publica a necessidade de financiamento do setor " +
       "público, e por isso o déficit fica acima de zero.",
   },
+  cambio: {
+    titulo: "Dólar: média do mês",
+    fiscal: false,
+    como:
+      "Quantos reais custa um dólar, na média do mês. Dólar mais caro " +
+      "encarece o que vem de fora e ajuda quem exporta; mais barato faz o " +
+      "contrário.",
+    melhor: "nenhum",
+    nota:
+      "Valor nominal, sem descontar a inflação. Desde julho de 1994, o " +
+      "primeiro mês do Real. Até janeiro de 1999 o Banco Central mantinha o " +
+      "dólar dentro de uma faixa; desde então o câmbio é flutuante.",
+  },
+  selic: {
+    titulo: "Selic: a taxa básica de juros",
+    fiscal: false,
+    como:
+      "A taxa de juros que o Banco Central fixa como meta, em % ao ano. " +
+      "Juros mais altos seguram a inflação e encarecem o crédito; mais " +
+      "baixos fazem o contrário.",
+    melhor: "nenhum",
+    nota:
+      "Decisão do Copom, o comitê do Banco Central, autônomo desde 2021 " +
+      "(Lei Complementar 179). Cada ponto é a meta em vigor no último dia " +
+      "do mês. Desde março de 1999, quando a meta começou.",
+  },
 };
 
 /** O selo de leitura, acima do gráfico. */
@@ -168,6 +196,7 @@ export const SELO: Record<Melhor, string> = {
   alto: "Mais alto é melhor",
   baixo: "Mais baixo é melhor",
   meta: "Melhor dentro da faixa da meta",
+  nenhum: "Nenhum lado é melhor por si",
 };
 
 // ------------------------------------------------------------------ tempo

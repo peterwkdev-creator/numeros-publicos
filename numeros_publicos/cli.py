@@ -976,7 +976,9 @@ def brasil_ingerir(args, transporte=None, dormir=None) -> int:
         ps = sorted(leitura.pontos)
         vao = brasil.buracos(leitura.serie.periodicidade, leitura.pontos)
         print(f"{leitura.serie.codigo}: {len(ps)} pontos, {ps[0]} a {ps[-1]}, "
-              "iguais na segunda leitura"
+              + ("iguais à média da PTAX diária, até meia unidade da 4ª casa"
+                 if leitura.serie.conferencia == "ptax"
+                 else "iguais na segunda leitura")
               + (f"; sem dado na fonte: {', '.join(vao)}" if vao else ""))
     anos = [m.ano for m in metas.metas]
     print(f"meta de inflação: {len(anos)} anos, {anos[0]} a {anos[-1]}, o "

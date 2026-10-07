@@ -18,7 +18,7 @@
 .nota p { margin: 0 0 .6rem; }
 
 /* Dois por linha onde cabem, um embaixo do outro no telefone. O eixo de tempo
-   é o mesmo nos seis, então a coluna também serve para comparar na vertical. */
+   é o mesmo em todos, então a coluna também serve para comparar na vertical. */
 .grade {
   display: grid;
   gap: 2.25rem 2rem;

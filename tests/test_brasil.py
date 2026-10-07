@@ -159,6 +159,147 @@ class TestDuasLeituras(unittest.TestCase):
             coletar(PIB, transporte_ibge(PIB, {}), sem_pausa)
 
 
+CAMBIO = next(s for s in brasil.SERIES if s.codigo == "cambio")
+SELIC = next(s for s in brasil.SERIES if s.codigo == "selic")
+
+
+def diaria(dias: dict[str, str]):
+    """`{"1994-07-01": "0.9320"}` na forma do SGS diário."""
+    return [{"data": f"{d[8:]}/{d[5:7]}/{d[:4]}", "valor": v}
+            for d, v in dias.items()]
+
+
+def transporte_diario(codigo: int, de: int, ate: int, dias: dict[str, str]):
+    """Uma resposta por janela diária, cada uma com os dias que lhe cabem."""
+    return {brasil._url_sgs(codigo, a, b): diaria(
+                {d: v for d, v in dias.items() if a <= int(d[:4]) <= b})
+            for a, b in brasil.janelas_diarias(de, ate)}
+
+
+class TestCambio(unittest.TestCase):
+    HOJE = brasil.dt.date(2026, 10, 6)
+    MENSAL = {"1994-06": "2296.2562", "1994-07": "0.9333", "1994-08": "0.9002"}
+    # Julho dá 0,9333 certo; agosto dá 0,90025, o empate na quinta casa que o
+    # BC arredondou para baixo em 1996-04, 1999-08 e 2001-03.
+    PTAX = {"1994-07-01": "0.9320", "1994-07-29": "0.9346",
+            "1994-08-01": "0.9002", "1994-08-31": "0.9003",
+            "1994-09-01": "0.8700"}
+
+    def transporte(self, mensal=None, ptax=None):
+        return Transporte({
+            brasil.url_sgs(CAMBIO, 1990, 2026): sgs(mensal or self.MENSAL),
+            **transporte_diario(1, 1994, 2026, ptax or self.PTAX)})
+
+    def test_janelas_diarias_de_dez_anos(self):
+        self.assertEqual(brasil.janelas_diarias(1994, 2026),
+                         [(1994, 2003), (2004, 2013), (2014, 2023), (2024, 2026)])
+        self.assertEqual(brasil.janelas_diarias(2024, 2026), [(2024, 2026)])
+
+    def test_media_confere_ate_o_arredondamento_e_corta_no_real(self):
+        lida = coletar(CAMBIO, self.transporte(), sem_pausa, hoje=self.HOJE)
+        self.assertEqual(lida.pontos, {"1994-07": 0.9333, "1994-08": 0.9002})
+        self.assertEqual(lida.origem, brasil.url_sgs(CAMBIO, 1990, 2026))
+        self.assertIn("bcdata.sgs.1/", lida.conferida)
+
+    def test_meia_casa_a_mais_reprova(self):
+        mensal = dict(self.MENSAL, **{"1994-08": "0.9001"})
+        with self.assertRaisesRegex(ErroBrasil, r"1994-08 \(0.9001 e 0.900250\)"):
+            coletar(CAMBIO, self.transporte(mensal=mensal), sem_pausa,
+                    hoje=self.HOJE)
+
+    def test_mes_faltando_na_mensal_reprova(self):
+        mensal = {"1994-08": "0.9002"}
+        with self.assertRaisesRegex(ErroBrasil, "só na média da diária: 1994-07"):
+            coletar(CAMBIO, self.transporte(mensal=mensal), sem_pausa,
+                    hoje=self.HOJE)
+
+    def test_mensal_parada_reprova(self):
+        ptax = dict(self.PTAX, **{"1994-10-03": "0.85", "1994-11-01": "0.84"})
+        with self.assertRaisesRegex(ErroBrasil, "para em 1994-08"):
+            coletar(CAMBIO, self.transporte(ptax=ptax), sem_pausa,
+                    hoje=self.HOJE)
+
+    def test_mes_corrente_nao_tem_media(self):
+        dias = brasil.ler_sgs_diaria("t", diaria(
+            {"2026-09-30": "5.30", "2026-10-01": "5.40"}))
+        self.assertEqual(brasil.medias_mensais(dias, self.HOJE),
+                         {"2026-09": brasil.Decimal("5.30")})
+
+
+def vigencia(inicio: str, fim: str | None, meta: float, n: int):
+    return {"NumeroReuniaoCopom": n, "MetaSelic": meta,
+            "DataInicioVigencia": f"{inicio}T03:00:00Z",
+            "DataFimVigencia": f"{fim}T03:00:00Z" if fim else None}
+
+
+class TestSelic(unittest.TestCase):
+    HOJE = brasil.dt.date(1999, 6, 10)
+    # A primeira é da TBC, de antes da meta: cai antes de março e não entra.
+    COPOM = {"conteudo": [
+        vigencia("1999-05-20", None, 27.0, 4),
+        vigencia("1999-04-15", "1999-05-19", 34.0, 3),
+        vigencia("1999-03-25", "1999-04-14", 42.0, 2),
+        vigencia("1999-03-05", "1999-03-24", 45.0, 1),
+        vigencia("1999-01-20", "1999-03-04", 2.9, 0)]}
+    # O SGS 432 traz datas futuras: 30/06 ainda não chegou.
+    DIAS = {"1999-03-05": "45.00", "1999-03-31": "42.00",
+            "1999-04-30": "34.00", "1999-05-31": "27.00",
+            "1999-06-30": "27.00"}
+
+    def transporte(self, copom=None, dias=None):
+        return Transporte({brasil.API_COPOM: copom or self.COPOM,
+                           **transporte_diario(432, 1999, 1999, dias or self.DIAS)})
+
+    def test_meta_do_ultimo_dia_de_cada_mes_ate_hoje(self):
+        lida = coletar(SELIC, self.transporte(), sem_pausa, hoje=self.HOJE)
+        self.assertEqual(lida.pontos,
+                         {"1999-03": 42.0, "1999-04": 34.0, "1999-05": 27.0})
+        self.assertEqual(lida.origem, brasil.API_COPOM)
+        self.assertIn("bcdata.sgs.432/", lida.conferida)
+
+    def test_serie_diaria_diferente_reprova(self):
+        dias = dict(self.DIAS, **{"1999-04-30": "33.50"})
+        with self.assertRaisesRegex(ErroBrasil, r"1999-04 \(34.0 e 33.5\)"):
+            coletar(SELIC, self.transporte(dias=dias), sem_pausa,
+                    hoje=self.HOJE)
+
+    def test_vigencias_sobrepostas_reprovam(self):
+        copom = {"conteudo": self.COPOM["conteudo"]
+                 + [vigencia("1999-04-01", "1999-04-30", 40.0, 9)]}
+        with self.assertRaisesRegex(ErroBrasil, "1999-04-30 cai em 2"):
+            coletar(SELIC, self.transporte(copom=copom), sem_pausa,
+                    hoje=self.HOJE)
+
+    def test_meta_que_nao_e_numero_reprova(self):
+        copom = {"conteudo": [vigencia("1999-05-20", None, None, 4)]}
+        with self.assertRaisesRegex(ErroBrasil, "reunião 4 veio com a meta None"):
+            brasil.ler_copom(SELIC, copom, self.HOJE)
+
+    def test_meia_noite_de_brasilia_com_e_sem_horario_de_verao(self):
+        # 02:00 UTC é a meia-noite do horário de verão: o dia é 30, e não 29
+        # (o fuso fixo em UTC-3 errava a meta de novembro de 2011 e de 2016).
+        self.assertEqual(brasil._data_copom("2011-11-30T02:00:00Z"),
+                         brasil.dt.date(2011, 11, 30))
+        self.assertEqual(brasil._data_copom("1999-03-05T03:00:00Z"),
+                         brasil.dt.date(1999, 3, 5))
+        for outra in ("1999-03-05T00:00:00Z", "1999-03-05T03:00:00"):
+            with self.assertRaises(ValueError):
+                brasil._data_copom(outra)
+
+    def test_fim_de_vigencia_no_horario_de_verao(self):
+        # As vigências de 2011 como o BC as publica (reuniões 162 e 163).
+        copom = {"conteudo": [
+            {"NumeroReuniaoCopom": 163, "MetaSelic": 11.0,
+             "DataInicioVigencia": "2011-12-01T02:00:00Z",
+             "DataFimVigencia": "2012-01-18T02:00:00Z"},
+            {"NumeroReuniaoCopom": 162, "MetaSelic": 11.5,
+             "DataInicioVigencia": "2011-10-20T02:00:00Z",
+             "DataFimVigencia": "2011-11-30T02:00:00Z"}]}
+        s = SELIC._replace(desde="2011-11")
+        self.assertEqual(brasil.ler_copom(s, copom, brasil.dt.date(2011, 12, 31)),
+                         {"2011-11": 11.5, "2011-12": 11.0})
+
+
 def leitura(s: SerieBrasil, pontos: dict[str, float]) -> Leitura:
     return Leitura(s, pontos, "https://origem", "https://conferida")
 
@@ -495,6 +636,10 @@ class TestRegistro(unittest.TestCase):
                     self.assertTrue(s.agregado and s.variavel and not s.sgs)
                 else:
                     self.assertTrue(s.sgs and not s.agregado)
+                self.assertIn(s.conferencia, ("janelas", "ptax", "copom"))
+                if s.conferencia != "janelas":
+                    # As janelas diárias começam no ano de `desde`.
+                    self.assertTrue(s.desde)
 
 
 if __name__ == "__main__":

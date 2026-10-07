@@ -8,8 +8,8 @@ import estilos from "./serie-brasil.module.css";
 
 /**
  * Uma série do país, com as faixas de quem ocupava a Presidência atrás.
- * **Componente de servidor.** Usado seis vezes em `/brasil/`, sempre com o
- * MESMO `dominio`: o eixo de tempo é o mesmo nos seis, e é isso que permite
+ * **Componente de servidor.** Usado uma vez por série em `/brasil/`, sempre com o
+ * MESMO `dominio`: o eixo de tempo é o mesmo em todos, e é isso que permite
  * olhar um embaixo do outro.
  *
  * ## O que o desenho se recusa a fazer
@@ -30,7 +30,8 @@ import estilos from "./serie-brasil.module.css";
  *
  * Cada gráfico diz para que lado é melhor: um selo acima dele, e dentro do
  * desenho a palavra em cada lado (no alto e embaixo, ou dos dois lados do
- * zero). Na inflação, a faixa da meta de cada ano. Sem verde e vermelho: a
+ * zero). Na inflação, a faixa da meta de cada ano. No câmbio e nos juros o
+ * selo diz que nenhum lado é melhor por si, e o desenho não leva palavra. Sem verde e vermelho: a
  * leitura vai escrita, e a cor continua sem dizer nada sobre as pessoas.
  */
 
@@ -89,7 +90,7 @@ export default function SerieBrasilSvg({
   if (ap?.zero && baixo < 0 && alto > 0) {
     leituras.push({ texto: `↑ ${ap.zero.acima}`, y: y(0) - 4 },
       { texto: `↓ ${ap.zero.abaixo}`, y: y(0) + 11 });
-  } else if (ap && ap.melhor !== "meta") {
+  } else if (ap?.melhor === "alto" || ap?.melhor === "baixo") {
     const [cima, baixa] = ap.melhor === "alto" ? ["melhor", "pior"] : ["pior", "melhor"];
     leituras.push({ texto: `↑ ${cima}`, y: M.topo + 11 },
       { texto: `↓ ${baixa}`, y: A - M.base - 5 });
@@ -107,9 +108,11 @@ export default function SerieBrasilSvg({
   const herdados = ap?.fiscal ? anosHerdados(mandatos, cobDe, cobAte) : [];
   const padrao = `herdado-${serie.codigo}`;
   const r = resumo(serie);
-  // "R$ 3.061", "7,5%", "51,27% do PIB".
+  // "R$ 3.061", "R$ 5,15 por dólar", "7,5%", "51,27% do PIB".
   const valor = (v: number) =>
-    serie.unidade === "R$" ? `R$ ${br(v, casas)}` : `${br(v, casas)}${serie.unidade}`;
+    serie.unidade.startsWith("R$")
+      ? `R$ ${br(v, casas)}${serie.unidade.slice(2)}`
+      : `${br(v, casas)}${serie.unidade}`;
   const comeco = cobDe - de > 1;
 
   const rotulo =
@@ -135,7 +138,7 @@ export default function SerieBrasilSvg({
         <p className={estilos.leitura}>
           <span className={estilos.selo} data-melhor={ap.melhor}>
             <span aria-hidden="true">
-              {ap.melhor === "alto" ? "↑ " : ap.melhor === "baixo" ? "↓ " : "▭ "}
+              {{ alto: "↑ ", baixo: "↓ ", meta: "▭ ", nenhum: "↕ " }[ap.melhor]}
             </span>
             {SELO[ap.melhor]}
           </span>{" "}

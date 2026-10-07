@@ -68,10 +68,19 @@ for (const caminho of caminhos) {
   // No modo `print` a preferência de tema fica em `dark` DE PROPÓSITO: é o
   // caso que mordeu. Se a folha de impressão não sobrescrever as cores, o
   // critério de contraste reprova aqui — que é exatamente o que se quer.
-  await p.emulateMediaFeatures([
-    { name: "prefers-color-scheme", value: tema === "print" ? "dark" : tema },
-  ]);
-  if (tema === "print") await p.emulateMediaType("print");
+  //
+  // As duas coisas vão numa chamada só. Medido em 06/10/2026: no
+  // puppeteer-core 25, `emulateMediaType` e `emulateMediaFeatures` mandam o
+  // mesmo comando do protocolo, e cada um apaga o que o outro pôs. O `print`
+  // pedido depois do `dark` voltava à preferência do sistema: escura nesta
+  // máquina (o caso certo, por acaso), clara no CI, que nunca auditou o papel
+  // com o tema escuro. O `modoLido` abaixo confere o que a página recebeu.
+  const esperado = `${tema === "print" ? "dark" : tema} ${tema === "print" ? "print" : "screen"}`;
+  const cdp = await p.createCDPSession();
+  await cdp.send("Emulation.setEmulatedMedia", {
+    media: tema === "print" ? "print" : "screen",
+    features: [{ name: "prefers-color-scheme", value: tema === "print" ? "dark" : tema }],
+  });
   const recursos = [];
   p.on("response", async (r) => {
     try {
@@ -83,6 +92,9 @@ for (const caminho of caminhos) {
   });
   await p.setViewport({ width: 1280, height: 900 });
   await p.goto(base + caminho, { waitUntil: "networkidle0", timeout: 40000 });
+  const modoLido = await p.evaluate(() =>
+    `${matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"} ` +
+    `${matchMedia("print").matches ? "print" : "screen"}`);
 
   // ---- ABRIR A BUSCA ANTES DE AUDITAR --------------------------------
   //
@@ -514,6 +526,8 @@ for (const caminho of caminhos) {
 
   const problemas = [];
   const flag = (cond, msg) => { if (cond) problemas.push(msg); };
+  flag(modoLido !== esperado,
+    `a página recebeu "${modoLido}", e não "${esperado}": este modo não foi auditado`);
   flag(r.trilhaDivergente, r.trilhaDivergente);
   flag(r.duplicados.length, `id duplicado: ${JSON.stringify(r.duplicados)}`);
   flag(r.aninhados.length, `âncora dentro de âncora: ${JSON.stringify(r.aninhados)}`);

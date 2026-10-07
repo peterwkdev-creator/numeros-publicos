@@ -86,6 +86,10 @@
   --rosca-6: #b6d9f0;
   --rosca-7: #d3e7f7;
   --rosca-8: #cbd5dd;
+  /* As faixas de quem ocupava a Presidência, em /brasil/: dois cinzas, e
+     nenhuma outra cor. Alternam pela ordem no cargo, nada mais. */
+  --faixa-0: #eef1f4;
+  --faixa-1: #dfe5ea;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -112,6 +116,8 @@
     --rosca-6: #1d4661;
     --rosca-7: #173648;
     --rosca-8: #3a4650;
+    --faixa-0: #151f26;
+    --faixa-1: #202d37;
   }
 }
 
@@ -376,6 +382,8 @@ p, li {
     --rosca-6: #c4d4e0;
     --rosca-7: #e0e9f0;
     --rosca-8: #d8dde1;
+    --faixa-0: #f2f2f2;
+    --faixa-1: #dcdcdc;
   }
 
   body {

@@ -6,6 +6,7 @@ import type { SnapshotFiscal } from "./fiscal";
 import type { SnapshotIdeb } from "./ideb";
 import type { SnapshotInss } from "./inss";
 import type { SnapshotCaged } from "./caged";
+import type { SnapshotBrasil } from "./brasil";
 
 /**
  * Leitura do snapshot gerado pelo motor Python. **Só no servidor.**
@@ -87,6 +88,20 @@ export async function lerCaged(): Promise<SnapshotCaged> {
   const arquivo = path.join(process.cwd(), "dados", "caged.json");
   cacheCaged = JSON.parse(await readFile(arquivo, "utf-8")) as SnapshotCaged;
   return cacheCaged;
+}
+
+/**
+ * O Brasil ao longo do tempo, escrito por `python -m numeros_publicos
+ * brasil-exportar`: seis séries do país, cada uma conferida ponto a ponto por
+ * uma segunda leitura da fonte, e quem ocupava a Presidência.
+ */
+let cacheBrasil: SnapshotBrasil | null = null;
+
+export async function lerBrasil(): Promise<SnapshotBrasil> {
+  if (cacheBrasil) return cacheBrasil;
+  const arquivo = path.join(process.cwd(), "dados", "brasil.json");
+  cacheBrasil = JSON.parse(await readFile(arquivo, "utf-8")) as SnapshotBrasil;
+  return cacheBrasil;
 }
 
 /**

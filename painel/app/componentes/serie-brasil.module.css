@@ -1,0 +1,172 @@
+/* Uma série do país em `/brasil/`. Toda cor do desenho mora aqui, em classe, e
+   não em atributo do SVG: variável ausente num atributo vira `none` e some sem
+   rastro, e `fill` de atributo dentro de `<pattern>` não resolve `var()`.
+   As faixas usam `--faixa-0/1` de `globals.css`, definidas nos três modos. */
+
+.figura {
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.titulo {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.3;
+}
+
+.unidade {
+  margin: 0.15rem 0 0.4rem;
+  font-size: 0.82rem;
+  color: var(--tinta-suave);
+}
+
+/* Como se lê a série: o selo diz para que lado é melhor, e a frase diz o que
+   ela mede. Em texto, e não em cor: verde e vermelho somem no daltonismo e no
+   papel, e dariam à página um tom de placar. */
+.leitura {
+  margin: 0 0 0.45rem;
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.selo {
+  display: inline-block;
+  padding: 0 0.4rem;
+  border: 1px solid var(--borda-forte);
+  border-radius: 999px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.grafico {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Em alto contraste forçado o `fill` é descartado e as faixas sumiriam: a
+   mesma razão da rosca, da barra e do mapa. */
+.faixa {
+  forced-color-adjust: none;
+}
+.faixa[data-faixa="0"] { fill: var(--faixa-0); }
+.faixa[data-faixa="1"] { fill: var(--faixa-1); }
+
+.hachura {
+  stroke: var(--tinta-fraca);
+  stroke-width: 1.4;
+  opacity: 0.45;
+}
+
+.divisa {
+  stroke: var(--borda-forte);
+  stroke-width: 1;
+  stroke-dasharray: 2 2;
+}
+
+.grade {
+  stroke: var(--borda);
+  stroke-width: 0.8;
+}
+
+.zero {
+  stroke: var(--tinta-fraca);
+  stroke-width: 1.2;
+}
+
+.marca {
+  stroke: var(--tinta-fraca);
+  stroke-width: 1;
+}
+
+.linha {
+  fill: none;
+  stroke: var(--acento);
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.ponto {
+  fill: var(--acento);
+}
+
+.rotulo {
+  fill: var(--tinta);
+  font-weight: 600;
+}
+
+/* A faixa da meta de inflação: a cor da linha, translúcida, com a borda
+   tracejada. Translúcida para a grade e as faixas do cargo seguirem visíveis
+   por baixo; a borda é o que dá os 3:1 de elemento gráfico. */
+.meta {
+  forced-color-adjust: none;
+  fill: var(--acento);
+  fill-opacity: 0.14;
+  stroke: var(--acento);
+  stroke-width: 0.9;
+  stroke-dasharray: 3 2;
+}
+
+/* As palavras da leitura dentro do desenho ("melhor", "cresceu"), com halo da
+   cor do fundo: leem mesmo quando a linha passa por elas. */
+.leituraSvg {
+  fill: var(--tinta);
+  font-weight: 600;
+  stroke: var(--fundo);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+  paint-order: stroke;
+}
+
+.eixo {
+  fill: var(--tinta-suave);
+  font-variant-numeric: tabular-nums;
+}
+
+.legenda {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+}
+.legenda p {
+  margin: 0 0 0.4rem;
+}
+
+.ressalva,
+.fonte {
+  color: var(--tinta-suave);
+  font-size: 0.8rem;
+}
+
+.valores summary {
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+/* A tabela inteira tem até 374 linhas (o IPCA): rola dentro da caixa, em vez
+   de empurrar o gráfico seguinte para o fim da página. */
+.rolagem {
+  max-height: 20rem;
+  overflow-y: auto;
+  margin-top: 0.4rem;
+}
+.rolagem table {
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+.rolagem th,
+.rolagem td {
+  padding: 0.15rem 0.8rem 0.15rem 0;
+  text-align: left;
+  border-bottom: 1px solid var(--borda);
+}
+.rolagem td {
+  text-align: right;
+}
+.rolagem thead th {
+  position: sticky;
+  top: 0;
+  background: var(--fundo);
+}

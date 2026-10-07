@@ -227,6 +227,15 @@ export default async function Pagina() {
         ))}
       </section>
 
+      {/* O único caminho da capa até `/brasil/`: sem link de lugar nenhum, a
+          página fica invisível para o rastreador (o defeito do concorrente
+          medido em 07/09, o mesmo que motivou o link do ranking). */}
+      <p className={s.secaoNota}>
+        <Link href="/brasil/" prefetch={false}>O Brasil ao longo do tempo</Link>{" "}
+        — PIB, desocupação, rendimento, inflação, dívida e resultado primário
+        do país, com quem ocupava a Presidência em cada período.
+      </p>
+
       {/* A capa listava indicadores e estados, e não respondia "para onde vai
           o dinheiro" — a pergunta que a página do município e a do estado já
           respondiam. O dado estava no disco desde que a varredura nacional

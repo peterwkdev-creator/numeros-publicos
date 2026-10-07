@@ -835,6 +835,13 @@ def construir_parser() -> argparse.ArgumentParser:
                     help="aceita série com menos pontos ou período mais curto "
                          "que o já gravado")
     bi.set_defaults(func=brasil_ingerir)
+    be = sub.add_parser("brasil-exportar",
+                        help="gera o brasil.json que a página /brasil/ lê")
+    be.add_argument("--saida", default="painel/dados/brasil.json")
+    be.add_argument("--banco-brasil",
+                    default=os.environ.get("BRASIL_BANCO", "brasil.db"))
+    be.add_argument("--permitir-encolher", action="store_true")
+    be.set_defaults(func=brasil_exportar)
     return p
 
 
@@ -952,13 +959,14 @@ def emendas_ingerir(args, baixar=None) -> int:
 
 
 def brasil_ingerir(args, transporte=None, dormir=None) -> int:
-    """Valida a tabela de mandatos, lê cada série pelos dois caminhos e só
-    grava se todas baterem: ou entram todas, ou nenhuma."""
+    """Valida a tabela de mandatos, lê cada série pelos dois caminhos, confere
+    a meta de inflação contra o SGS e a página do Banco Central, e só grava se
+    tudo bater: ou entra tudo, ou nada."""
     import time
     from . import brasil
     try:
         mandatos = brasil.carregar_mandatos()
-        leituras = brasil.ingerir(
+        leituras, metas = brasil.ingerir(
             args.banco_brasil, transporte or transporte_http(),
             dormir or time.sleep, permitir_encolher=args.permitir_encolher)
     except brasil.ErroBrasil as e:
@@ -970,10 +978,35 @@ def brasil_ingerir(args, transporte=None, dormir=None) -> int:
         print(f"{leitura.serie.codigo}: {len(ps)} pontos, {ps[0]} a {ps[-1]}, "
               "iguais na segunda leitura"
               + (f"; sem dado na fonte: {', '.join(vao)}" if vao else ""))
+    anos = [m.ano for m in metas.metas]
+    print(f"meta de inflação: {len(anos)} anos, {anos[0]} a {anos[-1]}, o "
+          f"centro igual ao SGS {brasil.SGS_METAS} e meta e intervalo iguais "
+          "à página do Banco Central")
     atual = mandatos[-1]
     print(f"mandatos: {len(mandatos)} períodos, de {mandatos[0].inicio} até "
           f"hoje ({atual.nome}, desde {atual.inicio}), com fonte oficial em "
           "todos, sem sobreposição nem buraco")
+    return 0
+
+
+def brasil_exportar(args) -> int:
+    """Escreve o `brasil.json` a partir do banco e da tabela de mandatos.
+    Não confere com a fonte: a conferência é a segunda leitura, feita na
+    ingestão, e nada entra no banco sem ela."""
+    from . import brasil
+    try:
+        mandatos = brasil.carregar_mandatos()
+        with brasil.ArmazemBrasil(args.banco_brasil) as db:
+            r = brasil.retrato(db, mandatos)
+        estado = brasil.gravar_retrato(r, args.saida, args.permitir_encolher)
+    except brasil.ErroBrasil as e:
+        print(f"[!] {e}", file=sys.stderr)
+        return 1
+    print(f"{args.saida}: {estado} · " + " · ".join(
+        f"{s['codigo']} {len(s['pontos'])} ({s['pontos'][0][0]} a "
+        f"{s['pontos'][-1][0]})" for s in r["series"])
+        + f" · {len(r['mandatos'])} períodos na Presidência"
+        + f" · meta de inflação de {len(r['metaInflacao']['anos'])} anos")
     return 0
 
 

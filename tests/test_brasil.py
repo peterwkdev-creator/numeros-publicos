@@ -18,8 +18,10 @@ from unittest import mock
 
 from numeros_publicos import brasil, cli
 from numeros_publicos.brasil import (
-    ArmazemBrasil, ErroBrasil, Leitura, Mandato, SerieBrasil, buracos,
-    carregar_mandatos, coletar, periodo_ibge, periodo_sgs, validar_mandatos,
+    ArmazemBrasil, ErroBrasil, Leitura, LeituraMetas, Mandato, Meta,
+    SerieBrasil, buracos, carregar_mandatos, carregar_metas, coletar,
+    coletar_metas, conferir_metas, ler_tabela_metas, periodo_ibge,
+    periodo_sgs, validar_mandatos,
 )
 from numeros_publicos.ibge import Resposta
 
@@ -161,6 +163,94 @@ def leitura(s: SerieBrasil, pontos: dict[str, float]) -> Leitura:
     return Leitura(s, pontos, "https://origem", "https://conferida")
 
 
+def metas(*anos: int) -> LeituraMetas:
+    return LeituraMetas([Meta(a, 4.5, 2.0, "Resolução CMN nº 1") for a in anos],
+                        "https://sgs", "https://pagina")
+
+
+# A forma da página do Banco Central lida em 06/10/2026: o texto da meta
+# contínua antes da tabela; uma linha inteira; uma revista (2003, com as duas
+# metas na mesma célula e um espaço de largura zero no nome da norma); e uma
+# das curtas do começo, sem norma nem data.
+PAGINA_METAS = {"conteudo": (
+    "<p>Desde janeiro de 2025, a meta se refere à inflação acumulada em doze "
+    "meses. A meta, fixada pela Resolução CMN nº 5.141, de 26 de junho de "
+    "2024, é de 3,00%, com intervalo de tolerância de &plusmn;1,5 ponto "
+    "percentual.</p><table><tr><th>Ano</th><th>Norma</th><th>Data</th>"
+    "<th>Meta (%)</th><th>Tamanho</th><th>Intervalo</th><th>Efetiva</th>"
+    "<th>Carta</th></tr>"
+    "<tr><td>2024</td><td>Resolução CMN nº 4.918</td><td>24/6/2021</td>"
+    "<td>3,00</td><td>1,50</td><td>1,50-4,50</td><td>4,83</td><td>Sim</td></tr>"
+    "<tr><td>2003*</td><td>Resolução CM​N nº 2.972<br>Resolução CMN nº "
+    "2.842</td><td>27/6/2002<br>28/6/2001</td><td>4<br>3,25</td>"
+    "<td>2,5<br>2</td><td>1,5-6,5 <br>1,25-5,25</td><td>9,30</td><td>Sim</td>"
+    "</tr><tr><td>1999</td><td>8</td><td>2</td><td>6-10</td><td>8,94</td>"
+    "<td>Não</td></tr></table>")}
+METAS_PAGINA = [Meta(1999, 8.0, 2.0, "Resolução CMN nº 2.615"),
+                Meta(2003, 4.0, 2.5, "Resolução CMN nº 2.972"),
+                Meta(2024, 3.0, 1.5, "Resolução CMN nº 4.918"),
+                Meta(2025, 3.0, 1.5, "Resolução CMN nº 5.141")]
+SGS_METAS = {1999: 8.0, 2003: 4.0, 2024: 3.0, 2025: 3.0}
+
+
+class TestMetas(unittest.TestCase):
+    """A meta de inflação: a tabela versionada contra o SGS e a página."""
+
+    def tabela(self):
+        return ler_tabela_metas(PAGINA_METAS)
+
+    def test_a_tabela_versionada_e_valida_e_comeca_em_1999(self):
+        ms = carregar_metas()
+        self.assertEqual(ms[0].ano, 1999)
+        self.assertEqual([m.ano for m in ms], list(range(1999, ms[-1].ano + 1)))
+
+    def test_le_a_pagina_pela_meta_vigente_e_conta_colunas_do_fim(self):
+        tabela, texto = self.tabela()
+        self.assertEqual(tabela, {2024: (3.0, 1.5, 1.5, 4.5),
+                                  2003: (4.0, 2.5, 1.5, 6.5),
+                                  1999: (8.0, 2.0, 6.0, 10.0)})
+        self.assertIn("±1,5 ponto", texto)
+
+    def test_as_tres_leituras_iguais_passam(self):
+        conferir_metas(METAS_PAGINA, SGS_METAS, *self.tabela())
+
+    def test_cada_divergencia_reprova_dizendo_qual(self):
+        casos = [
+            ("centro", {**SGS_METAS, 2003: 3.25}, METAS_PAGINA,
+             "2003: meta 4.0 aqui e 3.25 no SGS"),
+            ("ano a mais no SGS", {**SGS_METAS, 2026: 3.0}, METAS_PAGINA,
+             r"só no SGS: \[2026\]"),
+            ("intervalo", SGS_METAS,
+             [m._replace(tolerancia=2.0) if m.ano == 2024 else m
+              for m in METAS_PAGINA], "2024: .* na página"),
+            ("norma fora do texto", SGS_METAS,
+             [m._replace(norma="Resolução CMN nº 9.999") if m.ano == 2025
+              else m for m in METAS_PAGINA], "não traz 'Resolução CMN nº 9.999'"),
+        ]
+        for nome, sgs, ms, erro in casos:
+            with self.subTest(nome), self.assertRaisesRegex(ErroBrasil, erro):
+                conferir_metas(ms, sgs, *self.tabela())
+
+    def test_ano_no_meio_ausente_da_pagina_reprova(self):
+        ms = METAS_PAGINA + [Meta(2010, 4.5, 2.0, "Resolução CMN nº 3.584")]
+        with self.assertRaisesRegex(ErroBrasil, "2010: ausente da tabela"):
+            conferir_metas(ms, {**SGS_METAS, 2010: 4.5}, *self.tabela())
+
+    def test_coleta_pelas_duas_urls(self):
+        t = Transporte({
+            brasil.SGS.format(codigo=13521) + "?formato=json": [
+                {"data": f"01/01/{a}", "valor": f"{v:.2f}"}
+                for a, v in SGS_METAS.items()],
+            brasil.API_METAS: PAGINA_METAS})
+        r = coletar_metas(t, sem_pausa, METAS_PAGINA)
+        self.assertEqual(r.metas, METAS_PAGINA)
+        self.assertEqual(len(t.pedidas), 2)
+
+    def test_pagina_sem_tabela_e_erro(self):
+        with self.assertRaisesRegex(ErroBrasil, "sem nenhuma linha"):
+            ler_tabela_metas({"conteudo": "<p>nada</p>"})
+
+
 class TestBanco(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
@@ -209,13 +299,25 @@ class TestBanco(unittest.TestCase):
             self.gravar(leitura(PIB, {}), permitir_encolher=True)
         self.assertEqual(self.pontos("pib"), {"1996T1": 1.0})
 
+    def test_meta_regravada_inteira_e_que_nao_encolhe(self):
+        self.gravar(metas=metas(1999, 2000, 2001))
+        self.gravar(metas=metas(1999, 2000, 2001, 2002))
+        with ArmazemBrasil(self.banco) as db:
+            self.assertEqual([a[0] for a in db.metas()["anos"]],
+                             [1999, 2000, 2001, 2002])
+        for menor in (metas(1999, 2000, 2001), metas(2000, 2001, 2002, 2003)):
+            with self.subTest(menor.metas[0].ano), \
+                    self.assertRaisesRegex(ErroBrasil, "meta de inflação encolheria"):
+                self.gravar(metas=menor)
+
 
 class TestMandatos(unittest.TestCase):
     FONTE = "https://www.gov.br/planalto/pt-br/x"
 
-    def m(self, nome, inicio, fim, fonte=None):
+    def m(self, nome, inicio, fim, fonte=None, rotulo=None):
         return Mandato(nome, inicio, fim, "eleito",
-                       self.FONTE if fonte is None else fonte)
+                       self.FONTE if fonte is None else fonte,
+                       nome if rotulo is None else rotulo)
 
     def test_a_tabela_versionada_e_valida(self):
         mandatos = carregar_mandatos()
@@ -249,10 +351,103 @@ class TestMandatos(unittest.TestCase):
             "data inválida": [self.m("A", "1995-02-30", None)],
             "termina antes": [self.m("A", "1999-01-01", "1995-01-01")],
             "vazia": [],
+            "rótulo vazio": [self.m("A", "1995-01-01", None, rotulo=" ")],
+            "rótulo longo": [self.m("A", "1995-01-01", None, rotulo="x" * 21)],
+            "dois rótulos": [self.m("A", "1995-01-01", "1999-01-01"),
+                             self.m("A", "1999-01-01", None, rotulo="B")],
         }
         for caso, mandatos in casos.items():
             with self.subTest(caso), self.assertRaises(ErroBrasil):
                 validar_mandatos(mandatos)
+
+
+class TestRetrato(unittest.TestCase):
+    """O `brasil.json`: o que vai, e a trava contra encolher."""
+
+    MANDATOS = [Mandato("A", "1995-01-01", None, "eleito",
+                        "https://www.gov.br/x", "A")]
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.banco = Path(self.tmp.name) / "brasil.db"
+        self.saida = Path(self.tmp.name) / "brasil.json"
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def retrato(self, *leituras, series=(PIB, IPCA)):
+        with ArmazemBrasil(self.banco) as db:
+            db.gravar(list(leituras), metas=metas(1999, 2000),
+                      permitir_encolher=True)
+            return brasil.retrato(db, self.MANDATOS, series)
+
+    def test_series_na_ordem_do_registro_com_procedencia(self):
+        r = self.retrato(leitura(IPCA, {"1995-08": 2.0, "1995-07": 1.0}),
+                         leitura(PIB, {"1996T1": 3.0}))
+        self.assertEqual([s["codigo"] for s in r["series"]], ["pib", "ipca"])
+        ipca = r["series"][1]
+        self.assertEqual(ipca["pontos"], [["1995-07", 1.0], ["1995-08", 2.0]])
+        self.assertEqual((ipca["origem"], ipca["conferida"]),
+                         ("https://origem", "https://conferida"))
+        self.assertTrue(ipca["coletadoEm"])
+        self.assertEqual(r["mandatos"][0]["fim"], None)
+        self.assertEqual(r["mandatos"][0]["rotulo"], "A")
+        self.assertEqual(r["metaInflacao"]["anos"],
+                         [[1999, 4.5, 2.0], [2000, 4.5, 2.0]])
+        self.assertEqual(r["metaInflacao"]["fonte"], brasil.PAGINA_METAS)
+
+    def test_meta_ausente_e_erro(self):
+        with ArmazemBrasil(self.banco) as db:
+            db.gravar([leitura(PIB, {"1996T1": 3.0}),
+                       leitura(IPCA, {"1995-07": 1.0})])
+            with self.assertRaisesRegex(ErroBrasil, "meta de inflação ausente"):
+                brasil.retrato(db, self.MANDATOS, (PIB, IPCA))
+
+    def test_serie_ausente_e_erro_e_nao_serie_a_menos(self):
+        with self.assertRaisesRegex(ErroBrasil, "ipca: série ausente"):
+            self.retrato(leitura(PIB, {"1996T1": 3.0}))
+
+    def test_encolher_e_recusado_em_cada_dimensao(self):
+        base = self.retrato(leitura(PIB, {"1996T1": 1.0, "1996T2": 2.0,
+                                          "1996T3": 3.0}),
+                            leitura(IPCA, {"1995-07": 1.0}))
+        self.assertEqual(brasil.gravar_retrato(base, self.saida), "gravado")
+        conteudo = self.saida.read_bytes()
+
+        def com(**muda):
+            r = json.loads(json.dumps(base))
+            for chave, valor in muda.items():
+                if chave == "mandatos":
+                    r["mandatos"] = valor
+                elif valor is None:
+                    r["series"] = [s for s in r["series"] if s["codigo"] != chave]
+                else:
+                    next(s for s in r["series"] if s["codigo"] == chave)["pontos"] = valor
+            return r
+
+        for motivo, r in (
+                ("sumiu", com(ipca=None)),
+                ("3 pontos para 2", com(pib=[["1996T1", 1.0], ["1996T2", 2.0]])),
+                ("começo de", com(pib=[["1996T2", 2.0], ["1996T3", 3.0],
+                                       ["1996T4", 4.0]])),
+                ("fim de", com(pib=[["1995T4", 0.0], ["1996T1", 1.0],
+                                    ["1996T2", 2.0]])),
+                ("mandatos 1", com(mandatos=[]))):
+            with self.subTest(motivo), self.assertRaisesRegex(ErroBrasil, motivo):
+                brasil.gravar_retrato(r, self.saida)
+        self.assertEqual(self.saida.read_bytes(), conteudo)
+        self.assertEqual(brasil.gravar_retrato(com(ipca=None), self.saida,
+                                               permitir_encolher=True), "gravado")
+
+    def test_so_o_carimbo_mudou_nao_reescreve(self):
+        r = self.retrato(leitura(PIB, {"1996T1": 1.0}),
+                         leitura(IPCA, {"1995-07": 1.0}))
+        brasil.gravar_retrato(r, self.saida)
+        for s in r["series"]:
+            s["coletadoEm"] = "2099-01-01T00:00:00+00:00"
+        self.assertEqual(brasil.gravar_retrato(r, self.saida), "inalterado")
+        r["series"][0]["pontos"][0][1] = 9.0
+        self.assertEqual(brasil.gravar_retrato(r, self.saida), "gravado")
 
 
 class TestComando(unittest.TestCase):
@@ -272,12 +467,14 @@ class TestComando(unittest.TestCase):
 
     def test_imprime_cada_serie_o_vao_e_quem_ocupa_hoje(self):
         pontos = {"2019T4": 1.0, "2020T3": 2.0}
-        codigo, saida, _ = self.rodar(lambda *a, **k: [leitura(PIB, pontos)])
+        codigo, saida, _ = self.rodar(
+            lambda *a, **k: ([leitura(PIB, pontos)], metas(1999, 2000)))
         self.assertEqual(codigo, 0)
         self.assertIn("pib: 2 pontos, 2019T4 a 2020T3, iguais na segunda "
                       "leitura; sem dado na fonte: 2020T1, 2020T2", saida)
         atual = carregar_mandatos()[-1]
         self.assertIn(f"até hoje ({atual.nome}, desde {atual.inicio})", saida)
+        self.assertIn("meta de inflação: 2 anos, 1999 a 2000", saida)
 
     def test_erro_sai_com_1_e_diz_por_que(self):
         def falha(*a, **k):

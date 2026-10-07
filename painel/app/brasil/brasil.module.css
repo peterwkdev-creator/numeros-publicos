@@ -1,0 +1,32 @@
+/* A mesma linguagem da página de ranking: largura de leitura, trilha, título e
+   chamada iguais. A largura aqui é maior porque a grade põe dois gráficos lado
+   a lado, e um gráfico de 30 anos estreito demais achata as faixas curtas. */
+.pagina { max-width: 64rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+.trilha { font-size: .875rem; color: var(--tinta-fraca); margin-bottom: 1rem; }
+.trilha a { color: var(--tinta-fraca); }
+.titulo { font-size: 1.9rem; line-height: 1.15; margin: 0 0 .5rem; }
+.chamada { font-size: 1.05rem; color: var(--tinta-fraca); margin: 0 0 1.25rem; max-width: 46rem; }
+.texto { max-width: 46rem; }
+.texto p, p.texto { margin: 0 0 1rem; }
+.secao { font-size: 1.3rem; margin: 2.5rem 0 1rem; }
+
+.nota {
+  max-width: 46rem;
+  border-left: 3px solid var(--borda-forte);
+  padding: .1rem 0 .1rem 1rem;
+}
+.nota p { margin: 0 0 .6rem; }
+
+/* Dois por linha onde cabem, um embaixo do outro no telefone. O eixo de tempo
+   é o mesmo nos seis, então a coluna também serve para comparar na vertical. */
+.grade {
+  display: grid;
+  gap: 2.25rem 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr));
+}
+
+.rolagem { overflow-x: auto; }
+.tabela { width: 100%; border-collapse: collapse; font-size: .92rem; }
+.tabela th, .tabela td { padding: .45rem .6rem; border-bottom: 1px solid var(--borda); text-align: left; vertical-align: top; }
+.tabela th[scope="col"] { font-size: .78rem; text-transform: uppercase; letter-spacing: .03em; color: var(--tinta-fraca); }
+.tabela td:nth-child(2), .tabela td:nth-child(3) { white-space: nowrap; font-variant-numeric: tabular-nums; }

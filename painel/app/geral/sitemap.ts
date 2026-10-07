@@ -2,10 +2,10 @@ import type { MetadataRoute } from "next";
 
 import { slugUf } from "../../lib/estado";
 import { atualizadoEm } from "../../lib/sitemap";
-import { lerFiscal, lerSnapshot, SITE } from "../../lib/servidor";
+import { lerBrasil, lerFiscal, lerSnapshot, SITE } from "../../lib/servidor";
 
 /**
- * Tudo que não é página de município: a capa, a ajuda, o ranking e os 27
+ * Tudo que não é página de município: a capa, a ajuda, o ranking, o país e os 27
  * estados. Publicado em `/geral/sitemap.xml`.
  *
  * **O segmento `geral/` não tem página, e isso é de propósito.** Ele existe só
@@ -22,8 +22,13 @@ import { lerFiscal, lerSnapshot, SITE } from "../../lib/servidor";
 export const dynamic = "force-static";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [snapshot, fiscal] = await Promise.all([lerSnapshot(), lerFiscal()]);
+  const [snapshot, fiscal, brasil] = await Promise.all([
+    lerSnapshot(), lerFiscal(), lerBrasil(),
+  ]);
   const atualizado = atualizadoEm(snapshot, fiscal);
+  // A coleta das séries do país tem ritmo próprio: a data é a dela, e não a
+  // do snapshot dos municípios.
+  const coletaBrasil = brasil.series.map((s) => s.coletadoEm).sort().at(-1)!;
 
   const inicio: MetadataRoute.Sitemap = [
     {
@@ -53,6 +58,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: atualizado,
       changeFrequency: "weekly",
       priority: 0.9,
+    },
+    {
+      url: `${SITE}/brasil/`,
+      lastModified: new Date(coletaBrasil),
+      changeFrequency: "monthly",
+      priority: 0.8,
     },
   ];
 

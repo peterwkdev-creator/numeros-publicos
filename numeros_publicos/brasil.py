@@ -54,6 +54,8 @@ from __future__ import annotations
 
 import csv
 import datetime as dt
+import html
+import json
 import re
 import sqlite3
 import time
@@ -365,6 +367,13 @@ CREATE TABLE IF NOT EXISTS serie (
     fonte TEXT NOT NULL, periodicidade TEXT NOT NULL,
     origem TEXT NOT NULL, conferida TEXT NOT NULL, pontos INTEGER NOT NULL,
     primeiro TEXT NOT NULL, ultimo TEXT NOT NULL, coletado_em TEXT NOT NULL);
+
+-- A meta de inflação de cada ano, conferida na ingestão contra o SGS e contra
+-- a tabela da página do Banco Central. Regravada inteira, como uma série.
+CREATE TABLE IF NOT EXISTS meta_inflacao (
+    ano INTEGER PRIMARY KEY, meta REAL NOT NULL, tolerancia REAL NOT NULL,
+    norma TEXT NOT NULL, origem TEXT NOT NULL, conferida TEXT NOT NULL,
+    coletado_em TEXT NOT NULL);
 """
 
 
@@ -399,13 +408,43 @@ class ArmazemBrasil:
             (f"fim de {ultimo} para {ps[-1]}", ps[-1] < ultimo),
         ) if perde]
 
+    def _metas_encolheriam(self, anos: list[int]) -> list[str]:
+        n, primeiro, ultimo = self.con.execute(
+            "SELECT COUNT(*), MIN(ano), MAX(ano) FROM meta_inflacao").fetchone()
+        if n == 0:
+            return []
+        return [motivo for motivo, perde in (
+            (f"{n} anos para {len(anos)}", len(anos) < n),
+            (f"começo de {primeiro} para {anos[0]}", anos[0] > primeiro),
+            (f"fim de {ultimo} para {anos[-1]}", anos[-1] < ultimo),
+        ) if perde]
+
     def gravar(self, leituras: list[Leitura], *,
+               metas: LeituraMetas | None = None,
                permitir_encolher: bool = False) -> None:
-        """Regrava as séries numa transação só: ou entram todas, ou nenhuma.
-        Recusa série vazia e a que encolheria, nas três dimensões."""
+        """Regrava as séries (e a meta de inflação, quando vem) numa transação
+        só: ou entram todas, ou nenhuma. Recusa série vazia e a que
+        encolheria, nas três dimensões; a meta, do mesmo jeito, em anos."""
         quando = agora()
         self.con.execute("BEGIN")
         try:
+            if metas is not None:
+                anos = [m.ano for m in metas.metas]
+                if not anos:
+                    raise ErroBrasil("meta de inflação sem nenhum ano; nada "
+                                     "foi gravado")
+                motivos = ([] if permitir_encolher
+                           else self._metas_encolheriam(anos))
+                if motivos:
+                    raise ErroBrasil(
+                        f"a meta de inflação encolheria ({'; '.join(motivos)});"
+                        " nada foi gravado (--permitir-encolher se for a "
+                        "intenção)")
+                self.con.execute("DELETE FROM meta_inflacao")
+                self.con.executemany(
+                    "INSERT INTO meta_inflacao VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    [(m.ano, m.meta, m.tolerancia, m.norma, metas.origem,
+                      metas.conferida, quando) for m in metas.metas])
             for leitura in leituras:
                 s, ps = leitura.serie, sorted(leitura.pontos)
                 if not ps:
@@ -441,16 +480,31 @@ class ArmazemBrasil:
             "SELECT periodo, valor FROM observacao WHERE serie = ?"
             " ORDER BY periodo", (codigo,)).fetchall())
 
+    def metas(self) -> dict | None:
+        """A meta de inflação gravada, com a procedência; `None` se não há."""
+        linhas = self.con.execute(
+            "SELECT ano, meta, tolerancia, origem, conferida, coletado_em"
+            " FROM meta_inflacao ORDER BY ano").fetchall()
+        if not linhas:
+            return None
+        _, _, _, origem, conferida, coletado = linhas[0]
+        return {"fonte": PAGINA_METAS, "origem": origem,
+                "conferida": conferida, "coletadoEm": coletado,
+                "anos": [[a, m, t] for a, m, t, *_ in linhas]}
+
 
 def ingerir(banco: str | Path, transporte: Transporte,
             dormir: Callable[[float], None] = time.sleep,
             series: tuple[SerieBrasil, ...] = SERIES,
-            permitir_encolher: bool = False) -> list[Leitura]:
-    """Coleta e confere todas as séries, e só então grava todas juntas."""
+            permitir_encolher: bool = False,
+            ) -> tuple[list[Leitura], LeituraMetas]:
+    """Coleta e confere todas as séries e a meta de inflação, e só então
+    grava tudo junto."""
     leituras = [coletar(s, transporte, dormir) for s in series]
+    metas = coletar_metas(transporte, dormir)
     with ArmazemBrasil(banco) as db:
-        db.gravar(leituras, permitir_encolher=permitir_encolher)
-    return leituras
+        db.gravar(leituras, metas=metas, permitir_encolher=permitir_encolher)
+    return leituras, metas
 
 
 # ------------------------------------------------------------------ mandatos
@@ -460,7 +514,9 @@ def ingerir(banco: str | Path, transporte: Transporte,
 #: TSE e as duas Casas do Congresso.
 DOMINIOS_OFICIAIS = ("gov.br", "tse.jus.br", "senado.leg.br", "camara.leg.br",
                      "congressonacional.leg.br")
-COLUNAS_MANDATOS = ("nome", "inicio", "fim", "como", "fonte")
+COLUNAS_MANDATOS = ("nome", "inicio", "fim", "como", "fonte", "rotulo")
+#: O rótulo vai dentro da faixa do gráfico, onde o nome inteiro não cabe.
+ROTULO_MAX = 20
 
 
 class Mandato(NamedTuple):
@@ -469,6 +525,10 @@ class Mandato(NamedTuple):
     fim: str | None  # o dia em que o seguinte assumiu; None se ainda ocupa
     como: str  # como assumiu, pelo nome do ato, sem adjetivo
     fonte: str  # link https da página oficial que dá as datas
+    #: O nome curto, como a Agência Senado o escreve nas manchetes ("Lula",
+    #: "Temer"): é o que cabe na faixa do gráfico. O nome inteiro fica na
+    #: tabela da página.
+    rotulo: str
 
 
 def _oficial(url: str) -> bool:
@@ -501,6 +561,9 @@ def validar_mandatos(mandatos: list[Mandato]) -> None:
     for i, m in enumerate(mandatos, start=1):
         if not m.nome.strip() or not m.como.strip():
             erros.append(f"linha {i}: nome ou forma de assumir vazios")
+        if not m.rotulo.strip() or len(m.rotulo) > ROTULO_MAX:
+            erros.append(f"linha {i} ({m.nome}): rótulo {m.rotulo!r} vazio ou "
+                         f"com mais de {ROTULO_MAX} caracteres")
         if not _oficial(m.fonte):
             erros.append(f"linha {i} ({m.nome}): fonte {m.fonte!r} não é "
                          "link https de domínio oficial")
@@ -515,6 +578,12 @@ def validar_mandatos(mandatos: list[Mandato]) -> None:
     if mandatos[-1].fim is not None:
         erros.append(f"o último período ({mandatos[-1].nome}) termina em "
                      f"{mandatos[-1].fim}: falta quem assumiu depois")
+    # A mesma pessoa com dois rótulos viraria duas pessoas no gráfico.
+    rotulos: dict[str, str] = {}
+    for m in mandatos:
+        if rotulos.setdefault(m.nome, m.rotulo) != m.rotulo:
+            erros.append(f"{m.nome}: rótulos diferentes ({rotulos[m.nome]!r} "
+                         f"e {m.rotulo!r})")
     for a, b in zip(mandatos, mandatos[1:]):
         if a.fim is not None and a.fim != b.inicio:
             tipo = "sobreposição" if b.inicio < a.fim else "buraco"
@@ -531,6 +600,271 @@ def carregar_mandatos(caminho: str | Path = MANDATOS) -> list[Mandato]:
             raise ErroBrasil(f"{caminho}: colunas {leitor.fieldnames}, "
                              f"esperadas {list(COLUNAS_MANDATOS)}")
         mandatos = [Mandato(r["nome"], r["inicio"], r["fim"] or None,
-                            r["como"], r["fonte"]) for r in leitor]
+                            r["como"], r["fonte"], r["rotulo"]) for r in leitor]
     validar_mandatos(mandatos)
     return mandatos
+
+
+# ---------------------------------------------------------- meta de inflação
+
+#: A meta de cada ano como o Conselho Monetário Nacional a fixou, transcrita
+#: da tabela do Banco Central (`PAGINA_METAS`). Em 2003 e 2004 a meta foi
+#: revista um ano depois de fixada; vale a revista, que é a que a tabela põe
+#: primeiro e a que o SGS publica. Desde 2025 a meta é contínua (Resolução
+#: CMN nº 5.141): vale para os 12 meses acumulados em cada mês, e não mais só
+#: para dezembro; a tabela da página para em 2024, e esses anos se conferem
+#: pelo texto da mesma página.
+METAS = Path(__file__).with_name("brasil_metas.csv")
+COLUNAS_METAS = ("ano", "meta", "tolerancia", "norma")
+PAGINA_METAS = "https://www.bcb.gov.br/controleinflacao/historicometas"
+#: A mesma página como o site do Banco Central a carrega: JSON com o conteúdo
+#: em HTML, tabela inclusive.
+API_METAS = ("https://www.bcb.gov.br/api/paginasite/sitebcb/"
+             "controleinflacao/historicometas")
+#: O centro da meta, um valor por ano.
+SGS_METAS = 13521
+
+
+class Meta(NamedTuple):
+    ano: int
+    meta: float  # o centro, em % ao ano
+    tolerancia: float  # o intervalo, em pontos percentuais para cada lado
+    norma: str  # a resolução do CMN que a fixou
+
+
+class LeituraMetas(NamedTuple):
+    metas: list[Meta]
+    origem: str  # o SGS 13521
+    conferida: str  # a página do Banco Central, pela API dela
+
+
+def carregar_metas(caminho: str | Path = METAS) -> list[Meta]:
+    """A tabela versionada, com os anos seguidos e sem buraco."""
+    with open(caminho, encoding="utf-8", newline="") as f:
+        leitor = csv.DictReader(f)
+        if tuple(leitor.fieldnames or ()) != COLUNAS_METAS:
+            raise ErroBrasil(f"{caminho}: colunas {leitor.fieldnames}, "
+                             f"esperadas {list(COLUNAS_METAS)}")
+        try:
+            metas = [Meta(int(r["ano"]), float(r["meta"]),
+                          float(r["tolerancia"]), r["norma"]) for r in leitor]
+        except ValueError as e:
+            raise ErroBrasil(f"{caminho}: {e}") from e
+    erros = [] if metas else ["a tabela está vazia"]
+    for a, b in zip(metas, metas[1:]):
+        if b.ano != a.ano + 1:
+            erros.append(f"de {a.ano} para {b.ano}: fora de ordem ou com "
+                         "ano faltando")
+    for m in metas:
+        if not 0 < m.tolerancia < m.meta:
+            erros.append(f"{m.ano}: meta {m.meta} e intervalo {m.tolerancia}")
+        if not m.norma.startswith("Resolução CMN nº "):
+            erros.append(f"{m.ano}: norma {m.norma!r}")
+    if erros:
+        raise ErroBrasil("tabela de metas inválida: " + "; ".join(erros))
+    return metas
+
+
+def ler_sgs_metas(dados: object) -> dict[int, float]:
+    """O SGS 13521: um valor por ano, datado de 1º de janeiro."""
+    try:
+        anos: dict[int, float] = {}
+        for linha in dados or []:
+            m = re.fullmatch(r"01/01/(\d{4})", linha["data"])
+            if not m or int(m[1]) in anos:
+                raise ErroBrasil(f"meta de inflação: data {linha['data']!r} "
+                                 "fora da forma ou repetida no SGS")
+            anos[int(m[1])] = float(linha["valor"])
+    except (KeyError, TypeError, ValueError) as e:
+        raise ErroBrasil("meta de inflação: a resposta do SGS mudou de forma "
+                         f"({type(e).__name__}: {e})") from e
+    return anos
+
+
+LINHA_HTML = re.compile(r"<tr[^>]*>(.*?)</tr>", re.S)
+CELULA_HTML = re.compile(r"<t[dh][^>]*>(.*?)</t[dh]>", re.S)
+
+
+def _texto_html(h: str) -> str:
+    """O texto de um trecho de HTML, com os espaços juntados. A página traz
+    espaços de largura zero no meio de palavras ("CM​N")."""
+    t = html.unescape(re.sub(r"<[^>]+>", " ", h)).replace("​", "")
+    return " ".join(t.split())
+
+
+def ler_tabela_metas(dados: object) -> tuple[
+        dict[int, tuple[float, float, float, float]], str]:
+    """A tabela da página do Banco Central: `{ano: (meta, intervalo,
+    inferior, superior)}`, e o texto que vem antes dela.
+
+    Colunas: ano, norma, data, meta, tamanho do intervalo, intervalo, inflação
+    efetiva e carta aberta. As linhas de 1999 e 2000 não têm norma nem data (a
+    célula da de 2001 as cobre), então as colunas se contam do fim. Onde a
+    meta foi revista (2003 e 2004, com asterisco), cada célula traz as duas, a
+    vigente primeiro."""
+    try:
+        conteudo = dados["conteudo"]
+        tabela = {}
+        for linha in LINHA_HTML.findall(conteudo):
+            cel = [_texto_html(c) for c in CELULA_HTML.findall(linha)]
+            ano = re.fullmatch(r"(\d{4})\*?", cel[0]) if cel else None
+            if ano is None:
+                continue  # o cabeçalho
+            meta, tol, intervalo = (c.split()[0] for c in cel[-5:-2])
+            inferior, superior = intervalo.split("-")
+            tabela[int(ano[1])] = tuple(float(v.replace(",", ".")) for v in
+                                        (meta, tol, inferior, superior))
+        texto = _texto_html(conteudo.split("<table")[0])
+    except (KeyError, TypeError, IndexError, ValueError) as e:
+        raise ErroBrasil("meta de inflação: a página do Banco Central mudou "
+                         f"de forma ({type(e).__name__}: {e})") from e
+    if not tabela:
+        raise ErroBrasil("meta de inflação: a página do Banco Central veio "
+                         "sem nenhuma linha na tabela")
+    return tabela, texto
+
+
+def conferir_metas(metas: list[Meta], sgs: dict[int, float],
+                   tabela: dict[int, tuple[float, float, float, float]],
+                   texto: str) -> None:
+    """A tabela versionada contra as duas leituras: os mesmos anos e o mesmo
+    centro do SGS; a meta, o intervalo e as duas pontas da tabela da página;
+    e, nos anos depois da tabela, a norma, a meta e o intervalo escritos no
+    texto da página. Junta todos os erros antes de recusar."""
+    erros = []
+    anos = {m.ano for m in metas}
+    if anos != sgs.keys():
+        erros.append(f"anos só na tabela versionada: {sorted(anos - sgs.keys())}"
+                     f"; só no SGS: {sorted(sgs.keys() - anos)}")
+    if tabela.keys() - anos:
+        erros.append("anos da página do Banco Central fora da tabela "
+                     f"versionada: {sorted(tabela.keys() - anos)}")
+    for m in metas:
+        if m.ano in sgs and sgs[m.ano] != m.meta:
+            erros.append(f"{m.ano}: meta {m.meta} aqui e {sgs[m.ano]} no SGS")
+        esperado = (m.meta, m.tolerancia, round(m.meta - m.tolerancia, 2),
+                    round(m.meta + m.tolerancia, 2))
+        if m.ano in tabela:
+            if tabela[m.ano] != esperado:
+                erros.append(f"{m.ano}: {esperado} aqui e {tabela[m.ano]} na "
+                             "página do Banco Central")
+        elif m.ano < max(tabela):
+            erros.append(f"{m.ano}: ausente da tabela do Banco Central")
+        else:
+            for trecho in (m.norma, f"{m.meta:.2f}%".replace(".", ","),
+                           f"±{m.tolerancia:g}".replace(".", ",")):
+                if trecho not in texto:
+                    erros.append(f"{m.ano}: o texto da página do Banco "
+                                 f"Central não traz {trecho!r}")
+    if erros:
+        raise ErroBrasil("meta de inflação: as leituras divergem; "
+                         + "; ".join(erros))
+
+
+def coletar_metas(transporte: Transporte,
+                  dormir: Callable[[float], None] = time.sleep,
+                  metas: list[Meta] | None = None) -> LeituraMetas:
+    """Confere a tabela versionada contra o SGS e contra a página."""
+    metas = carregar_metas() if metas is None else metas
+    origem = SGS.format(codigo=SGS_METAS) + "?formato=json"
+    try:
+        sgs = ler_sgs_metas(buscar_json(transporte, origem, dormir))
+        tabela, texto = ler_tabela_metas(
+            buscar_json(transporte, API_METAS, dormir))
+    except ErroIBGE as e:
+        raise ErroBrasil(f"meta de inflação: {e}") from e
+    conferir_metas(metas, sgs, tabela, texto)
+    return LeituraMetas(metas, origem, API_METAS)
+
+
+# ---------------------------------------------------------------- exportação
+
+def retrato(db: ArmazemBrasil, mandatos: list[Mandato],
+            series: tuple[SerieBrasil, ...] = SERIES) -> dict:
+    """O que a página `/brasil/` lê: as séries na ordem de `SERIES`, inteiras,
+    cada uma com as duas leituras e a data de coleta, e a tabela de mandatos.
+
+    Série ausente do banco é ERRO, e não série a menos: a página promete as
+    seis, e um retrato com cinco seria bem formado e incompleto. O mesmo
+    vale para a meta de inflação, que o gráfico do IPCA desenha."""
+    saida = []
+    for s in series:
+        linha = db.con.execute(
+            "SELECT origem, conferida, coletado_em FROM serie WHERE codigo = ?",
+            (s.codigo,)).fetchone()
+        pontos = db.pontos(s.codigo)
+        if linha is None or not pontos:
+            raise ErroBrasil(f"{s.codigo}: série ausente do banco; rode "
+                             "brasil-ingerir antes de exportar")
+        origem, conferida, coletado = linha
+        saida.append({
+            "codigo": s.codigo, "nome": s.nome, "unidade": s.unidade,
+            "fonte": s.fonte, "periodicidade": s.periodicidade,
+            "origem": origem, "conferida": conferida, "coletadoEm": coletado,
+            "pontos": [[p, v] for p, v in sorted(pontos.items())],
+        })
+    meta = db.metas()
+    if meta is None:
+        raise ErroBrasil("meta de inflação ausente do banco; rode "
+                         "brasil-ingerir antes de exportar")
+    return {"series": saida, "mandatos": [m._asdict() for m in mandatos],
+            "metaInflacao": meta}
+
+
+def _cobertura_retrato(r: dict) -> dict[str, tuple[int, str, str]]:
+    return {s["codigo"]: (len(s["pontos"]), s["pontos"][0][0],
+                          s["pontos"][-1][0]) for s in r["series"]}
+
+
+def gravar_retrato(r: dict, saida: str | Path,
+                   permitir_encolher: bool = False) -> str:
+    """Escreve `brasil.json`, comparando com o que vai sobrescrever.
+
+    Recusa encolher em qualquer das dimensões: série que some, série com
+    menos pontos, começo mais tarde ou fim mais cedo, e mandato a menos
+    (`stack-ingestao.md`, lição 3b). Não reescreve quando só os carimbos de
+    coleta mudaram: o commit sairia vazio de dado e republicaria o site.
+    Devolve `"gravado"` ou `"inalterado"`."""
+    saida = Path(saida)
+    if saida.exists():
+        velho = json.loads(saida.read_text(encoding="utf-8"))
+        if not permitir_encolher:
+            erros = []
+            novo_cob = _cobertura_retrato(r)
+            for codigo, (n, primeiro, ultimo) in _cobertura_retrato(velho).items():
+                if codigo not in novo_cob:
+                    erros.append(f"{codigo}: a série sumiu")
+                    continue
+                m, p, u = novo_cob[codigo]
+                if m < n:
+                    erros.append(f"{codigo}: {n} pontos para {m}")
+                if p > primeiro:
+                    erros.append(f"{codigo}: começo de {primeiro} para {p}")
+                if u < ultimo:
+                    erros.append(f"{codigo}: fim de {ultimo} para {u}")
+            if len(r["mandatos"]) < len(velho.get("mandatos", [])):
+                erros.append(f"mandatos {len(velho['mandatos'])} → "
+                             f"{len(r['mandatos'])}")
+            va = [a[0] for a in velho.get("metaInflacao", {}).get("anos", [])]
+            na = [a[0] for a in r["metaInflacao"]["anos"]]
+            if va and (len(na) < len(va) or na[0] > va[0] or na[-1] < va[-1]):
+                erros.append(f"meta de inflação de {va[0]}–{va[-1]} "
+                             f"({len(va)} anos) para {na[0]}–{na[-1]} "
+                             f"({len(na)})")
+            if erros:
+                raise ErroBrasil("RECUSADO: o retrato do Brasil encolheu — "
+                                 + "; ".join(erros) + ". Se é a intenção, "
+                                 "repita com --permitir-encolher. Nada gravado.")
+
+        def sem_carimbo(x: dict) -> dict:
+            meta = {k: v for k, v in x.get("metaInflacao", {}).items()
+                    if k != "coletadoEm"}
+            return {**x, "metaInflacao": meta,
+                    "series": [{k: v for k, v in s.items()
+                                if k != "coletadoEm"} for s in x["series"]]}
+        if sem_carimbo(velho) == sem_carimbo(r):
+            return "inalterado"
+    saida.parent.mkdir(parents=True, exist_ok=True)
+    saida.write_text(json.dumps(r, ensure_ascii=False, separators=(",", ":"))
+                     + "\n", encoding="utf-8")
+    return "gravado"

@@ -1,0 +1,108 @@
+# Atualiza "O Brasil ao longo do tempo" (/brasil/) uma vez por semana.
+# Escrito em 06/10/2026.
+#
+# ## O que ele faz, e por que quase nunca publica
+#
+# Lê as seis séries pelos dois caminhos de cada fonte (IBGE: API de agregados
+# e SIDRA; Banco Central: a mesma série do SGS em dois recortes de datas) e a
+# meta de inflação (SGS 13521 e a tabela da página do BC). Se alguma leitura
+# divergir, `brasil-ingerir` sai com 1 e nada é gravado. O `brasil-exportar`
+# só reescreve o `brasil.json` quando um ponto mudou (carimbo de coleta não
+# conta) e recusa encolher. As fontes publicam por mês ou por trimestre: na
+# maioria das semanas o JSON fica igual e o job termina sem commit.
+#
+# ## O que ele NÃO faz
+#
+# Não mexe na tabela de quem ocupou a Presidência (`brasil_mandatos.csv`): a
+# troca de mandato se registra à mão, com a fonte oficial da data.
+#
+# ## Por que pede a publicação em vez de esperar o `push`
+#
+# Commit feito com o GITHUB_TOKEN não dispara `push`, mas `workflow_dispatch`
+# disparado por ele dispara (a exceção documentada pelo GitHub), e quem pede
+# espera o resultado: a mesma razão do workflow do Caged.
+name: Atualizar O Brasil ao longo do tempo
+
+on:
+  schedule:
+    # Quarta, 12:00 UTC (9:00 em Brasília): fora do horário do IBGE (segunda)
+    # e do Caged (todo dia, 21:30).
+    - cron: "0 12 * * 3"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  actions: write
+
+# O mesmo grupo do IBGE e do Caged: os três commitam no main, e um não pode
+# empurrar por cima do outro.
+concurrency:
+  group: ingestao
+  cancel-in-progress: false
+
+jobs:
+  brasil:
+    runs-on: ubuntu-latest
+    outputs:
+      commitou: ${{ steps.commit.outputs.commitou }}
+    # Folga larga: são poucas dezenas de pedidos, com pausa entre eles.
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Testes
+        run: python -m unittest discover -s tests -t .
+
+      # O banco não é versionado: o runner começa limpo e lê tudo de novo,
+      # o que também apanha correção que a fonte fez num ponto antigo.
+      - name: Ler as séries e a meta, cada uma por dois caminhos
+        run: python -m numeros_publicos brasil-ingerir
+
+      - name: Exportar o brasil.json
+        run: python -m numeros_publicos brasil-exportar
+
+      - name: Commitar apenas se o dado mudou
+        id: commit
+        run: |
+          if git diff --quiet -- painel/dados/brasil.json; then
+            echo "O brasil.json não mudou. Nada a commitar."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add painel/dados/brasil.json
+          git commit -m "atualiza O Brasil ao longo do tempo ($(date -u +%Y-%m-%d))"
+          git push
+          echo "commitou=true" >> "$GITHUB_OUTPUT"
+
+  publicar:
+    needs: brasil
+    if: needs.brasil.outputs.commitou == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Pedir a publicação e esperar o resultado
+        run: |
+          desde=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          gh workflow run publicar-cloudflare.yml --ref main
+          id=
+          for _ in $(seq 1 30); do
+            id=$(gh run list --workflow publicar-cloudflare.yml --event workflow_dispatch \
+                 --created ">=$desde" -L 1 --json databaseId -q '.[0].databaseId')
+            [ -n "$id" ] && break
+            sleep 10
+          done
+          if [ -z "$id" ]; then
+            echo "::error::a publicação pedida não apareceu em 5 min"
+            exit 1
+          fi
+          echo "Publicação: $GITHUB_SERVER_URL/$GH_REPO/actions/runs/$id"
+          gh run watch "$id" --exit-status --interval 60

@@ -164,6 +164,20 @@ export const APRESENTACAO: Record<string, Apresentacao> = {
       "ao tamanho da economia (o PIB).",
     melhor: "baixo",
   },
+  "divida-liquida": {
+    titulo: "Dívida líquida do setor público",
+    fiscal: true,
+    como:
+      "Quanto o setor público deve, descontado o que tem a receber, " +
+      "comparado ao tamanho da economia (o PIB).",
+    melhor: "baixo",
+    nota:
+      "Desde dezembro de 2001. Inclui os governos federal, estaduais e " +
+      "municipais, as estatais (sem Petrobras e Eletrobras) e o Banco " +
+      "Central. Desconta o que o setor público tem a receber, inclusive as " +
+      "reservas internacionais: por isso a alta do dólar a reduz. Quando o " +
+      "IBGE revisa o PIB, a série inteira muda.",
+  },
   "nfsp-primario": {
     titulo: "Resultado primário do setor público",
     fiscal: true,

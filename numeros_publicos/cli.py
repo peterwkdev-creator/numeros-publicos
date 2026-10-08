@@ -970,6 +970,8 @@ CONFERIDA = {
              "arredondamento do INPC, e o último mês igual ao nominal"),
     "ultimo-dia": ("iguais em duas janelas e, onde há série diária, ao último "
                    "dia útil de cada mês, até 0,05%"),
+    "razao-pib": ("iguais em duas janelas e à conta do saldo em reais pelo "
+                  "PIB de 12 meses, com duas casas"),
 }
 
 #: A saída de `brasil-ingerir` quando alguma série (ou a meta) ficou de fora:

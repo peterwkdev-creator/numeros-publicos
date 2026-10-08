@@ -304,6 +304,59 @@ class TestReservas(unittest.TestCase):
             brasil.comparar_ultimo_dia("t", {"2026-06": 1.0}, {}, 1000)
 
 
+DIVIDA_LIQUIDA = next(s for s in brasil.SERIES
+                      if s.codigo == "divida-liquida")
+
+
+class TestDividaLiquida(unittest.TestCase):
+    HOJE = brasil.dt.date(2026, 10, 8)
+    # 12.345 ÷ 100.000 = 12,345%: meio para cima dá 12,35 (o arredondamento
+    # bancário daria 12,34). 2.000 ÷ 3.000 = 66,666…%.
+    PUBLICADA = {"2001-12": "12.35", "2002-01": "66.67"}
+    SALDO = {"2001-12": "12345.00", "2002-01": "2000.00"}
+    PIB = {"2001-11": "90000.0", "2001-12": "100000.0", "2002-01": "3000.0"}
+
+    def transporte(self, publicada=None, saldo=None):
+        publicada = publicada or self.PUBLICADA
+
+        def janela(de, ate):
+            return sgs({p: v for p, v in publicada.items()
+                        if de <= int(p[:4]) <= ate})
+        return Transporte({
+            brasil.url_sgs(DIVIDA_LIQUIDA, 1990, 2026): janela(1990, 2026),
+            brasil.url_sgs(DIVIDA_LIQUIDA, 1990, 2014): janela(1990, 2014),
+            brasil.url_sgs(DIVIDA_LIQUIDA, 2015, 2026): janela(2015, 2026),
+            brasil._url_sgs(4478, 1990, 2026): sgs(saldo or self.SALDO),
+            brasil._url_sgs(4382, 1990, 2026): sgs(self.PIB)})
+
+    def test_conta_confere_com_meio_para_cima(self):
+        lida = coletar(DIVIDA_LIQUIDA, self.transporte(), sem_pausa,
+                       hoje=self.HOJE)
+        self.assertEqual(lida.pontos, {"2001-12": 12.35, "2002-01": 66.67})
+        self.assertIn("bcdata.sgs.4478/", lida.conferida)
+        self.assertIn("bcdata.sgs.4382/", lida.conferida)
+
+    def test_um_centesimo_a_mais_reprova(self):
+        publicada = dict(self.PUBLICADA, **{"2002-01": "66.68"})
+        with self.assertRaisesRegex(ErroBrasil,
+                                    r"não confere.*2002-01 \(66.68 e 66.67\)"):
+            coletar(DIVIDA_LIQUIDA, self.transporte(publicada=publicada),
+                    sem_pausa, hoje=self.HOJE)
+
+    def test_mes_sem_saldo_reprova(self):
+        saldo = {"2002-01": "2000.00"}
+        with self.assertRaisesRegex(ErroBrasil,
+                                    "só na série publicada: 2001-12"):
+            coletar(DIVIDA_LIQUIDA, self.transporte(saldo=saldo), sem_pausa,
+                    hoje=self.HOJE)
+
+    def test_saldo_sem_par_na_publicada_reprova(self):
+        saldo = dict(self.SALDO, **{"2001-11": "9000.00"})
+        with self.assertRaisesRegex(ErroBrasil, "só na conta: 2001-11"):
+            coletar(DIVIDA_LIQUIDA, self.transporte(saldo=saldo), sem_pausa,
+                    hoje=self.HOJE)
+
+
 def vigencia(inicio: str, fim: str | None, meta: float, n: int):
     return {"NumeroReuniaoCopom": n, "MetaSelic": meta,
             "DataInicioVigencia": f"{inicio}T03:00:00Z",
@@ -954,8 +1007,11 @@ class TestRegistro(unittest.TestCase):
                 else:
                     self.assertTrue(s.sgs and not s.agregado)
                 self.assertIn(s.conferencia, ("janelas", "ptax", "copom",
-                                              "inpc", "ultimo-dia"))
-                if s.conferencia != "janelas":
+                                              "inpc", "ultimo-dia",
+                                              "razao-pib"))
+                self.assertEqual(s.conferencia == "razao-pib",
+                                 s.sgs_saldo is not None)
+                if s.conferencia not in ("janelas", "razao-pib"):
                     # As janelas diárias começam no ano de `desde`.
                     self.assertTrue(s.desde)
                 self.assertEqual(s.conferencia == "ultimo-dia",

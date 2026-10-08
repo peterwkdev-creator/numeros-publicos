@@ -7,7 +7,7 @@ página lê do banco.
 
 ## As séries
 
-Cinco do IBGE (API de agregados), cinco do Banco Central (SGS) e uma do
+Cinco do IBGE (API de agregados), seis do Banco Central (SGS) e uma do
 Ipea (Ipeadata), todas no nível do país. Cada uma vem com o histórico inteiro que a fonte publica
 (`periodos/all` no IBGE, a janela desde 1990 no SGS): o site mostra a série
 inteira, nunca um recorte, e recorte escolhido aqui seria escolha editorial.
@@ -27,7 +27,9 @@ mesmos pontos com os mesmos valores:
   PTAX diária (SGS 1), e a meta da Selic contra o histórico das decisões do
   Copom (a página "Histórico das taxas de juros"), que dá o início e o fim
   de vigência de cada meta. As reservas (3546), além das duas janelas, vão
-  contra o último dia útil de cada mês da série diária (SGS 13621);
+  contra o último dia útil de cada mês da série diária (SGS 13621); a
+  dívida líquida (4513), contra a conta do saldo em reais (4478) pelo PIB de
+  12 meses (4382);
 - Ipea: o salário mínimo real, refeito mês a mês com o nominal e o INPC
   que o Banco Central publica no SGS.
 
@@ -68,7 +70,7 @@ import re
 import sqlite3
 import time
 from collections.abc import Callable
-from decimal import Decimal, InvalidOperation
+from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from pathlib import Path
 from typing import NamedTuple
 from urllib.parse import urlparse
@@ -100,6 +102,9 @@ IPEADATA = ("https://www.ipeadata.gov.br/api/odata4/"
 #: refaz a variação de cada mês do salário mínimo real do Ipea.
 SGS_SALARIO_MINIMO = 1619
 SGS_INPC = 188
+#: O PIB acumulado em 12 meses, a preços correntes, em R$ milhões: o
+#: denominador das séries em % do PIB do Banco Central (`razao-pib`).
+SGS_PIB_12_MESES = 4382
 #: Quanto a variação do mês pode diferir na conta refeita. O INPC sai com
 #: duas casas no SGS, então (1 + INPC) carrega até meio centésimo de ponto
 #: percentual de arredondamento: 0,00005 relativo. Medido em 07/10/2026:
@@ -141,13 +146,17 @@ class SerieBrasil(NamedTuple):
     #: duas janelas), `ptax` (a média mensal da PTAX diária) ou `copom` (a
     #: série diária do SGS contra o histórico das decisões do Copom),
     #: `inpc` (a variação de cada mês contra o salário mínimo nominal e o
-    #: INPC do SGS) ou `ultimo-dia` (as duas janelas e, além delas, o último
-    #: dia útil de cada mês de uma série diária de estoque, `sgs_diaria`).
+    #: INPC do SGS), `ultimo-dia` (as duas janelas e, além delas, o último
+    #: dia útil de cada mês de uma série diária de estoque, `sgs_diaria`) ou
+    #: `razao-pib` (as duas janelas e, além delas, o saldo em reais,
+    #: `sgs_saldo`, dividido pelo PIB de 12 meses).
     conferencia: str = "janelas"
     #: O código da série no Ipeadata, quando a fonte é o Ipea.
     ipeadata: str | None = None
     #: A série diária que confere uma mensal de estoque (`ultimo-dia`).
     sgs_diaria: int | None = None
+    #: O saldo em R$ milhões que, dividido pelo PIB, dá a série (`razao-pib`).
+    sgs_saldo: int | None = None
     #: Por quanto dividir o que o SGS publica: as reservas vêm em US$ milhões
     #: e a página fala em bilhões. A divisão é da coleta, não da página: o
     #: banco guarda o número que a página mostra, e o conferidor o compara.
@@ -191,6 +200,17 @@ SERIES: tuple[SerieBrasil, ...] = (
     SerieBrasil(
         "divida-bruta", "Dívida bruta do governo geral", "% do PIB",
         "Banco Central", "mensal", sgs=13762),
+    # Nome no SGS (portal de dados abertos do BC): "Dívida Líquida do Setor
+    # Público (% PIB) - Total - Setor público consolidado", desde 12/2001:
+    # com a saída da Petrobras e da Eletrobras, o BC refez a série só até
+    # ali, e a anterior não se emenda. A segunda leitura, além das duas
+    # janelas, é a conta do próprio BC: o saldo em R$ milhões (SGS 4478)
+    # pelo PIB de 12 meses (SGS 4382), com duas casas. Medido em 08/10/2026:
+    # 297 de 297 meses iguais.
+    SerieBrasil(
+        "divida-liquida", "Dívida líquida do setor público, total, setor "
+        "público consolidado", "% do PIB", "Banco Central", "mensal",
+        sgs=4513, conferencia="razao-pib", sgs_saldo=4478),
     # Nome no SGS: "NFSP sem desvalorização cambial (% PIB) - Fluxo acumulado
     # em 12 meses - Resultado primário - Total - Setor público consolidado".
     # Sinal da NFSP: positivo é déficit, negativo é superávit (01/2011 = -2,63,
@@ -665,6 +685,33 @@ def comparar_ultimo_dia(codigo: str, publicado: Pontos,
                          + "; ".join(partes))
 
 
+def comparar_razao_pib(codigo: str, publicado: Pontos, saldo: Pontos,
+                       pib: Pontos) -> None:
+    """A série em % do PIB contra a conta: saldo ÷ PIB de 12 meses × 100,
+    arredondada a duas casas (meio para cima), igual mês a mês. Os meses do
+    saldo sem par na série publicada, e vice-versa, também são erro."""
+    if not publicado:
+        raise ErroBrasil(f"{codigo}: a série mensal veio vazia")
+    conta = {m: (Decimal(repr(v)) / Decimal(repr(pib[m])) * 100).quantize(
+                 Decimal("0.01"), ROUND_HALF_UP)
+             for m, v in saldo.items() if m in pib}
+    so_a = sorted(publicado.keys() - conta.keys())
+    so_b = sorted(conta.keys() - publicado.keys())
+    difs = sorted(m for m in publicado.keys() & conta.keys()
+                  if Decimal(repr(publicado[m])) != conta[m])
+    partes = []
+    if so_a:
+        partes.append(f"só na série publicada: {', '.join(so_a[:5])}")
+    if so_b:
+        partes.append(f"só na conta: {', '.join(so_b[:5])}")
+    if difs:
+        partes.append("valores diferentes: " + ", ".join(
+            f"{m} ({publicado[m]} e {conta[m]})" for m in difs[:5]))
+    if partes:
+        raise ErroBrasil(f"{codigo}: a conta pelo PIB não confere; "
+                         + "; ".join(partes))
+
+
 def comparar(codigo: str, a: Pontos, b: Pontos) -> None:
     """Exige os mesmos períodos com os mesmos valores. Diz o que diverge
     (até cinco de cada tipo)."""
@@ -790,6 +837,15 @@ def coletar(s: SerieBrasil, transporte: Transporte,
             comparar_ultimo_dia(s.codigo, a, ultimo_dia(dias, hoje),
                                 s.dividir_por)
             u2 = f"{u2} + {ud}"
+        elif s.conferencia == "razao-pib":
+            us, up = (_url_sgs(s.sgs_saldo, SGS_DESDE, ano),
+                      _url_sgs(SGS_PIB_12_MESES, SGS_DESDE, ano))
+            saldo = ler_sgs_mensal(f"{s.codigo} (SGS {s.sgs_saldo})",
+                                   obter(us))
+            pib = ler_sgs_mensal(f"{s.codigo} (SGS {SGS_PIB_12_MESES})",
+                                 obter(up))
+            comparar_razao_pib(s.codigo, a, saldo, pib)
+            u2 = f"{u2} + {us} + {up}"
     if not a:
         raise ErroBrasil(f"{s.codigo}: a fonte não devolveu nenhum ponto")
     comparar(s.codigo, a, b)

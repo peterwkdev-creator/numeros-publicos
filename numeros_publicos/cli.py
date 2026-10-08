@@ -841,6 +841,10 @@ def construir_parser() -> argparse.ArgumentParser:
     be.add_argument("--banco-brasil",
                     default=os.environ.get("BRASIL_BANCO", "brasil.db"))
     be.add_argument("--permitir-encolher", action="store_true")
+    be.add_argument("--manter-ausentes", action="store_true",
+                    help="a série ou a meta que faltar no banco sai do "
+                         "brasil.json atual, como está (o banco do runner "
+                         "começa vazio)")
     be.set_defaults(func=brasil_exportar)
     return p
 
@@ -966,48 +970,71 @@ CONFERIDA = {
              "arredondamento do INPC, e o último mês igual ao nominal"),
 }
 
+#: A saída de `brasil-ingerir` quando alguma série (ou a meta) ficou de fora:
+#: o resto foi gravado, e a atualização semanal publica e termina vermelha.
+SAIDA_PARCIAL = 3
+
 
 def brasil_ingerir(args, transporte=None, dormir=None) -> int:
     """Valida a tabela de mandatos, lê cada série pelos dois caminhos, confere
-    a meta de inflação contra o SGS e a página do Banco Central, e só grava se
-    tudo bater: ou entra tudo, ou nada."""
+    a meta de inflação contra o SGS e a página do Banco Central, e grava o que
+    bateu. Cada série entra por si: a que falhar duas vezes fica com o dado
+    anterior, e o comando sai com `SAIDA_PARCIAL`, para a atualização semanal
+    seguir e avisar. Mandatos com defeito, nada lido ou série que encolheria:
+    sai com 1, e nada é gravado."""
     import time
     from . import brasil
     try:
         mandatos = brasil.carregar_mandatos()
-        leituras, metas = brasil.ingerir(
+        r = brasil.ingerir(
             args.banco_brasil, transporte or transporte_http(),
             dormir or time.sleep, permitir_encolher=args.permitir_encolher)
     except brasil.ErroBrasil as e:
         print(f"[!] {e}", file=sys.stderr)
         return 1
-    for leitura in leituras:
+    for leitura in r.leituras:
         ps = sorted(leitura.pontos)
         vao = brasil.buracos(leitura.serie.periodicidade, leitura.pontos)
         print(f"{leitura.serie.codigo}: {len(ps)} pontos, {ps[0]} a {ps[-1]}, "
               + CONFERIDA.get(leitura.serie.conferencia,
                               "iguais na segunda leitura")
               + (f"; sem dado na fonte: {', '.join(vao)}" if vao else ""))
-    anos = [m.ano for m in metas.metas]
-    print(f"meta de inflação: {len(anos)} anos, {anos[0]} a {anos[-1]}, o "
-          f"centro igual ao SGS {brasil.SGS_METAS} e meta e intervalo iguais "
-          "à página do Banco Central")
+    if r.metas is not None:
+        anos = [m.ano for m in r.metas.metas]
+        print(f"meta de inflação: {len(anos)} anos, {anos[0]} a {anos[-1]}, "
+              f"o centro igual ao SGS {brasil.SGS_METAS} e meta e intervalo "
+              "iguais à página do Banco Central")
     atual = mandatos[-1]
     print(f"mandatos: {len(mandatos)} períodos, de {mandatos[0].inicio} até "
           f"hoje ({atual.nome}, desde {atual.inicio}), com fonte oficial em "
           "todos, sem sobreposição nem buraco")
-    return 0
+    for falha in r.falhas:
+        print(f"[falha] {falha}; fica o dado anterior", file=sys.stderr)
+    return SAIDA_PARCIAL if r.falhas else 0
 
 
 def brasil_exportar(args) -> int:
     """Escreve o `brasil.json` a partir do banco e da tabela de mandatos.
     Não confere com a fonte: a conferência é a segunda leitura, feita na
-    ingestão, e nada entra no banco sem ela."""
+    ingestão, e nada entra no banco sem ela.
+
+    Com `--manter-ausentes`, a série ou a meta que faltar no banco sai do
+    `brasil.json` atual, como está: é o que a atualização semanal faz depois
+    de uma fonte falhar."""
+    import json as _json
     from . import brasil
     try:
         mandatos = brasil.carregar_mandatos()
+        anterior = None
+        if args.manter_ausentes and Path_(args.saida).exists():
+            anterior = _json.loads(
+                Path_(args.saida).read_text(encoding="utf-8"))
         with brasil.ArmazemBrasil(args.banco_brasil) as db:
-            r = brasil.retrato(db, mandatos)
+            r = brasil.retrato(db, mandatos, anterior=anterior)
+            mantidas = [s.codigo for s in brasil.SERIES
+                        if not db.pontos(s.codigo)]
+            if db.metas() is None:
+                mantidas.append(brasil.META)
         estado = brasil.gravar_retrato(r, args.saida, args.permitir_encolher)
     except brasil.ErroBrasil as e:
         print(f"[!] {e}", file=sys.stderr)
@@ -1017,6 +1044,9 @@ def brasil_exportar(args) -> int:
         f"{s['pontos'][-1][0]})" for s in r["series"])
         + f" · {len(r['mandatos'])} períodos na Presidência"
         + f" · meta de inflação de {len(r['metaInflacao']['anos'])} anos")
+    if mantidas:
+        print("sem coleta nova, mantidas do brasil.json anterior: "
+              + ", ".join(mantidas))
     return 0
 
 

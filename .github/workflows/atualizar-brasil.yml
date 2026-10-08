@@ -3,13 +3,23 @@
 #
 # ## O que ele faz, e por que quase nunca publica
 #
-# Lê as seis séries pelos dois caminhos de cada fonte (IBGE: API de agregados
-# e SIDRA; Banco Central: a mesma série do SGS em dois recortes de datas) e a
-# meta de inflação (SGS 13521 e a tabela da página do BC). Se alguma leitura
-# divergir, `brasil-ingerir` sai com 1 e nada é gravado. O `brasil-exportar`
-# só reescreve o `brasil.json` quando um ponto mudou (carimbo de coleta não
-# conta) e recusa encolher. As fontes publicam por mês ou por trimestre: na
-# maioria das semanas o JSON fica igual e o job termina sem commit.
+# Lê cada série pelos dois caminhos da fonte (IBGE: API de agregados e
+# SIDRA; Banco Central: a mesma série do SGS em dois recortes de datas; Ipea:
+# o salário real contra o nominal e o INPC do SGS) e a meta de inflação (SGS
+# 13521 e a tabela da página do BC). O `brasil-exportar` só reescreve o
+# `brasil.json` quando um ponto mudou (carimbo de coleta não conta) e recusa
+# encolher. As fontes publicam por mês, por trimestre ou por ano: na maioria
+# das semanas o JSON fica igual e o job termina sem commit.
+#
+# ## Quando uma fonte falha (desde 07/10/2026)
+#
+# Cada série entra por si. A que falhar (fonte fora do ar, leituras que
+# divergem) é tentada de novo no fim da coleta; se falhar outra vez,
+# `brasil-ingerir` sai com 3, o `brasil.json` guarda o que já estava
+# publicado dela (`--manter-ausentes`: o banco do runner começa vazio) e as
+# outras seguem até a publicação. O job `avisar`, por último, fica vermelho
+# com o motivo, para o GitHub mandar o aviso. Saída 1 (mandatos com defeito,
+# nada lido) e série que encolheria continuam parando tudo.
 #
 # ## O que ele NÃO faz
 #
@@ -45,6 +55,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       commitou: ${{ steps.commit.outputs.commitou }}
+      parcial: ${{ steps.ingerir.outputs.parcial }}
     # Folga larga: são poucas dezenas de pedidos, com pausa entre eles.
     timeout-minutes: 20
 
@@ -60,11 +71,25 @@ jobs:
 
       # O banco não é versionado: o runner começa limpo e lê tudo de novo,
       # o que também apanha correção que a fonte fez num ponto antigo.
+      # Saída 3 é coleta parcial: o que bateu segue, e cada falha vira
+      # anotação aqui e o vermelho do job `avisar`.
       - name: Ler as séries e a meta, cada uma por dois caminhos
-        run: python -m numeros_publicos brasil-ingerir
+        id: ingerir
+        run: |
+          set +e
+          PYTHONUNBUFFERED=1 python -m numeros_publicos brasil-ingerir 2>&1 \
+            | tee "$RUNNER_TEMP/ingerir.log"
+          codigo=${PIPESTATUS[0]}
+          set -e
+          if [ "$codigo" = 3 ]; then
+            grep '^\[falha\]' "$RUNNER_TEMP/ingerir.log" | sed 's/^/::error::/' || true
+            echo "parcial=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          exit "$codigo"
 
       - name: Exportar o brasil.json
-        run: python -m numeros_publicos brasil-exportar
+        run: python -m numeros_publicos brasil-exportar --manter-ausentes
 
       - name: Commitar apenas se o dado mudou
         id: commit
@@ -106,3 +131,15 @@ jobs:
           fi
           echo "Publicação: $GITHUB_SERVER_URL/$GH_REPO/actions/runs/$id"
           gh run watch "$id" --exit-status --interval 60
+
+  # Vermelho de propósito, e por último: a coleta parcial já publicou o que
+  # leu, e o vermelho é o que faz o GitHub avisar da série que ficou de fora.
+  avisar:
+    needs: [brasil, publicar]
+    if: always() && needs.brasil.outputs.parcial == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Falhar porque alguma série ficou com o dado anterior
+        run: |
+          echo "::error::coleta parcial: o motivo está nas anotações do passo 'Ler as séries' do job brasil"
+          exit 1

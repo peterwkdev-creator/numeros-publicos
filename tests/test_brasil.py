@@ -700,6 +700,123 @@ class TestRetrato(unittest.TestCase):
         self.assertEqual(brasil.gravar_retrato(r, self.saida), "gravado")
 
 
+class TestIngerirPorSerie(unittest.TestCase):
+    """Uma fonte que falha não segura as outras: a série é tentada de novo uma
+    vez, e se falhar outra vez fica de fora com o dado que o banco já tinha."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.banco = Path(self.tmp.name) / "brasil.db"
+        self.pausas = []
+        with ArmazemBrasil(self.banco) as db:
+            db.gravar([leitura(PIB, {"2020T1": 1.0}),
+                       leitura(IPCA, {"2020-01": 1.0})], metas=metas(1999))
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def ingerir(self, falhas):
+        """`falhas`: quantas vezes cada código falha antes de ler."""
+        restam = dict(falhas)
+
+        def tentar(codigo):
+            if restam.get(codigo, 0):
+                restam[codigo] -= 1
+                raise ErroBrasil("200 com corpo que não é JSON")
+
+        def coletar(s, transporte, dormir):
+            tentar(s.codigo)
+            return leitura(s, {"2020T1": 2.0} if s is PIB else {"2020-01": 2.0})
+
+        def coletar_metas(transporte, dormir):
+            tentar(brasil.META)
+            return metas(1999, 2000)
+
+        with mock.patch.object(brasil, "coletar", coletar), \
+                mock.patch.object(brasil, "coletar_metas", coletar_metas):
+            return brasil.ingerir(self.banco, object(), self.pausas.append,
+                                  series=(PIB, IPCA))
+
+    def gravado(self):
+        with ArmazemBrasil(self.banco) as db:
+            return (db.pontos("pib"), db.pontos("ipca"),
+                    len(db.metas()["anos"]))
+
+    def test_sem_falha_grava_tudo_e_nao_espera(self):
+        r = self.ingerir({})
+        self.assertEqual(r.falhas, [])
+        self.assertEqual(self.pausas, [])
+        self.assertEqual(self.gravado(),
+                         ({"2020T1": 2.0}, {"2020-01": 2.0}, 2))
+
+    def test_a_que_falha_duas_vezes_fica_com_o_dado_anterior(self):
+        r = self.ingerir({"ipca": 2})
+        self.assertEqual(r.falhas, ["ipca: 200 com corpo que não é JSON"])
+        self.assertEqual([x.serie.codigo for x in r.leituras], ["pib"])
+        self.assertEqual(self.pausas, [brasil.PAUSA_NOVA_TENTATIVA])
+        self.assertEqual(self.gravado(),
+                         ({"2020T1": 2.0}, {"2020-01": 1.0}, 2))
+
+    def test_a_que_falha_uma_vez_entra_na_nova_tentativa(self):
+        r = self.ingerir({"pib": 1})
+        self.assertEqual(r.falhas, [])
+        self.assertEqual([x.serie.codigo for x in r.leituras], ["pib", "ipca"])
+        self.assertEqual(self.pausas, [brasil.PAUSA_NOVA_TENTATIVA])
+
+    def test_meta_que_falha_fica_a_anterior(self):
+        r = self.ingerir({brasil.META: 2})
+        self.assertIsNone(r.metas)
+        self.assertEqual(r.falhas,
+                         ["meta de inflação: 200 com corpo que não é JSON"])
+        self.assertEqual(self.gravado(),
+                         ({"2020T1": 2.0}, {"2020-01": 2.0}, 1))
+
+    def test_nada_lido_e_erro_e_nada_gravado(self):
+        with self.assertRaises(ErroBrasil) as ctx:
+            self.ingerir({"pib": 2, "ipca": 2, brasil.META: 2})
+        self.assertIn("nada foi gravado", str(ctx.exception))
+        self.assertIn("ipca: 200 com corpo", str(ctx.exception))
+        self.assertEqual(self.gravado(),
+                         ({"2020T1": 1.0}, {"2020-01": 1.0}, 1))
+
+
+class TestManterAusentes(unittest.TestCase):
+    """`brasil-exportar --manter-ausentes`: o banco do runner começa vazio, e
+    a série que falhou sai do `brasil.json` já publicado, igual."""
+
+    MANDATOS = TestRetrato.MANDATOS
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.pasta = Path(self.tmp.name)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_serie_e_meta_ausentes_saem_do_anterior_iguais(self):
+        with ArmazemBrasil(self.pasta / "velho.db") as db:
+            db.gravar([leitura(PIB, {"1996T1": 1.0}),
+                       leitura(IPCA, {"1995-07": 1.0})], metas=metas(1999))
+            anterior = brasil.retrato(db, self.MANDATOS, (PIB, IPCA))
+        with ArmazemBrasil(self.pasta / "novo.db") as db:
+            db.gravar([leitura(PIB, {"1996T1": 2.0})])
+            r = brasil.retrato(db, self.MANDATOS, (PIB, IPCA),
+                               anterior=anterior)
+            with self.assertRaises(ErroBrasil):
+                brasil.retrato(db, self.MANDATOS, (PIB, IPCA))
+        self.assertEqual(r["series"][0]["pontos"], [["1996T1", 2.0]])
+        self.assertEqual(r["series"][1], anterior["series"][1])
+        self.assertEqual(r["metaInflacao"], anterior["metaInflacao"])
+
+    def test_ausente_dos_dois_continua_erro(self):
+        with ArmazemBrasil(self.pasta / "novo.db") as db:
+            db.gravar([leitura(PIB, {"1996T1": 2.0})], metas=metas(1999))
+            anterior = brasil.retrato(db, self.MANDATOS, (PIB,))
+            with self.assertRaisesRegex(ErroBrasil, "ipca: série ausente"):
+                brasil.retrato(db, self.MANDATOS, (PIB, IPCA),
+                               anterior=anterior)
+
+
 class TestComando(unittest.TestCase):
     """O que `brasil-ingerir` imprime, sem rede: a coleta é trocada por uma
     que devolve uma leitura pronta."""
@@ -718,7 +835,8 @@ class TestComando(unittest.TestCase):
     def test_imprime_cada_serie_o_vao_e_quem_ocupa_hoje(self):
         pontos = {"2019T4": 1.0, "2020T3": 2.0}
         codigo, saida, _ = self.rodar(
-            lambda *a, **k: ([leitura(PIB, pontos)], metas(1999, 2000)))
+            lambda *a, **k: brasil.Ingestao(
+                [leitura(PIB, pontos)], metas(1999, 2000), []))
         self.assertEqual(codigo, 0)
         self.assertIn("pib: 2 pontos, 2019T4 a 2020T3, iguais na segunda "
                       "leitura; sem dado na fonte: 2020T1, 2020T2", saida)
@@ -729,7 +847,8 @@ class TestComando(unittest.TestCase):
     def test_salario_minimo_diz_que_conferiu_a_variacao(self):
         pontos = {"2026-07": 1630.0, "2026-08": 1621.0}
         _, saida, _ = self.rodar(
-            lambda *a, **k: ([leitura(SALARIO, pontos)], metas(1999)))
+            lambda *a, **k: brasil.Ingestao(
+                [leitura(SALARIO, pontos)], metas(1999), []))
         self.assertIn("salario-minimo: 2 pontos, 2026-07 a 2026-08, cada "
                       "variação mensal igual à do nominal e do INPC", saida)
 
@@ -740,6 +859,16 @@ class TestComando(unittest.TestCase):
         self.assertEqual(codigo, 1)
         self.assertEqual(saida, "")
         self.assertIn("as duas leituras divergem", erro)
+
+    def test_parcial_sai_com_3_e_diz_qual_ficou_de_fora(self):
+        codigo, saida, erro = self.rodar(lambda *a, **k: brasil.Ingestao(
+            [leitura(PIB, {"2020T1": 1.0})], None,
+            ["cambio: 200 com corpo que não é JSON"]))
+        self.assertEqual(codigo, cli.SAIDA_PARCIAL)
+        self.assertIn("pib: 1 pontos, 2020T1 a 2020T1", saida)
+        self.assertNotIn("meta de inflação", saida)
+        self.assertIn("[falha] cambio: 200 com corpo que não é JSON; fica o "
+                      "dado anterior", erro)
 
 
 class TestRegistro(unittest.TestCase):

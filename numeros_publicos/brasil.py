@@ -854,18 +854,61 @@ class ArmazemBrasil:
                 "anos": [[a, m, t] for a, m, t, *_ in linhas]}
 
 
+#: Quanto esperar, em segundos, antes de tentar de novo o que falhou. Em
+#: 07/10/2026 o SGS devolveu um corpo que não era JSON no meio de duas coletas
+#: seguidas, e a mesma URL respondeu certo minutos depois.
+PAUSA_NOVA_TENTATIVA = 120
+
+#: O nome da meta de inflação nas falhas, ao lado dos códigos das séries.
+META = "meta de inflação"
+
+
+class Ingestao(NamedTuple):
+    leituras: list[Leitura]  # as que bateram, na ordem de `series`
+    metas: LeituraMetas | None  # `None` se a meta falhou
+    falhas: list[str]  # "código: motivo", uma por série (ou meta) de fora
+
+
 def ingerir(banco: str | Path, transporte: Transporte,
             dormir: Callable[[float], None] = time.sleep,
             series: tuple[SerieBrasil, ...] = SERIES,
-            permitir_encolher: bool = False,
-            ) -> tuple[list[Leitura], LeituraMetas]:
-    """Coleta e confere todas as séries e a meta de inflação, e só então
-    grava tudo junto."""
-    leituras = [coletar(s, transporte, dormir) for s in series]
-    metas = coletar_metas(transporte, dormir)
+            permitir_encolher: bool = False) -> Ingestao:
+    """Coleta e confere cada série e a meta de inflação por si, e grava numa
+    transação as que bateram.
+
+    A que falhar (fonte fora do ar, leituras que divergem) é tentada de novo
+    uma vez no fim, depois de `PAUSA_NOVA_TENTATIVA`; se falhar outra vez,
+    fica de fora, o banco guarda o que já tinha dela e o motivo vai em
+    `falhas`. Uma fonte com problema não segura as outras. Nada lido é erro,
+    e nada é gravado; série que encolheria também (`gravar`)."""
+    coletas: dict[str, Callable[[], Leitura | LeituraMetas]] = {
+        s.codigo: (lambda s=s: coletar(s, transporte, dormir)) for s in series}
+    coletas[META] = lambda: coletar_metas(transporte, dormir)
+
+    def tentar(codigos: list[str]) -> tuple[dict, dict[str, str]]:
+        lidas, falhas = {}, {}
+        for codigo in codigos:
+            try:
+                lidas[codigo] = coletas[codigo]()
+            except ErroBrasil as e:
+                motivo = str(e)
+                falhas[codigo] = (motivo if motivo.startswith(f"{codigo}:")
+                                  else f"{codigo}: {motivo}")
+        return lidas, falhas
+
+    lidas, falhas = tentar(list(coletas))
+    if falhas:
+        dormir(PAUSA_NOVA_TENTATIVA)
+        de_novo, falhas = tentar(list(falhas))
+        lidas.update(de_novo)
+    if not lidas:
+        raise ErroBrasil("nada foi lido, e nada foi gravado: "
+                         + "; ".join(falhas.values()))
+    leituras = [lidas[s.codigo] for s in series if s.codigo in lidas]
+    metas = lidas.get(META)
     with ArmazemBrasil(banco) as db:
         db.gravar(leituras, metas=metas, permitir_encolher=permitir_encolher)
-    return leituras, metas
+    return Ingestao(leituras, metas, list(falhas.values()))
 
 
 # ------------------------------------------------------------------ mandatos
@@ -1153,19 +1196,29 @@ def unidade_exportada(s: SerieBrasil, ultimo: str) -> str:
 
 
 def retrato(db: ArmazemBrasil, mandatos: list[Mandato],
-            series: tuple[SerieBrasil, ...] = SERIES) -> dict:
+            series: tuple[SerieBrasil, ...] = SERIES,
+            anterior: dict | None = None) -> dict:
     """O que a página `/brasil/` lê: as séries na ordem de `SERIES`, inteiras,
     cada uma com as duas leituras e a data de coleta, e a tabela de mandatos.
 
     Série ausente do banco é ERRO, e não série a menos: a página promete
     todas, e um retrato com uma a menos seria bem formado e incompleto. O mesmo
-    vale para a meta de inflação, que o gráfico do IPCA desenha."""
+    vale para a meta de inflação, que o gráfico do IPCA desenha.
+
+    Com `anterior` (o `brasil.json` já publicado), a série ou a meta que
+    faltar no banco sai dele como está, com a data de coleta antiga: é a
+    atualização semanal depois de uma fonte falhar, porque o banco do runner
+    começa vazio. Ausente dos dois, continua erro."""
+    velhas = {s["codigo"]: s for s in (anterior or {}).get("series", [])}
     saida = []
     for s in series:
         linha = db.con.execute(
             "SELECT origem, conferida, coletado_em FROM serie WHERE codigo = ?",
             (s.codigo,)).fetchone()
         pontos = db.pontos(s.codigo)
+        if (linha is None or not pontos) and s.codigo in velhas:
+            saida.append(velhas[s.codigo])
+            continue
         if linha is None or not pontos:
             raise ErroBrasil(f"{s.codigo}: série ausente do banco; rode "
                              "brasil-ingerir antes de exportar")
@@ -1177,7 +1230,7 @@ def retrato(db: ArmazemBrasil, mandatos: list[Mandato],
             "origem": origem, "conferida": conferida, "coletadoEm": coletado,
             "pontos": [[p, v] for p, v in sorted(pontos.items())],
         })
-    meta = db.metas()
+    meta = db.metas() or (anterior or {}).get("metaInflacao")
     if meta is None:
         raise ErroBrasil("meta de inflação ausente do banco; rode "
                          "brasil-ingerir antes de exportar")

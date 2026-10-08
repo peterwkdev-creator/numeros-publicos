@@ -190,6 +190,20 @@ export const APRESENTACAO: Record<string, Apresentacao> = {
       "primeiro mês do Real. Até janeiro de 1999 o Banco Central mantinha o " +
       "dólar dentro de uma faixa; desde então o câmbio é flutuante.",
   },
+  reservas: {
+    titulo: "Reservas internacionais",
+    fiscal: false,
+    como:
+      "Quanto o Banco Central guarda em moeda estrangeira e ouro no fim do " +
+      "mês. As reservas protegem o país da falta de dólares numa crise; " +
+      "mantê-las tem custo, porque rendem menos que os juros da dívida " +
+      "pública.",
+    melhor: "nenhum",
+    nota:
+      "Em bilhões de dólares, no último dia de cada mês. Desde julho de " +
+      "1994, o primeiro mês do Real. De 2001 a 2005, parte das reservas " +
+      "vinha de empréstimos do FMI, quitados no fim de 2005.",
+  },
   selic: {
     titulo: "Selic: a taxa básica de juros",
     fiscal: false,

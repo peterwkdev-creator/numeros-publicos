@@ -235,6 +235,75 @@ class TestCambio(unittest.TestCase):
                          {"2026-09": brasil.Decimal("5.30")})
 
 
+RESERVAS = next(s for s in brasil.SERIES if s.codigo == "reservas")
+
+
+class TestReservas(unittest.TestCase):
+    HOJE = brasil.dt.date(2026, 10, 7)
+    # US$ milhões, como o SGS publica. 06/1994 fica de fora pelo `desde`.
+    MENSAL = {"1994-06": "40131", "1994-07": "43090", "1998-08": "67333",
+              "1998-09": "45811", "1998-10": "42385"}
+    # A diária começa em 09/1998; o último dia útil de outubro é 30/10.
+    DIAS = {"1998-09-01": "66000", "1998-09-30": "45811",
+            "1998-10-29": "42000", "1998-10-30": "42385"}
+
+    def transporte(self, mensal=None, dias=None):
+        mensal = mensal or self.MENSAL
+
+        def janela(de, ate):
+            return sgs({p: v for p, v in mensal.items()
+                        if de <= int(p[:4]) <= ate})
+        return Transporte({
+            brasil.url_sgs(RESERVAS, 1990, 2026): janela(1990, 2026),
+            brasil.url_sgs(RESERVAS, 1990, 2014): janela(1990, 2014),
+            brasil.url_sgs(RESERVAS, 2015, 2026): janela(2015, 2026),
+            **transporte_diario(13621, 1994, 2026, dias or self.DIAS)})
+
+    def test_le_em_bilhoes_e_confere_o_ultimo_dia(self):
+        lida = coletar(RESERVAS, self.transporte(), sem_pausa, hoje=self.HOJE)
+        self.assertEqual(lida.pontos, {"1994-07": 43.09, "1998-08": 67.333,
+                                       "1998-09": 45.811, "1998-10": 42.385})
+        self.assertIn("bcdata.sgs.13621/", lida.conferida)
+
+    def test_ultimo_dia_e_o_ultimo_com_dado_e_o_mes_corrente_fica_fora(self):
+        dias = brasil.ler_sgs_diaria("t", diaria(
+            dict(self.DIAS, **{"1998-11-03": "41900"})))
+        self.assertEqual(brasil.ultimo_dia(dias, brasil.dt.date(1998, 11, 10)),
+                         {"1998-09": brasil.Decimal("45811"),
+                          "1998-10": brasil.Decimal("42385")})
+
+    def test_diferenca_dentro_da_tolerancia_passa(self):
+        # 15 em 42.385: 0,035%, a maior diferença medida.
+        dias = dict(self.DIAS, **{"1998-10-30": "42400"})
+        coletar(RESERVAS, self.transporte(dias=dias), sem_pausa,
+                hoje=self.HOJE)
+
+    def test_diferenca_fora_da_tolerancia_reprova(self):
+        dias = dict(self.DIAS, **{"1998-10-30": "42500"})
+        with self.assertRaisesRegex(ErroBrasil,
+                                    r"não confere.*1998-10 \(42.385 e 42.5\)"):
+            coletar(RESERVAS, self.transporte(dias=dias), sem_pausa,
+                    hoje=self.HOJE)
+
+    def test_mes_sem_dado_na_mensal_reprova(self):
+        mensal = {p: v for p, v in self.MENSAL.items() if p != "1998-09"}
+        with self.assertRaisesRegex(ErroBrasil, "só na diária: 1998-09"):
+            coletar(RESERVAS, self.transporte(mensal=mensal), sem_pausa,
+                    hoje=self.HOJE)
+
+    def test_mensal_parada_reprova(self):
+        ultimos = {m: brasil.Decimal(1000) for m in
+                   ("2026-06", "2026-07", "2026-08", "2026-09")}
+        brasil.comparar_ultimo_dia("t", {"2026-06": 1.0}, dict(
+            list(ultimos.items())[:3]), 1000)
+        with self.assertRaisesRegex(ErroBrasil, "para em 2026-06"):
+            brasil.comparar_ultimo_dia("t", {"2026-06": 1.0}, ultimos, 1000)
+
+    def test_diaria_vazia_reprova(self):
+        with self.assertRaisesRegex(ErroBrasil, "diária veio vazia"):
+            brasil.comparar_ultimo_dia("t", {"2026-06": 1.0}, {}, 1000)
+
+
 def vigencia(inicio: str, fim: str | None, meta: float, n: int):
     return {"NumeroReuniaoCopom": n, "MetaSelic": meta,
             "DataInicioVigencia": f"{inicio}T03:00:00Z",
@@ -884,11 +953,14 @@ class TestRegistro(unittest.TestCase):
                     self.assertEqual(s.conferencia, "inpc")
                 else:
                     self.assertTrue(s.sgs and not s.agregado)
-                self.assertIn(s.conferencia,
-                              ("janelas", "ptax", "copom", "inpc"))
+                self.assertIn(s.conferencia, ("janelas", "ptax", "copom",
+                                              "inpc", "ultimo-dia"))
                 if s.conferencia != "janelas":
                     # As janelas diárias começam no ano de `desde`.
                     self.assertTrue(s.desde)
+                self.assertEqual(s.conferencia == "ultimo-dia",
+                                 s.sgs_diaria is not None)
+                self.assertGreaterEqual(s.dividir_por, 1)
 
 
 if __name__ == "__main__":

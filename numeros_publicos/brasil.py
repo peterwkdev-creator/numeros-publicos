@@ -7,7 +7,7 @@ página lê do banco.
 
 ## As séries
 
-Cinco do IBGE (API de agregados), quatro do Banco Central (SGS) e uma do
+Cinco do IBGE (API de agregados), cinco do Banco Central (SGS) e uma do
 Ipea (Ipeadata), todas no nível do país. Cada uma vem com o histórico inteiro que a fonte publica
 (`periodos/all` no IBGE, a janela desde 1990 no SGS): o site mostra a série
 inteira, nunca um recorte, e recorte escolhido aqui seria escolha editorial.
@@ -26,7 +26,8 @@ mesmos pontos com os mesmos valores:
   segunda leitura é esse caminho: o câmbio mensal (3698) contra a média da
   PTAX diária (SGS 1), e a meta da Selic contra o histórico das decisões do
   Copom (a página "Histórico das taxas de juros"), que dá o início e o fim
-  de vigência de cada meta;
+  de vigência de cada meta. As reservas (3546), além das duas janelas, vão
+  contra o último dia útil de cada mês da série diária (SGS 13621);
 - Ipea: o salário mínimo real, refeito mês a mês com o nominal e o INPC
   que o Banco Central publica no SGS.
 
@@ -133,17 +134,24 @@ class SerieBrasil(NamedTuple):
     variavel: int | None = None
     classificacao: str | None = None  # "11255[90707]", como na API
     sgs: int | None = None
-    #: Primeiro período que entra, quando há critério técnico (o IPCA e o
-    #: câmbio, pelo Real; a Selic, pelo começo da meta).
+    #: Primeiro período que entra, quando há critério técnico (o IPCA, o
+    #: câmbio e as reservas, pelo Real; a Selic, pelo começo da meta).
     desde: str | None = None
     #: A segunda leitura de uma série do SGS: `janelas` (a mesma série em
     #: duas janelas), `ptax` (a média mensal da PTAX diária) ou `copom` (a
-    #: série diária do SGS contra o histórico das decisões do Copom) ou
+    #: série diária do SGS contra o histórico das decisões do Copom),
     #: `inpc` (a variação de cada mês contra o salário mínimo nominal e o
-    #: INPC do SGS).
+    #: INPC do SGS) ou `ultimo-dia` (as duas janelas e, além delas, o último
+    #: dia útil de cada mês de uma série diária de estoque, `sgs_diaria`).
     conferencia: str = "janelas"
     #: O código da série no Ipeadata, quando a fonte é o Ipea.
     ipeadata: str | None = None
+    #: A série diária que confere uma mensal de estoque (`ultimo-dia`).
+    sgs_diaria: int | None = None
+    #: Por quanto dividir o que o SGS publica: as reservas vêm em US$ milhões
+    #: e a página fala em bilhões. A divisão é da coleta, não da página: o
+    #: banco guarda o número que a página mostra, e o conferidor o compara.
+    dividir_por: int = 1
 
 
 # Os nomes do IBGE são os dos metadados de cada tabela, lidos em 05/10/2026.
@@ -200,6 +208,18 @@ SERIES: tuple[SerieBrasil, ...] = (
         "cambio", "Taxa de câmbio, dólar americano (venda), média do mês",
         "R$ por dólar", "Banco Central", "mensal", sgs=3698, desde="1994-07",
         conferencia="ptax"),
+    # SGS 3546, "Reservas internacionais - Total - mensal": o estoque no fim
+    # de cada mês, em US$ milhões, que a coleta divide por mil. Desde
+    # 07/1994, como o câmbio. A segunda leitura, além das duas janelas, é o
+    # último dia útil de cada mês da série diária (SGS 13621, desde
+    # 09/1998): medido em 07/10/2026, 331 de 337 meses iguais. A SGS 13982
+    # é outro conceito (liquidez internacional), que inclui as linhas com
+    # recompra. Não há série sem os empréstimos do FMI de 2001 a 2005 (a
+    # dívida com o Fundo, SGS 3648, zera em 10/2005): a nota da página avisa.
+    SerieBrasil(
+        "reservas", "Reservas internacionais, total, fim do mês",
+        "US$ bilhões", "Banco Central", "mensal", sgs=3546, desde="1994-07",
+        conferencia="ultimo-dia", sgs_diaria=13621, dividir_por=1000),
     # A meta da Selic que o Copom fixa, em vigor no último dia de cada mês.
     # Desde 03/1999, quando o regime da meta começou (05/03/1999): antes, o
     # histórico do Copom traz a TBC, taxa mensal de outro regime. O SGS 432
@@ -347,7 +367,11 @@ def ler_sgs(s: SerieBrasil, dados: object) -> Pontos:
     O SGS não tem marcador de ausência (mês sem dado não vem na lista), então
     valor que não é número é erro. O `_numero` do IBGE, que trata marcador
     desconhecido como ausente, abriria aqui um buraco calado."""
-    return _cortar(s, ler_sgs_mensal(s.codigo, dados))
+    pontos = _cortar(s, ler_sgs_mensal(s.codigo, dados))
+    if s.dividir_por == 1:
+        return pontos
+    return {p: float(Decimal(repr(v)) / s.dividir_por)
+            for p, v in pontos.items()}
 
 
 def ler_sgs_mensal(rotulo: str, dados: object) -> Pontos:
@@ -587,6 +611,60 @@ def ler_copom(s: SerieBrasil, dados: object, hoje: dt.date) -> Pontos:
     return pontos
 
 
+def ultimo_dia(dias: dict[dt.date, Decimal],
+               hoje: dt.date) -> dict[str, Decimal]:
+    """O valor do último dia com dado de cada mês já encerrado: o fim do mês
+    de uma série de dias úteis (`fim_de_mes` quer o último do calendário)."""
+    ultimos: dict[str, dt.date] = {}
+    for d in dias:
+        m = _mes(d)
+        if m < _mes(hoje) and (m not in ultimos or d > ultimos[m]):
+            ultimos[m] = d
+    return {m: dias[d] for m, d in ultimos.items()}
+
+
+#: Quanto o último dia útil da série diária pode diferir do estoque mensal,
+#: em proporção. Medido nas reservas em 07/10/2026: 331 de 337 meses
+#: (09/1998 a 09/2026) iguais; os seis outros, de 11/2007 a 02/2010,
+#: diferem em até US$ 67 milhões (0,035%).
+ULTIMO_DIA_TOLERANCIA = Decimal("0.0005")
+
+
+def comparar_ultimo_dia(codigo: str, publicado: Pontos,
+                        ultimos: dict[str, Decimal], escala: int = 1) -> None:
+    """O estoque mensal publicado contra o último dia de cada mês da série
+    diária, dividido por `escala` (a unidade da página), desde o primeiro mês
+    da diária e até `ULTIMO_DIA_TOLERANCIA`. Os meses da diária depois do
+    último publicado saem da conta, até `PTAX_ADIANTADA`."""
+    if not publicado:
+        raise ErroBrasil(f"{codigo}: a série mensal veio vazia")
+    if not ultimos:
+        raise ErroBrasil(f"{codigo}: a série diária veio vazia")
+    ultimo = max(publicado)
+    adiante = sorted(m for m in ultimos if m > ultimo)
+    if len(adiante) > PTAX_ADIANTADA:
+        raise ErroBrasil(f"{codigo}: a série mensal para em {ultimo}, e a "
+                         f"diária já tem {', '.join(adiante)}")
+    inicio = min(ultimos)
+    a = {m: Decimal(repr(v)) for m, v in publicado.items() if m >= inicio}
+    b = {m: v / escala for m, v in ultimos.items() if m <= ultimo}
+    so_a = sorted(a.keys() - b.keys())
+    so_b = sorted(b.keys() - a.keys())
+    difs = sorted(m for m in a.keys() & b.keys()
+                  if abs(a[m] - b[m]) > ULTIMO_DIA_TOLERANCIA * abs(b[m]))
+    partes = []
+    if so_a:
+        partes.append(f"só na série mensal: {', '.join(so_a[:5])}")
+    if so_b:
+        partes.append(f"só na diária: {', '.join(so_b[:5])}")
+    if difs:
+        partes.append("valores diferentes: " + ", ".join(
+            f"{m} ({a[m]} e {b[m]})" for m in difs[:5]))
+    if partes:
+        raise ErroBrasil(f"{codigo}: o último dia da diária não confere; "
+                         + "; ".join(partes))
+
+
 def comparar(codigo: str, a: Pontos, b: Pontos) -> None:
     """Exige os mesmos períodos com os mesmos valores. Diz o que diverge
     (até cinco de cada tipo)."""
@@ -707,6 +785,11 @@ def coletar(s: SerieBrasil, transporte: Transporte,
                 raise ErroBrasil(f"{s.codigo}: as duas janelas do SGS se "
                                  "sobrepõem")
             b |= parte
+        if s.conferencia == "ultimo-dia":
+            ud, dias = diaria(s.sgs_diaria)
+            comparar_ultimo_dia(s.codigo, a, ultimo_dia(dias, hoje),
+                                s.dividir_por)
+            u2 = f"{u2} + {ud}"
     if not a:
         raise ErroBrasil(f"{s.codigo}: a fonte não devolveu nenhum ponto")
     comparar(s.codigo, a, b)

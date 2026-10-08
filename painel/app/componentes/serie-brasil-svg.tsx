@@ -108,10 +108,12 @@ export default function SerieBrasilSvg({
   const herdados = ap?.fiscal ? anosHerdados(mandatos, cobDe, cobAte) : [];
   const padrao = `herdado-${serie.codigo}`;
   const r = resumo(serie);
-  // "R$ 3.061", "R$ 5,15 por dólar", "7,5%", "51,27% do PIB".
+  // "R$ 3.061", "R$ 5,15 por dólar", "US$ 362,82 bilhões", "7,5%",
+  // "51,27% do PIB": a moeda vai antes do número, o resto depois.
+  const moeda = /^(R|US)\$/.exec(serie.unidade)?.[0];
   const valor = (v: number) =>
-    serie.unidade.startsWith("R$")
-      ? `R$ ${br(v, casas)}${serie.unidade.slice(2)}`
+    moeda
+      ? `${moeda} ${br(v, casas)}${serie.unidade.slice(moeda.length)}`
       : `${br(v, casas)}${serie.unidade}`;
   const comeco = cobDe - de > 1;
 

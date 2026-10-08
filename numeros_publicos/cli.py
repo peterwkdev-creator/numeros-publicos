@@ -968,6 +968,8 @@ CONFERIDA = {
     "ptax": "iguais à média da PTAX diária, até meia unidade da 4ª casa",
     "inpc": ("cada variação mensal igual à do nominal e do INPC do SGS, até o "
              "arredondamento do INPC, e o último mês igual ao nominal"),
+    "ultimo-dia": ("iguais em duas janelas e, onde há série diária, ao último "
+                   "dia útil de cada mês, até 0,05%"),
 }
 
 #: A saída de `brasil-ingerir` quando alguma série (ou a meta) ficou de fora:

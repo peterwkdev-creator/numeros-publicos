@@ -1,390 +1,443 @@
 # Números Públicos
 
-**Live at [www.numerospublicos.com.br](https://www.numerospublicos.com.br).**
+**No ar em [www.numerospublicos.com.br](https://www.numerospublicos.com.br).**
 
-Open data on **all 5,571 Brazilian municipalities** — ingested from official
-IBGE public APIs, stored with full provenance, joined to municipal fiscal
-filings from the National Treasury and to school results from INEP, and
-published as **one static page per municipality**.
+Dados abertos de **todos os 5.571 municípios brasileiros**: coletados das APIs
+públicas oficiais do IBGE, guardados com a procedência completa, cruzados com
+as declarações fiscais dos municípios ao Tesouro Nacional e com os resultados
+escolares do INEP, e publicados como **uma página estática por município**.
 
-It started as a regional observatory for the Northeast (1,794 municipalities);
-the national cut was always a flag, so the expansion was one command — and the
-five latent defects it exposed are written up in the design notes below.
+Começou como um observatório regional do Nordeste (1.794 municípios); o
+recorte nacional sempre foi um parâmetro, então a expansão foi um comando só,
+e os cinco defeitos latentes que ela revelou estão descritos nas notas de
+projeto abaixo.
 
-> **Status: published and scheduled.** Every figure is ingested from a live API,
-> idempotent, cross-checked against IBGE's own regional aggregate, and rebuilt
-> weekly by a GitHub Actions job that commits only when the data actually
-> changed.
+> **Situação: publicado e agendado.** Todo número é coletado de uma API ao
+> vivo, de forma idempotente, conferido contra o agregado regional que o
+> próprio IBGE publica e refeito toda semana por um job do GitHub Actions que
+> só faz commit quando o dado de fato mudou.
 
-**5,571 indexable pages, not one.** The whole site used to be a single URL
-holding every municipality behind a filter — which meant nobody searching for a
-specific town could ever reach it. Each municipality now has its own address,
-title, description and canonical, carrying population, GDP, personnel spending
-against the legal limit, the school index, and work and income (2022 Census
-unemployment, social-security coverage and earnings; the Central Business
-Register's firms, jobs and average wage), joined by the shared IBGE code.
+**5.571 páginas indexáveis, não uma.** O site inteiro era uma única URL com
+todos os municípios atrás de um filtro, e por isso ninguém que buscasse uma
+cidade específica conseguia chegar a ela. Cada município agora tem endereço,
+título, descrição e canonical próprios, com população, PIB, gasto com pessoal
+contra o limite legal, o índice escolar e trabalho e renda (desocupação,
+cobertura previdenciária e rendimento do Censo 2022; empresas, pessoal ocupado
+e salário médio do Cadastro Central de Empresas), unidos pelo código do IBGE.
 
-The fiscal half comes from [painel-fiscal-ne](https://github.com/peterwkdev-creator/painel-fiscal-ne),
-handed over as a versioned snapshot rather than fetched at build time: a build
-that reached into another repository would fail silently the day that repository
-moved.
+A metade fiscal vem do [painel-fiscal-ne](https://github.com/peterwkdev-creator/painel-fiscal-ne),
+entregue como um retrato versionado em vez de buscada na hora do build: um
+build que entrasse em outro repositório falharia em silêncio no dia em que
+esse repositório mudasse.
 
-## Independent work — no affiliation
+## Trabalho independente, sem vínculo
 
-Built against a **public** term of reference (TR 21/2026, project BRA/23/006,
-published by UNDP Brazil for the Consórcio Nordeste) describing a regional
-observatory that does not yet exist. This is **independent work with no
-affiliation to, or endorsement by, the Consórcio Nordeste or UNDP**, and it is
-not a bid, proposal or deliverable for that contract.
+Feito a partir de um termo de referência **público** (TR 21/2026, projeto
+BRA/23/006, publicado pelo PNUD Brasil para o Consórcio Nordeste) que descreve
+um observatório regional que ainda não existe. Este é um **trabalho
+independente, sem vínculo com o Consórcio Nordeste nem com o PNUD, e sem
+endosso deles**, e não é proposta, lance nem entrega daquele contrato.
 
-## Run it
+## Como rodar
 
-Python 3.10+ and nothing else — standard library only, no install step.
+Python 3.10+ e nada mais: só a biblioteca padrão, sem passo de instalação.
 
 ```bash
 python -m numeros_publicos ingerir-municipios
 ```
 
-Then:
+Depois:
 
 ```bash
 python -m numeros_publicos ingerir-indicador populacao-censo-2022
 python -m numeros_publicos observacoes pib-municipal --uf SE
-python -m numeros_publicos conferir             # integrity, against the source
-python -m numeros_publicos coletas              # ingestion history
+python -m numeros_publicos conferir             # integridade, contra a fonte
+python -m numeros_publicos coletas              # histórico das coletas
 ```
 
-## Integrity: checked against the source, not against itself
+## Integridade: conferida contra a fonte, não contra si mesma
 
-`conferir` compares the **sum of all municipalities** with the **regional total
-IBGE itself publishes**. Verifying one city proves the parser is right; only the
-sum proves the ingestion is *complete* — it catches a missing, duplicated or
-mis-summed municipality in a single comparison.
+`conferir` compara a **soma de todos os municípios** com o **total regional
+que o próprio IBGE publica**. Conferir uma cidade prova que o parser está
+certo; só a soma prova que a coleta está *completa*: ela pega um município
+faltando, duplicado ou somado errado numa comparação só.
 
-Run against the live API on 2026-09-24, national cut (`--regiao BR`, IBGE's
-own N1 aggregate):
+Rodado contra a API ao vivo em 24/09/2026, recorte nacional (`--regiao BR`, o
+agregado N1 do próprio IBGE):
 
-| Indicator | Sum of municipalities | vs. IBGE national total |
+| Indicador | Soma dos municípios | Contra o total nacional do IBGE |
 |---|---|---|
-| Population (2022 Census) | 203,080,756 | **exact** |
-| Estimated population (2026) | 214,211,951 | **exact** |
-| Municipal GDP (2023) | 10,943,345,420 (BRL thousands) | rounding, 19 (1.7e-09) |
+| População (Censo 2022) | 203.080.756 | **exata** |
+| População estimada (2026) | 214.211.951 | **exata** |
+| PIB municipal (2023) | 10.943.345.420 (R$ mil) | arredondamento, 19 (1,7e-09) |
 
-**Averages and sample estimates are checked differently, and say so.** The
-average wage and average earnings are IBGE's published means, not ours:
-dividing the published total by the published head count misses by up to
-BRL 2.92, because the count was rounded after IBGE computed the mean. Summing
-means is meaningless, so `conferir` checks each municipality's mean against
-`total ÷ count` within the error IBGE's own rounding allows. And the Census
-labour tables are expanded from a sample, rounded per municipality: the
-unemployed sum to 44 below the national total, which passes only for series
-that declare `amostra=True` (at most half a person per municipality).
+**Médias e estimativas por amostra se conferem de outro jeito, e dizem isso.**
+O salário médio e o rendimento médio são as médias publicadas pelo IBGE, não
+as nossas: dividir o total publicado pela contagem publicada erra por até
+R$ 2,92, porque a contagem foi arredondada depois que o IBGE calculou a
+média. Somar médias não tem sentido, então `conferir` confere a média de cada
+município contra `total ÷ contagem`, dentro do erro que o próprio
+arredondamento do IBGE permite. E as tabelas de trabalho do Censo são
+expandidas de uma amostra, arredondadas por município: os desocupados somam 44
+a menos que o total nacional, o que só passa nas séries que declaram
+`amostra=True` (no máximo meia pessoa por município).
 
-**IBGE's `-` means zero, not missing.** Until 2026-09-29 it was read as
-absent, and 33 pages said "no data" on water or sewage where IBGE publishes
-zero.
+**O `-` do IBGE quer dizer zero, não ausente.** Até 29/09/2026 ele era lido
+como ausente, e 33 páginas diziam "sem dado" em água ou esgoto onde o IBGE
+publica zero.
 
-**The estimate and the GDP follow the latest year IBGE publishes.** Their
-period is not written in the code: ingestion asks the API for the aggregate's
-newest period (`MAIS_RECENTE`), so the weekly job picks up a new year on its
-own. Until 2026-09-24 the years were hard-coded, and the site kept showing the
-2024 estimate and the 2021 GDP while 2026 and 2023 were already out.
+**A estimativa e o PIB seguem o ano mais recente que o IBGE publica.** O
+período deles não está escrito no código: a coleta pergunta à API o período
+mais novo do agregado (`MAIS_RECENTE`), então o job semanal pega um ano novo
+sozinho. Até 24/09/2026 os anos estavam fixos no código, e o site seguia
+mostrando a estimativa de 2024 e o PIB de 2021 quando 2026 e 2023 já tinham
+saído.
 
-**Exact equality is the wrong test for a rounded aggregate**, and the first real
-run showed why: GDP came out 5 apart in 1,243,103,280 back when the cut was
-regional, and 31 apart in 9,012,142,000 nationally (2021) — the absolute gap grows
-with the sum, the relative one does not. IBGE publishes municipal
-GDP already rounded to thousands and computes the regional total before
-rounding. Widening the tolerance to hide that would be dishonest; the check
-**classifies** instead — below 1e-6 relative it is rounding and says so with the
-number, above it the command fails. The gap between the two cases is hundreds of
-times over.
+**Igualdade exata é o teste errado para um agregado arredondado**, e a
+primeira rodada real mostrou por quê: o PIB saiu com 5 de diferença em
+1.243.103.280 quando o recorte era regional, e 31 em 9.012.142.000 no
+nacional (2021); a diferença absoluta cresce com a soma, a relativa não. O
+IBGE publica o PIB municipal já arredondado em milhares e calcula o total
+regional antes de arredondar. Alargar a tolerância para esconder isso seria
+desonesto; a conferência **classifica**: abaixo de 1e-6 relativo é
+arredondamento, e ela diz isso com o número; acima disso, o comando falha. A
+distância entre os dois casos é de centenas de vezes.
 
-## Test it
+## Como testar
 
 ```bash
 python -m unittest discover -s tests -t .
 ```
 
-100 tests, **no network and no real waiting** — the HTTP transport and the clock
-are injected. The fixtures in `tests/fixtures/` are real captured responses from
-the IBGE API: the 75 municipalities of Sergipe, the 2022 Census population of
-Rio Grande do Norte, and the 2021 GDP of Sergipe.
+100 testes, **sem rede e sem espera de verdade**: o transporte HTTP e o
+relógio são injetados. As fixtures em `tests/fixtures/` são respostas reais
+capturadas da API do IBGE: os 75 municípios de Sergipe, a população do Censo
+2022 do Rio Grande do Norte e o PIB de 2021 de Sergipe.
 
-## Novo Caged: formal jobs, month by month
-
-```bash
-python -m numeros_publicos caged-novo       # is there a new month (files AND official summary)?
-python -m numeros_publicos caged-ingerir    # 12 months x 3 files from the Ministry of Labour FTP
-python -m numeros_publicos caged-exportar   # checks against the official summary, then writes painel/dados/caged.json
-```
-
-Hires and separations of formally registered (CLT) jobs, by municipality, for
-the last 12 months, from the Ministry of Labour's public microdata
-(`ftp.mtps.gov.br/pdet/microdados/NOVO CAGED/`). Each month has three files:
-the month's movements, late filings for earlier months, and exclusions — which
-undo a line already filed. The "adjusted" figure the Ministry publishes is
-reproducible: for each month, its own file plus every late filing for that
-month, minus every exclusion. On 2026-09-29 the month (+58,568), the year to
-date (+972,203) and the 12 months (+880,717) matched the Ministry's executive
-summary exactly.
-
-`caged-exportar` has **no flag to skip that check**: it reads the summary PDF
-from the month's folder on gov.br and refuses to write if any of the three
-blocks differ. The December summary is an annual edition whose own figures do
-not add up, so that month is refused and checked by hand. A municipality with
-no line in a month has **zero** movements, not missing data. The files need
-`7z` (or the `py7zr` package) and the summary needs `pdftotext`; the scheduled
-workflow installs both.
-
-## INSS: the social-security queue
+## Novo Caged: emprego formal, mês a mês
 
 ```bash
-python -m numeros_publicos inss-exportar   # writes painel/dados/inss.json, one entry per group
+python -m numeros_publicos caged-novo       # há mês novo (arquivos E resumo oficial)?
+python -m numeros_publicos caged-ingerir    # 12 meses x 3 arquivos do FTP do Ministério do Trabalho
+python -m numeros_publicos caged-exportar   # confere contra o resumo oficial, depois grava painel/dados/caged.json
 ```
 
-Each group with a publishable queue gets a page at `/inss/<group>/`: how long
-the pending requests have been waiting, how long the denied ones took to get a
-"no", and the 2021 Supreme Court agreement deadline as a *dated reference* —
-with the caveat, where it applies, that the deadline only starts after the
-medical examination, which the open data does not date. Like the snapshot, the
-export refuses to shrink (fewer groups, or an older month) without
+Admissões e desligamentos de empregos formais (CLT), por município, nos
+últimos 12 meses, dos microdados públicos do Ministério do Trabalho
+(`ftp.mtps.gov.br/pdet/microdados/NOVO CAGED/`). Cada mês tem três arquivos:
+as movimentações do mês, as declarações fora do prazo de meses anteriores e as
+exclusões, que desfazem uma linha já declarada. O número "com ajustes" que o
+Ministério publica é reproduzível: para cada mês, o arquivo do próprio mês
+mais toda declaração fora do prazo daquele mês, menos toda exclusão. Em
+29/09/2026 o mês (+58.568), o acumulado do ano (+972.203) e os 12 meses
+(+880.717) bateram exatamente com o sumário executivo do Ministério.
+
+`caged-exportar` **não tem opção para pular essa conferência**: lê o PDF do
+sumário na pasta do mês no gov.br e se recusa a gravar se qualquer um dos três
+blocos divergir. O sumário de dezembro é uma edição anual cujos próprios
+números não fecham, então esse mês é recusado e conferido à mão. Município sem
+linha num mês tem **zero** movimentações, não dado ausente. Os arquivos
+precisam do `7z` (ou do pacote `py7zr`) e o sumário precisa do `pdftotext`; o
+workflow agendado instala os dois.
+
+## INSS: a fila da previdência
+
+```bash
+python -m numeros_publicos inss-exportar   # grava painel/dados/inss.json, uma entrada por grupo
+```
+
+Cada grupo com fila publicável ganha uma página em `/inss/<grupo>/`: há
+quanto tempo os requerimentos pendentes esperam, quanto tempo os indeferidos
+levaram para receber o "não" e o prazo do acordo de 2021 no Supremo como
+*referência datada*, com a ressalva, onde ela se aplica, de que o prazo só
+começa depois da perícia médica, que o dado aberto não data. Como o retrato,
+a exportação se recusa a encolher (menos grupos, ou um mês mais antigo) sem
 `--permitir-encolher`.
 
-### Ingestion
+### Coleta
 
-`numeros_publicos/inss.py` reads two monthly datasets from INSS's open-data portal
-into a separate database (`inss.db`; only `inss-exportar`, above, feeds the site):
+`numeros_publicos/inss.py` lê dois conjuntos mensais do portal de dados
+abertos do INSS para um banco separado (`inss.db`; só o `inss-exportar`,
+acima, alimenta o site):
 
 ```bash
 python -m numeros_publicos inss-ingerir --mes 2026-07
 python -m numeros_publicos inss-resumo --mes 2026-07
 ```
 
-- **Pending requests** measure the *age of the queue*: how long the requests
-  still undecided on the reference date have been waiting. Not the time to a
-  decision — whoever was served fast has already left the file.
-- **Denied requests** carry the request date and the denial date, so they give
-  the time to a "no". Granted requests carry no request date; **the time to a
-  "yes" is not in the open data.** They are stored with the *clientele*
-  (urban or rural): it is the only column that separates, among denials, the
-  urban old-age pension from the rural one, which share the same benefit code.
-  A database written before this column existed refuses to open;
-  `inss-ingerir --conjunto indeferidos` migrates it by re-reading each month.
+- **Requerimentos pendentes** medem a *idade da fila*: há quanto tempo
+  esperam os requerimentos ainda sem decisão na data de referência. Não o
+  tempo até a decisão: quem foi atendido rápido já saiu do arquivo.
+- **Requerimentos indeferidos** trazem a data do requerimento e a do
+  indeferimento, então dão o tempo até o "não". Os concedidos não trazem a
+  data do requerimento; **o tempo até o "sim" não está no dado aberto.** Eles
+  são guardados com a *clientela* (urbana ou rural): é a única coluna que
+  separa, entre os indeferimentos, a aposentadoria por idade urbana da rural,
+  que têm o mesmo código de benefício. Um banco gravado antes de essa coluna
+  existir se recusa a abrir; `inss-ingerir --conjunto indeferidos` o migra,
+  relendo cada mês.
 
-The two files share no code: the queue uses *service* codes, the denials use
-*benefit* codes. `numeros_publicos/inss_grupos.py` bridges them into ten groups
-(the unit a page will have), each checked against the 2026 files, and every
-code must fall into exactly one group or an explicit "no page" list — **a new
-code refuses the ingestion** instead of vanishing from every page. A median is
-publishable only with at least 1,000 requests: below ~500 it swung 25–100% from
-one month to the next, in both directions.
+Os dois arquivos não compartilham código: a fila usa códigos de *serviço*, os
+indeferimentos usam códigos de *benefício*. `numeros_publicos/inss_grupos.py`
+liga os dois em dez grupos (a unidade de uma página), cada um conferido
+contra os arquivos de 2026, e todo código tem de cair em exatamente um grupo
+ou numa lista explícita de "sem página": **um código novo faz a coleta se
+recusar**, em vez de sumir de todas as páginas. Uma mediana só é publicável
+com pelo menos 1.000 requerimentos: abaixo de ~500, ela oscilava de 25% a
+100% de um mês para o outro, nos dois sentidos.
 
-The portal's labels are not trusted: in September 2026 the resource labelled
-"August 2026" was July 2025's file. The month is checked **inside** each file,
-and a mismatch is refused. The spreadsheets (60–70 MB) are read by a
-dependency-free XLSX reader, checked cell by cell against `openpyxl` on a real
-935,123-row file: zero differences.
+Os rótulos do portal não são confiáveis: em setembro de 2026, o recurso
+rotulado "agosto de 2026" era o arquivo de julho de 2025. O mês é conferido
+**dentro** de cada arquivo, e a divergência é recusada. As planilhas (60 a
+70 MB) são lidas por um leitor de XLSX sem dependência, conferido célula a
+célula contra o `openpyxl` num arquivo real de 935.123 linhas: zero
+diferenças.
 
-## The panel
+## O painel
 
 ```bash
-python -m numeros_publicos exportar     # writes painel/dados/snapshot.json
+python -m numeros_publicos exportar     # grava painel/dados/snapshot.json
 cd painel && npm install && npm run build
 ```
 
-Next.js 16 + React 19 + TypeScript, **fully static** (`output: "export"`) — no
-server, no serverless function, no runtime data fetching. The build reads the
-JSON snapshot from disk and emits HTML that already contains every number.
-5,571 municipality pages plus 27 state pages build in **40 seconds**.
+Next.js 16 + React 19 + TypeScript, **totalmente estático**
+(`output: "export"`): sem servidor, sem função serverless, sem busca de dado
+em tempo de execução. O build lê o retrato JSON do disco e emite HTML que já contém todos
+os números. As 5.571 páginas de município e as 27 de estado são geradas em
+**40 segundos**.
 
-The one client component is the municipality table, because searching and
-sorting 5,571 rows is the only thing here that genuinely needs JavaScript.
+O único componente de cliente é a tabela de municípios, porque buscar e
+ordenar 5.571 linhas é a única coisa aqui que precisa de verdade de
+JavaScript.
 
-### Checking the build
+### Conferindo o build
 
-Three commands, each verifying something the others cannot:
+Três comandos, cada um conferindo algo que os outros não conseguem:
 
 ```bash
-npm test           # the pure libraries: distribution maths, spreadsheet format
+npm test           # as bibliotecas puras: a matemática da distribuição, o formato da planilha
 npm run typecheck  # tsc --noEmit
-npm run auditar    # accessibility and SEO, against the GENERATED HTML
+npm run auditar    # acessibilidade e SEO, contra o HTML GERADO
 ```
 
-`npm test` uses the Node test runner over TypeScript that Node itself strips —
-**no test dependency**. `npm run auditar` needs `npm run build` and the output
-served on `:8791`; it drives a real browser through every page in **both colour
-themes**, because a contrast bug that only exists in light mode is invisible to
-a checker that only ever renders dark.
+`npm test` usa o executor de testes do Node sobre TypeScript, cujos tipos o
+próprio Node remove: **nenhuma dependência de teste**. `npm run auditar`
+precisa do `npm run build` e da saída servida na `:8791`; ele conduz um
+navegador de verdade por todas as páginas **nos dois temas de cor**, porque um
+defeito de contraste que só existe no modo claro é invisível para um
+conferidor que só desenha o escuro.
 
 ```bash
-npm run conferir-xlsx   # opens the generated spreadsheet in LibreOffice
+npm run conferir-xlsx   # abre a planilha gerada no LibreOffice
 ```
 
-The `.xlsx` writer builds a ZIP of XML by hand, and a format error there raises
-no exception — it produces a file Excel refuses to open. So the check hands the
-file to LibreOffice, an independent implementation, converts it back to CSV and
-compares the values. Requires LibreOffice on the PATH (or `SOFFICE=` pointing
-at it).
+O gravador de `.xlsx` monta um ZIP de XML à mão, e um erro de formato ali não
+levanta exceção: produz um arquivo que o Excel se recusa a abrir. Por isso a
+conferência entrega o arquivo ao LibreOffice, uma implementação independente,
+converte de volta para CSV e compara os valores. Exige o LibreOffice no PATH
+(ou `SOFFICE=` apontando para ele).
 
-**No CSS framework**, by decision: design tokens as custom properties plus CSS
-Modules. One less dependency, and real control over typography — including
-`font-variant-numeric: tabular-nums`, without which number columns wobble and
-comparing values becomes work.
+**Nenhum framework de CSS**, por decisão: tokens de desenho como propriedades
+customizadas, mais CSS Modules. Uma dependência a menos e controle real sobre
+a tipografia, inclusive `font-variant-numeric: tabular-nums`, sem o qual as
+colunas de número dançam e comparar valores vira trabalho.
 
-**Accessibility is not decoration here**: skip link, real table semantics with
-`<th scope>`, sortable headers as actual `<button>`s (focus and keyboard for
-free), `aria-sort` only on the active column, and `prefers-reduced-motion`
-honoured.
+**Acessibilidade aqui não é enfeite**: link para pular ao conteúdo, semântica
+real de tabela com `<th scope>`, cabeçalhos ordenáveis como `<button>` de
+verdade (foco e teclado de graça), `aria-sort` só na coluna ativa e
+`prefers-reduced-motion` respeitado.
 
-### Publishing
+### Publicação
 
-The site is served by **Cloudflare Pages** (since 27 September 2026; it was
-on Vercel before). `.github/workflows/publicar-cloudflare.yml` builds
-`painel/` on GitHub Actions on every push to `main` that changes the site,
-and after the weekly data update, then uploads the finished `out/` (Direct
-Upload), so Pages' 20-minute build limit never applies.
-`cloudflare/_headers` sets the long cache for `/_next/static/` and marks the
-`*.pages.dev` hosts `noindex`. It needs two repository secrets:
-`CLOUDFLARE_API_TOKEN` (an account token with *Cloudflare Pages: Edit*) and
+O site é servido pela **Cloudflare Pages** (desde 27 de setembro de 2026;
+antes, estava na Vercel). `.github/workflows/publicar-cloudflare.yml` gera o
+`painel/` no GitHub Actions a cada push na `main` que muda o site, e depois da
+atualização semanal de dados, e então sobe o `out/` pronto (Direct Upload),
+de modo que o limite de 20 minutos de build da Pages nunca se aplica.
+`cloudflare/_headers` define o cache longo de `/_next/static/` e marca os
+hosts `*.pages.dev` como `noindex`. Precisa de dois secrets do repositório:
+`CLOUDFLARE_API_TOKEN` (um token de conta com *Cloudflare Pages: Edit*) e
 `CLOUDFLARE_ACCOUNT_ID`.
 
-## Telling search engines the site changed
+## Avisando os buscadores de que o site mudou
 
 ```bash
 npm run indexnow
 ```
 
-A sitemap solves **discovery**; it does not make anything happen sooner.
-Measured one day after publishing: Google had *detected* all 5,600 URLs from
-the sitemap and *crawled exactly one* — the home page.
-[IndexNow](https://www.indexnow.org/) is the other half: an active ping that a
-URL changed, which participating engines use to prioritise their crawl queue.
+Um sitemap resolve a **descoberta**; não faz nada acontecer mais cedo. Medido
+um dia depois da publicação: o Google tinha *detectado* todas as 5.600 URLs
+do sitemap e *rastreado exatamente uma*, a página inicial.
+O [IndexNow](https://www.indexnow.org/) é a outra metade: um aviso ativo de
+que uma URL mudou, que os buscadores participantes usam para priorizar a fila
+de rastreamento.
 
-Listening: **Bing, Yandex, Naver, Seznam, Yep and Amazon** — not Google, whose
-indexing API stays limited to job postings and livestreams.
+Escutam: **Bing, Yandex, Naver, Seznam, Yep e Amazon**. O Google não: a API
+de indexação dele segue limitada a vagas de emprego e transmissões ao vivo.
 
-**Bing is the reason this is worth doing**, and not for Bing's own search: it is
-the index behind ChatGPT Search and Copilot. For a site whose content is factual
-answers with the source beside them, being citable by an assistant is plausibly
-worth more than a position on a search page.
+**O Bing é o motivo de valer a pena**, e não pela busca do próprio Bing: ele
+é o índice por trás do ChatGPT Search e do Copilot. Para um site cujo
+conteúdo são respostas factuais com a fonte ao lado, ser citável por um
+assistente vale, plausivelmente, mais do que uma posição numa página de
+resultados.
 
-Three things the script refuses to do, each of them a mistake made once:
+Três coisas que o script se recusa a fazer, cada uma um erro já cometido uma
+vez:
 
-- **Submit when only the code changed.** A static site rebuilds entirely on
-  every deploy, including for a CSS tweak. The guard fingerprints the **data
-  files**, not the generated HTML — a layout change tells nobody; a new
-  collection tells everybody. Override with `--forcar` if you know why.
-- **Submit before the key is live.** The key must be readable at the domain
-  root; that is what proves ownership. The script checks the **live** site
-  first, because submitting against a 404 key returns 403 and burns the
-  submission.
-- **Exit through `process.exit()` with a request in flight.** On Windows that
-  aborts the process outright and the exit code is lost in the crash, so a
-  pipeline reads a failure as a pass.
+- **Enviar quando só o código mudou.** Um site estático se refaz inteiro a
+  cada deploy, inclusive por um ajuste de CSS. A trava tira a impressão
+  digital dos **arquivos de dados**, não do HTML gerado: uma mudança de layout
+  não avisa ninguém; uma coleta nova avisa todo mundo. Para passar por cima,
+  `--forcar`, se você sabe por quê.
+- **Enviar antes de a chave estar no ar.** A chave tem de poder ser lida na
+  raiz do domínio; é isso que prova a propriedade. O script confere primeiro o
+  site **no ar**, porque enviar com a chave em 404 devolve 403 e queima o
+  envio.
+- **Sair por `process.exit()` com uma requisição em curso.** No Windows, isso
+  derruba o processo de vez e o código de saída se perde na queda, e um
+  pipeline lê a falha como sucesso.
 
-The key is **not a secret** — the protocol requires it to be publicly readable.
-It lives in `public/`, and a test asserts the file content matches the constant
-in the script byte for byte, including the absence of a trailing newline. Get
-that wrong and every submission returns 403, weeks after the change that caused
-it.
+A chave **não é segredo**: o protocolo exige que ela possa ser lida por
+qualquer um. Ela fica em `public/`, e um teste confere que o conteúdo do
+arquivo bate com a constante do script byte a byte, inclusive a ausência de
+quebra de linha no fim. Errar isso faz todo envio devolver 403, semanas depois
+da mudança que causou o erro.
 
-## Every number is downloadable
+## Todo número pode ser baixado
 
-A public-data panel that only lets you *look* is half a panel: a number nobody
-can download is a number nobody can contest. Every figure ships in three shapes,
-generated at build time as static files — no server, no API.
+Um painel de dado público que só deixa *olhar* é meio painel: um número que
+ninguém consegue baixar é um número que ninguém consegue contestar. Todo
+número sai em três formatos, gerados no build como arquivos estáticos: sem
+servidor, sem API.
 
-| File | Shape | For |
+| Arquivo | Formato | Para |
 |---|---|---|
-| `/dados/municipios.xlsx` | three sheets | anyone who opens spreadsheets |
-| `/dados/municipios.csv` | wide, one row per municipality | anyone reading it by program |
-| `/municipio/<slug>/dados.csv` | long, one observation per row | one town at a time |
+| `/dados/municipios.xlsx` | três abas | quem abre planilhas |
+| `/dados/municipios.csv` | largo, uma linha por município | quem lê por programa |
+| `/municipio/<slug>/dados.csv` | longo, uma observação por linha | uma cidade de cada vez |
 
-**The CSVs use `;` and decimal commas, with a UTF-8 BOM.** Not pedantry: this
-site's readers open Excel in a pt-BR locale, where a "standard" CSV lands
-entirely in one column and, without the BOM, `Município` renders as `MunicÃ­pio`.
+**Os CSVs usam `;` e vírgula decimal, com BOM UTF-8.** Não é preciosismo: os
+leitores deste site abrem o Excel em pt-BR, onde um CSV "padrão" cai inteiro
+numa coluna só e, sem o BOM, `Município` aparece como `MunicÃ­pio`.
 
-**The spreadsheet carries two sheets the CSV cannot.** One says what each column
-means; the other says where each number came from and when it was collected. In
-a CSV those would have to become a second file nobody downloads alongside the
-first — and a number without provenance is exactly what this site exists not to
-produce.
+**A planilha leva duas abas que o CSV não consegue levar.** Uma diz o que
+cada coluna significa; a outra diz de onde veio cada número e quando foi
+coletado. Num CSV, elas teriam de virar um segundo arquivo que ninguém baixa
+junto com o primeiro, e um número sem procedência é exatamente o que este
+site existe para não produzir.
 
-**An empty cell means ABSENT, never zero**, and that survives the download:
-`pessoal_publicou` is `sim`/`nao`/`nao_consultado`, never blank. Collapsing "did
-not file" into "we did not ask" would erase the distinction the whole panel is
-built to keep.
+**Célula vazia quer dizer AUSENTE, nunca zero**, e isso sobrevive ao
+download: `pessoal_publicou` é `sim`/`nao`/`nao_consultado`, nunca em branco.
+Juntar "não declarou" com "não perguntamos" apagaria a distinção que o painel
+inteiro existe para manter.
 
-The `.xlsx` is written without a dependency — the format is a ZIP of XML, and
-Node ships `deflateRawSync` but no packer. That choice buys a verification
-obligation, met by `npm run conferir-xlsx` above.
+O `.xlsx` é gravado sem dependência: o formato é um ZIP de XML, e o Node traz
+`deflateRawSync`, mas nenhum empacotador. Essa escolha cria uma obrigação de
+conferência, cumprida pelo `npm run conferir-xlsx` acima.
 
-## Design notes
+## Notas de projeto
 
-**Missing is not zero.** IBGE marks absent values with `-`, `...` or `X`. Those
-become `NULL`, never `0` — conflating "we don't know" with "zero" is how a
-dashboard starts lying without anyone noticing. Averages count only rows that
-have a number.
+**Ausente não é zero.** O IBGE marca valores ausentes com `-`, `...` ou `X`.
+Eles viram `NULL`, nunca `0`: confundir "não sabemos" com "zero" é como um
+painel começa a mentir sem ninguém perceber. As médias contam só as linhas que
+têm número.
 
-**Provenance is a column, not a comment.** Every observation records when it was
-collected and which endpoint it came from. A number with no traceable origin is
-worthless here — that is what separates this from a scraper.
+**Procedência é coluna, não comentário.** Toda observação registra quando foi
+coletada e de qual endpoint veio. Um número sem origem rastreável não vale
+nada aqui: é isso que separa este projeto de um raspador.
 
-**Revisions do not overwrite.** IBGE revises GDP retroactively; a new collection
-with a different value becomes another row, never a silent overwrite.
+**Revisão não sobrescreve.** O IBGE revisa o PIB retroativamente; uma coleta
+nova com valor diferente vira outra linha, nunca uma sobrescrita silenciosa.
 
-**Idempotent by construction.** Running twice changes nothing: proven in tests
-and against the live API (second run: 0 new, every municipality already
-known).
+**Idempotente por construção.** Rodar duas vezes não muda nada: provado nos
+testes e contra a API ao vivo (segunda rodada: 0 novos, todos os municípios já
+conhecidos).
 
-**Failure is expected, not exceptional.** The transport returns a status instead
-of raising on network failure, so retry policy is actually consulted; a socket
-`TimeoutError` is an `OSError`, not a `URLError`, and would otherwise escape it.
+**Falha é esperada, não exceção.** O transporte devolve um status em vez de
+levantar exceção numa falha de rede, então a política de nova tentativa é de
+fato consultada; um `TimeoutError` de socket é um `OSError`, não um
+`URLError`, e de outro modo escaparia dela.
 
-**One contract, tested from the Python side.** The TypeScript panel reads the
-JSON snapshot at build time. If the Python export changes shape, the panel
-breaks in another directory, in another language, with no warning — so
-`tests/test_snapshot.py` asserts exactly the keys `type Snapshot` declares.
+**Um contrato, testado do lado do Python.** O painel em TypeScript lê o
+retrato JSON na hora do build. Se a exportação em Python mudar de forma, o
+painel quebra em outro diretório, em outra linguagem, sem aviso; por isso
+`tests/test_snapshot.py` confere exatamente as chaves que `type Snapshot`
+declara.
 
-**Flat layout, deliberately.** The PyPA does not recommend `src/` over flat; it
-states the trade-off, and the deciding one here is that *"the src layout
+**Layout plano, de propósito.** A PyPA não recomenda `src/` acima do layout
+plano; ela expõe os prós e contras, e o que decide aqui é que *"the src layout
 requires installation of the project to be able to run its code, and the flat
-layout does not."* This project must run from a clean checkout with no install.
+layout does not"* (o layout `src` exige instalar o projeto para rodar o
+código, e o plano não). Este projeto tem de rodar a partir de um clone limpo,
+sem instalação.
 
-## License: AGPL-3.0-or-later, deliberately
+## Licença: AGPL-3.0-or-later, de propósito
 
-Not MIT. This project can plausibly become a product: Brazilian municipalities
-buy exactly this kind of public data portal, on continuous contracts, and the
-three tender documents read in full price it at BRL 5,000–6,000 per month.
+Não MIT. Este projeto pode plausivelmente virar produto: municípios
+brasileiros compram exatamente esse tipo de portal de dado público, em
+contratos contínuos, e os três editais lidos por inteiro o precificam em
+R$ 5.000 a 6.000 por mês.
 
-MIT would let anyone take this code, **close it**, rebrand it and sell it to
-those same municipalities — including the incumbent vendors it would compete
-with. AGPL keeps it open and inspectable, which is the entire point of
-publishing it, while requiring anyone who offers it **as a service** to publish
-their modifications. That is the clause MIT lacks and a SaaS market needs.
+A MIT deixaria qualquer um pegar este código, **fechá-lo**, trocar a marca e
+vendê-lo a esses mesmos municípios, inclusive os fornecedores que já estão lá
+e com quem ele competiria. A AGPL o mantém aberto e inspecionável, que é todo
+o motivo de publicá-lo, e exige que quem o oferecer **como serviço** publique
+as suas modificações. É a cláusula que falta na MIT e de que um mercado de
+SaaS precisa.
 
-The copyright is held by one person, so dual licensing stays available:
-AGPL for everyone, a commercial licence for anyone who needs it closed.
+O direito autoral é de uma pessoa só, então o licenciamento duplo continua
+possível: AGPL para todos, uma licença comercial para quem precisar dele
+fechado.
 
-Note that this decision gets more expensive over time — relicensing later
-requires the consent of **every** contributor.
+Essa decisão fica mais cara com o tempo: trocar a licença depois exige o
+consentimento de **cada** contribuidor.
 
-## Data sources
+## Fontes dos dados
 
-All public, no registration, no token — `https://servicodados.ibge.gov.br`.
-Every endpoint was called and returned real municipal data before being written
-down; two aggregate/variable combinations returned HTTP 500 and were left out
-rather than promised.
+Todas públicas, sem cadastro, sem token: `https://servicodados.ibge.gov.br`.
+Todo endpoint foi chamado e devolveu dado municipal real antes de ser escrito
+aqui; duas combinações de agregado e variável devolveram HTTP 500 e ficaram
+de fora, em vez de prometidas.
 
-The formal-employment figures come from the Ministry of Labour's Novo Caged
-microdata, over public FTP (`ftp.mtps.gov.br`), checked against the monthly
-executive summary published on gov.br.
+Os números do emprego formal vêm dos microdados do Novo Caged do Ministério do
+Trabalho, por FTP público (`ftp.mtps.gov.br`), conferidos contra o sumário
+executivo mensal publicado no gov.br.
 
-The fiscal figures come from SICONFI (`https://apidatalake.tesouro.gov.br`),
-equally public and equally token-free. **The percentage of revenue committed to
-personnel is never recalculated here** — it arrives computed and filed by the
-municipality itself, over its *adjusted* net revenue. Filings that fall outside
-0–100% of revenue are shown as filed and labelled implausible, because
-correcting them would invent a number and hiding them would decide which
-filings a reader may see.
+Os números fiscais vêm do SICONFI (`https://apidatalake.tesouro.gov.br`),
+igualmente público e igualmente sem token. **O percentual da receita
+comprometido com pessoal nunca é recalculado aqui**: ele chega calculado e
+declarado pelo próprio município, sobre a receita corrente líquida
+*ajustada*. Declarações fora de 0 a 100% da receita aparecem como foram
+declaradas e marcadas como implausíveis, porque corrigi-las inventaria um
+número, e escondê-las decidiria quais declarações um leitor pode ver.
+
+<details>
+<summary><b>In English</b></summary>
+
+**Números Públicos**: open data on all 5,571 Brazilian municipalities, one
+static page per municipality, live at
+[www.numerospublicos.com.br](https://www.numerospublicos.com.br). The full
+description is in Portuguese above; this is the short version.
+
+- **Sources, all public and token-free:** IBGE's public APIs
+  (`https://servicodados.ibge.gov.br`), municipal fiscal filings from
+  SICONFI (`https://apidatalake.tesouro.gov.br`, through
+  [painel-fiscal-ne](https://github.com/peterwkdev-creator/painel-fiscal-ne)),
+  school results from INEP, INSS open data and the Ministry of Labour's Novo
+  Caged microdata (`ftp.mtps.gov.br`).
+- **Checked against the source, not against itself:** the sum of all
+  municipalities against IBGE's own national total (2022 Census population:
+  exact); the Caged month against the Ministry's executive summary, with no
+  flag to skip it. Missing is never zero, provenance is a column, and
+  revisions never overwrite.
+- **Run and test:** Python 3.10+, standard library only
+  (`python -m numeros_publicos`, 100 tests with no network); the panel is
+  Next.js 16 + React 19 + TypeScript, fully static, served by Cloudflare
+  Pages.
+- **Every number is downloadable**, as `.xlsx` and `.csv`, for the whole
+  country and per municipality.
+- **Independent work**, with no affiliation to, or endorsement by, the
+  Consórcio Nordeste or UNDP.
+- **License:** AGPL-3.0-or-later; dual licensing stays available.
+
+</details>

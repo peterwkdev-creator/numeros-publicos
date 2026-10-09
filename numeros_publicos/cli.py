@@ -834,6 +834,9 @@ def construir_parser() -> argparse.ArgumentParser:
     bi.add_argument("--permitir-encolher", action="store_true",
                     help="aceita série com menos pontos ou período mais curto "
                          "que o já gravado")
+    bi.add_argument("--semanal", action="store_true",
+                    help="só as séries da atualização semanal: as anuais "
+                         "coletadas à mão (SIM) ficam com o dado anterior")
     bi.set_defaults(func=brasil_ingerir)
     be = sub.add_parser("brasil-exportar",
                         help="gera o brasil.json que a página /brasil/ lê")
@@ -989,14 +992,25 @@ def brasil_ingerir(args, transporte=None, dormir=None) -> int:
     bateu. Cada série entra por si: a que falhar duas vezes fica com o dado
     anterior, e o comando sai com `SAIDA_PARCIAL`, para a atualização semanal
     seguir e avisar. Mandatos com defeito, nada lido ou série que encolheria:
-    sai com 1, e nada é gravado."""
+    sai com 1, e nada é gravado. Com `--semanal`, as séries anuais coletadas
+    à mão ficam de fora, sem contar como falha. Cada coleta imprime o tempo
+    assim que termina: o log mostra onde a coleta parou."""
     import time
     from . import brasil
+
+    def andamento(codigo: str, segundos: float, motivo: str | None) -> None:
+        print(f"· {codigo}: {'falhou' if motivo else 'lida'} em "
+              f"{segundos:.0f} s", flush=True)
+
+    series = tuple(s for s in brasil.SERIES if s.semanal or not args.semanal)
     try:
         mandatos = brasil.carregar_mandatos()
         r = brasil.ingerir(
-            args.banco_brasil, transporte or transporte_http(),
-            dormir or time.sleep, permitir_encolher=args.permitir_encolher)
+            args.banco_brasil,
+            transporte or transporte_http(prazo=brasil.PRAZO_PEDIDO),
+            dormir or time.sleep, series=series,
+            permitir_encolher=args.permitir_encolher,
+            prazo=brasil.PRAZO_COLETA, ao_ler=andamento)
     except brasil.ErroBrasil as e:
         print(f"[!] {e}", file=sys.stderr)
         return 1
@@ -1016,6 +1030,10 @@ def brasil_ingerir(args, transporte=None, dormir=None) -> int:
     print(f"mandatos: {len(mandatos)} períodos, de {mandatos[0].inicio} até "
           f"hoje ({atual.nome}, desde {atual.inicio}), com fonte oficial em "
           "todos, sem sobreposição nem buraco")
+    fora = [s.codigo for s in brasil.SERIES if s not in series]
+    if fora:
+        print("fora da semanal (anuais, coletadas à mão): "
+              + ", ".join(fora) + "; fica o dado anterior")
     for falha in r.falhas:
         print(f"[falha] {falha}; fica o dado anterior", file=sys.stderr)
     return SAIDA_PARCIAL if r.falhas else 0

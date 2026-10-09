@@ -21,6 +21,17 @@
 # com o motivo, para o GitHub mandar o aviso. Saída 1 (mandatos com defeito,
 # nada lido) e série que encolheria continuam parando tudo.
 #
+# ## Prazos e séries anuais (desde 09/10/2026)
+#
+# Em 09/10 a coleta passou dos 20 min do job e foi cancelada sem uma linha de
+# log nem aviso (o SIM recém-incluído, o Ipeadata fora do ar). Desde então
+# cada pedido tem prazo total e a coleta inteira também (`PRAZO_PEDIDO` e
+# `PRAZO_COLETA` em `brasil.py`), cada série imprime o tempo assim que
+# termina, e `avisar` também fica vermelho quando o job é cancelado. As
+# séries anuais sem API (o SIM, pelo TabNet) se coletam à mão quando sai o
+# ano final: aqui entra `--semanal`, e elas ficam com o dado publicado. Para
+# testar o TabNet a partir do runner, dispare à mão com `anuais`.
+#
 # ## O que ele NÃO faz
 #
 # Não mexe na tabela de quem ocupou a Presidência (`brasil_mandatos.csv`): a
@@ -38,7 +49,12 @@ on:
     # Quarta, 12:00 UTC (9:00 em Brasília): fora do horário do IBGE (segunda)
     # e do Caged (todo dia, 21:30).
     - cron: "0 12 * * 3"
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      anuais:
+        description: "Incluir as séries anuais coletadas à mão (o SIM), para testar a fonte a partir do runner"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -75,9 +91,11 @@ jobs:
       # anotação aqui e o vermelho do job `avisar`.
       - name: Ler as séries e a meta, cada uma por dois caminhos
         id: ingerir
+        env:
+          SEMANAL: ${{ inputs.anuais && ' ' || '--semanal' }}
         run: |
           set +e
-          PYTHONUNBUFFERED=1 python -m numeros_publicos brasil-ingerir 2>&1 \
+          PYTHONUNBUFFERED=1 python -m numeros_publicos brasil-ingerir $SEMANAL 2>&1 \
             | tee "$RUNNER_TEMP/ingerir.log"
           codigo=${PIPESTATUS[0]}
           set -e
@@ -134,12 +152,20 @@ jobs:
 
   # Vermelho de propósito, e por último: a coleta parcial já publicou o que
   # leu, e o vermelho é o que faz o GitHub avisar da série que ficou de fora.
+  # Também quando o job `brasil` é cancelado (tempo esgotado): cancelado sozinho
+  # não avisa ninguém.
   avisar:
     needs: [brasil, publicar]
-    if: always() && needs.brasil.outputs.parcial == 'true'
+    if: always() && (needs.brasil.outputs.parcial == 'true' || needs.brasil.result == 'cancelled')
     runs-on: ubuntu-latest
     steps:
       - name: Falhar porque alguma série ficou com o dado anterior
+        env:
+          RESULTADO: ${{ needs.brasil.result }}
         run: |
-          echo "::error::coleta parcial: o motivo está nas anotações do passo 'Ler as séries' do job brasil"
+          if [ "$RESULTADO" = cancelled ]; then
+            echo "::error::coleta cancelada antes do fim (tempo do job?): nada foi publicado; o andamento está no passo 'Ler as séries' do job brasil"
+          else
+            echo "::error::coleta parcial: o motivo está nas anotações do passo 'Ler as séries' do job brasil"
+          fi
           exit 1

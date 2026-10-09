@@ -996,11 +996,14 @@ class TestIngerirPorSerie(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
-    def ingerir(self, falhas):
-        """`falhas`: quantas vezes cada código falha antes de ler."""
+    def ingerir(self, falhas, custo=None, **k):
+        """`falhas`: quantas vezes cada código falha antes de ler; `custo`:
+        quantos segundos do relógio falso cada coleta gasta."""
         restam = dict(falhas)
+        self.agora = 0.0
 
         def tentar(codigo):
+            self.agora += (custo or {}).get(codigo, 0)
             if restam.get(codigo, 0):
                 restam[codigo] -= 1
                 raise ErroBrasil("200 com corpo que não é JSON")
@@ -1016,7 +1019,8 @@ class TestIngerirPorSerie(unittest.TestCase):
         with mock.patch.object(brasil, "coletar", coletar), \
                 mock.patch.object(brasil, "coletar_metas", coletar_metas):
             return brasil.ingerir(self.banco, object(), self.pausas.append,
-                                  series=(PIB, IPCA))
+                                  series=(PIB, IPCA),
+                                  relogio=lambda: self.agora, **k)
 
     def gravado(self):
         with ArmazemBrasil(self.banco) as db:
@@ -1051,6 +1055,33 @@ class TestIngerirPorSerie(unittest.TestCase):
                          ["meta de inflação: 200 com corpo que não é JSON"])
         self.assertEqual(self.gravado(),
                          ({"2020T1": 2.0}, {"2020-01": 2.0}, 1))
+
+    def test_prazo_esgotado_deixa_de_fora_o_que_nao_comecou(self):
+        r = self.ingerir({}, custo={"pib": 700}, prazo=600)
+        self.assertEqual([x.serie.codigo for x in r.leituras], ["pib"])
+        self.assertEqual(r.falhas, [
+            "ipca: não coletada, a coleta passou do prazo de 10 min",
+            "meta de inflação: não coletada, a coleta passou do prazo de 10 min"])
+        self.assertEqual(self.pausas, [])
+        self.assertEqual(self.gravado(),
+                         ({"2020T1": 2.0}, {"2020-01": 1.0}, 1))
+
+    def test_nova_tentativa_so_se_couber_no_prazo(self):
+        r = self.ingerir({"ipca": 1}, custo={"pib": 500}, prazo=600)
+        self.assertEqual(r.falhas, ["ipca: 200 com corpo que não é JSON"])
+        self.assertEqual(self.pausas, [])
+        r = self.ingerir({"ipca": 1}, custo={"pib": 400}, prazo=600)
+        self.assertEqual(r.falhas, [])
+        self.assertEqual(self.pausas, [brasil.PAUSA_NOVA_TENTATIVA])
+
+    def test_ao_ler_recebe_cada_coleta_com_tempo_e_motivo(self):
+        vistas = []
+        self.ingerir({"ipca": 2}, custo={"pib": 3},
+                     ao_ler=lambda *a: vistas.append(a))
+        falha = "ipca: 200 com corpo que não é JSON"
+        self.assertEqual(vistas, [("pib", 3.0, None), ("ipca", 0.0, falha),
+                                  (brasil.META, 0.0, None),
+                                  ("ipca", 0.0, falha)])
 
     def test_nada_lido_e_erro_e_nada_gravado(self):
         with self.assertRaises(ErroBrasil) as ctx:
@@ -1103,7 +1134,7 @@ class TestComando(unittest.TestCase):
     que devolve uma leitura pronta."""
 
     ARGS = argparse.Namespace(banco_brasil="nao-usado.db",
-                              permitir_encolher=False)
+                              permitir_encolher=False, semanal=False)
 
     def rodar(self, ingerir):
         saida, erro = io.StringIO(), io.StringIO()
@@ -1183,6 +1214,69 @@ class TestRegistro(unittest.TestCase):
                 self.assertEqual(s.conferencia == "ultimo-dia",
                                  s.sgs_diaria is not None)
                 self.assertGreaterEqual(s.dividir_por, 1)
+
+
+class TestPrazoDoPedido(unittest.TestCase):
+    """`ler_ate`: o prazo vale para o corpo inteiro, não para cada pedaço."""
+
+    class Pingos:
+        def __init__(self, partes):
+            self.partes = list(partes)
+
+        def read(self, n=-1):
+            if n == -1:
+                inteiro, self.partes = b"".join(self.partes), []
+                return inteiro
+            return self.partes.pop(0) if self.partes else b""
+
+    def test_sem_prazo_le_tudo_de_uma_vez(self):
+        self.assertEqual(brasil.ler_ate(self.Pingos([b"a", b"b"]), None),
+                         b"ab")
+
+    def test_dentro_do_prazo_junta_os_pedacos(self):
+        agora = iter([1.0, 2.0, 3.0])
+        self.assertEqual(brasil.ler_ate(self.Pingos([b"a", b"b", b"c"]), 10.0,
+                                        lambda: next(agora)), b"abc")
+
+    def test_pingos_que_passam_do_prazo_sao_falha_de_rede(self):
+        agora = iter([1.0, 11.0])
+        with self.assertRaises(TimeoutError):
+            brasil.ler_ate(self.Pingos([b"a", b"b", b"c"]), 10.0,
+                           lambda: next(agora))
+        self.assertTrue(issubclass(TimeoutError, OSError))
+
+
+class TestSemanal(unittest.TestCase):
+    """`brasil-ingerir --semanal`: o SIM, anual e sem API, fica de fora e com
+    o dado anterior, sem contar como falha; o prazo da coleta vai junto."""
+
+    def test_so_o_sim_e_anual(self):
+        self.assertEqual([s.codigo for s in brasil.SERIES if not s.semanal],
+                         ["mortes-agressao"])
+
+    def test_semanal_deixa_o_sim_de_fora_e_diz(self):
+        vistas = {}
+
+        def ingerir(*a, **k):
+            vistas.update(k)
+            return brasil.Ingestao([leitura(PIB, {"2020T1": 1.0})],
+                                   metas(1999, 2000), [])
+
+        args = argparse.Namespace(banco_brasil="nao-usado.db",
+                                  permitir_encolher=False, semanal=True)
+        saida = io.StringIO()
+        with mock.patch.object(brasil, "ingerir", ingerir), \
+                redirect_stdout(saida), redirect_stderr(io.StringIO()):
+            codigo = cli.brasil_ingerir(args, transporte=object(),
+                                        dormir=sem_pausa)
+        self.assertEqual(codigo, 0)
+        self.assertEqual([s.codigo for s in vistas["series"]],
+                         [s.codigo for s in brasil.SERIES
+                          if s.codigo != "mortes-agressao"])
+        self.assertEqual(vistas["prazo"], brasil.PRAZO_COLETA)
+        self.assertIn("fora da semanal (anuais, coletadas à mão): "
+                      "mortes-agressao; fica o dado anterior",
+                      saida.getvalue())
 
 
 if __name__ == "__main__":

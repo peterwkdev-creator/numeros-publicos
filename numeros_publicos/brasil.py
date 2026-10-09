@@ -86,7 +86,7 @@ from urllib.parse import urlencode, urlparse
 
 from .ibge import (
     ESPERA_INICIAL, FALHA_DE_REDE, REPETIVEIS, TENTATIVAS, ErroIBGE, Resposta,
-    Transporte, _numero, buscar_json, url_serie_regiao,
+    Transporte, _numero, buscar_json, ler_ate, url_serie_regiao,
 )
 
 SIDRA = "https://apisidra.ibge.gov.br/values"
@@ -191,6 +191,9 @@ class SerieBrasil(NamedTuple):
     dividir_por: int = 1
     #: As duas tabelas do TabNet que dão a série, a gravada e a que a confere.
     tabnet: tuple[TabelaTabNet, TabelaTabNet] | None = None
+    #: Fora da atualização semanal: série anual de fonte sem API, coletada à
+    #: mão quando sai o ano final (`brasil-ingerir` sem `--semanal`).
+    semanal: bool = True
 
 
 # Os nomes do IBGE são os dos metadados de cada tabela, lidos em 05/10/2026.
@@ -314,7 +317,7 @@ SERIES: tuple[SerieBrasil, ...] = (
             TabelaTabNet("sim/cnv/ext10uf.def", "SGrande_Grupo_CID10", "4",
                          "X85-Y09 Agressões"),
             TabelaTabNet("sim/cnv/obt10uf.def", "SGrupo_CID-10", "246",
-                         "Agressões"))),
+                         "Agressões")), semanal=False),
 )
 
 TRIMESTRE = re.compile(r"(\d{4})0([1-4])")
@@ -826,16 +829,18 @@ LINHA_TABNET = re.compile(r'^"(\d{4})";(\d+)\r?$', re.M)
 FINAIS_TABNET = re.compile(r"Dados finais disponíveis até (\d{4})")
 
 
-def formulario_http(timeout: float = 60.0) -> Formulario:
+def formulario_http(timeout: float = 60.0,
+                    prazo: float | None = None) -> Formulario:
     """O transporte real do TabNet. Como `transporte_http`, nunca levanta
-    por falha de rede: devolve o status."""
+    por falha de rede (devolve o status), e o `prazo` é o mesmo."""
 
     def pedir(url: str, corpo: bytes | None) -> Resposta:
+        fim = None if prazo is None else time.monotonic() + prazo
         req = urllib.request.Request(url, corpo, headers={
             "User-Agent": "numeros-publicos/0.1 (dados abertos; uso pessoal)"})
         try:
             with urllib.request.urlopen(req, timeout=timeout) as r:
-                return Resposta(r.status, r.read().decode("latin-1"))
+                return Resposta(r.status, ler_ate(r, fim).decode("latin-1"))
         except urllib.error.HTTPError as e:
             return Resposta(e.code, e.read().decode("latin-1"))
         except (urllib.error.URLError, OSError) as e:
@@ -989,7 +994,7 @@ def coletar(s: SerieBrasil, transporte: Transporte,
         return " + ".join(urls), dias
 
     if s.fonte == "Ministério da Saúde":
-        formulario = formulario or formulario_http()
+        formulario = formulario or formulario_http(prazo=PRAZO_PEDIDO)
         lidas = []
         for t in s.tabnet:
             rotulo = f"{s.codigo} ({t.definicao})"
@@ -1222,6 +1227,14 @@ class ArmazemBrasil:
 #: seguidas, e a mesma URL respondeu certo minutos depois.
 PAUSA_NOVA_TENTATIVA = 120
 
+#: Prazos, em segundos: o de cada pedido, da conexão ao fim do corpo, e o da
+#: coleta inteira, depois do qual a série que ainda não começou fica de fora
+#: com o dado anterior. Em 09/10/2026 a semanal passou dos 20 min do job e
+#: foi cancelada sem uma linha de log nem aviso (o SIM recém-incluído, o
+#: Ipeadata fora do ar): o job tem de terminar a tempo de avisar.
+PRAZO_PEDIDO = 90.0
+PRAZO_COLETA = 600.0
+
 #: O nome da meta de inflação nas falhas, ao lado dos códigos das séries.
 META = "meta de inflação"
 
@@ -1235,7 +1248,10 @@ class Ingestao(NamedTuple):
 def ingerir(banco: str | Path, transporte: Transporte,
             dormir: Callable[[float], None] = time.sleep,
             series: tuple[SerieBrasil, ...] = SERIES,
-            permitir_encolher: bool = False) -> Ingestao:
+            permitir_encolher: bool = False,
+            prazo: float | None = None,
+            ao_ler: Callable[[str, float, str | None], None] | None = None,
+            relogio: Callable[[], float] = time.monotonic) -> Ingestao:
     """Coleta e confere cada série e a meta de inflação por si, e grava numa
     transação as que bateram.
 
@@ -1243,24 +1259,39 @@ def ingerir(banco: str | Path, transporte: Transporte,
     uma vez no fim, depois de `PAUSA_NOVA_TENTATIVA`; se falhar outra vez,
     fica de fora, o banco guarda o que já tinha dela e o motivo vai em
     `falhas`. Uma fonte com problema não segura as outras. Nada lido é erro,
-    e nada é gravado; série que encolheria também (`gravar`)."""
+    e nada é gravado; série que encolheria também (`gravar`).
+
+    Com `prazo` (segundos desde o início), a coleta que ainda não começou
+    quando ele passa vira falha, e a nova tentativa só acontece se couber.
+    `ao_ler(código, segundos, motivo ou None)` vem ao fim de cada coleta,
+    para quem chama mostrar o andamento."""
     coletas: dict[str, Callable[[], Leitura | LeituraMetas]] = {
         s.codigo: (lambda s=s: coletar(s, transporte, dormir)) for s in series}
     coletas[META] = lambda: coletar_metas(transporte, dormir)
 
+    inicio = relogio()
+
     def tentar(codigos: list[str]) -> tuple[dict, dict[str, str]]:
         lidas, falhas = {}, {}
         for codigo in codigos:
+            if prazo is not None and relogio() - inicio > prazo:
+                falhas[codigo] = (f"{codigo}: não coletada, a coleta passou "
+                                  f"do prazo de {prazo / 60:g} min")
+                continue
+            comeco = relogio()
             try:
                 lidas[codigo] = coletas[codigo]()
             except ErroBrasil as e:
                 motivo = str(e)
                 falhas[codigo] = (motivo if motivo.startswith(f"{codigo}:")
                                   else f"{codigo}: {motivo}")
+            if ao_ler is not None:
+                ao_ler(codigo, relogio() - comeco, falhas.get(codigo))
         return lidas, falhas
 
     lidas, falhas = tentar(list(coletas))
-    if falhas:
+    if falhas and (prazo is None
+                   or relogio() - inicio + PAUSA_NOVA_TENTATIVA < prazo):
         dormir(PAUSA_NOVA_TENTATIVA)
         de_novo, falhas = tentar(list(falhas))
         lidas.update(de_novo)

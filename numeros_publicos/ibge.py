@@ -58,10 +58,29 @@ class Resposta:
 Transporte = Callable[[str], Resposta]
 
 
-def transporte_http(timeout: float = 30.0) -> Transporte:
-    """Transporte real. **Nunca levanta por falha de rede**: devolve status."""
+def ler_ate(r, fim: float | None,
+            relogio: Callable[[], float] = time.monotonic) -> bytes:
+    """O corpo inteiro de `r`. O `timeout` do urllib vale para cada espera do
+    socket, não para o pedido: um servidor que manda aos pingos segura a
+    leitura sem fim. Com `fim` (no relógio `relogio`), passar dele é
+    `TimeoutError`, que os transportes tratam como falha de rede."""
+    if fim is None:
+        return r.read()
+    partes = []
+    while parte := r.read(65536):
+        partes.append(parte)
+        if relogio() > fim:
+            raise TimeoutError("o pedido passou do prazo total")
+    return b"".join(partes)
+
+
+def transporte_http(timeout: float = 30.0,
+                    prazo: float | None = None) -> Transporte:
+    """Transporte real. **Nunca levanta por falha de rede**: devolve status.
+    `prazo`: segundos para o pedido inteiro, da conexão ao fim do corpo."""
 
     def buscar(url: str) -> Resposta:
+        fim = None if prazo is None else time.monotonic() + prazo
         req = urllib.request.Request(
             url,
             headers={
@@ -75,7 +94,7 @@ def transporte_http(timeout: float = 30.0) -> Transporte:
         )
         try:
             with urllib.request.urlopen(req, timeout=timeout) as r:
-                bruto = r.read()
+                bruto = ler_ate(r, fim)
                 if r.headers.get("Content-Encoding") == "gzip":
                     bruto = gzip.decompress(bruto)
                 return Resposta(r.status, bruto.decode("utf-8"))

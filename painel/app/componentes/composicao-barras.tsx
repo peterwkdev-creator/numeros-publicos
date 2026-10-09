@@ -1,4 +1,4 @@
-import { br, escala } from "../../lib/dados";
+import { br, escalaComSinal } from "../../lib/dados";
 import type { FatiaFuncao } from "../../lib/fiscal";
 import estilos from "./composicao-barras.module.css";
 
@@ -65,15 +65,19 @@ export default function ComposicaoBarras({
   // escala até 100 deixaria todas as barras comprimidas no primeiro terço e a
   // diferença entre a 3ª e a 4ª -- que é o que se quer ver -- sumiria.
   const maior = Math.max(...fatias.map((f) => f.valor), somaCauda);
+  // Fatia negativa (estorno maior que o pagamento, 09/10/2026) não tem
+  // barra: o piso de 1,5% a desenharia como um valor positivo pequeno.
   const largura = (v: number) =>
-    maior > 0 ? `${Math.max((v * 100) / maior, 1.5)}%` : "0%";
+    maior > 0 && v > 0 ? `${Math.max((v * 100) / maior, 1.5)}%` : "0%";
 
   const linha = (nome: string, valor: number, pct: number | null, chave: string) => (
     <tr key={chave}>
       <th scope="row">{nome}</th>
-      <td className={`${estilos.num} tabular`}>{pct === null ? "—" : `${br(pct, 1)}%`}</td>
-      <td className={`${estilos.num} tabular`} title={escala(valor).exato}>
-        {escala(valor).curto}
+      <td className={`${estilos.num} tabular`}>
+        {pct === null ? "—" : `${br(pct, 1).replace("-", "−")}%`}
+      </td>
+      <td className={`${estilos.num} tabular`} title={escalaComSinal(valor).exato}>
+        {escalaComSinal(valor).curto}
       </td>
       <td className={estilos.trilho}>
         <div className={estilos.barra} style={{ width: largura(valor) }} aria-hidden="true" />

@@ -3,7 +3,8 @@ import { cabecalhosCsv, paraCsv } from "../../../lib/csv";
 import {
   CODIGO_FAIXA, funcoesDe, indexarFiscal, receitaDe,
 } from "../../../lib/fiscal";
-import { lerCaged, lerFiscal, lerSnapshot } from "../../../lib/servidor";
+import { lerCaged, lerEmendas, lerFiscal, lerSnapshot } from "../../../lib/servidor";
+import { emendasDe } from "../../../lib/emendas";
 import { cagedDe } from "../../../lib/caged";
 import { atualDeFuncoes, atualDeReceita } from "@/lib/fiscal";
 
@@ -20,8 +21,8 @@ import { atualDeFuncoes, atualDeReceita } from "@/lib/fiscal";
 export const dynamic = "force-static";
 
 export async function GET() {
-  const [snapshot, fiscal, caged] = await Promise.all([
-    lerSnapshot(), lerFiscal(), lerCaged(),
+  const [snapshot, fiscal, caged, emendas] = await Promise.all([
+    lerSnapshot(), lerFiscal(), lerCaged(), lerEmendas(),
   ]);
   const porCodigo = indexarFiscal(fiscal);
 
@@ -59,8 +60,16 @@ export async function GET() {
     // Caged não tem "sem dado", e a célula vazia significaria outra coisa.
     "caged_periodo", "caged_admissoes_12m", "caged_desligamentos_12m",
     "caged_saldo_12m", "caged_saldo_ultimo_mes",
+    // As emendas, também NO FIM, pela mesma razão. Uma coluna por ano, de
+    // 2015 ao corrente; `emendas_periodo` diz que o último ano é parcial.
+    // Vazio é ano sem pagamento nenhum, e não zero. Até 2024 parte do
+    // dinheiro ia ao Banco do Brasil sem o município, e por isso a série
+    // NÃO se compara com 2025: a página diz, o XLSX diz no dicionário.
+    "emendas_periodo",
+    ...emendas.anos.map((ano) => `emendas_pagas_${ano}`),
   ];
   const periodoCaged = `${caged.competencias[0]}-${caged.competencia}`;
+  const periodoEmendas = `${emendas.anos[0]}01-${emendas.ultimoMes}`;
 
   // `undefined` quando o município não entregou o RREO. Vira campo vazio no
   // CSV, e não zero: "não entregou" e "gastou nada" não podem colapsar na
@@ -118,6 +127,9 @@ export async function GET() {
       periodoCaged,
       cg?.admissoes ?? null, cg?.desligamentos ?? null,
       cg?.saldo ?? null, cg?.ultimo.saldo ?? null,
+      periodoEmendas,
+      ...(emendasDe(emendas, m.codigo)?.anos.map((a) => a.reais) ??
+        emendas.anos.map(() => null)),
     ];
   });
 

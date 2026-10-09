@@ -1,7 +1,10 @@
-import { expandir } from "../../../lib/dados";
+import { dataCurta, expandir } from "../../../lib/dados";
 import { funcoesDe, indexarFiscal, naoInstaladosEm, receitaDe, ROTULO_FAIXA } from "../../../lib/fiscal";
 import { trajetoriaDe } from "../../../lib/ideb";
-import { lerCaged, lerFiscal, lerIdeb, lerSnapshot, SITE } from "../../../lib/servidor";
+import {
+  lerCaged, lerEmendas, lerFiscal, lerIdeb, lerSnapshot, SITE,
+} from "../../../lib/servidor";
+import { emendasDe, mesDeCorte, ULTIMO_ANO_VIA_BB } from "../../../lib/emendas";
 import { cagedDe, nomeCompetencia } from "../../../lib/caged";
 import { cabecalhosXlsx, xlsx, type Aba } from "../../../lib/xlsx";
 import { rotuloDownload } from "../../../lib/censo";
@@ -31,10 +34,17 @@ import { rotuloDownload } from "../../../lib/censo";
 export const dynamic = "force-static";
 
 export async function GET() {
-  const [snapshot, fiscal, ideb, idebFinais, caged] = await Promise.all([
+  const [snapshot, fiscal, ideb, idebFinais, caged, emendas] = await Promise.all([
     lerSnapshot(), lerFiscal(), lerIdeb("anos_iniciais"), lerIdeb("anos_finais"),
-    lerCaged(),
+    lerCaged(), lerEmendas(),
   ]);
+  // O ano corrente das emendas, se o arquivo não termina em dezembro.
+  const anoParcial = Number(emendas.ultimoMes.slice(0, 4)) > emendas.anoTipos
+    ? Number(emendas.ultimoMes.slice(0, 4)) : null;
+  const corte = mesDeCorte(emendas.ultimoMes);
+  const rotuloEmendas = (ano: number) => ano === anoParcial
+    ? `Emendas pagas em ${ano}, até ${corte} (R$)`
+    : `Emendas pagas em ${ano} (R$)`;
   const janelaCaged = `${nomeCompetencia(caged.competencias[0]!)} a ` +
     nomeCompetencia(caged.competencia);
   const porCodigo = indexarFiscal(fiscal);
@@ -58,6 +68,8 @@ export async function GET() {
     "IDEB anos iniciais", "IDEB anos finais",
     "Caged: admissões em 12 meses", "Caged: desligamentos em 12 meses",
     "Caged: saldo em 12 meses", "Caged: saldo do último mês",
+    // No fim, como no CSV: coluna nova no meio desloca as de quem já baixou.
+    ...emendas.anos.map(rotuloEmendas),
   ];
 
   const linhas = municipios.map((m) => {
@@ -91,6 +103,8 @@ export async function GET() {
       ...((cg) => [cg?.admissoes ?? null, cg?.desligamentos ?? null,
                    cg?.saldo ?? null, cg?.ultimo.saldo ?? null])(
         cagedDe(caged, m.codigo)),
+      ...(emendasDe(emendas, m.codigo)?.anos.map((a) => a.reais) ??
+        emendas.anos.map(() => null)),
     ];
   });
 
@@ -153,6 +167,25 @@ export async function GET() {
       ["Caged: saldo do último mês",
        `O saldo de ${nomeCompetencia(caged.competencia)} sozinho. É o mês mais recente, e ainda pode mudar com declarações fora do prazo.`,
        "vínculos", "MTE — Novo Caged"],
+      // Uma linha por coluna, com o MESMO rótulo do cabeçalho. A ressalva do
+      // Banco do Brasil vai em cada ano que ela atinge: quem lê o dicionário
+      // procura a coluna que tem na mão, não a primeira.
+      ...emendas.anos.map((ano) => [
+        rotuloEmendas(ano),
+        (ano === anoParcial
+          ? `Pagamentos de janeiro a ${corte} de ${ano}: o ano ainda não terminou. `
+          : `Pagamentos de ${ano}. `) +
+        "O que a União pagou à prefeitura e aos fundos municipais (como o de " +
+        "saúde) por emendas parlamentares, pelo mês do pagamento, e não o " +
+        "empenhado. Não entram pagamentos a outros favorecidos no município. " +
+        "Negativo quer dizer que os estornos superaram os pagamentos no ano." +
+        (ano <= ULTIMO_ANO_VIA_BB
+          ? ` ATENÇÃO: até ${ULTIMO_ANO_VIA_BB}, parte do dinheiro de emendas ` +
+            "era paga ao Banco do Brasil, sem o município de destino, e não " +
+            "está aqui. NÃO compare com os anos seguintes."
+          : ""),
+        "R$", "CGU — Portal da Transparência",
+      ]),
       [],
       ["Célula vazia", "Significa AUSÊNCIA, nunca zero. O dado não existe na fonte.", "—", "—"],
     ],
@@ -180,6 +213,11 @@ export async function GET() {
       [caged.fonte,
        `Admissões e desligamentos de ${janelaCaged}; conferido contra o sumário executivo do MTE (${caged.conferencia.sumario})`,
        caged.coletadoEm?.slice(0, 10) ?? "—"],
+      [emendas.fonte,
+       `Emendas parlamentares pagas a prefeituras e fundos municipais, de ` +
+       `janeiro de ${emendas.anos[0]} a ${corte} de ${emendas.ultimoMes.slice(0, 4)}; ` +
+       `arquivo da CGU de ${dataCurta(emendas.dataArquivo)}`,
+       emendas.coletadoEm?.slice(0, 10) ?? "—"],
       [],
       ["Cobertura", "", ""],
       ["Municípios no IBGE", fiscal.cobertura.municipiosIbge, ""],
@@ -198,7 +236,9 @@ export async function GET() {
       ["Licença dos dados",
        "ODbL 1.0 (opendatacommons.org/licenses/odbl/1-0). Os dados fiscais vêm " +
        "do SICONFI/Tesouro Nacional, publicado sob ODbL; os do IBGE e do INEP, " +
-       "de uso livre citando a fonte. Cite as fontes e mantenha a licença.", ""],
+       "de uso livre citando a fonte. Os de emendas parlamentares vêm do " +
+       "download aberto do Portal da Transparência (CGU). Cite as fontes e " +
+       "mantenha a licença.", ""],
       ["Licença do código do site", "AGPL-3.0", ""],
       ["Site", SITE, ""],
       ["Como conferir", "Cada número tem a sua página no site, com a fonte ao lado.", ""],

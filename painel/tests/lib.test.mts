@@ -14,7 +14,8 @@ import fs from "node:fs";
 import { inflateRawSync } from "node:zlib";
 
 import {
-  concorda, descricaoDe, escala, fracaoDe, INDICADORES_DA_CAPA, periodoDe,
+  concorda, descricaoDe, escala, escalaComSinal, fracaoDe, INDICADORES_DA_CAPA,
+  periodoDe,
   dataCurta, dataPorExtenso, inteiroImpresso, projetar,
   COLUNA_DA_CAPA, rotuloCurto, unidadeDaColuna, type Snapshot,
 } from "../lib/dados.ts";
@@ -49,6 +50,9 @@ import {
   cagedDe, comSinal, competenciaCurta, contagem, nomeCompetencia, totalDoPais,
   type SnapshotCaged,
 } from "../lib/caged.ts";
+import {
+  emendasDe, mesDeCorte, rotuloDoTipo, SEM_PREFEITURA, type SnapshotEmendas,
+} from "../lib/emendas.ts";
 import { xlsx } from "../lib/xlsx.ts";
 
 // ------------------------------------------------------------------ posicao
@@ -2502,4 +2506,108 @@ test("dataPorExtenso: a data do topo da página, no mesmo fuso", () => {
   // Sem hora: o dia que está escrito, e não o anterior pelo fuso.
   assert.equal(dataPorExtenso("2026-07-01"), "1 de julho de 2026");
   assert.equal(dataPorExtenso(null), "—");
+});
+
+// ---------------------------------------------------------------- emendas
+
+/** Pequeno e inventado: cada linha exercita um caso da página. */
+const EMENDAS_FICTICIO = (fim = "202609", anoTipos = 2025): SnapshotEmendas => ({
+  fonte: "CGU", origem: "https://exemplo", dataArquivo: "2026-10-01T11:23:36",
+  sha256: "0", ultimoMes: fim, coletadoEm: null,
+  anos: [2024, 2025, 2026], anoTipos,
+  tipos: ["Emenda de Bancada", "Emenda Individual - Transferências Especiais",
+          "Tipo que a fonte ainda não tinha"],
+  municipios: [
+    // Pagou em 2025, nada em 2026; um tipo com estorno maior que o pagamento.
+    [1, [null, 150000, null], [-5000, 155000, null]],
+    // Só antes de 2025: a página diz que não houve pagamento recente.
+    [2, [100, null, null], [null, null, null]],
+    // Saldo negativo no ano cheio, e zero (não ausência) em 2024.
+    [3, [0, -1705634, 250], [null, -1705634, null]],
+  ],
+});
+
+test("emendasDe: ausência é null, zero é zero, e o estorno passa com o sinal", () => {
+  const e = EMENDAS_FICTICIO();
+  const um = emendasDe(e, 1)!;
+  assert.deepEqual(um.cheio, { ano: 2025, reais: 1500 });
+  assert.deepEqual(um.parcial, { ano: 2026, reais: null });
+  assert.equal(um.temRecente, true);
+  // Do maior para o menor, o negativo por último, e sem o tipo nulo.
+  assert.deepEqual(um.tipos.map((x) => [x.nome, x.valor]),
+    [["Individual: transferência especial", 1550], ["De bancada estadual", -50]]);
+  assert.ok(Math.abs(um.tipos[0]!.percentual! - 103.333) < 0.001);
+
+  const dois = emendasDe(e, 2)!;
+  assert.equal(dois.temRecente, false);
+  assert.deepEqual(dois.anos[0], { ano: 2024, reais: 1 });
+  assert.deepEqual(dois.tipos, []);
+
+  const tres = emendasDe(e, 3)!;
+  assert.equal(tres.cheio.reais, -17056.34);
+  assert.equal(tres.anos[0]!.reais, 0, "zero é pagamento que se anulou, não ausência");
+  assert.equal(tres.parcial!.reais, 2.5);
+  // Percentual de um total negativo não quer dizer nada: fica null.
+  assert.equal(tres.tipos[0]!.percentual, null);
+
+  assert.equal(emendasDe(e, 99), null);
+});
+
+test("emendasDe: arquivo que termina em dezembro não tem ano parcial", () => {
+  const um = emendasDe(EMENDAS_FICTICIO("202612", 2026), 1)!;
+  assert.equal(um.cheio.ano, 2026);
+  assert.equal(um.parcial, null);
+});
+
+test("mesDeCorte e rotuloDoTipo", () => {
+  assert.equal(mesDeCorte("202601"), "janeiro");
+  assert.equal(mesDeCorte("202609"), "setembro");
+  assert.equal(mesDeCorte("202612"), "dezembro");
+  assert.equal(rotuloDoTipo("Emenda de Relator"), "De relator");
+  // Tipo novo na fonte sai com o nome da fonte, nunca some.
+  assert.equal(rotuloDoTipo("Tipo que a fonte ainda não tinha"),
+               "Tipo que a fonte ainda não tinha");
+});
+
+test("escalaComSinal: o sinal tipográfico antes do R$, e o resto igual a escala", () => {
+  assert.equal(escalaComSinal(-17056.34).curto, `\u2212${escala(17056.34).curto}`);
+  assert.equal(escalaComSinal(-17056.34).exato, `\u2212${escala(17056.34).exato}`);
+  assert.ok(!escalaComSinal(-17056.34).curto.includes("-"), "hífen não é sinal");
+  assert.deepEqual(escalaComSinal(1500), escala(1500));
+  assert.deepEqual(escalaComSinal(0), escala(0));
+  assert.deepEqual(escalaComSinal(null), escala(null));
+});
+
+const EMENDAS = (): SnapshotEmendas => JSON.parse(
+  fs.readFileSync(new URL("../dados/emendas.json", import.meta.url), "utf-8"));
+
+test("emendas.json: 5.571 municípios, centavos inteiros, e os tipos somam o ano", () => {
+  // O `emendas-exportar` já confere a soma contra o banco. Aqui se confere o
+  // ARQUIVO que o build lê: um município perdido ou um tipo que não fecha com
+  // o ano apareceria na página como número errado, sem erro nenhum.
+  const e = EMENDAS();
+  assert.equal(e.municipios.length, 5571);
+  assert.equal(new Set(e.municipios.map((l) => l[0])).size, 5571);
+  const i = e.anos.indexOf(e.anoTipos);
+  assert.ok(i >= 0, "o ano dos tipos está na série");
+  for (const [codigo, anos, tipos] of e.municipios) {
+    assert.equal(anos.length, e.anos.length, `${codigo}: anos`);
+    assert.equal(tipos.length, e.tipos.length, `${codigo}: tipos`);
+    for (const v of [...anos, ...tipos]) {
+      assert.ok(v === null || Number.isInteger(v), `${codigo}: ${v} não é centavo`);
+    }
+    const presentes = tipos.filter((v): v is number => v !== null);
+    if (presentes.length === 0) {
+      assert.equal(anos[i], null, `${codigo}: ano com pagamento e sem tipo`);
+    } else {
+      assert.equal(presentes.reduce((s, v) => s + v, 0), anos[i], `${codigo}: tipos`);
+    }
+  }
+  // Os dois sem prefeitura: a página diz por que não há pagamento. Se um dia
+  // houver, a frase deixa de ser verdade, e este teste é quem avisa.
+  for (const codigo of SEM_PREFEITURA.keys()) {
+    const em = emendasDe(e, codigo);
+    assert.ok(em, `${codigo} está no arquivo`);
+    assert.ok(em.anos.every((a) => a.reais === null), `${codigo} passou a ter pagamento`);
+  }
 });

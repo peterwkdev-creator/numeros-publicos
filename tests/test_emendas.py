@@ -211,5 +211,90 @@ class TestIngerir(unittest.TestCase):
         self.assertFalse(self.banco.exists())
 
 
+#: 5.000 códigos fictícios mais os do snapshot: o retrato recusa lista curta.
+CODIGOS = [c for c, *_ in SNAPSHOT["municipios"]] + list(range(1000000, 1005000))
+IND_ESP, IND_FIN, BANCADA, COMISSAO, RELATOR = emendas.TIPOS
+
+
+def pagamento(municipio, ano_mes, centavos_, tipo=IND_FIN):
+    return ("e", tipo, "a", "A", "n", ano_mes, municipio, MUN,
+            "13927801000149", "F", centavos_)
+
+
+class TestRetrato(unittest.TestCase):
+    """O `emendas.json`: ausência é `None`, o sinal passa, a soma fecha."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.banco = Path(self.tmp.name) / "emendas.db"
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def gravado(self, linhas):
+        with ArmazemEmendas(self.banco) as db:
+            db.gravar(linhas, (len(linhas), sum(l[-1] for l in linhas)), sha="x",
+                      bytes_=1, data_arquivo="2026-10-01T11:23:36", origem="o",
+                      lidas=len(linhas))
+            return emendas.retrato(db, CODIGOS)
+
+    def test_ano_sem_pagamento_e_none_e_zero_e_negativo_passam(self):
+        r = self.gravado([
+            pagamento(2927408, "201407", 500),       # antes da série
+            pagamento(2927408, "201503", 1000),
+            pagamento(2927408, "202204", 700),
+            pagamento(2927408, "202209", -700),      # zero: não é ausência
+            pagamento(2105302, "202207", -1705634),  # estorno maior (São José)
+            pagamento(2105302, "202501", 300, BANCADA),
+            pagamento(2105302, "202502", 200, BANCADA),
+            pagamento(2105302, "202503", 50, RELATOR),
+            pagamento(2105302, "202609", 9),
+        ])
+        self.assertEqual(r["anos"], list(range(2015, 2027)))
+        self.assertEqual(r["anoTipos"], 2025)
+        self.assertEqual(r["ultimoMes"], "202609")
+        d = {m[0]: m for m in r["municipios"]}
+        self.assertEqual(len(d), len(CODIGOS))
+        salvador = d[2927408][1]
+        self.assertEqual(salvador[0], 1000)
+        self.assertEqual(salvador[2022 - 2015], 0)
+        self.assertIsNone(salvador[2016 - 2015])
+        imperatriz = d[2105302]
+        self.assertEqual(imperatriz[1][2022 - 2015], -1705634)
+        self.assertEqual(imperatriz[1][2025 - 2015], 550)
+        self.assertEqual(imperatriz[2], [None, None, 500, None, 50])
+        self.assertEqual(d[1000000][1:], [[None] * 12, [None] * 5])
+
+    def test_ano_cheio_quando_o_ultimo_mes_e_dezembro(self):
+        r = self.gravado([pagamento(2927408, "202512", 1, COMISSAO)])
+        self.assertEqual((r["anos"][-1], r["anoTipos"]), (2025, 2025))
+        self.assertEqual({m[0]: m for m in r["municipios"]}[2927408][2],
+                         [None, None, None, 1, None])
+
+    def test_tipo_novo_na_fonte_e_erro(self):
+        with self.assertRaisesRegex(ErroEmendas, "tipo de emenda novo"):
+            self.gravado([pagamento(2927408, "202501", 1, "Emenda de Plenário")])
+
+    def test_municipio_fora_do_snapshot_e_erro(self):
+        with self.assertRaisesRegex(ErroEmendas, "fora do snapshot"):
+            self.gravado([pagamento(9999999, "202501", 1)])
+
+    def test_gravar_recusa_encolher_e_ignora_so_o_carimbo(self):
+        r = self.gravado([pagamento(2927408, "202609", 1)])
+        saida = Path(self.tmp.name) / "emendas.json"
+        self.assertEqual(emendas.gravar_retrato(r, saida), "gravado")
+        self.assertEqual(emendas.gravar_retrato({**r, "coletadoEm": "outro"}, saida),
+                         "inalterado")
+        velho = {**r, "ultimoMes": "202608"}
+        with self.assertRaisesRegex(ErroEmendas, "RECUSADO"):
+            emendas.gravar_retrato(velho, saida)
+        with self.assertRaisesRegex(ErroEmendas, "RECUSADO"):
+            emendas.gravar_retrato({**r, "municipios": r["municipios"][1:]}, saida)
+        self.assertEqual(emendas.gravar_retrato(velho, saida, permitir_encolher=True),
+                         "gravado")
+        self.assertEqual(json.loads(saida.read_text(encoding="utf-8"))["ultimoMes"],
+                         "202608")
+
+
 if __name__ == "__main__":
     unittest.main()

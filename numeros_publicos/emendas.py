@@ -300,3 +300,116 @@ def ingerir(zip_: str | Path, snapshot: dict, banco: str | Path,
             "centavos": a["centavos"], "municipios": cobertos,
             "ultimo_mes": a["ultimo_mes"], "data_arquivo": a["data_arquivo"],
             "apelidos": len(apelidos)}
+
+
+# ------------------------------------------------------------------ retrato
+
+#: O primeiro ano da série exportada. 2014 fica fora: o arquivo só começa em
+#: 07/2014. De 2015 a 2021 a conferência contra o Portal foi feita em
+#: 09/10/2026 (a espec, §6).
+PRIMEIRO_ANO = 2015
+
+#: Os tipos de emenda, na ordem da página. Tipo novo na fonte é ERRO: a
+#: divisão por tipo que não somasse o ano inteiro mentiria em silêncio.
+TIPOS = (
+    "Emenda Individual - Transferências Especiais",
+    "Emenda Individual - Transferências com Finalidade Definida",
+    "Emenda de Bancada",
+    "Emenda de Comissão",
+    "Emenda de Relator",
+)
+
+
+def retrato(db: ArmazemEmendas, codigos_ibge: Iterable[int]) -> dict:
+    """O `emendas.json` que o painel lê.
+
+    Um município por linha, **todos os do IBGE**:
+    `[código, [centavos por ano, de PRIMEIRO_ANO ao ano do último mês],
+    [centavos por tipo no último ano cheio]]`. Ano (ou tipo) sem nenhum
+    pagamento é `None`, nunca 0: zero é a soma de pagamentos que se anulam,
+    e "nenhum pagamento" é outra coisa (a espec, §5). Saldo negativo
+    (estorno maior que o pagamento do ano) passa com o sinal.
+
+    Fecha a conta antes de devolver: a soma exportada mais a de antes de
+    PRIMEIRO_ANO tem de ser o total do banco, ao centavo.
+    """
+    a = db.arquivo()
+    if a is None:
+        raise ErroEmendas("banco de emendas vazio: rode emendas-ingerir")
+    ultimo = a["ultimo_mes"]
+    ano_final = int(ultimo[:4])
+    anos = list(range(PRIMEIRO_ANO, ano_final + 1))
+    ano_tipos = ano_final if ultimo.endswith("12") else ano_final - 1
+    codigos = sorted({int(c) for c in codigos_ibge})
+    if len(codigos) < 5000:
+        raise ErroEmendas(f"só {len(codigos)} municípios do IBGE: lista suspeita")
+    linhas = {c: [[None] * len(anos), [None] * len(TIPOS)] for c in codigos}
+    fora = sorted({m for (m,) in db.con.execute(
+        "SELECT DISTINCT municipio FROM pagamento")} - set(codigos))
+    if fora:
+        raise ErroEmendas(f"municípios do banco fora do snapshot: {fora[:10]}")
+    novos = sorted({t for (t,) in db.con.execute(
+        "SELECT DISTINCT tipo FROM pagamento")} - set(TIPOS))
+    if novos:
+        raise ErroEmendas(f"tipo de emenda novo na fonte: {novos}")
+    for m, ano, s in db.con.execute(
+            "SELECT municipio, CAST(substr(ano_mes, 1, 4) AS INTEGER), SUM(centavos)"
+            " FROM pagamento WHERE ano_mes >= ? GROUP BY 1, 2", (f"{PRIMEIRO_ANO}",)):
+        linhas[m][0][ano - PRIMEIRO_ANO] = s
+    for m, tipo, s in db.con.execute(
+            "SELECT municipio, tipo, SUM(centavos) FROM pagamento"
+            " WHERE substr(ano_mes, 1, 4) = ? GROUP BY 1, 2", (f"{ano_tipos}",)):
+        linhas[m][1][TIPOS.index(tipo)] = s
+    antes = db.con.execute(
+        "SELECT COALESCE(SUM(centavos), 0) FROM pagamento WHERE ano_mes < ?",
+        (f"{PRIMEIRO_ANO}",)).fetchone()[0]
+    exportado = sum(v for p, _ in linhas.values() for v in p if v is not None)
+    if exportado + antes != a["centavos"]:
+        raise ErroEmendas(f"a soma exportada ({exportado} + {antes} antes de "
+                          f"{PRIMEIRO_ANO}) não fecha com o banco ({a['centavos']})")
+    no_ano = sum(v for _, t in linhas.values() for v in t if v is not None)
+    if no_ano != sum(p[ano_tipos - PRIMEIRO_ANO] or 0 for p, _ in linhas.values()):
+        raise ErroEmendas(f"os tipos de {ano_tipos} não somam o ano")
+    return {
+        "fonte": ("Controladoria-Geral da União — Portal da Transparência, "
+                  "emendas parlamentares por favorecido"),
+        "origem": URL,
+        "dataArquivo": a["data_arquivo"],
+        "sha256": a["sha256"],
+        "ultimoMes": ultimo,
+        "coletadoEm": a["gravado_em"],
+        "anos": anos,
+        "anoTipos": ano_tipos,
+        "tipos": list(TIPOS),
+        "municipios": [[c, p, t] for c, (p, t) in sorted(linhas.items())],
+    }
+
+
+def gravar_retrato(r: dict, saida: str | Path,
+                   permitir_encolher: bool = False) -> str:
+    """Escreve o retrato, comparando com o que vai sobrescrever (a mesma
+    trava do Caged): recusa último mês mais velho e menos municípios, e não
+    reescreve quando só o carimbo de coleta mudou. Devolve `"gravado"` ou
+    `"inalterado"`."""
+    import json
+    saida = Path(saida)
+    if saida.exists():
+        velho = json.loads(saida.read_text(encoding="utf-8"))
+        if not permitir_encolher:
+            erros = []
+            if r["ultimoMes"] < velho.get("ultimoMes", ""):
+                erros.append(f"último mês {velho['ultimoMes']} → {r['ultimoMes']}")
+            if len(r["municipios"]) < len(velho.get("municipios", [])):
+                erros.append(f"municípios {len(velho['municipios'])} → "
+                             f"{len(r['municipios'])}")
+            if erros:
+                raise ErroEmendas("RECUSADO: o retrato das emendas encolheu — "
+                                  + "; ".join(erros) + ". Se é a intenção, repita "
+                                  "com --permitir-encolher. Nada gravado.")
+        sem_carimbo = lambda x: {k: v for k, v in x.items() if k != "coletadoEm"}
+        if sem_carimbo(velho) == sem_carimbo(r):
+            return "inalterado"
+    saida.parent.mkdir(parents=True, exist_ok=True)
+    saida.write_text(json.dumps(r, ensure_ascii=False, separators=(",", ":")) + "\n",
+                     encoding="utf-8")
+    return "gravado"

@@ -3,7 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import {
-  br, dataCurta, dataPorExtenso, descricaoDe, escala, expandir, milReaisParaReais,
+  br, dataCurta, dataPorExtenso, descricaoDe, escala, escalaComSinal, expandir,
+  milReaisParaReais,
   periodoDe,
 } from "../../../lib/dados";
 import { atualizadoEm } from "../../../lib/sitemap";
@@ -32,9 +33,10 @@ import {
   EMPRESAS, medianaDaColunaCache, PARES_TRABALHO, RENDA_CENSO,
 } from "../../../lib/trabalho";
 import {
-  cartaoSocial, lerCaged, lerFiscal, lerIdeb, lerSnapshot, SITE,
+  cartaoSocial, lerCaged, lerEmendas, lerFiscal, lerIdeb, lerSnapshot, SITE,
 } from "../../../lib/servidor";
 import ComposicaoBarras from "../../componentes/composicao-barras";
+import { emendasDe, mesDeCorte, SEM_PREFEITURA } from "../../../lib/emendas";
 import DistribuicaoSvg from "../../componentes/distribuicao-svg";
 import IdebSvg from "../../componentes/ideb-svg";
 import Termo from "../../componentes/termo";
@@ -56,9 +58,9 @@ import SerieFuncoes from "../../componentes/serie-funcoes";
  */
 
 async function carregar() {
-  const [snapshot, fiscal, ideb, idebFinais, caged] = await Promise.all([
+  const [snapshot, fiscal, ideb, idebFinais, caged, emendas] = await Promise.all([
     lerSnapshot(), lerFiscal(), lerIdeb("anos_iniciais"), lerIdeb("anos_finais"),
-    lerCaged(),
+    lerCaged(), lerEmendas(),
   ]);
   const porCodigo = indexarFiscal(fiscal);
   const municipios = expandir(snapshot).map((m) => ({
@@ -66,7 +68,7 @@ async function carregar() {
     slug: slugDe(m.nome, m.uf),
     fiscal: porCodigo.get(m.codigo) ?? null,
   }));
-  return { snapshot, fiscal, ideb, idebFinais, caged, municipios };
+  return { snapshot, fiscal, ideb, idebFinais, caged, emendas, municipios };
 }
 
 export async function generateStaticParams() {
@@ -145,7 +147,8 @@ export default async function PaginaMunicipio(
   { params }: { params: Promise<{ slug: string }> },
 ) {
   const { slug } = await params;
-  const { snapshot, fiscal, ideb, idebFinais, caged, municipios } = await carregar();
+  const { snapshot, fiscal, ideb, idebFinais, caged, emendas, municipios } =
+    await carregar();
   const m = municipios.find((x) => x.slug === slug);
   if (!m) notFound();
   // Os mesmos argumentos de `app/municipio/sitemap.ts`.
@@ -192,6 +195,9 @@ export default async function PaginaMunicipio(
   // O Novo Caged: 12 meses, com os ajustes. `null` só se o município não
   // estiver no arquivo; município sem movimento vem com ZEROS, e é mostrado.
   const cagedM = cagedDe(caged, m.codigo);
+  // As emendas: `null` só se o município não estiver no arquivo (estão os
+  // 5.571); sem pagamento, a seção diz isso, e não mostra zero.
+  const emendasM = emendasDe(emendas, m.codigo);
 
   // `?? null` porque o acesso indexado num Record pode devolver `undefined`
   // quando a coluna não existe no snapshot -- e `undefined` e `null` precisam
@@ -645,6 +651,7 @@ export default async function PaginaMunicipio(
           id: "o-que-mudou",
           titulo: comparacao ? "O que mudou" : "A composição ao longo dos anos",
         },
+        !!emendasM && { id: "emendas", titulo: "Emendas parlamentares" },
         { id: "educacao", titulo: "Educação" },
         medidas.some((x) => x.percentual !== null) &&
           { id: "como-se-vive", titulo: "Como se vive" },
@@ -1385,6 +1392,113 @@ export default async function PaginaMunicipio(
               </>
             )}
             <Link href="/ajuda/#comparacao">Por quê?</Link>
+          </p>
+        </section>
+      )}
+
+      {/* Emendas parlamentares pagas à prefeitura (Portal da Transparência,
+          09/10/2026). SÓ o último ano cheio e o corrente: até 2024 parte do
+          dinheiro ia ao Banco do Brasil sem município, e uma série de 2015 a
+          2026 mostraria em 2025 um salto que é em boa parte mudança de
+          registro (especs/numeros-publicos-emendas.md, armadilha 2). A série
+          inteira vai no download, com a mesma nota. */}
+      {emendasM && (
+        <section className={estilos.texto} id="emendas">
+          <h2>Emendas parlamentares pagas a {m.nome}</h2>
+          {emendasM.temRecente ? (
+            <p>
+              {emendasM.cheio.reais === null ? (
+                <>
+                  Em {emendasM.cheio.ano}, nenhum pagamento de emenda
+                  parlamentar à prefeitura de {m.nome} ou a fundo municipal
+                  foi registrado.
+                </>
+              ) : emendasM.cheio.reais < 0 ? (
+                <>
+                  Em {emendasM.cheio.ano}, os estornos de emendas
+                  parlamentares superaram os pagamentos à prefeitura de{" "}
+                  {m.nome} e aos fundos municipais: o saldo do ano é{" "}
+                  <strong title={escalaComSinal(emendasM.cheio.reais).exato}>
+                    {escalaComSinal(emendasM.cheio.reais).curto}
+                  </strong>.
+                </>
+              ) : (
+                <>
+                  Em {emendasM.cheio.ano}, a prefeitura de {m.nome} e os
+                  fundos municipais receberam{" "}
+                  <strong title={escalaComSinal(emendasM.cheio.reais).exato}>
+                    {escalaComSinal(emendasM.cheio.reais).curto}
+                  </strong>{" "}
+                  em pagamentos de emendas parlamentares.
+                </>
+              )}
+              {emendasM.parcial && (
+                emendasM.parcial.reais === null ? (
+                  <>
+                    {" "}Em {emendasM.parcial.ano}, até {mesDeCorte(emendas.ultimoMes)},
+                    nenhum pagamento foi registrado.
+                  </>
+                ) : (
+                  <>
+                    {" "}Em {emendasM.parcial.ano}, até {mesDeCorte(emendas.ultimoMes)},
+                    o saldo é de{" "}
+                    <strong title={escalaComSinal(emendasM.parcial.reais).exato}>
+                      {escalaComSinal(emendasM.parcial.reais).curto}
+                    </strong>.
+                  </>
+                )
+              )}
+            </p>
+          ) : SEM_PREFEITURA.has(m.codigo) ? (
+            <p>
+              {m.nome} não tem prefeitura: {SEM_PREFEITURA.get(m.codigo)}, e
+              esta seção conta só o que vai a prefeituras e fundos municipais.
+            </p>
+          ) : (
+            <p>
+              Nenhum pagamento de emenda parlamentar à prefeitura de {m.nome} ou
+              a fundo municipal foi registrado em {emendasM.cheio.ano}
+              {emendasM.parcial && (
+                <> nem em {emendasM.parcial.ano}, até {mesDeCorte(emendas.ultimoMes)}</>
+              )}.
+            </p>
+          )}
+          {emendasM.cheio.reais !== null && emendasM.cheio.reais > 0 &&
+            emendasM.tipos.length > 0 && (
+            <>
+              <h3 className={estilos.subtitulo}>
+                Por tipo de emenda, em {emendasM.cheio.ano}
+              </h3>
+              <div className={estilos.rolagem}>
+                <ComposicaoBarras
+                  fatias={emendasM.tipos}
+                  total={emendasM.cheio.reais}
+                  municipio={m.nome}
+                  legenda={`Emendas parlamentares pagas em ${emendasM.cheio.ano} por tipo`}
+                  cabecalho="Tipo de emenda"
+                  cabecalhoPercentual={`% de ${emendasM.cheio.ano}`}
+                  nomeDaCauda={["tipo", "tipos"]}
+                />
+              </div>
+              {emendasM.tipos.some((t) => t.valor < 0) && (
+                <p className={estilos.ressalva}>
+                  Valor negativo: no ano, os estornos daquele tipo de emenda
+                  superaram os pagamentos.
+                </p>
+              )}
+            </>
+          )}
+          <p className={estilos.ressalva}>
+            Conta o que a União <strong>pagou</strong> à prefeitura e aos
+            fundos municipais (como o de saúde) por emendas parlamentares ao
+            orçamento federal, pelo mês do pagamento, e não o que foi
+            empenhado. Não entram os pagamentos a outros favorecidos no
+            município, como o governo do estado, entidades e empresas.{" "}
+            <strong>Até 2024, parte do dinheiro de emendas era paga ao Banco do
+            Brasil, sem o município de destino</strong>; por isso a série desde
+            2015, no download desta página, mostra só o que foi pago
+            diretamente à prefeitura e não se compara com {emendasM.cheio.ano}.
+            Fonte: {emendas.fonte}, arquivo de {dataCurta(emendas.dataArquivo)}.
           </p>
         </section>
       )}

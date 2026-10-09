@@ -4,8 +4,11 @@ import {
   CODIGO_FAIXA, funcoesDe, indexarFiscal, slugDe,
 } from "../../../../lib/fiscal";
 import { trajetoriaDe } from "../../../../lib/ideb";
-import { lerCaged, lerFiscal, lerIdeb, lerSnapshot } from "../../../../lib/servidor";
+import {
+  lerCaged, lerEmendas, lerFiscal, lerIdeb, lerSnapshot,
+} from "../../../../lib/servidor";
 import { cagedDe } from "../../../../lib/caged";
+import { emendasDe, ULTIMO_ANO_VIA_BB } from "../../../../lib/emendas";
 import { rotuloDownload } from "../../../../lib/censo";
 
 /**
@@ -31,9 +34,9 @@ export async function GET(
   { params }: { params: Promise<{ slug: string }> },
 ) {
   const { slug } = await params;
-  const [snapshot, fiscal, ideb, idebFinais, caged] = await Promise.all([
+  const [snapshot, fiscal, ideb, idebFinais, caged, emendas] = await Promise.all([
     lerSnapshot(), lerFiscal(), lerIdeb("anos_iniciais"), lerIdeb("anos_finais"),
-    lerCaged(),
+    lerCaged(), lerEmendas(),
   ]);
   const m = expandir(snapshot).find((x) => slugDe(x.nome, x.uf) === slug);
   if (!m) return new Response("não encontrado", { status: 404 });
@@ -177,6 +180,29 @@ export async function GET(
       quando, mes.admissoes, "vínculos", "MTE", caged.coletadoEm ?? ""]);
     linhas.push([...comum, "Novo Caged — desligamentos (com ajustes)",
       quando, mes.desligamentos, "vínculos", "MTE", caged.coletadoEm ?? ""]);
+  }
+
+  // As emendas parlamentares, ano a ano desde 2015: a série que a página NÃO
+  // mostra (lá, só o último ano cheio e o corrente). O nome do indicador leva
+  // as duas ressalvas, porque o arquivo viaja sem a página: o vazio é ano sem
+  // pagamento nenhum, nunca zero, e até 2024 parte do dinheiro ia ao Banco do
+  // Brasil sem o município. O ano corrente sai com o intervalo dos meses
+  // (AAAA-MM/AAAA-MM), para não passar por ano cheio.
+  const em = emendasDe(emendas, m.codigo);
+  const fimEmendas = `${emendas.ultimoMes.slice(0, 4)}-${emendas.ultimoMes.slice(4)}`;
+  for (const a of em?.anos ?? []) {
+    linhas.push([...comum,
+      "Emendas parlamentares pagas à prefeitura e a fundos municipais " +
+        `(vazio = nenhum pagamento, e até ${ULTIMO_ANO_VIA_BB} fora o que foi ` +
+        "pago ao Banco do Brasil sem indicar o município)",
+      a.ano === em?.parcial?.ano ? `${a.ano}-01/${fimEmendas}` : String(a.ano),
+      a.reais, "R$", "CGU", emendas.coletadoEm ?? ""]);
+  }
+  // O tipo, só no último ano cheio e só o que teve pagamento: é a divisão que
+  // a página mostra. Os tipos somam o ano, ao centavo (o exportador confere).
+  for (const t of em?.tipos ?? []) {
+    linhas.push([...comum, `Emendas parlamentares pagas — ${t.nome}`,
+      String(em!.cheio.ano), t.valor, "R$", "CGU", emendas.coletadoEm ?? ""]);
   }
 
   const csv = paraCsv(

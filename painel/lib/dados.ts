@@ -354,6 +354,21 @@ export function escala(reais: number | null | undefined): {
 }
 
 /**
+ * `escala` para valor que pode ser negativo: `−R$ 17.056`, com o sinal
+ * tipográfico (U+2212) **antes** do R$. `escala` sozinha imprime `R$ -17.056`,
+ * com o hífen colado ao número. Existe para o estorno (emendas, 09/10/2026) e
+ * para a fatia negativa da composição, que são raros e verdadeiros.
+ */
+export function escalaComSinal(reais: number | null | undefined): {
+  curto: string;
+  exato: string;
+} {
+  if (reais === null || reais === undefined || reais >= 0) return escala(reais);
+  const e = escala(-reais);
+  return { curto: `−${e.curto}`, exato: `−${e.exato}` };
+}
+
+/**
  * O valor de um indicador na forma em que uma pessoa o lê, **decidindo pela
  * unidade que a própria fonte declara**.
  *

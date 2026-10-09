@@ -6,6 +6,7 @@ import type { SnapshotFiscal } from "./fiscal";
 import type { SnapshotIdeb } from "./ideb";
 import type { SnapshotInss } from "./inss";
 import type { SnapshotCaged } from "./caged";
+import type { SnapshotEmendas } from "./emendas";
 import type { SnapshotBrasil } from "./brasil";
 
 /**
@@ -88,6 +89,21 @@ export async function lerCaged(): Promise<SnapshotCaged> {
   const arquivo = path.join(process.cwd(), "dados", "caged.json");
   cacheCaged = JSON.parse(await readFile(arquivo, "utf-8")) as SnapshotCaged;
   return cacheCaged;
+}
+
+/**
+ * As emendas parlamentares pagas à prefeitura, escritas por `python -m
+ * numeros_publicos emendas-exportar` com a soma fechada contra o banco (que
+ * confere com o CSV da CGU ao centavo). Arquivo próprio, pela razão do Caged:
+ * outra fonte e outro ritmo.
+ */
+let cacheEmendas: SnapshotEmendas | null = null;
+
+export async function lerEmendas(): Promise<SnapshotEmendas> {
+  if (cacheEmendas) return cacheEmendas;
+  const arquivo = path.join(process.cwd(), "dados", "emendas.json");
+  cacheEmendas = JSON.parse(await readFile(arquivo, "utf-8")) as SnapshotEmendas;
+  return cacheEmendas;
 }
 
 /**

@@ -824,6 +824,17 @@ def construir_parser() -> argparse.ArgumentParser:
     em.add_argument("--banco-emendas",
                     default=os.environ.get("EMENDAS_BANCO", "emendas.db"))
     em.set_defaults(func=emendas_ingerir)
+
+    ee = sub.add_parser("emendas-exportar",
+                        help="gera o emendas.json que o painel lê, com a soma "
+                             "fechada contra o banco")
+    ee.add_argument("--saida", default="painel/dados/emendas.json")
+    ee.add_argument("--snapshot", default="painel/dados/snapshot.json",
+                    help="de onde vêm os 5.571 códigos do IBGE")
+    ee.add_argument("--banco-emendas",
+                    default=os.environ.get("EMENDAS_BANCO", "emendas.db"))
+    ee.add_argument("--permitir-encolher", action="store_true")
+    ee.set_defaults(func=emendas_exportar)
     # --- O Brasil ao longo do tempo (05/10/2026). Banco próprio: séries do
     # país, do IBGE e do Banco Central, cada uma lida por dois caminhos.
     bi = sub.add_parser("brasil-ingerir",
@@ -963,6 +974,28 @@ def emendas_ingerir(args, baixar=None) -> int:
           + " (confere com o CSV ao centavo)")
     print(f"tabela de apelidos: {r['apelidos']} nomes antigos, todos conferidos "
           "contra o snapshot")
+    return 0
+
+
+def emendas_exportar(args) -> int:
+    """Escreve o `emendas.json` a partir do banco. A conferência contra a
+    fonte é a da ingestão (o total ao centavo); aqui, a soma exportada fecha
+    com o banco antes de gravar."""
+    import json as _json
+    from . import emendas
+    try:
+        snap = _json.loads(Path_(args.snapshot).read_text(encoding="utf-8"))
+        with emendas.ArmazemEmendas(args.banco_emendas) as db:
+            r = emendas.retrato(db, (l[0] for l in snap["municipios"]))
+        estado = emendas.gravar_retrato(r, args.saida, args.permitir_encolher)
+    except emendas.ErroEmendas as e:
+        print(f"[!] {e}", file=sys.stderr)
+        return 1
+    com = sum(1 for _, p, _t in r["municipios"] if any(v is not None for v in p))
+    print(f"{args.saida}: {estado} · arquivo da CGU de {r['dataArquivo']} · "
+          f"{r['anos'][0]} a {r['anos'][-1]} (último mês {r['ultimoMes']}) · "
+          f"{len(r['municipios'])} municípios, {com} com pagamento · "
+          "soma fechada com o banco")
     return 0
 
 

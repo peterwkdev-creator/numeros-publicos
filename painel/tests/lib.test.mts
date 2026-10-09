@@ -2220,6 +2220,10 @@ test("desidratar tira payload e runtime, e mantém CSS, JSON-LD e a busca", asyn
 });
 
 // ---------------------- o experimento de título (só nas UFs de UFS_TITULO_FISCAL)
+//
+// Desfeito em 09/10/2026 (a lista está vazia); a máquina segue testada com SP
+// passado à mão, para um teste futuro.
+const UFS_TESTE: ReadonlySet<string> = new Set(["SP"]);
 
 test("título fiscal: cabe em 60, só nas UFs do experimento, e nunca com implausível", async () => {
   const { tituloDe, tituloFiscalDe, UFS_TITULO_FISCAL, LIMITE_TITULO } =
@@ -2238,11 +2242,15 @@ test("título fiscal: cabe em 60, só nas UFs do experimento, e nunca com implau
   let fiscais = 0;
   for (const l of snapshot.municipios) {
     const f = porCodigo.get(l[iCod]);
-    const t = tituloFiscalDe(l[iNome], l[iUf], f?.faixa, f?.percentual);
+    const t = tituloFiscalDe(l[iNome], l[iUf], f?.faixa, f?.percentual, UFS_TESTE);
     assert.ok(t.length <= LIMITE_TITULO || t === `${l[iNome]} (${l[iUf]})`,
       `${t.length} caracteres: ${t}`);
-    if (!UFS_TITULO_FISCAL.has(l[iUf])) {
+    if (!UFS_TESTE.has(l[iUf])) {
       assert.equal(t, tituloDe(l[iNome], l[iUf]), "fora do experimento, o título de sempre");
+    }
+    if (!UFS_TITULO_FISCAL.has(l[iUf])) {
+      assert.equal(tituloFiscalDe(l[iNome], l[iUf], f?.faixa, f?.percentual),
+        tituloDe(l[iNome], l[iUf]), "a página publicada, fora da lista, tem o título de sempre");
     }
     if (f?.faixa === "implausivel") {
       assert.equal(t, tituloDe(l[iNome], l[iUf]), `implausível no título: ${t}`);
@@ -2257,12 +2265,14 @@ test("título fiscal: cabe em 60, só nas UFs do experimento, e nunca com implau
 test("abertura fiscal cita o limite do veredito, não outro", async () => {
   const { aberturaFiscalDe } = await import("../lib/titulo.ts");
   const lim = { legal: 54, prudencial: 51.3 };
-  assert.match(aberturaFiscalDe("Adolfo", "SP", "acima-prudencial", 52.1, lim)!,
+  assert.match(aberturaFiscalDe("Adolfo", "SP", "acima-prudencial", 52.1, lim, UFS_TESTE)!,
     /acima do limite prudencial de 51,3%$/);
-  assert.match(aberturaFiscalDe("Adolfo", "SP", "acima-legal", 60, lim)!,
+  assert.match(aberturaFiscalDe("Adolfo", "SP", "acima-legal", 60, lim, UFS_TESTE)!,
     /acima do limite legal de 54%$/);
-  assert.equal(aberturaFiscalDe("Adolfo", "SP", "implausivel", 99, lim), null);
-  assert.equal(aberturaFiscalDe("Imperatriz", "MA", "acima-legal", 60, lim), null);
+  assert.equal(aberturaFiscalDe("Adolfo", "SP", "implausivel", 99, lim, UFS_TESTE), null);
+  assert.equal(aberturaFiscalDe("Imperatriz", "MA", "acima-legal", 60, lim, UFS_TESTE), null);
+  // Fora da lista publicada (vazia desde 09/10), nenhuma abertura fiscal.
+  assert.equal(aberturaFiscalDe("Adolfo", "SP", "acima-legal", 60, lim), null);
 });
 
 test("abertura fiscal escreve o limite próprio com as casas que ele tem", async () => {
@@ -2270,14 +2280,15 @@ test("abertura fiscal escreve o limite próprio com as casas que ele tem", async
   // 59,08% contra um prudencial próprio de 59,05%: com uma casa fixa a frase
   // diria "acima do limite prudencial de 59,1%", e o número a desmentiria.
   assert.match(
-    aberturaFiscalDe("Adolfo", "SP", "acima-prudencial", 59.08, { legal: 62, prudencial: 59.05 })!,
+    aberturaFiscalDe("Adolfo", "SP", "acima-prudencial", 59.08, { legal: 62, prudencial: 59.05 },
+      UFS_TESTE)!,
     /acima do limite prudencial de 59,05%$/);
   assert.deepEqual([54, 51.3, 48.6, 59.05, 57].map(casasDe), [0, 1, 1, 2, 0]);
 });
 
 test("título fiscal não chama o prudencial de 'alerta' — a LRF tem outro limite com esse nome", async () => {
   const { tituloFiscalDe } = await import("../lib/titulo.ts");
-  const t = tituloFiscalDe("Cachoeira Paulista", "SP", "acima-prudencial", 51.4);
+  const t = tituloFiscalDe("Cachoeira Paulista", "SP", "acima-prudencial", 51.4, UFS_TESTE);
   assert.doesNotMatch(t, /alerta/i);
   assert.match(t, /prudencial/);
 });

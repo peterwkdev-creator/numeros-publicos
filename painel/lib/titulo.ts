@@ -20,8 +20,17 @@ import type { Faixa } from "./fiscal";
  * consultas fiscais e se o CTR muda. Ver `numeros-publicos-descoberta.md`.
  *
  * Tirar o experimento é esvaziar `UFS_TITULO_FISCAL`.
+ *
+ * ## O resultado, lido em 09/10/2026: desfeito
+ *
+ * 23/09–07/10 contra 08–22/09: as impressões de consulta de população nas
+ * páginas de SP caíram 95% (1.534 → 79), contra 70% no RS e 66% em MG, os
+ * controles; consulta fiscal, nenhuma, em SP ou no site inteiro (0 de
+ * 1.716). O título perdeu a consulta commodity e não ganhou outra. A lista
+ * ficou vazia; as funções seguem, e os testes as exercitam com SP, para um
+ * teste futuro (quem busca diz "despesa com pessoal", não "pessoal").
  */
-export const UFS_TITULO_FISCAL: ReadonlySet<string> = new Set(["SP"]);
+export const UFS_TITULO_FISCAL: ReadonlySet<string> = new Set();
 
 /** O Google corta perto de 60 caracteres. */
 export const LIMITE_TITULO = 60;
@@ -69,9 +78,10 @@ export function tituloFiscalDe(
   uf: string,
   faixa: Faixa | undefined,
   percentual: number | null | undefined,
+  ufs: ReadonlySet<string> = UFS_TITULO_FISCAL,
 ): string {
   const veredito = faixa ? VEREDITO[faixa] : undefined;
-  if (!UFS_TITULO_FISCAL.has(uf) || !veredito || typeof percentual !== "number") {
+  if (!ufs.has(uf) || !veredito || typeof percentual !== "number") {
     return tituloDe(nome, uf);
   }
   // Duas casas, como a página: com uma, 54,04% viraria "54,0%… acima do
@@ -104,9 +114,10 @@ export function aberturaFiscalDe(
   faixa: Faixa | undefined,
   percentual: number | null | undefined,
   limites: { legal: number; prudencial: number },
+  ufs: ReadonlySet<string> = UFS_TITULO_FISCAL,
 ): string | null {
   const veredito = faixa ? VEREDITO[faixa] : undefined;
-  if (!UFS_TITULO_FISCAL.has(uf) || !veredito || typeof percentual !== "number") {
+  if (!ufs.has(uf) || !veredito || typeof percentual !== "number") {
     return null;
   }
   // O limite citado é o do veredito: "acima do limite prudencial de 51,3%",

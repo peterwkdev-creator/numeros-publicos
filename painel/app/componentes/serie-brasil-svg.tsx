@@ -109,12 +109,13 @@ export default function SerieBrasilSvg({
   const padrao = `herdado-${serie.codigo}`;
   const r = resumo(serie);
   // "R$ 3.061", "R$ 5,15 por dólar", "US$ 362,82 bilhões", "7,5%",
-  // "51,27% do PIB": a moeda vai antes do número, o resto depois.
+  // "51,27% do PIB", "38.894 óbitos": a moeda vai antes do número, o resto
+  // depois, com espaço se não for o sinal de por cento.
   const moeda = /^(R|US)\$/.exec(serie.unidade)?.[0];
   const valor = (v: number) =>
     moeda
       ? `${moeda} ${br(v, casas)}${serie.unidade.slice(moeda.length)}`
-      : `${br(v, casas)}${serie.unidade}`;
+      : `${br(v, casas)}${serie.unidade.startsWith("%") ? "" : " "}${serie.unidade}`;
   const comeco = cobDe - de > 1;
 
   const rotulo =

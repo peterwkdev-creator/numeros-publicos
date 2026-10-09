@@ -261,6 +261,22 @@ export const APRESENTACAO: Record<string, Apresentacao> = {
       "último mês. Desde agosto de 1994: em julho, o mês da troca da moeda, " +
       "o Ipea ajusta a inflação, e o valor não se compara com os seguintes.",
   },
+  "mortes-agressao": {
+    titulo: "Mortes por agressão: óbitos no ano",
+    fiscal: false,
+    como:
+      "Quantas pessoas morreram no ano vítimas de agressão (homicídio), " +
+      "pelas declarações de óbito.",
+    melhor: "baixo",
+    nota:
+      "Segurança pública é competência dos estados. Número de óbitos, e não " +
+      "taxa por habitante: a população também cresceu no período. Só os " +
+      "anos que o Ministério da Saúde dá como finais; o ano seguinte ainda é " +
+      "preliminar e entra quando fechar. Desde 2019 cresceram os óbitos de " +
+      "intenção indeterminada (sem saber se foi agressão, acidente ou " +
+      "suicídio), que não entram aqui. Um ano já fechado pode ser " +
+      "republicado com correções.",
+  },
 };
 
 /** O selo de leitura, acima do gráfico. */
@@ -270,6 +286,22 @@ export const SELO: Record<Melhor, string> = {
   meta: "Melhor dentro da faixa da meta",
   nenhum: "Nenhum lado é melhor por si",
 };
+
+/** Cada fonte com o seu artigo. Fonte nova sem entrada reprova no teste. */
+export const FONTE_COM_ARTIGO: Record<string, string> = {
+  IBGE: "do IBGE",
+  "Banco Central": "do Banco Central",
+  Ipea: "do Ipea",
+  "Ministério da Saúde": "do Ministério da Saúde",
+};
+
+/** "do IBGE, do Banco Central e do Ipea", na ordem dada. */
+export function fontesPorExtenso(fontes: string[]): string {
+  const ditas = fontes.map((f) => FONTE_COM_ARTIGO[f] ?? f);
+  return ditas.length > 1
+    ? `${ditas.slice(0, -1).join(", ")} e ${ditas[ditas.length - 1]}`
+    : (ditas[0] ?? "");
+}
 
 // ------------------------------------------------------------------ tempo
 

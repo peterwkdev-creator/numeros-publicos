@@ -11,8 +11,9 @@ import fs from "node:fs";
 
 import {
   anoDecimal, anosDoEixo, anosHerdados, APRESENTACAO, casasDe, cobertura,
-  contiguos, dominio, escala, faixas, fimPeriodo, inicioPeriodo, meioPeriodo,
-  resumo, rotuloPeriodo, SELO, trechosMeta,
+  contiguos, dominio, escala, faixas, FONTE_COM_ARTIGO, fimPeriodo,
+  fontesPorExtenso, inicioPeriodo, meioPeriodo, resumo, rotuloPeriodo, SELO,
+  trechosMeta,
   type Mandato, type SerieBrasil, type SnapshotBrasil,
 } from "../lib/brasil.ts";
 
@@ -53,6 +54,14 @@ test("brasil: o JSON real tem as chaves que o tipo declara", () => {
 test("brasil: toda série do JSON tem apresentação, e nenhuma apresentação sobra", () => {
   const codigos = real.series.map((s) => s.codigo).sort();
   assert.deepEqual(Object.keys(APRESENTACAO).sort(), codigos);
+});
+
+test("brasil: toda fonte do JSON tem artigo, e a lista sai por extenso", () => {
+  for (const s of real.series) assert.ok(s.fonte in FONTE_COM_ARTIGO, s.fonte);
+  assert.equal(fontesPorExtenso(["IBGE"]), "do IBGE");
+  assert.equal(fontesPorExtenso(["IBGE", "Ipea"]), "do IBGE e do Ipea");
+  assert.equal(fontesPorExtenso(["IBGE", "Banco Central", "Ministério da Saúde"]),
+    "do IBGE, do Banco Central e do Ministério da Saúde");
 });
 
 // ----------------------------------------------------------------- leitura

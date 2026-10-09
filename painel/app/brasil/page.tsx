@@ -4,7 +4,7 @@ import Link from "next/link";
 import SerieBrasilSvg from "../componentes/serie-brasil-svg";
 import { br, dataCurta } from "../../lib/dados";
 import {
-  APRESENTACAO, dominio, inicioPeriodo, rotuloPeriodo,
+  APRESENTACAO, dominio, fontesPorExtenso, inicioPeriodo, rotuloPeriodo,
   type SnapshotBrasil,
 } from "../../lib/brasil";
 import { catalogoDe, trilha, LICENCA_DADOS } from "../../lib/jsonld";
@@ -105,7 +105,7 @@ export default async function Pagina() {
 
       <h1 className={estilos.titulo}>{TITULO}</h1>
       <p className={estilos.chamada}>
-        São {b.series.length} séries do país, de {fontes.join(" e de ")}, cada uma inteira desde
+        São {b.series.length} séries do país, {fontesPorExtenso(fontes)}, cada uma inteira desde
         o primeiro dado que a fonte publica nesta forma. Ao fundo, quem ocupava
         a Presidência da República em cada período.
       </p>

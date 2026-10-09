@@ -416,6 +416,106 @@ class TestBalancaComercial(unittest.TestCase):
                     sem_pausa, hoje=self.HOJE)
 
 
+SIM = next(s for s in brasil.SERIES if s.codigo == "mortes-agressao")
+EXT, OBT = SIM.tabnet
+
+
+def pagina_formulario(t, rotulo=None):
+    """O formulário como o TabNet o escreve: maiúsculas e entidades."""
+    rotulo = (rotulo or t.rotulo).replace("õ", "&otilde;")
+    return ('<SELECT NAME="Arquivos" ID="A" SIZE=4 MULTIPLE>\r\n'
+            '<OPTION VALUE="a25.dbf" SELECTED >2025\r\n'
+            '<OPTION VALUE="a24.dbf">2024\r\n</SELECT>'
+            f'<select name="{t.filtro}" multiple>\r\n'
+            '<option value="TODAS_AS_CATEGORIAS__" selected>Todas\r\n'
+            f'<option value="{t.valor}">{rotulo}\r\n</select>')
+
+
+def pagina_tabela(anos, finais=2024):
+    linhas = "\r\n".join(f'"{a}";{n}' for a, n in anos.items())
+    return ('<PRE>\r\n"Ano do &Oacute;bito";"&Oacute;bitos p/Ocorr&ecirc;nc"'
+            f'\r\n{linhas}\r\n"Total";{sum(anos.values())}\r\n</PRE>'
+            '<b>Notas</b>: Dados finais dispon&iacute;veis at&eacute; '
+            f'{finais} - data de extra&ccedil;&atilde;o 02/12/2025.')
+
+
+class FormularioFalso:
+    def __init__(self, respostas):
+        self.respostas = respostas
+        self.pedidos = []
+
+    def __call__(self, url, corpo):
+        self.pedidos.append((url, corpo))
+        r = self.respostas.get(url)
+        if isinstance(r, list):
+            r = r.pop(0)
+        if r is None:
+            return Resposta(404, f"não previsto: {url}")
+        return r if isinstance(r, Resposta) else Resposta(200, r)
+
+
+class TestSim(unittest.TestCase):
+    ANOS = {"1996": 38894, "2010": 52260, "2024": 39946, "2025": 35231}
+
+    def formulario(self, ext=None, obt=None, finais_obt=2024, rotulo_obt=None,
+                   **trocas):
+        r = {brasil.url_tabnet(EXT): pagina_formulario(EXT),
+             brasil.url_tabnet(OBT): pagina_formulario(OBT, rotulo_obt),
+             f"{brasil.TABNET}tabcgi.exe?{EXT.definicao}":
+                 pagina_tabela(ext or self.ANOS),
+             f"{brasil.TABNET}tabcgi.exe?{OBT.definicao}":
+                 pagina_tabela(obt or self.ANOS, finais_obt)}
+        r.update(trocas)
+        return FormularioFalso(r)
+
+    def coletar(self, formulario, pausas=None):
+        return coletar(SIM, object(), (pausas if pausas is not None
+                                       else []).append,
+                       formulario=formulario)
+
+    def test_so_os_anos_finais_e_iguais_nas_duas_tabelas(self):
+        f = self.formulario()
+        lida = self.coletar(f)
+        self.assertEqual(lida.pontos, {"1996": 38894.0, "2010": 52260.0,
+                                       "2024": 39946.0})
+        self.assertEqual(lida.origem, brasil.url_tabnet(EXT))
+        self.assertEqual(lida.conferida, brasil.url_tabnet(OBT))
+        corpo = f.pedidos[1][1].decode("ascii")
+        self.assertIn("SGrande_Grupo_CID10=4", corpo)
+        self.assertIn("Arquivos=a25.dbf&Arquivos=a24.dbf", corpo)
+        self.assertIn("Linha=Ano_do_%D3bito", corpo)
+
+    def test_um_ano_diferente_reprova(self):
+        obt = dict(self.ANOS, **{"2010": 52261})
+        with self.assertRaisesRegex(
+                ErroBrasil, r"divergem.*2010 \(52260.0 e 52261.0\)"):
+            self.coletar(self.formulario(obt=obt))
+
+    def test_anos_finais_diferentes_reprova(self):
+        with self.assertRaisesRegex(ErroBrasil, r"anos finais diferentes "
+                                    r"\(2024 e 2023\)"):
+            self.coletar(self.formulario(finais_obt=2023))
+
+    def test_opcao_renumerada_reprova(self):
+        with self.assertRaisesRegex(ErroBrasil, "246 de SGrupo_CID-10 agora "
+                                    "é 'Acidentes', e não 'Agressões'"):
+            self.coletar(self.formulario(rotulo_obt="Acidentes"))
+
+    def test_resposta_sem_tabela_reprova(self):
+        f = self.formulario(**{f"{brasil.TABNET}tabcgi.exe?{OBT.definicao}":
+                               "<html><b>Nenhum registro selecionado</b>"})
+        with self.assertRaisesRegex(ErroBrasil, "não traz a tabela: Nenhum "
+                                    "registro selecionado"):
+            self.coletar(f)
+
+    def test_falha_de_rede_repete(self):
+        pausas = []
+        f = self.formulario(**{brasil.url_tabnet(EXT): [
+            Resposta(599, "TimeoutError"), pagina_formulario(EXT)]})
+        self.assertEqual(len(self.coletar(f, pausas).pontos), 3)
+        self.assertEqual(pausas, [2.0])
+
+
 def vigencia(inicio: str, fim: str | None, meta: float, n: int):
     return {"NumeroReuniaoCopom": n, "MetaSelic": meta,
             "DataInicioVigencia": f"{inicio}T03:00:00Z",
@@ -1063,11 +1163,15 @@ class TestRegistro(unittest.TestCase):
                 elif s.fonte == "Ipea":
                     self.assertTrue(s.ipeadata and not s.sgs and not s.agregado)
                     self.assertEqual(s.conferencia, "inpc")
+                elif s.fonte == "Ministério da Saúde":
+                    self.assertTrue(s.tabnet and not s.sgs and not s.agregado)
+                    self.assertEqual(s.conferencia, "tabnet")
                 else:
                     self.assertTrue(s.sgs and not s.agregado)
                 self.assertIn(s.conferencia, ("janelas", "ptax", "copom",
                                               "inpc", "ultimo-dia",
-                                              "razao-pib", "diferenca"))
+                                              "razao-pib", "diferenca",
+                                              "tabnet"))
                 self.assertEqual(s.conferencia == "razao-pib",
                                  s.sgs_saldo is not None)
                 self.assertEqual(s.conferencia == "diferenca",

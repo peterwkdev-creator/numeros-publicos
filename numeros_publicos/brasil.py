@@ -7,12 +7,15 @@ página lê do banco.
 
 ## As séries
 
-Cinco do IBGE (API de agregados), sete do Banco Central (SGS) e uma do
-Ipea (Ipeadata), todas no nível do país. Cada uma vem com o histórico inteiro que a fonte publica
+Cinco do IBGE (API de agregados), sete do Banco Central (SGS), uma do
+Ipea (Ipeadata) e uma do Ministério da Saúde (SIM, pelo TabNet), todas no
+nível do país. Cada uma vem com o histórico inteiro que a fonte publica
 (`periodos/all` no IBGE, a janela desde 1990 no SGS): o site mostra a série
 inteira, nunca um recorte, e recorte escolhido aqui seria escolha editorial.
-A única exceção é técnica e está escrita na própria série: o IPCA começa em
-07/1995, o primeiro mês em que os 12 meses acumulados caem inteiros no Real.
+As exceções são técnicas e estão escritas na própria série: o IPCA começa em
+07/1995, o primeiro mês em que os 12 meses acumulados caem inteiros no Real;
+o SIM traz só os anos que o próprio TabNet chama de finais, porque o ano
+preliminar ainda muda.
 
 ## Duas leituras, e nada se grava se divergirem
 
@@ -32,7 +35,10 @@ mesmos pontos com os mesmos valores:
   12 meses (4382); o saldo da balança comercial (22707), contra as
   exportações (22708) menos as importações (22709);
 - Ipea: o salário mínimo real, refeito mês a mês com o nominal e o INPC
-  que o Banco Central publica no SGS.
+  que o Banco Central publica no SGS;
+- Ministério da Saúde: os óbitos por agressão em duas tabelas do TabNet do
+  SIM, montadas de arquivos diferentes: a das causas externas (grande grupo
+  X85-Y09) e a dos óbitos gerais (grupo "Agressões").
 
 Ponto que falta num lado, sobra no outro ou difere em valor é ERRO, com a
 lista, e o banco fica como estava.
@@ -70,13 +76,18 @@ import json
 import re
 import sqlite3
 import time
+import urllib.error
+import urllib.request
 from collections.abc import Callable
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from pathlib import Path
 from typing import NamedTuple
-from urllib.parse import urlparse
+from urllib.parse import urlencode, urlparse
 
-from .ibge import ErroIBGE, Transporte, _numero, buscar_json, url_serie_regiao
+from .ibge import (
+    ESPERA_INICIAL, FALHA_DE_REDE, REPETIVEIS, TENTATIVAS, ErroIBGE, Resposta,
+    Transporte, _numero, buscar_json, url_serie_regiao,
+)
 
 SIDRA = "https://apisidra.ibge.gov.br/values"
 SGS = "https://api.bcb.gov.br/dados/serie/bcdata.sgs.{codigo}/dados"
@@ -123,6 +134,17 @@ class ErroBrasil(RuntimeError):
     """A fonte mudou de forma, as duas leituras divergem, ou a fatia encolheu."""
 
 
+class TabelaTabNet(NamedTuple):
+    """Uma tabela do TabNet e o filtro que recorta nela os óbitos da série."""
+
+    definicao: str  # o arquivo `.def`, como "sim/cnv/ext10uf.def"
+    filtro: str  # o nome do campo no formulário
+    valor: str  # a opção escolhida nele
+    #: O texto da opção, conferido a cada coleta: se o TabNet renumerar as
+    #: opções, a série não troca de causa calada.
+    rotulo: str
+
+
 class SerieBrasil(NamedTuple):
     """Uma série do país e a coordenada dela na fonte.
 
@@ -134,7 +156,7 @@ class SerieBrasil(NamedTuple):
     codigo: str
     nome: str
     unidade: str
-    fonte: str  # "IBGE", "Banco Central" ou "Ipea"
+    fonte: str  # "IBGE", "Banco Central", "Ipea" ou "Ministério da Saúde"
     periodicidade: str  # "trimestral", "mensal" ou "anual"
     agregado: int | None = None
     variavel: int | None = None
@@ -151,7 +173,8 @@ class SerieBrasil(NamedTuple):
     #: dia útil de cada mês de uma série diária de estoque, `sgs_diaria`) ou
     #: `razao-pib` (as duas janelas e, além delas, o saldo em reais,
     #: `sgs_saldo`, dividido pelo PIB de 12 meses) ou `diferenca` (as duas
-    #: janelas e, além delas, uma série menos a outra, `sgs_partes`).
+    #: janelas e, além delas, uma série menos a outra, `sgs_partes`). No
+    #: TabNet, `tabnet`: duas tabelas, iguais ano a ano.
     conferencia: str = "janelas"
     #: O código da série no Ipeadata, quando a fonte é o Ipea.
     ipeadata: str | None = None
@@ -166,6 +189,8 @@ class SerieBrasil(NamedTuple):
     #: e a página fala em bilhões. A divisão é da coleta, não da página: o
     #: banco guarda o número que a página mostra, e o conferidor o compara.
     dividir_por: int = 1
+    #: As duas tabelas do TabNet que dão a série, a gravada e a que a confere.
+    tabnet: tuple[TabelaTabNet, TabelaTabNet] | None = None
 
 
 # Os nomes do IBGE são os dos metadados de cada tabela, lidos em 05/10/2026.
@@ -275,6 +300,21 @@ SERIES: tuple[SerieBrasil, ...] = (
         "salario-minimo", "Salário mínimo real", REAIS_DO_ULTIMO_MES, "Ipea",
         "mensal", desde="1994-08", conferencia="inpc",
         ipeadata="GAC12_SALMINRE12"),
+    # O SIM pelo TabNet: óbitos por agressão (CID-10 X85 a Y09) por ano e
+    # local de ocorrência, desde 1996 (a CID-10 no SIM). A tabela das causas
+    # externas e a dos óbitos gerais vêm de arquivos diferentes e deram o
+    # mesmo número nos 31 anos, 1996 a 2026, em 08/10/2026; os microdados do
+    # OpenDataSUS (CAUSABAS X85 a Y09, ano de DTOBITO) deram o mesmo número
+    # em 1996, 2010 e 2024, no mesmo dia. Número de óbitos, e não taxa: a
+    # taxa pede a população, que é outra fonte e outra conta.
+    SerieBrasil(
+        "mortes-agressao", "Óbitos por agressões (CID-10 X85-Y09), por ano e "
+        "local de ocorrência", "óbitos", "Ministério da Saúde", "anual",
+        desde="1996", conferencia="tabnet", tabnet=(
+            TabelaTabNet("sim/cnv/ext10uf.def", "SGrande_Grupo_CID10", "4",
+                         "X85-Y09 Agressões"),
+            TabelaTabNet("sim/cnv/obt10uf.def", "SGrupo_CID-10", "246",
+                         "Agressões"))),
 )
 
 TRIMESTRE = re.compile(r"(\d{4})0([1-4])")
@@ -764,6 +804,112 @@ def comparar_diferenca(codigo: str, publicado: Pontos, mais: Pontos,
                          + "; ".join(partes))
 
 
+# ------------------------------------------------------------------ TabNet
+
+#: Por HTTP, e não HTTPS: em 08/10/2026 o HTTPS do TabNet respondeu 2 de 10
+#: pedidos (os outros caíram depois de 22 s sem conexão), e o HTTP, 10 de 10.
+#: O dado é público, e as duas tabelas conferem uma à outra.
+TABNET = "http://tabnet.datasus.gov.br/cgi/"
+
+#: O TabNet responde a formulário: a página dele por GET (`corpo` `None`) e
+#: a tabela por POST, as duas em latin-1. O transporte das outras fontes lê
+#: JSON em UTF-8 por GET, e por isso o TabNet tem o seu.
+Formulario = Callable[[str, bytes | None], Resposta]
+
+SELECT_HTML = re.compile(r'<select[^>]*name="([^"]+)"[^>]*>(.*?)</select>',
+                         re.S | re.I)
+OPCAO_HTML = re.compile(r'<option value="([^"]+)"[^>]*>([^<\r\n]*)', re.I)
+PRE_HTML = re.compile(r"<pre[^>]*>(.*?)</pre>", re.S | re.I)
+LINHA_TABNET = re.compile(r'^"(\d{4})";(\d+)\r?$', re.M)
+#: A nota que o TabNet põe embaixo de cada tabela do SIM: "Dados finais
+#: disponíveis até 2024 - data de extração 02/12/2025."
+FINAIS_TABNET = re.compile(r"Dados finais disponíveis até (\d{4})")
+
+
+def formulario_http(timeout: float = 60.0) -> Formulario:
+    """O transporte real do TabNet. Como `transporte_http`, nunca levanta
+    por falha de rede: devolve o status."""
+
+    def pedir(url: str, corpo: bytes | None) -> Resposta:
+        req = urllib.request.Request(url, corpo, headers={
+            "User-Agent": "numeros-publicos/0.1 (dados abertos; uso pessoal)"})
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                return Resposta(r.status, r.read().decode("latin-1"))
+        except urllib.error.HTTPError as e:
+            return Resposta(e.code, e.read().decode("latin-1"))
+        except (urllib.error.URLError, OSError) as e:
+            return Resposta(FALHA_DE_REDE, f"{type(e).__name__}: {e}")
+
+    return pedir
+
+
+def pedir_tabnet(formulario: Formulario, rotulo: str, url: str,
+                 corpo: bytes | None,
+                 dormir: Callable[[float], None]) -> str:
+    """Uma página do TabNet, com a repetição de `buscar_json`."""
+    espera = ESPERA_INICIAL
+    for tentativa in range(1, TENTATIVAS + 1):
+        r = formulario(url, corpo)
+        if r.status == 200:
+            return r.corpo
+        if r.status not in REPETIVEIS or tentativa == TENTATIVAS:
+            raise ErroBrasil(f"{rotulo}: HTTP {r.status} em {url}: "
+                             f"{_texto_html(r.corpo)[:120]}")
+        dormir(espera)
+        espera *= 2
+    raise AssertionError("inalcançável")
+
+
+def url_tabnet(t: TabelaTabNet) -> str:
+    """O formulário da tabela: o endereço que quem lê abre para refazer."""
+    return f"{TABNET}deftohtm.exe?{t.definicao}"
+
+
+def ler_formulario_tabnet(rotulo: str, pagina: str,
+                          t: TabelaTabNet) -> list[str]:
+    """Os arquivos de todos os anos que o formulário oferece, depois de
+    conferir que a opção do filtro ainda é a mesma causa."""
+    selects = {html.unescape(n): c for n, c in SELECT_HTML.findall(pagina)}
+    if "Arquivos" not in selects or t.filtro not in selects:
+        raise ErroBrasil(f"{rotulo}: o formulário perdeu o campo Arquivos ou "
+                         f"{t.filtro}")
+    opcoes = {v: html.unescape(o).strip()
+              for v, o in OPCAO_HTML.findall(selects[t.filtro])}
+    if opcoes.get(t.valor) != t.rotulo:
+        raise ErroBrasil(f"{rotulo}: a opção {t.valor} de {t.filtro} agora é "
+                         f"{opcoes.get(t.valor)!r}, e não {t.rotulo!r}")
+    arquivos = [v for v, _ in OPCAO_HTML.findall(selects["Arquivos"])]
+    if not arquivos:
+        raise ErroBrasil(f"{rotulo}: o formulário não oferece nenhum ano")
+    return arquivos
+
+
+def corpo_tabnet(t: TabelaTabNet, arquivos: list[str]) -> bytes:
+    """Ano do óbito na linha, óbitos por ocorrência, todos os anos, o filtro
+    da causa e a saída em texto separado por ponto e vírgula."""
+    campos = [("Linha", "Ano_do_Óbito"), ("Coluna", "--Não-Ativa--"),
+              ("Incremento", "Óbitos_p/Ocorrênc")]
+    campos += [("Arquivos", a) for a in arquivos]
+    campos += [(t.filtro, t.valor), ("formato", "prn"), ("mostre", "Mostra")]
+    return urlencode(campos, encoding="latin-1").encode("ascii")
+
+
+def ler_tabela_tabnet(rotulo: str, pagina: str) -> tuple[Pontos, int]:
+    """Os óbitos de cada ano e o último ano final, que a nota da tabela diz."""
+    texto = html.unescape(pagina)
+    pre = PRE_HTML.search(texto)
+    if not pre:
+        raise ErroBrasil(f"{rotulo}: a resposta do TabNet não traz a tabela: "
+                         f"{_texto_html(pagina)[-160:]}")
+    finais = FINAIS_TABNET.search(texto)
+    if not finais:
+        raise ErroBrasil(f"{rotulo}: a nota \"Dados finais disponíveis até\" "
+                         "sumiu da tabela")
+    pontos = {a: float(n) for a, n in LINHA_TABNET.findall(pre.group(1))}
+    return pontos, int(finais.group(1))
+
+
 def comparar(codigo: str, a: Pontos, b: Pontos) -> None:
     """Exige os mesmos períodos com os mesmos valores. Diz o que diverge
     (até cinco de cada tipo)."""
@@ -817,7 +963,8 @@ class Leitura(NamedTuple):
 
 def coletar(s: SerieBrasil, transporte: Transporte,
             dormir: Callable[[float], None] = time.sleep,
-            hoje: dt.date | None = None) -> Leitura:
+            hoje: dt.date | None = None,
+            formulario: Formulario | None = None) -> Leitura:
     """Lê a série pelos dois caminhos e só devolve se baterem."""
     hoje = hoje or dt.date.today()
     ano = hoje.year
@@ -841,7 +988,24 @@ def coletar(s: SerieBrasil, transporte: Transporte,
             dias |= parte
         return " + ".join(urls), dias
 
-    if s.fonte == "IBGE":
+    if s.fonte == "Ministério da Saúde":
+        formulario = formulario or formulario_http()
+        lidas = []
+        for t in s.tabnet:
+            rotulo = f"{s.codigo} ({t.definicao})"
+            arquivos = ler_formulario_tabnet(rotulo, pedir_tabnet(
+                formulario, rotulo, url_tabnet(t), None, dormir), t)
+            lidas.append(ler_tabela_tabnet(rotulo, pedir_tabnet(
+                formulario, rotulo, f"{TABNET}tabcgi.exe?{t.definicao}",
+                corpo_tabnet(t, arquivos), dormir)))
+        (a, fa), (b, fb) = lidas
+        if fa != fb:
+            raise ErroBrasil(f"{s.codigo}: as duas tabelas dão anos finais "
+                             f"diferentes ({fa} e {fb})")
+        a, b = ({p: v for p, v in _cortar(s, x).items() if int(p) <= fa}
+                for x in (a, b))
+        u1, u2 = (url_tabnet(t) for t in s.tabnet)
+    elif s.fonte == "IBGE":
         u1, u2 = url_agregados(s), url_sidra(s)
         a = ler_agregados(s, obter(u1))
         b = ler_sidra(s, obter(u2))

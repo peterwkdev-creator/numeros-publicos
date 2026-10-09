@@ -974,6 +974,8 @@ CONFERIDA = {
                   "PIB de 12 meses, com duas casas"),
     "diferenca": ("iguais em duas janelas e às exportações menos as "
                   "importações, até 0,1 milhão de dólares"),
+    "tabnet": ("iguais nas tabelas das causas externas e dos óbitos gerais "
+               "do TabNet, só nos anos finais"),
 }
 
 #: A saída de `brasil-ingerir` quando alguma série (ou a meta) ficou de fora:

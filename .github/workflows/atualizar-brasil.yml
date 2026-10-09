@@ -28,9 +28,10 @@
 # cada pedido tem prazo total e a coleta inteira também (`PRAZO_PEDIDO` e
 # `PRAZO_COLETA` em `brasil.py`), cada série imprime o tempo assim que
 # termina, e `avisar` também fica vermelho quando o job é cancelado. As
-# séries anuais sem API (o SIM, pelo TabNet) se coletam à mão quando sai o
-# ano final: aqui entra `--semanal`, e elas ficam com o dado publicado. Para
-# testar o TabNet a partir do runner, dispare à mão com `anuais`.
+# séries anuais sem API (o SIM, pelo TabNet, e o PRODES, pelo TerraBrasilis
+# contra a nota técnica do INPE) se coletam à mão quando sai o ano final:
+# aqui entra `--semanal`, e elas ficam com o dado publicado. Para testar as
+# fontes a partir do runner, dispare à mão com `anuais`.
 #
 # ## O que ele NÃO faz
 #
@@ -52,7 +53,7 @@ on:
   workflow_dispatch:
     inputs:
       anuais:
-        description: "Incluir as séries anuais coletadas à mão (o SIM), para testar a fonte a partir do runner"
+        description: "Incluir as séries anuais coletadas à mão (o SIM e o PRODES), para testar as fontes a partir do runner"
         type: boolean
         default: false
 

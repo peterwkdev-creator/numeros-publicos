@@ -836,7 +836,8 @@ def construir_parser() -> argparse.ArgumentParser:
                          "que o já gravado")
     bi.add_argument("--semanal", action="store_true",
                     help="só as séries da atualização semanal: as anuais "
-                         "coletadas à mão (SIM) ficam com o dado anterior")
+                         "coletadas à mão (SIM e PRODES) ficam com o dado "
+                         "anterior")
     bi.set_defaults(func=brasil_ingerir)
     be = sub.add_parser("brasil-exportar",
                         help="gera o brasil.json que a página /brasil/ lê")

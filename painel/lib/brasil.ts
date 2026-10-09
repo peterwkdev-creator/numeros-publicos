@@ -277,6 +277,20 @@ export const APRESENTACAO: Record<string, Apresentacao> = {
       "suicídio), que não entram aqui. Um ano já fechado pode ser " +
       "republicado com correções.",
   },
+  desmatamento: {
+    titulo: "Desmatamento da Amazônia Legal: km² no ano",
+    fiscal: false,
+    como:
+      "Quantos quilômetros quadrados de floresta nativa foram desmatados no " +
+      "ano nos nove estados da Amazônia Legal, medidos pelo INPE em imagens " +
+      "de satélite.",
+    melhor: "baixo",
+    nota:
+      "Cada ano vai de agosto do ano anterior a julho: 2025 é de agosto de " +
+      "2024 a julho de 2025. É a taxa consolidada, que sai no ano seguinte; " +
+      "a estimativa que o INPE divulga antes não entra aqui. 1993 e 1994 têm " +
+      "o mesmo valor na série do INPE.",
+  },
 };
 
 /** O selo de leitura, acima do gráfico. */
@@ -293,6 +307,7 @@ export const FONTE_COM_ARTIGO: Record<string, string> = {
   "Banco Central": "do Banco Central",
   Ipea: "do Ipea",
   "Ministério da Saúde": "do Ministério da Saúde",
+  INPE: "do INPE",
 };
 
 /** "do IBGE, do Banco Central e do Ipea", na ordem dada. */

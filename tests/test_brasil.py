@@ -516,6 +516,110 @@ class TestSim(unittest.TestCase):
         self.assertEqual(pausas, [2.0])
 
 
+PRODES = next(s for s in brasil.SERIES if s.codigo == "desmatamento")
+URL_NOTA = "https://data.inpe.br/nota-2025.pdf"
+
+
+def rates(taxas: dict[int, int], estados: int = 9, inicio=(8, 1)):
+    """O arquivo do TerraBrasilis: cada taxa repartida entre os estados."""
+    def periodo(ano, total):
+        partes = [1] * (estados - 1) + [total - (estados - 1)]
+        return {"startDate": {"year": ano - 1, "month": inicio[0],
+                              "day": inicio[1]},
+                "endDate": {"year": ano, "month": 7, "day": 31},
+                "features": [{"loi": 1, "loiname": 18277 + i,
+                              "areas": [{"type": 1, "area": a}]}
+                             for i, a in enumerate(partes)]}
+    return {"name": "PRODES LEGAL AMAZON", "clazz": "deforestation_rates",
+            "periods": [periodo(a, v) for a, v in taxas.items()]}
+
+
+class TestProdes(unittest.TestCase):
+    TAXAS = {1988: 21050, 1993: 14896, 1994: 14896, 2025: 5731}
+    HOJE = brasil.dt.date(2026, 10, 9)
+
+    def setUp(self):
+        self.pasta = tempfile.TemporaryDirectory()
+        self.addCleanup(self.pasta.cleanup)
+        self.nota(self.TAXAS)
+
+    def nota(self, taxas, fonte=URL_NOTA, cabecalho="ano,km2,fonte"):
+        caminho = Path(self.pasta.name) / "prodes.csv"
+        caminho.write_text(cabecalho + "\n" + "".join(
+            f"{a},{v},{fonte}\n" for a, v in taxas.items()), encoding="utf-8")
+        patcher = mock.patch.object(brasil, "NOTA_PRODES", caminho)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def coletar(self, arquivos):
+        return coletar(PRODES, Transporte(
+            {brasil.url_prodes(a): d for a, d in arquivos.items()}),
+            sem_pausa, hoje=self.HOJE)
+
+    def test_soma_os_estados_e_procura_o_arquivo_do_ano_anterior(self):
+        self.nota({a: 100 + a for a in range(1988, 2026)})
+        r = self.coletar({2025: rates({a: 100 + a
+                                       for a in range(1988, 2026)})})
+        self.assertEqual(len(r.pontos), 38)
+        self.assertEqual(r.pontos["2025"], 2125.0)
+        self.assertEqual(r.origem, brasil.url_prodes(2025))
+        self.assertEqual(r.conferida, URL_NOTA)
+
+    def test_nenhum_arquivo_reprova(self):
+        with self.assertRaisesRegex(ErroBrasil, "nenhum arquivo de taxas.*"
+                                    "de 2024 a 2026"):
+            self.coletar({2023: rates(self.TAXAS)})
+
+    def test_valor_diferente_da_nota_reprova(self):
+        self.nota({2024: 6518, 2025: 5731})
+        with self.assertRaisesRegex(ErroBrasil, r"divergem; valores "
+                                    r"diferentes: 2024 \(6519.0 e 6518.0\)"):
+            self.coletar({2025: rates({2024: 6519, 2025: 5731})})
+
+    def test_ano_novo_sem_linha_na_nota_reprova(self):
+        self.nota({2025: 5731})
+        with self.assertRaisesRegex(ErroBrasil, "só na 1ª leitura: 2026"):
+            self.coletar({2026: rates({2025: 5731, 2026: 5000})})
+
+    def test_arquivo_que_nao_termina_no_proprio_ano_reprova(self):
+        self.nota({2024: 6518})
+        with self.assertRaisesRegex(ErroBrasil, "o arquivo de 2025 termina "
+                                    "em 2024"):
+            self.coletar({2025: rates({2024: 6518})})
+
+    def test_periodo_fora_de_agosto_a_julho_reprova(self):
+        with self.assertRaisesRegex(ErroBrasil, "fora de agosto a julho"):
+            self.coletar({2025: rates({2025: 5731}, inicio=(1, 1))})
+
+    def test_estado_faltando_reprova(self):
+        with self.assertRaisesRegex(ErroBrasil, "2025 com 8 estados"):
+            self.coletar({2025: rates({2025: 5731}, estados=8)})
+
+    def test_arquivo_de_outra_classe_reprova(self):
+        dados = dict(rates({2025: 5731}), clazz="increments")
+        with self.assertRaisesRegex(ErroBrasil, "não é a taxa do PRODES"):
+            self.coletar({2025: dados})
+
+    def test_nota_com_buraco_ou_fonte_de_fora_reprova(self):
+        self.nota({1988: 21050, 1990: 13730},
+                  fonte="https://exemplo.com.br/nota.pdf")
+        with self.assertRaisesRegex(ErroBrasil, "de 1988 para 1990.*fonte "
+                                    "'https://exemplo.com.br/nota.pdf' fora "
+                                    "do INPE"):
+            brasil.carregar_nota_prodes(brasil.NOTA_PRODES)
+
+    def test_a_nota_versionada(self):
+        pontos, fontes = brasil.carregar_nota_prodes(
+            Path(brasil.__file__).with_name("brasil_prodes.csv"))
+        self.assertEqual((min(pontos), max(pontos), len(pontos)),
+                         ("1988", "2025", 38))
+        self.assertEqual((pontos["1995"], pontos["2012"], pontos["2025"]),
+                         (29059.0, 4571.0, 5731.0))
+        self.assertEqual(pontos["1993"], pontos["1994"])
+        self.assertEqual(len(fontes), 1)
+        self.assertTrue(fontes[0].startswith("https://data.inpe.br/"))
+
+
 def vigencia(inicio: str, fim: str | None, meta: float, n: int):
     return {"NumeroReuniaoCopom": n, "MetaSelic": meta,
             "DataInicioVigencia": f"{inicio}T03:00:00Z",
@@ -1197,12 +1301,16 @@ class TestRegistro(unittest.TestCase):
                 elif s.fonte == "Ministério da Saúde":
                     self.assertTrue(s.tabnet and not s.sgs and not s.agregado)
                     self.assertEqual(s.conferencia, "tabnet")
+                elif s.fonte == "INPE":
+                    self.assertTrue(not s.sgs and not s.agregado
+                                    and not s.semanal)
+                    self.assertEqual(s.conferencia, "nota-tecnica")
                 else:
                     self.assertTrue(s.sgs and not s.agregado)
                 self.assertIn(s.conferencia, ("janelas", "ptax", "copom",
                                               "inpc", "ultimo-dia",
                                               "razao-pib", "diferenca",
-                                              "tabnet"))
+                                              "tabnet", "nota-tecnica"))
                 self.assertEqual(s.conferencia == "razao-pib",
                                  s.sgs_saldo is not None)
                 self.assertEqual(s.conferencia == "diferenca",
@@ -1247,12 +1355,12 @@ class TestPrazoDoPedido(unittest.TestCase):
 
 
 class TestSemanal(unittest.TestCase):
-    """`brasil-ingerir --semanal`: o SIM, anual e sem API, fica de fora e com
-    o dado anterior, sem contar como falha; o prazo da coleta vai junto."""
+    """`brasil-ingerir --semanal`: o SIM e o PRODES, anuais, ficam de fora e
+    com o dado anterior, sem contar como falha; o prazo da coleta vai junto."""
 
-    def test_so_o_sim_e_anual(self):
+    def test_so_o_sim_e_o_prodes_sao_anuais(self):
         self.assertEqual([s.codigo for s in brasil.SERIES if not s.semanal],
-                         ["mortes-agressao"])
+                         ["mortes-agressao", "desmatamento"])
 
     def test_semanal_deixa_o_sim_de_fora_e_diz(self):
         vistas = {}
@@ -1272,10 +1380,11 @@ class TestSemanal(unittest.TestCase):
         self.assertEqual(codigo, 0)
         self.assertEqual([s.codigo for s in vistas["series"]],
                          [s.codigo for s in brasil.SERIES
-                          if s.codigo != "mortes-agressao"])
+                          if s.codigo not in ("mortes-agressao",
+                                              "desmatamento")])
         self.assertEqual(vistas["prazo"], brasil.PRAZO_COLETA)
         self.assertIn("fora da semanal (anuais, coletadas à mão): "
-                      "mortes-agressao; fica o dado anterior",
+                      "mortes-agressao, desmatamento; fica o dado anterior",
                       saida.getvalue())
 
 

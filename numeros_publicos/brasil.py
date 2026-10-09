@@ -8,14 +8,14 @@ página lê do banco.
 ## As séries
 
 Cinco do IBGE (API de agregados), sete do Banco Central (SGS), uma do
-Ipea (Ipeadata) e uma do Ministério da Saúde (SIM, pelo TabNet), todas no
-nível do país. Cada uma vem com o histórico inteiro que a fonte publica
+Ipea (Ipeadata), uma do Ministério da Saúde (SIM, pelo TabNet) e uma do
+INPE (PRODES, pelo TerraBrasilis), todas no nível do país. Cada uma vem com o histórico inteiro que a fonte publica
 (`periodos/all` no IBGE, a janela desde 1990 no SGS): o site mostra a série
 inteira, nunca um recorte, e recorte escolhido aqui seria escolha editorial.
 As exceções são técnicas e estão escritas na própria série: o IPCA começa em
 07/1995, o primeiro mês em que os 12 meses acumulados caem inteiros no Real;
 o SIM traz só os anos que o próprio TabNet chama de finais, porque o ano
-preliminar ainda muda.
+preliminar ainda muda; o PRODES, só a taxa consolidada, sem a estimativa.
 
 ## Duas leituras, e nada se grava se divergirem
 
@@ -38,7 +38,10 @@ mesmos pontos com os mesmos valores:
   que o Banco Central publica no SGS;
 - Ministério da Saúde: os óbitos por agressão em duas tabelas do TabNet do
   SIM, montadas de arquivos diferentes: a das causas externas (grande grupo
-  X85-Y09) e a dos óbitos gerais (grupo "Agressões").
+  X85-Y09) e a dos óbitos gerais (grupo "Agressões");
+- INPE: a taxa do PRODES no arquivo que o painel do TerraBrasilis lê,
+  contra a tabela versionada das notas técnicas do INPE
+  (`brasil_prodes.csv`), que não têm versão legível por máquina.
 
 Ponto que falta num lado, sobra no outro ou difere em valor é ERRO, com a
 lista, e o banco fica como estava.
@@ -156,7 +159,7 @@ class SerieBrasil(NamedTuple):
     codigo: str
     nome: str
     unidade: str
-    fonte: str  # "IBGE", "Banco Central", "Ipea" ou "Ministério da Saúde"
+    fonte: str  # "IBGE", "Banco Central", "Ipea", "Ministério da Saúde" ou "INPE"
     periodicidade: str  # "trimestral", "mensal" ou "anual"
     agregado: int | None = None
     variavel: int | None = None
@@ -174,7 +177,8 @@ class SerieBrasil(NamedTuple):
     #: `razao-pib` (as duas janelas e, além delas, o saldo em reais,
     #: `sgs_saldo`, dividido pelo PIB de 12 meses) ou `diferenca` (as duas
     #: janelas e, além delas, uma série menos a outra, `sgs_partes`). No
-    #: TabNet, `tabnet`: duas tabelas, iguais ano a ano.
+    #: TabNet, `tabnet`: duas tabelas, iguais ano a ano. No PRODES,
+    #: `nota-tecnica`: o arquivo do TerraBrasilis contra `brasil_prodes.csv`.
     conferencia: str = "janelas"
     #: O código da série no Ipeadata, quando a fonte é o Ipea.
     ipeadata: str | None = None
@@ -318,6 +322,17 @@ SERIES: tuple[SerieBrasil, ...] = (
                          "X85-Y09 Agressões"),
             TabelaTabNet("sim/cnv/obt10uf.def", "SGrupo_CID-10", "246",
                          "Agressões")), semanal=False),
+    # O PRODES do INPE: a taxa consolidada de desmatamento da Amazônia Legal,
+    # em km², por período de agosto a julho, no ano em que o período termina
+    # (agosto de 1987 a julho de 1988 é 1988). A 2ª leitura é a tabela das
+    # notas técnicas (`brasil_prodes.csv`): os 38 anos da Figura 2 da nota
+    # de 2025 e os totais das Tabelas 2 e 3 iguais ao arquivo em 09/10/2026.
+    # 1993 e 1994 têm o mesmo valor (14.896), e nenhum texto oficial achado
+    # diz por quê; a página diz só isso.
+    SerieBrasil(
+        "desmatamento", "Taxa de desmatamento da Amazônia Legal (PRODES)",
+        "km²", "INPE", "anual", desde="1988", conferencia="nota-tecnica",
+        semanal=False),
 )
 
 TRIMESTRE = re.compile(r"(\d{4})0([1-4])")
@@ -915,6 +930,98 @@ def ler_tabela_tabnet(rotulo: str, pagina: str) -> tuple[Pontos, int]:
     return pontos, int(finais.group(1))
 
 
+# ------------------------------------------------------------------ PRODES
+
+#: O arquivo que o painel do TerraBrasilis lê, um por ano: o nome muda
+#: quando sai a taxa consolidada (em 09/10/2026, `rates2025.json`, e o de
+#: 2026 dava 404). Só HTTPS: o HTTP redireciona para ele.
+PRODES = ("https://terrabrasilis.dpi.inpe.br/app/prodes/dashboard/"
+          "deforestation/files/rates{ano}.json")
+#: Quantos anos antes do corrente procurar o arquivo.
+PRODES_ANOS_ATRAS = 2
+#: Os nove estados da Amazônia Legal, um `loiname` cada, em todo período.
+PRODES_ESTADOS = 9
+#: A segunda leitura: a taxa de cada ano nas notas técnicas do INPE, com a
+#: URL de onde saiu. Ano novo é uma linha nova, da nota nova.
+NOTA_PRODES = Path(__file__).with_name("brasil_prodes.csv")
+COLUNAS_PRODES = ("ano", "km2", "fonte")
+
+
+def url_prodes(ano: int) -> str:
+    return PRODES.format(ano=ano)
+
+
+def ler_prodes(s: SerieBrasil, dados: object) -> Pontos:
+    """A taxa de cada período de agosto a julho, somados os nove estados, no
+    ano em que o período termina."""
+    if not isinstance(dados, dict) or (dados.get("name"), dados.get(
+            "clazz")) != ("PRODES LEGAL AMAZON", "deforestation_rates"):
+        raise ErroBrasil(f"{s.codigo}: o arquivo não é a taxa do PRODES na "
+                         "Amazônia Legal")
+    pontos: Pontos = {}
+    try:
+        for p in dados["periods"]:
+            ini, fim = p["startDate"], p["endDate"]
+            ano = fim["year"]
+            if (ini["year"], ini["month"], ini["day"], fim["month"],
+                    fim["day"]) != (ano - 1, 8, 1, 7, 31):
+                raise ErroBrasil(f"{s.codigo}: período fora de agosto a "
+                                 f"julho: {ini} a {fim}")
+            estados = [f["loiname"] for f in p["features"]]
+            if len(set(estados)) != PRODES_ESTADOS or len(
+                    estados) != PRODES_ESTADOS:
+                raise ErroBrasil(f"{s.codigo}: {ano} com {len(estados)} "
+                                 f"estados, esperados {PRODES_ESTADOS}")
+            areas = [a for f in p["features"] for a in f["areas"]]
+            if len(areas) != PRODES_ESTADOS or any(
+                    a["type"] != 1 for a in areas):
+                raise ErroBrasil(f"{s.codigo}: {ano} com áreas fora do "
+                                 "previsto (uma por estado, tipo 1)")
+            if str(ano) in pontos:
+                raise ErroBrasil(f"{s.codigo}: {ano} duas vezes")
+            pontos[str(ano)] = float(sum(a["area"] for a in areas))
+    except (KeyError, TypeError) as e:
+        raise ErroBrasil(f"{s.codigo}: formato inesperado ({e!r})") from e
+    return _cortar(s, pontos)
+
+
+def carregar_nota_prodes(caminho: str | Path) -> tuple[Pontos, list[str]]:
+    """A tabela versionada: anos seguidos, km² inteiros e positivos, e a
+    nota técnica de cada linha no domínio do INPE. Devolve os pontos e as
+    URLs, sem repetir."""
+    with open(caminho, encoding="utf-8", newline="") as f:
+        leitor = csv.DictReader(f)
+        if tuple(leitor.fieldnames or ()) != COLUNAS_PRODES:
+            raise ErroBrasil(f"{caminho}: colunas {leitor.fieldnames}, "
+                             f"esperadas {list(COLUNAS_PRODES)}")
+        linhas = list(leitor)
+    erros = [] if linhas else ["a tabela está vazia"]
+    pontos: Pontos = {}
+    fontes: list[str] = []
+    anterior = None
+    for r in linhas:
+        try:
+            ano, km2 = int(r["ano"]), int(r["km2"])
+        except ValueError:
+            erros.append(f"linha {r!r}")
+            continue
+        if anterior is not None and ano != anterior + 1:
+            erros.append(f"de {anterior} para {ano}: fora de ordem ou com "
+                         "ano faltando")
+        anterior = ano
+        if km2 <= 0:
+            erros.append(f"{ano}: {km2} km²")
+        u = urlparse(r["fonte"])
+        if u.scheme != "https" or not (u.hostname or "").endswith(".inpe.br"):
+            erros.append(f"{ano}: fonte {r['fonte']!r} fora do INPE")
+        pontos[str(ano)] = float(km2)
+        if r["fonte"] not in fontes:
+            fontes.append(r["fonte"])
+    if erros:
+        raise ErroBrasil("tabela do PRODES inválida: " + "; ".join(erros))
+    return pontos, fontes
+
+
 def comparar(codigo: str, a: Pontos, b: Pontos) -> None:
     """Exige os mesmos períodos com os mesmos valores. Diz o que diverge
     (até cinco de cada tipo)."""
@@ -1010,6 +1117,22 @@ def coletar(s: SerieBrasil, transporte: Transporte,
         a, b = ({p: v for p, v in _cortar(s, x).items() if int(p) <= fa}
                 for x in (a, b))
         u1, u2 = (url_tabnet(t) for t in s.tabnet)
+    elif s.fonte == "INPE":
+        # O arquivo do ano corrente pode ainda não existir (404): o anterior.
+        for arquivo in range(ano, ano - PRODES_ANOS_ATRAS - 1, -1):
+            u1 = url_prodes(arquivo)
+            if transporte(u1).status != 404:
+                break
+        else:
+            raise ErroBrasil(
+                f"{s.codigo}: nenhum arquivo de taxas no TerraBrasilis, de "
+                f"{ano - PRODES_ANOS_ATRAS} a {ano} (404 em todos)")
+        a = ler_prodes(s, obter(u1))
+        if a and max(a) != str(arquivo):
+            raise ErroBrasil(f"{s.codigo}: o arquivo de {arquivo} termina em "
+                             f"{max(a)}")
+        b, fontes = carregar_nota_prodes(NOTA_PRODES)
+        u2 = " + ".join(fontes)
     elif s.fonte == "IBGE":
         u1, u2 = url_agregados(s), url_sidra(s)
         a = ler_agregados(s, obter(u1))

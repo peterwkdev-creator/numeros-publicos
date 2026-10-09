@@ -156,6 +156,18 @@ export const VARIAVEIS = [
 ];
 
 /**
+ * O que só a base por município mede: a página do município e a base completa
+ * (`municipios.csv` e `.xlsx`) trazem o Novo Caged e as emendas; a de estado,
+ * não. Separado de `VARIAVEIS` em 09/10/2026 pelo mesmo motivo de
+ * `FONTES_DA_BASE`.
+ */
+export const VARIAVEIS_DA_BASE = [
+  ...VARIAVEIS,
+  "Admissões, desligamentos e saldo do emprego com carteira (Novo Caged)",
+  "Emendas parlamentares pagas à prefeitura",
+];
+
+/**
  * O identificador do município, como `PropertyValue`.
  *
  * O Google recomenda DOI ou identificador compacto; nenhum dos dois existe
@@ -231,6 +243,31 @@ export const FONTES = [
     name: "SIOPS — Ministério da Saúde",
     url: "https://dadosabertos.saude.gov.br/dataset/siops",
     license: "https://creativecommons.org/licenses/by-nd/3.0/",
+  },
+] as const;
+
+/**
+ * As fontes da base por município: as de `FONTES` mais o Ministério do
+ * Trabalho (Novo Caged, nas páginas desde 29/09/2026) e a CGU (emendas, desde
+ * 09/10/2026), que faltavam até 09/10. Só na página do município e na capa,
+ * cujo conjunto é a base completa: a página de estado não mostra nenhum dos
+ * dois, e `isBasedOn` diz de onde vem o que o conjunto TEM.
+ *
+ * Sem `license`: nenhuma das duas páginas declara uma (a da CGU conferida em
+ * 09/10/2026; só "Termos de Uso"). Afirmar a licença sem a ler seria inventar
+ * metadado, o erro que `FONTES` já evita com o IBGE e o INEP.
+ */
+export const FONTES_DA_BASE = [
+  ...FONTES,
+  {
+    "@type": "CreativeWork",
+    name: "Novo Caged — Ministério do Trabalho e Emprego",
+    url: "https://www.gov.br/trabalho-e-emprego/pt-br/acesso-a-informacao/acoes-e-programas/programas-projetos-acoes-obras-e-atividades/estatisticas-trabalho/novo-caged",
+  },
+  {
+    "@type": "CreativeWork",
+    name: "Emendas parlamentares — Portal da Transparência (CGU)",
+    url: "https://portaldatransparencia.gov.br/download-de-dados/emendas-parlamentares",
   },
 ] as const;
 

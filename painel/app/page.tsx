@@ -17,7 +17,7 @@ import TabelaCenso from "./componentes/tabela-censo";
 import ComposicaoBarras from "./componentes/composicao-barras";
 import RoscaFuncoes from "./componentes/rosca-funcoes";
 import {
-  coberturaTemporal, FONTES, idCatalogo, palavrasChave, VARIAVEIS, LICENCA_DADOS,
+  coberturaTemporal, FONTES_DA_BASE, idCatalogo, palavrasChave, VARIAVEIS_DA_BASE, LICENCA_DADOS,
 } from "@/lib/jsonld";
 import { lerFiscal, lerIdeb, lerSnapshot, SITE } from "@/lib/servidor";
 import { Municipios } from "./municipios";
@@ -136,7 +136,7 @@ export default async function Pagina() {
           "@type": "Place",
           name: "Brasil",
         },
-        variableMeasured: VARIAVEIS,
+        variableMeasured: VARIAVEIS_DA_BASE,
         distribution: [
           {
             "@type": "DataDownload",
@@ -152,7 +152,7 @@ export default async function Pagina() {
             name: `Base completa: ${br(capa.linhas.length)} municípios em CSV`,
           },
         ],
-        isBasedOn: FONTES,
+        isBasedOn: FONTES_DA_BASE,
       },
     ],
   };

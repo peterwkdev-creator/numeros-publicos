@@ -13,7 +13,7 @@ import { deEstado, slugUf, vizinhosDe } from "../../../lib/estado";
 import { medianasSaudeCache, rankingCache } from "../../../lib/nacional";
 import { posicaoEntre, posicaoNoEstado } from "../../../lib/posicao";
 import {
-  FONTES, trilha, VARIAVEIS, catalogoDe, coberturaTemporal, identificadorIbge, LICENCA_DADOS,
+  FONTES_DA_BASE, trilha, VARIAVEIS_DA_BASE, catalogoDe, coberturaTemporal, identificadorIbge, LICENCA_DADOS,
   palavrasChave,
 } from "../../../lib/jsonld";
 import {
@@ -392,7 +392,7 @@ export default async function PaginaMunicipio(
     identifier: identificadorIbge(m.codigo),
     keywords: palavrasChave([m.nome, uf?.nome ?? m.uf, "IDEB", "IBGE", "SICONFI"]),
     temporalCoverage: coberturaTemporal(snapshot, fiscal, ideb),
-    variableMeasured: VARIAVEIS,
+    variableMeasured: VARIAVEIS_DA_BASE,
     includedInDataCatalog: catalogoDe(SITE),
     spatialCoverage: {
       "@type": "Place",
@@ -423,7 +423,7 @@ export default async function PaginaMunicipio(
         name: `Base completa: ${br(snapshot.municipios.length)} municípios`,
       },
     ],
-    isBasedOn: FONTES,
+    isBasedOn: FONTES_DA_BASE,
   };
 
   return (

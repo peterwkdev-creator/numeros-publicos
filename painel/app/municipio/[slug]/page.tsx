@@ -1144,6 +1144,14 @@ export default async function PaginaMunicipio(
               municipio={m.nome}
             />
           </div>
+          {funcoes.fatias.some((x) => x.valor < 0) && (
+            <p className={estilos.ressalva}>
+              Com valor negativo entre as funções:{" "}
+              {funcoes.fatias.filter((x) => x.valor < 0).map((x) => x.nome).join(", ")}
+              . É o que {m.nome} declarou ao SICONFI no período; o painel não
+              o corrige.
+            </p>
+          )}
           <p className={estilos.ressalva}>
             Despesa{" "}
             <Termo
@@ -1208,6 +1216,14 @@ export default async function PaginaMunicipio(
                 nomeDaCauda={["origem", "origens"]}
               />
             </div>
+            {receita.fatias.some((x) => x.valor < 0) && (
+              <p className={estilos.ressalva}>
+                Com valor negativo entre as origens:{" "}
+                {receita.fatias.filter((x) => x.valor < 0).map((x) => x.nome).join(", ")}
+                . É o que {m.nome} declarou ao SICONFI no período; o painel não
+                o corrige.
+              </p>
+            )}
             {receita.detalhe.length > 0 && (
               <>
                 <h3 className={estilos.subtitulo}>Dentro dessas origens</h3>
@@ -1247,11 +1263,35 @@ export default async function PaginaMunicipio(
                 No {receita.periodo}º bimestre de {receita.exercicio},{" "}
                 {m.nome} declarou{" "}
                 <strong>{escala(receita.total).curto}</strong> de receita
-                corrente — <strong>sem nenhuma transferência corrente</strong>.
-                Nenhum município brasileiro recebe zero: o Fundo de Participação
-                dos Municípios é repasse obrigatório pela Constituição (art.
-                159). Isso não descreve de onde vem o dinheiro de {m.nome}:
-                descreve um relatório enviado incompleto.
+                corrente
+                {receita.implausivelPor === "transferencia-acima-do-total" ? (
+                  <>
+                    {" "}— menos do que os{" "}
+                    <strong>{escala(receita.transferida).curto}</strong> que
+                    declarou só em transferências, porque a declaração traz{" "}
+                    {receita.fatias.filter((x) => x.valor < 0).map((x, i) => (
+                      <span key={x.nome}>
+                        {i > 0 && " e "}
+                        <strong>
+                          {x.nome.toLocaleLowerCase("pt-BR")} em{" "}
+                          {escalaComSinal(x.valor).curto}
+                        </strong>
+                      </span>
+                    ))}
+                    . Uma origem negativa desse tamanho não descreve de onde vem
+                    o dinheiro de {m.nome}: descreve um relatório com erro de
+                    lançamento.
+                  </>
+                ) : (
+                  <>
+                    {" "}— <strong>sem nenhuma transferência corrente</strong>.
+                    Nenhum município brasileiro recebe zero: o Fundo de
+                    Participação dos Municípios é repasse obrigatório pela
+                    Constituição (art. 159). Isso não descreve de onde vem o
+                    dinheiro de {m.nome}: descreve um relatório enviado
+                    incompleto.
+                  </>
+                )}
               </p>
               <p className={estilos.ressalva}>
                 O valor acima é{" "}

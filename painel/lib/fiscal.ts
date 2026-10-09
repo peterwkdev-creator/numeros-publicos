@@ -1238,8 +1238,18 @@ export type ComposicaoReceita = {
    * O critério estatístico (receita contra RCL) mora no motor Python
    * (`fiscal conferir-receita`), porque ele diz que UM dos dois relatórios
    * está errado sem dizer qual. Este aqui diz qual.
+   *
+   * **O segundo critério, de 09/10/2026: transferência acima da receita
+   * corrente inteira.** Só acontece com uma origem negativa, e grande. Em
+   * 2024, 12 municípios (11 do TO e 1 de GO) declararam os impostos
+   * negativos, até a previsão; Novo Jardim/TO estava no ar dizendo *"194,9%
+   * veio de transferências"*. Conferido na API do SICONFI: o número é o
+   * declarado. Origem negativa pequena (16 municípios, até -1,1%) continua
+   * plausível, e a página põe uma nota.
    */
   plausivel: boolean;
+  /** Por que não é plausível — a página explica cada caso com a sua frase. */
+  implausivelPor: "sem-transferencia" | "transferencia-acima-do-total" | null;
 };
 
 /** O exercício em destaque: o mais recente da coleta. Não recua. */
@@ -1325,6 +1335,12 @@ function montarReceita(
   };
 
   const transferida = achar(CONTA_TRANSFERIDA);
+  const implausivelPor =
+    transferida === null || transferida <= 0
+      ? "sem-transferencia" as const
+      : total !== null && transferida > total
+        ? "transferencia-acima-do-total" as const
+        : null;
   return {
     exercicio: ex.exercicio,
     periodo: bloco.periodo,
@@ -1343,6 +1359,7 @@ function montarReceita(
       .sort((a, b) => b.valor - a.valor),
     tributaria: achar(CONTA_TRIBUTARIA),
     transferida,
-    plausivel: transferida !== null && transferida > 0,
+    plausivel: implausivelPor === null,
+    implausivelPor,
   };
 }

@@ -1800,6 +1800,7 @@ test("declaração sem transferência NÃO é composição — o caso de Apiaí"
   const r = receitaDe(s, 3502705)!;
   assert.ok(r, "o dado continua disponível: a declaração existe");
   assert.equal(r.plausivel, false);
+  assert.equal(r.implausivelPor, "sem-transferencia");
   assert.equal(r.transferida, null);
 });
 
@@ -1810,11 +1811,40 @@ test("transferência zero também é declaração incompleta", () => {
   assert.equal(receitaDe(s, 7)!.plausivel, false);
 });
 
+test("transferência acima do total NÃO é composição — o caso de Novo Jardim", () => {
+  // Novo Jardim/TO declarou R$ 18,2 mi de receita corrente e R$ 35,5 mi de
+  // transferências: os impostos vieram negativos. O site publicou "194,9%
+  // veio de transferências". Os números abaixo são os dele.
+  const s = fiscalComReceita();
+  (s as { receita: Receita }).receita.exercicios[0]!.porMunicipio["1715259"] =
+    [18211664.21, [[0, 35491586.78], [1, -17650065.04]], []];
+  const r = receitaDe(s, 1715259)!;
+  assert.ok(r, "o dado continua disponível: a declaração existe");
+  assert.equal(r.plausivel, false);
+  assert.equal(r.implausivelPor, "transferencia-acima-do-total");
+  assert.equal(r.transferida, 35491586.78, "o valor segue o declarado");
+});
+
+test("origem negativa pequena continua plausível — o caso de Itabi", () => {
+  // Itabi/SE: outras receitas correntes em -1,1% do total. A página mostra a
+  // composição, com o sinal e uma nota; condenar aqui apagaria 16 páginas.
+  const s = fiscalComReceita();
+  const bloco = (s as { receita: Receita }).receita;
+  (bloco.rotulos as string[]).push("OUTRAS RECEITAS CORRENTES");
+  bloco.exercicios[0]!.porMunicipio["2803104"] =
+    [33122812, [[0, 29009170], [1, 4477389], [2, -363747]], []];
+  const r = receitaDe(s, 2803104)!;
+  assert.equal(r.plausivel, true);
+  assert.equal(r.implausivelPor, null);
+  assert.equal(r.fatias.at(-1)!.valor, -363747, "a negativa fica, com sinal");
+});
+
 test("o município normal é plausível", () => {
   // O controle: sem ele, os dois testes acima passariam com `plausivel`
   // sempre falso — e a seção sumiria de 3.242 páginas sem nada reprovar.
   assert.equal(receitaDe(fiscalComReceita(), 1)!.plausivel, true);
-  assert.equal(receitaDe(fiscalComReceita(), 2)!.plausivel, true);
+  assert.equal(receitaDe(fiscalComReceita(), 2)!.plausivel, true,
+               "transferência IGUAL ao total é plausível: só acima condena");
 });
 
 // ------------------------- percentual sobre RCL que a receita desmente

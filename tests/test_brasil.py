@@ -357,6 +357,65 @@ class TestDividaLiquida(unittest.TestCase):
                     hoje=self.HOJE)
 
 
+BALANCA = next(s for s in brasil.SERIES if s.codigo == "balanca-comercial")
+
+
+class TestBalancaComercial(unittest.TestCase):
+    HOJE = brasil.dt.date(2026, 10, 8)
+    # 2014-12 e 2015-01 caem cada um numa janela. 1995-01: 4.000,0 − 4.100,1
+    # = −100,1, e o saldo publicado diz −100,0 (o arredondamento de cada
+    # série deixa até 0,1 de folga).
+    PUBLICADA = {"1995-01": "-100.0", "2014-12": "10264.7",
+                 "2015-01": "-4183.8"}
+    EXPORTACOES = {"1995-01": "4000.0", "2014-12": "20000.0",
+                   "2015-01": "15000.0"}
+    IMPORTACOES = {"1995-01": "4100.1", "2014-12": "9735.3",
+                   "2015-01": "19183.8"}
+
+    def transporte(self, exportacoes=None, importacoes=None):
+        def janela(de, ate):
+            return sgs({p: v for p, v in self.PUBLICADA.items()
+                        if de <= int(p[:4]) <= ate})
+        return Transporte({
+            brasil.url_sgs(BALANCA, 1990, 2026): janela(1990, 2026),
+            brasil.url_sgs(BALANCA, 1990, 2014): janela(1990, 2014),
+            brasil.url_sgs(BALANCA, 2015, 2026): janela(2015, 2026),
+            brasil._url_sgs(22708, 1990, 2026):
+                sgs(exportacoes or self.EXPORTACOES),
+            brasil._url_sgs(22709, 1990, 2026):
+                sgs(importacoes or self.IMPORTACOES)})
+
+    def test_em_bilhoes_e_conferida_pela_diferenca(self):
+        lida = coletar(BALANCA, self.transporte(), sem_pausa, hoje=self.HOJE)
+        self.assertEqual(lida.pontos, {"1995-01": -0.1, "2014-12": 10.2647,
+                                       "2015-01": -4.1838})
+        self.assertIn("bcdata.sgs.22708/", lida.conferida)
+        self.assertIn("bcdata.sgs.22709/", lida.conferida)
+
+    def test_mais_de_um_decimo_reprova(self):
+        importacoes = dict(self.IMPORTACOES, **{"1995-01": "4100.2"})
+        with self.assertRaisesRegex(
+                ErroBrasil, r"não confere.*1995-01 \(-100.0 e -100.2\)"):
+            coletar(BALANCA, self.transporte(importacoes=importacoes),
+                    sem_pausa, hoje=self.HOJE)
+
+    def test_mes_sem_importacao_reprova(self):
+        importacoes = {m: v for m, v in self.IMPORTACOES.items()
+                       if m != "2015-01"}
+        with self.assertRaisesRegex(
+                ErroBrasil, "só numa das partes: 2015-01.*só na série "
+                "publicada: 2015-01"):
+            coletar(BALANCA, self.transporte(importacoes=importacoes),
+                    sem_pausa, hoje=self.HOJE)
+
+    def test_conta_sem_par_na_publicada_reprova(self):
+        exportacoes = dict(self.EXPORTACOES, **{"2015-02": "100.0"})
+        importacoes = dict(self.IMPORTACOES, **{"2015-02": "50.0"})
+        with self.assertRaisesRegex(ErroBrasil, "só na conta: 2015-02"):
+            coletar(BALANCA, self.transporte(exportacoes, importacoes),
+                    sem_pausa, hoje=self.HOJE)
+
+
 def vigencia(inicio: str, fim: str | None, meta: float, n: int):
     return {"NumeroReuniaoCopom": n, "MetaSelic": meta,
             "DataInicioVigencia": f"{inicio}T03:00:00Z",
@@ -1008,10 +1067,13 @@ class TestRegistro(unittest.TestCase):
                     self.assertTrue(s.sgs and not s.agregado)
                 self.assertIn(s.conferencia, ("janelas", "ptax", "copom",
                                               "inpc", "ultimo-dia",
-                                              "razao-pib"))
+                                              "razao-pib", "diferenca"))
                 self.assertEqual(s.conferencia == "razao-pib",
                                  s.sgs_saldo is not None)
-                if s.conferencia not in ("janelas", "razao-pib"):
+                self.assertEqual(s.conferencia == "diferenca",
+                                 s.sgs_partes is not None)
+                if s.conferencia not in ("janelas", "razao-pib",
+                                         "diferenca"):
                     # As janelas diárias começam no ano de `desde`.
                     self.assertTrue(s.desde)
                 self.assertEqual(s.conferencia == "ultimo-dia",

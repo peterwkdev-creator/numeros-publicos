@@ -7,7 +7,7 @@ página lê do banco.
 
 ## As séries
 
-Cinco do IBGE (API de agregados), seis do Banco Central (SGS) e uma do
+Cinco do IBGE (API de agregados), sete do Banco Central (SGS) e uma do
 Ipea (Ipeadata), todas no nível do país. Cada uma vem com o histórico inteiro que a fonte publica
 (`periodos/all` no IBGE, a janela desde 1990 no SGS): o site mostra a série
 inteira, nunca um recorte, e recorte escolhido aqui seria escolha editorial.
@@ -29,7 +29,8 @@ mesmos pontos com os mesmos valores:
   de vigência de cada meta. As reservas (3546), além das duas janelas, vão
   contra o último dia útil de cada mês da série diária (SGS 13621); a
   dívida líquida (4513), contra a conta do saldo em reais (4478) pelo PIB de
-  12 meses (4382);
+  12 meses (4382); o saldo da balança comercial (22707), contra as
+  exportações (22708) menos as importações (22709);
 - Ipea: o salário mínimo real, refeito mês a mês com o nominal e o INPC
   que o Banco Central publica no SGS.
 
@@ -149,7 +150,8 @@ class SerieBrasil(NamedTuple):
     #: INPC do SGS), `ultimo-dia` (as duas janelas e, além delas, o último
     #: dia útil de cada mês de uma série diária de estoque, `sgs_diaria`) ou
     #: `razao-pib` (as duas janelas e, além delas, o saldo em reais,
-    #: `sgs_saldo`, dividido pelo PIB de 12 meses).
+    #: `sgs_saldo`, dividido pelo PIB de 12 meses) ou `diferenca` (as duas
+    #: janelas e, além delas, uma série menos a outra, `sgs_partes`).
     conferencia: str = "janelas"
     #: O código da série no Ipeadata, quando a fonte é o Ipea.
     ipeadata: str | None = None
@@ -157,6 +159,9 @@ class SerieBrasil(NamedTuple):
     sgs_diaria: int | None = None
     #: O saldo em R$ milhões que, dividido pelo PIB, dá a série (`razao-pib`).
     sgs_saldo: int | None = None
+    #: As duas séries cuja diferença dá a série (`diferenca`): a primeira
+    #: menos a segunda, na unidade do SGS.
+    sgs_partes: tuple[int, int] | None = None
     #: Por quanto dividir o que o SGS publica: as reservas vêm em US$ milhões
     #: e a página fala em bilhões. A divisão é da coleta, não da página: o
     #: banco guarda o número que a página mostra, e o conferidor o compara.
@@ -240,6 +245,17 @@ SERIES: tuple[SerieBrasil, ...] = (
         "reservas", "Reservas internacionais, total, fim do mês",
         "US$ bilhões", "Banco Central", "mensal", sgs=3546, desde="1994-07",
         conferencia="ultimo-dia", sgs_diaria=13621, dividir_por=1000),
+    # Nome no SGS: "Balança comercial - Balanço de Pagamentos - mensal -
+    # saldo", em US$ milhões com uma casa, desde 01/1995 (o critério do
+    # balanço de pagamentos, BPM6), que a coleta divide por mil. A segunda
+    # leitura, além das duas janelas, é a conta: exportações (SGS 22708)
+    # menos importações (SGS 22709), até `DIFERENCA_TOLERANCIA`. Medido em
+    # 08/10/2026: 380 meses, diferença máxima de 0,1 (o arredondamento de
+    # cada série), 280 iguais.
+    SerieBrasil(
+        "balanca-comercial", "Balança comercial, saldo do mês, balanço de "
+        "pagamentos", "US$ bilhões", "Banco Central", "mensal", sgs=22707,
+        conferencia="diferenca", sgs_partes=(22708, 22709), dividir_por=1000),
     # A meta da Selic que o Copom fixa, em vigor no último dia de cada mês.
     # Desde 03/1999, quando o regime da meta começou (05/03/1999): antes, o
     # histórico do Copom traz a TBC, taxa mensal de outro regime. O SGS 432
@@ -712,6 +728,42 @@ def comparar_razao_pib(codigo: str, publicado: Pontos, saldo: Pontos,
                          + "; ".join(partes))
 
 
+#: Cada série do SGS vem arredondada a uma casa: a diferença de duas pode
+#: sair 0,1 longe do saldo publicado, nunca mais (na unidade do SGS).
+DIFERENCA_TOLERANCIA = Decimal("0.1")
+
+
+def comparar_diferenca(codigo: str, publicado: Pontos, mais: Pontos,
+                       menos: Pontos, escala: int = 1) -> None:
+    """A série publicada, de volta à unidade do SGS (× `escala`), contra a
+    primeira parte menos a segunda, mês a mês, até `DIFERENCA_TOLERANCIA`.
+    Mês de um lado só, ou de uma parte só, também é erro."""
+    if not publicado:
+        raise ErroBrasil(f"{codigo}: a série mensal veio vazia")
+    a = {m: Decimal(repr(v)) * escala for m, v in publicado.items()}
+    b = {m: Decimal(repr(v)) - Decimal(repr(menos[m]))
+         for m, v in mais.items() if m in menos}
+    partes = []
+    so_partes = sorted(mais.keys() ^ menos.keys())
+    if so_partes:
+        partes.append(f"só numa das partes: {', '.join(so_partes[:5])}")
+    so_a = sorted(a.keys() - b.keys())
+    so_b = sorted(b.keys() - a.keys())
+    difs = sorted(m for m in a.keys() & b.keys()
+                  if abs(a[m] - b[m]) > DIFERENCA_TOLERANCIA)
+    if so_a:
+        partes.append(f"só na série publicada: {', '.join(so_a[:5])}")
+    if so_b:
+        partes.append(f"só na conta: {', '.join(so_b[:5])}")
+    if difs:
+        partes.append("valores diferentes: " + ", ".join(
+            f"{m} ({a[m].quantize(DIFERENCA_TOLERANCIA)} e "
+            f"{b[m].quantize(DIFERENCA_TOLERANCIA)})" for m in difs[:5]))
+    if partes:
+        raise ErroBrasil(f"{codigo}: a diferença das partes não confere; "
+                         + "; ".join(partes))
+
+
 def comparar(codigo: str, a: Pontos, b: Pontos) -> None:
     """Exige os mesmos períodos com os mesmos valores. Diz o que diverge
     (até cinco de cada tipo)."""
@@ -846,6 +898,14 @@ def coletar(s: SerieBrasil, transporte: Transporte,
                                  obter(up))
             comparar_razao_pib(s.codigo, a, saldo, pib)
             u2 = f"{u2} + {us} + {up}"
+        elif s.conferencia == "diferenca":
+            um, un = (_url_sgs(c, SGS_DESDE, ano) for c in s.sgs_partes)
+            mais = ler_sgs_mensal(f"{s.codigo} (SGS {s.sgs_partes[0]})",
+                                  obter(um))
+            menos = ler_sgs_mensal(f"{s.codigo} (SGS {s.sgs_partes[1]})",
+                                   obter(un))
+            comparar_diferenca(s.codigo, a, mais, menos, s.dividir_por)
+            u2 = f"{u2} + {um} + {un}"
     if not a:
         raise ErroBrasil(f"{s.codigo}: a fonte não devolveu nenhum ponto")
     comparar(s.codigo, a, b)

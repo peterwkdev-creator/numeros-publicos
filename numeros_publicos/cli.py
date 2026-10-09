@@ -972,6 +972,8 @@ CONFERIDA = {
                    "dia útil de cada mês, até 0,05%"),
     "razao-pib": ("iguais em duas janelas e à conta do saldo em reais pelo "
                   "PIB de 12 meses, com duas casas"),
+    "diferenca": ("iguais em duas janelas e às exportações menos as "
+                  "importações, até 0,1 milhão de dólares"),
 }
 
 #: A saída de `brasil-ingerir` quando alguma série (ou a meta) ficou de fora:

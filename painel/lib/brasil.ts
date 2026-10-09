@@ -218,6 +218,22 @@ export const APRESENTACAO: Record<string, Apresentacao> = {
       "1994, o primeiro mês do Real. De 2001 a 2005, parte das reservas " +
       "vinha de empréstimos do FMI, quitados no fim de 2005.",
   },
+  "balanca-comercial": {
+    titulo: "Balança comercial: saldo do mês",
+    fiscal: false,
+    como:
+      "Quanto o país vendeu de bens ao exterior, menos o que comprou, no " +
+      "mês. Acima de zero, vendeu mais do que comprou (superávit); abaixo, " +
+      "comprou mais do que vendeu (déficit).",
+    melhor: "nenhum",
+    zero: { acima: "superávit", abaixo: "déficit" },
+    nota:
+      "Em bilhões de dólares, pelo critério do balanço de pagamentos, desde " +
+      "janeiro de 1995. Por isso não bate com o número do Ministério do " +
+      "Desenvolvimento (Comex Stat): o Banco Central inclui a energia " +
+      "elétrica, as operações sem passagem pela alfândega e as encomendas " +
+      "postais. O saldo sobe e desce ao longo do ano com a safra.",
+  },
   selic: {
     titulo: "Selic: a taxa básica de juros",
     fiscal: false,

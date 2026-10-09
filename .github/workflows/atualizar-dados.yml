@@ -164,9 +164,15 @@ jobs:
           fi
           echo "Publicação: $GITHUB_SERVER_URL/$GH_REPO/actions/runs/$id"
           # Pelo estado, e não pelo `gh run watch --exit-status`, que já saiu
-          # com 1 com o run ainda rodando (github.md, 09/10/2026). O laço acaba
-          # no `timeout-minutes` do job, se a publicação nunca terminar.
+          # com 1 com o run ainda rodando (github.md, 09/10/2026). Com prazo
+          # próprio, abaixo do `timeout-minutes` do job: job cancelado pelo
+          # tempo não avisa ninguém, e falhar avisa.
+          prazo=$((SECONDS + 105 * 60))
           while [ "$(gh run view "$id" --json status -q .status)" != "completed" ]; do
+            if [ "$SECONDS" -ge "$prazo" ]; then
+              echo "::error::a publicação não terminou em 105 min: $GITHUB_SERVER_URL/$GH_REPO/actions/runs/$id"
+              exit 1
+            fi
             sleep 60
           done
           conclusao=$(gh run view "$id" --json conclusion -q .conclusion)

@@ -25,7 +25,7 @@ contra o limite legal, o índice escolar e trabalho e renda (desocupação,
 cobertura previdenciária e rendimento do Censo 2022; empresas, pessoal ocupado
 e salário médio do Cadastro Central de Empresas), unidos pelo código do IBGE.
 
-A metade fiscal vem do [painel-fiscal-ne](https://github.com/peterwkdev-creator/painel-fiscal-ne),
+A metade fiscal vem do [painel-fiscal](https://github.com/peterwkdev-creator/painel-fiscal),
 entregue como um retrato versionado em vez de buscada na hora do build: um
 build que entrasse em outro repositório falharia em silêncio no dia em que
 esse repositório mudasse.
@@ -423,7 +423,7 @@ description is in Portuguese above; this is the short version.
 - **Sources, all public and token-free:** IBGE's public APIs
   (`https://servicodados.ibge.gov.br`), municipal fiscal filings from
   SICONFI (`https://apidatalake.tesouro.gov.br`, through
-  [painel-fiscal-ne](https://github.com/peterwkdev-creator/painel-fiscal-ne)),
+  [painel-fiscal](https://github.com/peterwkdev-creator/painel-fiscal)),
   school results from INEP, INSS open data and the Ministry of Labour's Novo
   Caged microdata (`ftp.mtps.gov.br`).
 - **Checked against the source, not against itself:** the sum of all

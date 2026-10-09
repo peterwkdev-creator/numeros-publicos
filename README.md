@@ -337,9 +337,10 @@ conferência, cumprida pelo `npm run conferir-xlsx` acima.
 
 ## Notas de projeto
 
-**Ausente não é zero.** O IBGE marca valores ausentes com `-`, `...` ou `X`.
-Eles viram `NULL`, nunca `0`: confundir "não sabemos" com "zero" é como um
-painel começa a mentir sem ninguém perceber. As médias contam só as linhas que
+**Ausente não é zero.** O IBGE marca valores ausentes com `..`, `...`, `X`
+ou `.`. Eles viram `NULL`, nunca `0`: confundir "não sabemos" com "zero" é
+como um painel começa a mentir sem ninguém perceber. O `-` não está entre
+eles: é o zero do IBGE, como diz a seção de integridade. As médias contam só as linhas que
 têm número.
 
 **Procedência é coluna, não comentário.** Toda observação registra quando foi

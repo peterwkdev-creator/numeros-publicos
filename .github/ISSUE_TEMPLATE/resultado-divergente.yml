@@ -1,0 +1,30 @@
+name: Número diferente da fonte
+description: Um número do site difere da fonte oficial ou da sua conta, ou falta um município ou um dado.
+title: "Número diferente: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Não escreva dado pessoal (CPF, endereço, contato) de ninguém.
+        O site reproduz o dado oficial como a fonte o publica: não é auditoria nem parecer sobre a gestão de nenhum município.
+  - type: input
+    id: pagina
+    attributes:
+      label: Página
+      description: O endereço da página e a data em que você a viu.
+    validations:
+      required: true
+  - type: textarea
+    id: obtido
+    attributes:
+      label: O que o site mostra
+      description: O número e onde ele aparece na página.
+    validations:
+      required: true
+  - type: textarea
+    id: esperado
+    attributes:
+      label: O que você esperava, e de onde vem
+      description: O endereço da fonte oficial, a tabela ou a conta à mão.
+    validations:
+      required: true

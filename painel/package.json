@@ -29,5 +29,8 @@
     "serve": "14.2.6",
     "typescript": "5.8.3"
   },
+  "overrides": {
+    "compression": "1.8.2"
+  },
   "license": "AGPL-3.0-or-later"
 }

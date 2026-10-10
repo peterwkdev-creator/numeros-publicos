@@ -17,7 +17,7 @@ uma issue pelo modelo "Número diferente da fonte". Para mandar código:
   ```
 
 - Todo número vem de fonte oficial (IBGE, Tesouro Nacional, INEP, INSS,
-  Ministério do Trabalho, CGU), com o endereço da fonte, a data da coleta e
+  Ministérios do Trabalho e da Saúde, CGU, Banco Central, Ipea e INPE), com o endereço da fonte, a data da coleta e
   uma conferência que o compara com a própria fonte, não consigo mesmo.
 - O site não toma lado: o texto descreve o dado, sem juízo sobre governo,
   partido ou pessoa.

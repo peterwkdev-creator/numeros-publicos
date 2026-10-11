@@ -95,6 +95,9 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add painel/dados/caged.json
           git commit -m "atualiza o Novo Caged ($(python -c "import json;print(json.load(open('painel/dados/caged.json'))['competencia'])"))"
+          # Um push no main enquanto a coleta roda faria este ser recusado
+          # (não é fast-forward) e o dado do dia se perderia.
+          git pull --rebase
           git push
           echo "commitou=true" >> "$GITHUB_OUTPUT"
 

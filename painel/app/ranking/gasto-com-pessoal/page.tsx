@@ -10,6 +10,8 @@ import {
 } from "../../../lib/jsonld";
 import { cartaoSocial, lerFiscal, lerIdeb, lerSnapshot, SITE } from "../../../lib/servidor";
 import estilos from "./ranking.module.css";
+import ComoLer from "../../componentes/como-ler";
+import Termo from "../../componentes/termo";
 
 const CAMINHO = "/ranking/gasto-com-pessoal/";
 
@@ -161,9 +163,11 @@ export default async function Pagina() {
       </h1>
       <p className={estilos.chamada}>
         Quanto cada prefeitura gasta com a folha de pagamento, em proporção da
-        receita corrente líquida — e quais passaram do teto que a Lei de
+        <Termo chave="rcl">receita corrente líquida</Termo> — e quais passaram do{" "}
+        <Termo chave="teto-legal">teto</Termo> que a Lei de
         Responsabilidade Fiscal impõe ao Executivo municipal.
       </p>
+      <ComoLer tipo="ranking" />
 
       <div className={estilos.grade}>
         <div className={estilos.cartao}>

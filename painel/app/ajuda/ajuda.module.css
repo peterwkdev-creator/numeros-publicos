@@ -118,6 +118,39 @@
   color: var(--tinta);
 }
 
+.subtitulo {
+  font-size: var(--texto-base);
+  margin: var(--e-6) 0 var(--e-2);
+}
+
+/* O glossário: o verbete leva o alvo da âncora, então o deslocamento do
+   topo é dele, e não só da seção. */
+.glossario {
+  margin: 0;
+  max-width: 68ch;
+}
+
+.verbete {
+  padding: var(--e-3) 0;
+  border-bottom: 1px solid var(--borda);
+  scroll-margin-top: var(--e-6);
+}
+
+.verbete:target {
+  background: var(--acento-suave);
+}
+
+.verbete dt {
+  font-weight: 600;
+  color: var(--tinta);
+}
+
+.verbete dd {
+  margin: var(--e-1) 0 0;
+  line-height: 1.6;
+  color: var(--tinta-suave);
+}
+
 .rodape {
   border-top: 1px solid var(--borda);
   padding-top: var(--e-4);

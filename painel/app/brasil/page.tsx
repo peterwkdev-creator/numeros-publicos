@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import SerieBrasilSvg from "../componentes/serie-brasil-svg";
+import ComoLer from "../componentes/como-ler";
 import { br, dataCurta } from "../../lib/dados";
 import {
   APRESENTACAO, dominio, fontesPorExtenso, inicioPeriodo, rotuloPeriodo,
@@ -109,6 +110,7 @@ export default async function Pagina() {
         o primeiro dado que a fonte publica nesta forma. Ao fundo, quem ocupava
         a Presidência da República em cada período.
       </p>
+      <ComoLer tipo="brasil" />
 
       {/* A nota fixa da espec (seção 4, item 2), no topo e em cada gráfico:
           quem chega por um link direto a um gráfico também a lê. */}

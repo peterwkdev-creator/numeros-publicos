@@ -40,6 +40,7 @@ import { emendasDe, mesDeCorte, SEM_PREFEITURA } from "../../../lib/emendas";
 import DistribuicaoSvg from "../../componentes/distribuicao-svg";
 import IdebSvg from "../../componentes/ideb-svg";
 import Termo from "../../componentes/termo";
+import ComoLer from "../../componentes/como-ler";
 import NestaPagina from "../../componentes/nesta-pagina";
 import SerieSvg from "./serie-svg";
 import SaudeSvg from "./saude-svg";
@@ -475,8 +476,10 @@ export default async function PaginaMunicipio(
           {m.nome} <span className={estilos.uf}>{m.uf}</span>
         </h1>
         <p className={estilos.chamada}>
-          Código IBGE {m.codigo}. Todos os números abaixo vêm das APIs públicas
-          do IBGE e do Tesouro Nacional, com a fonte ao lado de cada um.
+          Código IBGE {m.codigo}. Os números abaixo vêm de fontes oficiais — o
+          IBGE, o Tesouro Nacional, o INEP, os ministérios da Saúde e do
+          Trabalho e a Controladoria-Geral da União —, com a fonte ao lado de
+          cada um.
         </p>
         {/* A data que o sitemap anuncia para esta página, com a mesma função:
             quem volta vê de cara se há coisa nova, e a página e o buscador
@@ -486,6 +489,7 @@ export default async function PaginaMunicipio(
           Dados atualizados em{" "}
           <time dateTime={atualizado.toISOString()}>{dataPorExtenso(atualizado)}</time>.
         </p>
+        <ComoLer tipo="municipio" />
       </header>
 
       <section className={estilos.grade} aria-label="Indicadores">
@@ -562,35 +566,19 @@ export default async function PaginaMunicipio(
           </p>
           <p className={estilos.selo}>
             {f?.faixa === "implausivel" ? (
-              <Termo
-                ancora="implausivel"
-                bloco
-                dica="O percentual declarado não pode descrever a prefeitura: acima de 100% da receita, negativo, ou calculado sobre uma receita corrente líquida que a declaração de receita do próprio município desmente. Não descreve uma crise: descreve um relatório preenchido errado. Fica exibido e marcado, e fora das médias e do ranking."
-              >
+              <Termo chave="implausivel">
                 {ROTULO_FAIXA.implausivel}
               </Termo>
             ) : f?.faixa === "sem-dado" ? (
-              <Termo
-                ancora="travessao"
-                bloco
-                dica="O município não entregou o relatório ao SICONFI. Isso não significa que gaste zero com pessoal: significa que o dado não existe na base do Tesouro."
-              >
+              <Termo chave="sem-relatorio">
                 {ROTULO_FAIXA["sem-dado"]}
               </Termo>
             ) : f?.faixa === "como-estado" ? (
-              <Termo
-                ancora="como-estado"
-                bloco
-                dica="Este ente presta contas como estado, e não como município: entrega o relatório na esfera estadual, onde de fato responde. O painel cobre municípios, e por isso não há número aqui — o que falta é o recorte, não a prestação de contas."
-              >
+              <Termo chave="como-estado">
                 {ROTULO_FAIXA["como-estado"]}
               </Termo>
             ) : f?.faixa === "nao-instalado" ? (
-              <Termo
-                ancora="nao-instalado"
-                bloco
-                dica="O município só passou a ter prefeitura depois do exercício deste relatório. Não havia quem o entregasse, e por isso não há número aqui: o que falta é o município no período, não a prestação de contas."
-              >
+              <Termo chave="nao-instalado">
                 {ROTULO_FAIXA["nao-instalado"]}
               </Termo>
             ) : (
@@ -621,11 +609,7 @@ export default async function PaginaMunicipio(
           )}
           <p className={estilos.fonte}>
             da{" "}
-            <Termo
-              ancora="pessoal"
-              bloco
-              dica="A arrecadação do município menos as transferências que ele é obrigado a repassar, com os ajustes que a Lei de Responsabilidade Fiscal manda fazer. É o denominador do percentual — e é a ajustada, não a bruta."
-            >
+            <Termo chave="rcl">
               receita corrente líquida ajustada
             </Termo>{" "}
             · {quadrimestre} · SICONFI
@@ -669,17 +653,27 @@ export default async function PaginaMunicipio(
       {(posPop || posPerCapita) && uf && (
         <section className={estilos.texto} id="no-estado">
           <h2>{m.nome} no seu estado</h2>
+          {/* Nas pontas a conta vira frase: "mais habitantes que 0 dos 853"
+              é verdade e não se lê (Serra da Saudade, o menor do país). */}
           {posPop && (
             <p>
-              Em população, {m.nome} tem <strong>mais habitantes que{" "}
-              {br(posPop.abaixo)}</strong> dos <strong>{br(posPop.de)}</strong>{" "}
-              municípios {deEstado(m.uf)} — a mediana do estado é{" "}
+              Em população, {m.nome}{" "}
+              {posPop.abaixo === 0 ? (
+                <>é <strong>o menos populoso</strong> dos</>
+              ) : posPop.abaixo === posPop.de - 1 ? (
+                <>é <strong>o mais populoso</strong> dos</>
+              ) : (
+                <>tem <strong>mais habitantes que{" "}
+                {br(posPop.abaixo)}</strong> dos</>
+              )}{" "}
+              <strong>{br(posPop.de)}</strong>{" "}
+              municípios {deEstado(m.uf)} — a <Termo chave="mediana">mediana</Termo> do estado é{" "}
               <strong>{br(posPop.mediana, 0)}</strong> habitantes.
             </p>
           )}
           {posPerCapita && perCapita !== null && (
             <p>
-              O PIB por habitante, <strong>R$ {br(perCapita, 0)}</strong>, fica{" "}
+              O <Termo chave="pib-por-habitante">PIB por habitante</Termo>, <strong>R$ {br(perCapita, 0)}</strong>, fica{" "}
               <strong>
                 {perCapita >= posPerCapita.mediana ? "acima" : "abaixo"}
               </strong>{" "}
@@ -746,7 +740,7 @@ export default async function PaginaMunicipio(
             )}
             <br />
             <br />
-            O número acima é <strong>o que o município enviou ao SICONFI</strong>,
+            O número acima é <strong>o que o município enviou ao <Termo chave="siconfi">SICONFI</Termo></strong>,
             conferido linha a linha contra a API. Este painel não o corrige —
             corrigir seria inventar um valor — mas também não o apresenta como se
             fosse verdade sobre o gasto real.
@@ -760,10 +754,7 @@ export default async function PaginaMunicipio(
             Executivo municipal, e{" "}
             <strong>{br(f.limitePrudencial ?? fiscal.limites.prudencial, 2)}%</strong>{" "}
             como{" "}
-            <Termo
-              ancora="pessoal"
-              dica="O patamar de alerta da Lei de Responsabilidade Fiscal, 95% do teto. Passar dele já proíbe criar cargo, conceder aumento e contratar — antes de o teto ser atingido."
-            >
+            <Termo chave="limite-prudencial">
               limite prudencial
             </Termo>{" "}
             — passar dele já proíbe criar cargo, conceder aumento e contratar.
@@ -1043,12 +1034,12 @@ export default async function PaginaMunicipio(
                 regra que só passou a valer em 2004. */}
             {saude.ultimo[1] >= 15 ? (
               <>
-                Está <strong>acima do mínimo constitucional de 15%</strong>, que
+                Está <strong>acima do <Termo chave="minimo-saude">mínimo constitucional</Termo> de 15%</strong>, que
                 vale desde 2004.
               </>
             ) : (
               <>
-                Está <strong>abaixo do mínimo constitucional de 15%</strong>, que
+                Está <strong>abaixo do <Termo chave="minimo-saude">mínimo constitucional</Termo> de 15%</strong>, que
                 vale desde 2004.
               </>
             )}{" "}
@@ -1154,14 +1145,11 @@ export default async function PaginaMunicipio(
           )}
           <p className={estilos.ressalva}>
             Despesa{" "}
-            <Termo
-              ancora="funcao"
-              dica="O que de fato foi gasto: o serviço foi prestado ou o material entregue, e a prefeitura reconheceu a dívida. Diferente de dotação (o que foi orçado) e de empenhada (o dinheiro reservado)."
-            >
+            <Termo chave="liquidada">
               <strong>liquidada</strong>
             </Termo>{" "}
             até o bimestre — o que de fato foi gasto, não o que foi orçado nem o
-            que foi empenhado. {m.nome}{" "}
+            que foi <Termo chave="empenhada">empenhado</Termo>. {m.nome}{" "}
             declarou gasto em <strong>{funcoes.fatias.length}</strong> das{" "}
             {FUNCOES_DA_PORTARIA} funções previstas na Portaria MOG 42/1999, e a
             soma delas fecha com o total que o próprio município declarou.
@@ -1423,7 +1411,7 @@ export default async function PaginaMunicipio(
                 quase nada.{" "}
               </>
             )}
-            Os valores são <strong>nominais</strong>: parte do crescimento é
+            Os valores são <strong><Termo chave="nominal">nominais</Termo></strong>: parte do crescimento é
             inflação, e este painel não deflaciona nada.{" "}
             {serieFuncoes.length >= 3 && (
               <>
@@ -1530,7 +1518,8 @@ export default async function PaginaMunicipio(
           )}
           <p className={estilos.ressalva}>
             Conta o que a União <strong>pagou</strong> à prefeitura e aos
-            fundos municipais (como o de saúde) por emendas parlamentares ao
+            fundos municipais (como o de saúde) por{" "}
+            <Termo chave="emenda-parlamentar">emendas parlamentares</Termo> ao
             orçamento federal, pelo mês do pagamento, e não o que foi
             empenhado. Não entram os pagamentos a outros favorecidos no
             município, como o governo do estado, entidades e empresas.{" "}
@@ -1583,10 +1572,7 @@ export default async function PaginaMunicipio(
                 {m.nome} destinou{" "}
                 <strong>{br(educacao.percentual, 1)}%</strong> do orçamento à
                 educação no {bimestre}. O{" "}
-                <Termo
-                  ancora="ideb"
-                  dica="O índice do INEP que combina o quanto os alunos aprenderam (prova do SAEB) com quantos avançaram de ano sem reprovar ou abandonar. Vai de 0 a 10, na mesma escala para todo município do país."
-                >
+                <Termo chave="ideb">
                   IDEB
                 </Termo>{" "}
                 mede o outro lado da mesma conta: aprendizado e fluxo escolar,
@@ -1770,7 +1756,7 @@ export default async function PaginaMunicipio(
         <section className={estilos.texto} id="como-se-vive">
           <h2>Como se vive em {m.nome}</h2>
           <p>
-            Do <strong>Censo de 2022</strong>. Cada linha traz{" "}
+            Do <strong><Termo chave="censo">Censo de 2022</Termo></strong>. Cada linha traz{" "}
             <strong>quantos</strong>, e não só a proporção: é o número absoluto
             que permite conferir na fonte, e a porcentagem sozinha esconde o
             tamanho do lugar.
@@ -1808,7 +1794,7 @@ export default async function PaginaMunicipio(
           {temCensoTrabalho && (
             <>
               <p>
-                Do <strong>Censo de 2022</strong>, que conta as pessoas onde
+                Do <strong><Termo chave="censo">Censo de 2022</Termo></strong>, que conta as pessoas onde
                 elas <strong>moram</strong>, trabalhem ali ou numa cidade
                 vizinha.
               </p>
@@ -1847,7 +1833,7 @@ export default async function PaginaMunicipio(
                 Empresas e empregos em {anoEmpresas}
               </h3>
               <p>
-                Do <strong>Cadastro Central de Empresas</strong> do IBGE, que
+                Do <strong><Termo chave="cempre">Cadastro Central de Empresas</Termo></strong> do IBGE, que
                 conta os empregos onde a <strong>empresa</strong> está. Inclui
                 prefeitura, câmara e outros órgãos públicos, e não inclui quem
                 trabalha por conta própria sem CNPJ.
@@ -1873,7 +1859,7 @@ export default async function PaginaMunicipio(
                 {nomeCompetencia(caged.competencia)}
               </h3>
               <p>
-                Do <strong>Novo Caged</strong>, do Ministério do Trabalho, que
+                Do <strong><Termo chave="caged">Novo Caged</Termo></strong>, do Ministério do Trabalho, que
                 registra cada contratação e cada desligamento com carteira
                 assinada, no município da empresa. Em 12 meses foram{" "}
                 <strong>{contagem(cagedM.admissoes, "admissão", "admissões")}</strong>{" "}
@@ -1881,7 +1867,7 @@ export default async function PaginaMunicipio(
                 <strong>
                   {contagem(cagedM.desligamentos, "desligamento", "desligamentos")}
                 </strong>
-                : saldo de <strong>{comSinal(cagedM.saldo)}</strong>. Só em{" "}
+                : <Termo chave="saldo">saldo</Termo> de <strong>{comSinal(cagedM.saldo)}</strong>. Só em{" "}
                 {nomeCompetencia(caged.competencia)}, o saldo foi de{" "}
                 <strong>{comSinal(cagedM.ultimo.saldo)}</strong>.
               </p>
@@ -1913,7 +1899,8 @@ export default async function PaginaMunicipio(
             <strong>
               Não existe taxa de desemprego atual por município
             </strong>{" "}
-            em nenhuma fonte oficial. A do Censo é de 2022; a PNAD Contínua,
+            em nenhuma fonte oficial. A do Censo é de 2022; a{" "}
+            <Termo chave="pnad">PNAD Contínua</Termo>,
             que o IBGE publica a cada trimestre, vai só até os estados e as
             capitais, e mede de outro jeito — as duas não se comparam. No
             Censo, a desocupação do país inteiro foi de{" "}

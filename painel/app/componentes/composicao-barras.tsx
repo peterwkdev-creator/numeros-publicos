@@ -40,6 +40,7 @@ export default function ComposicaoBarras({
   fatias,
   total,
   municipio,
+  local,
   legenda = "Despesa liquidada por função",
   cabecalho = "Função",
   cabecalhoPercentual = "% do gasto",
@@ -49,6 +50,9 @@ export default function ComposicaoBarras({
   fatias: FatiaFuncao[];
   total: number | null;
   municipio: string;
+  /** O lugar com a preposição certa ("na Bahia"); sem ele, "em {municipio}",
+   * que serve a município e erra em estado ("em Bahia"). */
+  local?: string;
   legenda?: string;
   cabecalho?: string;
   cabecalhoPercentual?: string;
@@ -88,7 +92,7 @@ export default function ComposicaoBarras({
   return (
     <table className={estilos.funcoes}>
       <caption className="so-leitor">
-        {legenda} em {municipio}, da maior para a menor.
+        {legenda} {local ?? `em ${municipio}`}, da maior para a menor.
       </caption>
       <thead>
         <tr>

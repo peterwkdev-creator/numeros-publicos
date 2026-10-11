@@ -54,6 +54,8 @@ import {
   emendasDe, mesDeCorte, rotuloDoTipo, SEM_PREFEITURA, type SnapshotEmendas,
 } from "../lib/emendas.ts";
 import { xlsx } from "../lib/xlsx.ts";
+import { ancoraDe, glossarioAZ, idDoVerbete } from "../lib/glossario.ts";
+import { COMO_LER } from "../lib/como-ler.ts";
 
 // ------------------------------------------------------------------ posicao
 
@@ -2640,4 +2642,38 @@ test("emendas.json: 5.571 municípios, centavos inteiros, e os tipos somam o ano
     assert.ok(em, `${codigo} está no arquivo`);
     assert.ok(em.anos.every((a) => a.reais === null), `${codigo} passou a ter pagamento`);
   }
+});
+
+// As âncoras da ajuda: o "Mais sobre isto" do `<Termo>`, o do verbete e o do
+// "Como ler" levam a `/ajuda/#secao`. Seção renomeada ou apagada deixa o link
+// bem formado e caindo no topo da página, sem erro em lugar nenhum. A chave do
+// `<Termo>` o próprio TypeScript cobra (`ChaveGlossario`); o destino, só isto.
+function idsDaAjuda(): Set<string> {
+  const texto = fs.readFileSync(
+    new URL("../app/ajuda/page.tsx", import.meta.url), "utf-8");
+  return new Set([...texto.matchAll(/\bid="([^"]+)"/g)].map((m) => m[1]));
+}
+
+test("toda seção citada pelo glossário existe na /ajuda", () => {
+  const ids = idsDaAjuda();
+  const faltam = glossarioAZ()
+    .filter(({ verbete }) => verbete.secao && !ids.has(verbete.secao))
+    .map(({ chave, verbete }) => `${chave} -> #${verbete.secao}`);
+  assert.deepEqual(faltam, []);
+});
+
+test("verbete sem seção leva ao próprio verbete, e a /ajuda o desenha com esse id", () => {
+  const texto = fs.readFileSync(
+    new URL("../app/ajuda/page.tsx", import.meta.url), "utf-8");
+  assert.match(texto, /id=\{idDoVerbete\(chave\)\}/);
+  assert.equal(ancoraDe("nao-instalado"), idDoVerbete("nao-instalado"));
+  assert.equal(ancoraDe("mediana"), "mediana");
+});
+
+test("todo link do Como ler aponta para uma seção que existe na /ajuda", () => {
+  const ids = idsDaAjuda();
+  const faltam = Object.entries(COMO_LER).flatMap(([tipo, itens]) =>
+    itens.filter((i) => i.ajuda && !ids.has(i.ajuda.ancora))
+      .map((i) => `${tipo}: ${i.titulo} -> #${i.ajuda!.ancora}`));
+  assert.deepEqual(faltam, []);
 });

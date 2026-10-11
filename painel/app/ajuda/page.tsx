@@ -10,6 +10,8 @@ import { gruposComPagina } from "../../lib/inss";
 import { lerFiscal, lerIdeb, lerInss, lerSnapshot, SITE } from "../../lib/servidor";
 import estilos from "./ajuda.module.css";
 import { anteriorDeFuncoes, atualDeFuncoes, naoInstaladosEm } from "../../lib/fiscal";
+import { glossarioAZ, idDoVerbete } from "../../lib/glossario";
+import { ListaComoLer } from "../componentes/como-ler";
 
 /**
  * A página de ajuda — o que fazer quando o número não se explica sozinho.
@@ -97,7 +99,7 @@ export default async function PaginaAjuda() {
 
   // `WebPage`, e deliberadamente NÃO `FAQPage`.
   //
-  // A página tem treze perguntas e responderia ao formato, mas o `FAQPage`
+  // A página tem duas dezenas de perguntas e responderia ao formato, mas o `FAQPage`
   // exige repetir cada resposta como texto dentro do JSON-LD. Isso cria uma
   // segunda cópia do conteúdo, que se afasta da visível no primeiro ajuste de
   // redação — e dado estruturado que não bate com o que está na tela é
@@ -117,7 +119,8 @@ export default async function PaginaAjuda() {
     description:
       "Glossário e perguntas frequentes sobre os números publicados: RCL " +
       "ajustada, limites da Lei de Responsabilidade Fiscal, despesa " +
-      "liquidada por função, IDEB e as convenções de ausência de dado.",
+      "liquidada por função, IDEB, Censo, Caged, emendas, saúde e as " +
+      "convenções de ausência de dado, com um glossário de A a Z.",
   };
 
   return (
@@ -160,12 +163,21 @@ export default async function PaginaAjuda() {
       <nav className={estilos.sumario} aria-label="Nesta página">
         <h2>Nesta página</h2>
         <ul>
+          <li><a href="#como-ler">Como ler as páginas</a></li>
           <li><a href="#travessao">Por que aparece “—” no lugar de um número</a></li>
+          <li><a href="#mediana">Média, mediana e pontos percentuais</a></li>
+          <li><a href="#relatorios">Os relatórios fiscais: RGF, RREO e o SICONFI</a></li>
           <li><a href="#pessoal">Despesa com pessoal, RCL e os dois limites</a></li>
           <li><a href="#implausivel">O que quer dizer “valor implausível”</a></li>
           <li><a href="#funcao">Despesa por função, e o que é “liquidada”</a></li>
           <li><a href="#comparacao">Por que a comparação é entre anos</a></li>
+          <li><a href="#saude">Saúde: o mínimo da Constituição e o SIOPS</a></li>
+          <li><a href="#emendas">Emendas parlamentares: o que entra na conta</a></li>
           <li><a href="#ideb">O que é o IDEB, e por que só a rede municipal</a></li>
+          <li><a href="#censo">Censo, PIB e as outras estatísticas do IBGE</a></li>
+          <li><a href="#caged">Emprego com carteira: o Novo Caged</a></li>
+          <li><a href="#brasil">Como ler o Brasil ao longo do tempo</a></li>
+          <li><a href="#ranking">Como ler o ranking do gasto com pessoal</a></li>
           <li><a href="#inss">Quanto tempo o INSS está levando</a></li>
           <li><a href="#inflacao">Os valores estão corrigidos pela inflação?</a></li>
           <li><a href="#quando">De quando são os dados</a></li>
@@ -175,8 +187,33 @@ export default async function PaginaAjuda() {
           <li><a href="#licenca">Posso usar estes dados?</a></li>
           <li><a href="#erro">Achei um número errado</a></li>
           <li><a href="#outras">Onde perguntar o que este site não responde</a></li>
+          <li><a href="#glossario">Glossário de A a Z</a></li>
         </ul>
       </nav>
+
+      {/* O roteiro de cada tipo de página, o mesmo texto do "Como ler esta
+          página" que fica fechado abaixo do título delas (`lib/como-ler.ts`). */}
+      <section className={estilos.bloco} id="como-ler">
+        <h2>Como ler as páginas</h2>
+        <p>
+          Logo abaixo do título de cada página há um quadro fechado, “Como ler
+          esta página”. O que ele diz está reunido aqui.
+        </p>
+        <h3 className={estilos.subtitulo}>A página de um município</h3>
+        <ListaComoLer tipo="municipio" naAjuda />
+        <h3 className={estilos.subtitulo}>A página de um estado</h3>
+        <ListaComoLer tipo="estado" naAjuda />
+        <h3 className={estilos.subtitulo}>
+          <Link href="/brasil/" prefetch={false}>O Brasil ao longo do tempo</Link>
+        </h3>
+        <ListaComoLer tipo="brasil" naAjuda />
+        <h3 className={estilos.subtitulo}>
+          <Link href="/ranking/gasto-com-pessoal/" prefetch={false}>
+            O ranking do gasto com pessoal
+          </Link>
+        </h3>
+        <ListaComoLer tipo="ranking" naAjuda />
+      </section>
 
       <section className={estilos.bloco} id="travessao">
         <h2>Por que aparece “—” no lugar de um número</h2>
@@ -187,10 +224,12 @@ export default async function PaginaAjuda() {
         <p>
           No {quadrimestre}, <strong>{br(naoPublicaram)}</strong> dos{" "}
           {br(obrigados)} municípios consultados
-          {naoInstalados > 0 && " que já estavam instalados"} não entregaram o Relatório
-          de Gestão Fiscal ao SICONFI. Isso não significa que gastem zero com
-          pessoal: significa que ninguém sabe quanto gastam, porque o relatório
-          não foi publicado.
+          {naoInstalados > 0 && " que já estavam instalados"} não têm o Relatório
+          de Gestão Fiscal quadrimestral no SICONFI. Isso não significa que
+          gastem zero com pessoal: significa que o site não tem o número.
+          Parte deles tem menos de 50 mil habitantes e pode ter optado pelo
+          relatório semestral simplificado, que o site ainda não lê (veja{" "}
+          <a href="#relatorios">os relatórios fiscais</a>).
         </p>
         <p>
           Escrever “0” ali seria inventar um número, e é assim que um painel
@@ -203,8 +242,9 @@ export default async function PaginaAjuda() {
         </p>
         <ul className={estilos.lista}>
           <li>
-            <strong>Sem relatório entregue</strong> — perguntamos, e o
-            município não publicou. É afirmação sobre ele.
+            <strong>Sem relatório entregue</strong> — perguntamos pelo
+            relatório quadrimestral, e ele não está no SICONFI. Ou o município
+            não o entregou, ou optou pelo semestral simplificado.
           </li>
           <li>
             <strong>Ainda não consultado</strong> — nós é que ainda não
@@ -227,6 +267,70 @@ export default async function PaginaAjuda() {
             entregasse.
           </li>
         </ul>
+      </section>
+
+      {/* Os números do exemplo são de brinquedo, escolhidos para a conta ser
+          feita de cabeça; nenhum vem do dado. */}
+      <section className={estilos.bloco} id="mediana">
+        <h2>Média, mediana e pontos percentuais</h2>
+        <p>
+          A <strong>média</strong> é a soma dividida pela quantidade. A{" "}
+          <strong>mediana</strong> é o valor do meio, depois de pôr todos em
+          ordem: metade fica abaixo dela, metade acima.
+        </p>
+        <p>
+          Cinco municípios com 20, 30, 40, 45 e 90: a mediana é 40 (o do
+          meio) e a média é 45 (225 dividido por 5). Se o último fosse 900 e
+          não 90, a média iria a 207, e a mediana continuaria 40. Um valor
+          extremo puxa a média; a mediana não se mexe.
+        </p>
+        <p>
+          Por isso, para dizer se um número é alto ou baixo, o site o compara
+          com a <strong>mediana dos municípios do mesmo estado</strong>, e não
+          com a média: num estado, poucas cidades grandes puxariam a média
+          para longe de quase todas as outras.
+        </p>
+        <p>
+          <strong>Pontos percentuais</strong> são a diferença entre dois
+          percentuais. Passar de 20% para 25% é subir 5 pontos percentuais —
+          e é também um aumento de 25% sobre o valor de partida. As duas
+          frases estão certas, e dizem coisas diferentes; o site usa a
+          primeira.
+        </p>
+      </section>
+
+      <section className={estilos.bloco} id="relatorios">
+        <h2>Os relatórios fiscais: RGF, RREO e o SICONFI</h2>
+        <p>
+          A Lei de Responsabilidade Fiscal obriga todo município a publicar
+          dois relatórios e a entregá-los ao <strong>SICONFI</strong>, o
+          sistema do Tesouro Nacional. É de lá que vêm os números fiscais deste
+          site, como o próprio município os declarou.
+        </p>
+        <ul className={estilos.lista}>
+          <li>
+            <strong>RGF, o Relatório de Gestão Fiscal</strong> — a cada{" "}
+            <strong>quadrimestre</strong> (janeiro a abril, maio a agosto,
+            setembro a dezembro). Traz a despesa com pessoal e a compara com
+            os limites da lei. O município com menos de 50 mil habitantes pode
+            optar por publicá-lo a cada <strong>semestre</strong>, numa versão
+            simplificada (art. 63 da lei).{" "}
+            <strong>O site, por ora, lê só o quadrimestral</strong>: quem
+            optou pelo semestral aparece sem o número.
+          </li>
+          <li>
+            <strong>RREO, o Relatório Resumido da Execução
+            Orçamentária</strong> — a cada <strong>bimestre</strong>, com a
+            receita e a despesa acumuladas desde janeiro. Dele vêm{" "}
+            <a href="#funcao">a despesa por função</a> e a composição da
+            receita. O último bimestre do ano traz o ano inteiro.
+          </li>
+        </ul>
+        <p>
+          Os dois são entregues em datas diferentes, e um município pode ter um
+          e não o outro. Por isso cada seção da página aparece, ou some, de
+          acordo com o seu próprio relatório.
+        </p>
       </section>
 
       <section className={estilos.bloco} id="pessoal">
@@ -362,6 +466,62 @@ export default async function PaginaAjuda() {
         </p>
       </section>
 
+      <section className={estilos.bloco} id="saude">
+        <h2>Saúde: o mínimo da Constituição e o SIOPS</h2>
+        <p>
+          A Constituição obriga o município a aplicar em ações e serviços
+          públicos de saúde <strong>ao menos 15% da receita de impostos</strong>.
+          Quanto cada um aplicou é ele mesmo que declara, ano a ano, ao{" "}
+          <strong>SIOPS</strong>, o sistema do Ministério da Saúde. É de lá o
+          percentual da seção de saúde, com a série de cada município desde
+          2000, ou desde o primeiro ano que ele declarou.
+        </p>
+        <p>
+          <strong>O mínimo não foi sempre 15%.</strong> A Emenda Constitucional
+          29, de 2000, começou exigindo 7% e deu aos municípios até 2004 para
+          chegar aos 15%. Entre 2001 e 2003 o piso de cada um dependia de onde
+          ele tinha partido, e não há uma régua comum. Por isso a página só
+          compara com os 15% os anos a partir de 2004.
+        </p>
+        <p>
+          O Distrito Federal declara ao SIOPS como estado, e por isso não tem a
+          série municipal.
+        </p>
+      </section>
+
+      <section className={estilos.bloco} id="emendas">
+        <h2>Emendas parlamentares: o que entra na conta</h2>
+        <p>
+          <strong>Emenda parlamentar</strong> é a parte do orçamento federal
+          cujo destino deputados e senadores indicam. O dado vem do Portal da
+          Transparência, da Controladoria-Geral da União.
+        </p>
+        <ul className={estilos.lista}>
+          <li>
+            <strong>Entra</strong> o que a União <strong>pagou</strong> à
+            prefeitura e aos fundos municipais (como o de saúde), pelo mês do
+            pagamento.
+          </li>
+          <li>
+            <strong>Não entra</strong> o que foi só empenhado (reservado no
+            orçamento, sem o dinheiro sair), nem o que foi pago a outros
+            favorecidos no município, como o governo do estado, entidades e
+            empresas.
+          </li>
+          <li>
+            <strong>Valor negativo</strong> quer dizer que, no ano, os
+            estornos superaram os pagamentos.
+          </li>
+        </ul>
+        <p>
+          <strong>A página mostra o último ano completo e o ano corrente.</strong>{" "}
+          Até 2024, parte do dinheiro de emendas era paga ao Banco do Brasil,
+          sem o município de destino; uma série longa mostraria um salto que é,
+          em boa parte, mudança no jeito de registrar. A série desde 2015 está
+          no download da página, com a mesma ressalva.
+        </p>
+      </section>
+
       <section className={estilos.bloco} id="ideb">
         <h2>O que é o IDEB, e por que só a rede municipal</h2>
         <p>
@@ -445,6 +605,129 @@ export default async function PaginaAjuda() {
           ficariam órfãs, sem nenhum link interno, e o rastreador só as acharia
           pelo sitemap. E é aqui que se explica a diferença entre as duas
           medidas, que cada página repete em uma frase. */}
+      <section className={estilos.bloco} id="censo">
+        <h2>Censo, PIB e as outras estatísticas do IBGE</h2>
+        <ul className={estilos.lista}>
+          <li>
+            <strong>Censo Demográfico</strong> — a contagem de toda a
+            população e de todos os domicílios, a mais recente em 2022. Conta
+            as pessoas onde elas <strong>moram</strong>. Dele vêm a seção
+            “Como se vive” e parte de “Trabalho e renda”.
+          </li>
+          <li>
+            <strong>PIB</strong> — o valor de tudo o que se produziu no
+            município num ano, a preços do próprio ano. O IBGE o publica com
+            alguns anos de atraso, e a página diz de que ano é.{" "}
+            <strong>PIB por habitante</strong> é o PIB dividido pela
+            população.
+          </li>
+          <li>
+            <strong>Cadastro Central de Empresas (Cempre)</strong> — conta
+            empresas, órgãos públicos e entidades, e os empregos formais
+            deles, onde a <strong>empresa</strong> está. Não inclui quem
+            trabalha por conta própria sem CNPJ.
+          </li>
+          <li>
+            <strong>PNAD Contínua</strong> — a pesquisa por amostra que mede
+            a desocupação do país, dos estados e das capitais a cada
+            trimestre. Não é desenhada para medir cada município.
+          </li>
+        </ul>
+        <p>
+          <strong>Não existe taxa de desemprego atual por município</strong> em
+          nenhuma fonte oficial. A do Censo é de 2022, e a da PNAD mede de
+          outro jeito: as duas não se comparam. E os recortes não precisam
+          bater: o Censo conta quem mora no município; o cadastro de empresas
+          e o Caged, quem trabalha numa empresa dele. Numa cidade vizinha de um
+          polo, muita gente trabalha fora.
+        </p>
+      </section>
+
+      <section className={estilos.bloco} id="caged">
+        <h2>Emprego com carteira: o Novo Caged</h2>
+        <p>
+          O <strong>Novo Caged</strong>, do Ministério do Trabalho e Emprego,
+          registra cada contratação e cada desligamento com carteira assinada,
+          mês a mês, no município da empresa. A página mostra os últimos 12
+          meses.
+        </p>
+        <ul className={estilos.lista}>
+          <li>
+            <strong>Saldo</strong> é admissões menos desligamentos. Positivo,
+            abriram-se mais vagas com carteira do que se fecharam; negativo, o
+            contrário.
+          </li>
+          <li>
+            <strong>Só emprego celetista</strong>, sob a CLT. Servidor
+            estatutário, quem trabalha por conta própria e quem trabalha sem
+            carteira não entram.
+          </li>
+          <li>
+            <strong>Um mês sozinho engana.</strong> Safra, comércio de fim de
+            ano e obra pública mudam o saldo de um mês para o outro; os 12
+            meses juntos dizem mais.
+          </li>
+        </ul>
+      </section>
+
+      <section className={estilos.bloco} id="brasil">
+        <h2>Como ler o Brasil ao longo do tempo</h2>
+        <p>
+          <Link href="/brasil/" prefetch={false}>A página do Brasil</Link>{" "}
+          reúne séries do país inteiro, cada uma desde o primeiro dado que a
+          fonte publica naquela forma, todas no mesmo eixo de tempo. Cada série
+          é lida por dois caminhos da própria fonte, e só entra se os dois
+          concordarem.
+        </p>
+        <ul className={estilos.lista}>
+          <li>
+            <strong>As faixas ao fundo mostram quem ocupava a Presidência, e
+            não medem efeito.</strong> Estas séries se movem por muitos
+            fatores, de dentro e de fora do país, e nenhum gráfico separa um do
+            outro. Por isso a página não soma, não tira média e não compara
+            mandatos.
+          </li>
+          <li>
+            <strong>O selo acima de cada gráfico</strong> diz para que lado a
+            série melhora: “Mais alto é melhor”, “Mais baixo é melhor”, na
+            inflação “Melhor dentro da faixa da meta”, e “Nenhum lado é melhor
+            por si” quando o número não tem direção boa.
+          </li>
+          <li>
+            <strong>Resultado primário</strong> é o que o setor público
+            arrecada menos o que gasta, sem contar os juros da dívida. Sobra é
+            superávit; falta, déficit.
+          </li>
+        </ul>
+      </section>
+
+      <section className={estilos.bloco} id="ranking">
+        <h2>Como ler o ranking do gasto com pessoal</h2>
+        <p>
+          <Link href="/ranking/gasto-com-pessoal/" prefetch={false}>
+            O ranking
+          </Link>{" "}
+          lista os municípios cujo gasto com pessoal declarado passou do{" "}
+          <a href="#pessoal">teto legal</a> do Executivo municipal, do maior
+          para o menor.
+        </p>
+        <ul className={estilos.lista}>
+          <li>
+            <strong>Sem o relatório, o município não está na lista</strong> —
+            e ficar fora não quer dizer estar dentro do limite.
+          </li>
+          <li>
+            <strong>As declarações implausíveis</strong> ficam numa lista à
+            parte, abaixo: nem escondidas, nem misturadas à conta (veja{" "}
+            <a href="#implausivel">valor implausível</a>).
+          </li>
+          <li>
+            O filtro acima da tabela mostra só os municípios de um estado, e o
+            nome de cada um leva à página dele.
+          </li>
+        </ul>
+      </section>
+
       <section className={estilos.bloco} id="inss">
         <h2>Quanto tempo o INSS está levando</h2>
         <p>
@@ -726,6 +1009,31 @@ export default async function PaginaAjuda() {
             as contas municipais.
           </li>
         </ul>
+      </section>
+
+      {/* O mesmo texto da explicação que abre no lugar do termo, nas outras
+          páginas (`lib/glossario.ts`). O `id` de cada termo vem de
+          `idDoVerbete`, com prefixo para não colidir com o de uma seção de
+          mesmo nome (`caged`, `ideb`): é para ele que o "Ler mais" leva
+          quando o termo não tem seção própria aqui. */}
+      <section className={estilos.bloco} id="glossario">
+        <h2>Glossário de A a Z</h2>
+        <dl className={estilos.glossario}>
+          {glossarioAZ().map(({ chave, verbete }) => (
+            <div key={chave} id={idDoVerbete(chave)} className={estilos.verbete}>
+              <dt>{verbete.termo}</dt>
+              <dd>
+                {verbete.curta}
+                {verbete.secao && (
+                  <>
+                    {" "}
+                    <a href={`#${verbete.secao}`}>Mais sobre isto</a>
+                  </>
+                )}
+              </dd>
+            </div>
+          ))}
+        </dl>
       </section>
 
       <footer className={estilos.rodape}>

@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import ComposicaoBarras from "../../componentes/composicao-barras";
 import TiraEstados from "../../componentes/tira-estados";
 import Termo from "../../componentes/termo";
+import ComoLer from "../../componentes/como-ler";
 import {
   br, concorda, dataCurta, dataPorExtenso, descricaoDe, escala, expandir, fracaoDe,
   milReaisParaReais, periodoDe,
@@ -259,6 +260,7 @@ export default async function PaginaEstado(
           Dados atualizados em{" "}
           <time dateTime={atualizado.toISOString()}>{dataPorExtenso(atualizado)}</time>.
         </p>
+        <ComoLer tipo="estado" />
       </header>
 
       <section className={estilos.grade} aria-label="Totais do estado">
@@ -281,11 +283,7 @@ export default async function PaginaEstado(
         <article className={estilos.cartao}>
           <h2 className={estilos.rotulo}>
             Média de{" "}
-            <Termo
-              ancora="pessoal"
-              bloco
-              dica="O percentual da receita corrente líquida ajustada que cada município declarou comprometido com pessoal. A média exclui os implausíveis — fora da faixa de 0 a 100%, ou calculados sobre uma receita corrente líquida que a declaração de receita do próprio município desmente."
-            >
+            <Termo chave="gasto-com-pessoal">
               gasto com pessoal
             </Termo>
           </h2>
@@ -295,7 +293,7 @@ export default async function PaginaEstado(
           <p className={estilos.fonte}>
             {r.baseMedia === 0
               ? "sem base para calcular"
-              : `média de ${br(r.baseMedia)} ${r.baseMedia === 1 ? "município" : "municípios"}`}{" "}
+              : `média de ${br(r.baseMedia)} ${r.baseMedia === 1 ? "município" : "municípios"} com valor plausível`}{" "}
             · {quadrimestre} · SICONFI
           </p>
         </article>
@@ -307,11 +305,7 @@ export default async function PaginaEstado(
               {br(medIdeb.mediana, 1)}
             </p>
             <p className={estilos.fonte}>
-              <Termo
-                ancora="ideb"
-                bloco
-                dica="O índice do INEP que combina aprendizado e fluxo escolar, de 0 a 10. Aqui é a rede municipal — a que a prefeitura administra —, e não a rede pública, que inclui escolas estaduais."
-              >
+              <Termo chave="rede-municipal">
                 rede municipal
               </Termo>
               , anos iniciais · {medIdeb.edicao} · INEP
@@ -417,7 +411,7 @@ export default async function PaginaEstado(
         <section className={estilos.texto} id="como-se-vive">
           <h2>Como se vive {emContracao(de)}</h2>
           <p>
-            Do <strong>Censo de 2022</strong>, somando os municípios do estado.
+            Do <strong><Termo chave="censo">Censo de 2022</Termo></strong>, somando os municípios do estado.
             A coluna do Brasil é a <strong>mesma conta no país inteiro</strong> —
             as duas são proporção de domicílios ou de pessoas, então comparam
             diretamente.
@@ -449,9 +443,9 @@ export default async function PaginaEstado(
         <p>
           A Lei de Responsabilidade Fiscal fixa{" "}
           <strong>{br(fiscal.limites.legal, 2)}%</strong> da receita corrente
-          líquida ajustada como teto para o Executivo municipal, e{" "}
-          <strong>{br(fiscal.limites.prudencial, 2)}%</strong> como limite
-          prudencial. No {quadrimestre}:
+          líquida ajustada como <Termo chave="teto-legal">teto</Termo> para o Executivo municipal, e{" "}
+          <strong>{br(fiscal.limites.prudencial, 2)}%</strong> como{" "}
+          <Termo chave="limite-prudencial">limite prudencial</Termo>. No {quadrimestre}:
         </p>
         <ul className={estilos.faixas}>
           {(["acima-legal", "acima-prudencial", "abaixo", "implausivel",
@@ -518,6 +512,7 @@ export default async function PaginaEstado(
               fatias={r.funcoes.fatias}
               total={r.funcoes.total}
               municipio={r.uf.nome}
+              local={emContracao(de)}
             />
           </div>
         </section>
@@ -576,7 +571,7 @@ export default async function PaginaEstado(
               então são 26 e não 27. Escrever "27" aqui seria a mesma mentira
               silenciosa que a mediana regional cravada já custou. */}
           <h2>
-            {r.uf.nome} e os outros {br(panorama.length - 1)} estados
+            {r.uf.nome} ao lado dos outros estados
           </h2>
 
           <h3 className={estilos.subtitulo}>Quantos prestam contas</h3>
@@ -636,7 +631,7 @@ export default async function PaginaEstado(
             <>
               <h3 className={estilos.subtitulo}>Quanto se gasta com pessoal</h3>
               <p>
-                A mediana {de} é <strong>{br(meu.mediana, 2)}%</strong> da
+                A <Termo chave="mediana">mediana</Termo> {de} é <strong>{br(meu.mediana, 2)}%</strong> da
                 receita corrente líquida ajustada, calculada sobre{" "}
                 <strong>{br(meu.base)}</strong>{" "}
                 {meu.base === 1 ? "município" : "municípios"}. Entre os{" "}

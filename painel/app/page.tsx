@@ -21,6 +21,7 @@ import {
 } from "@/lib/jsonld";
 import { lerFiscal, lerIdeb, lerSnapshot, SITE } from "@/lib/servidor";
 import { Municipios } from "./municipios";
+import Termo from "./componentes/termo";
 import s from "./page.module.css";
 
 /**
@@ -175,6 +176,13 @@ export default async function Pagina() {
           <strong>{br(capa.linhas.length)} municípios</strong> dos 27 estados
           do Brasil — com a fonte e a data de coleta ao lado de cada número.
         </p>
+        {/* O que fazer vem antes da procedência: quem chega quer a cidade
+            dela, e a busca do cabeçalho não se anuncia sozinha. */}
+        <p className={s.subtitulo}>
+          Para ver uma cidade, digite o nome na busca do alto da página. Para
+          um estado, escolha na <a href="#por-estado">tabela por estado</a>.
+          Dúvida sobre um termo ou um número: <Link href="/ajuda/" prefetch={false}>Ajuda</Link>.
+        </p>
         <p className={s.coletadoEm}>
           Última coleta em{" "}
           <time dateTime={coletadoEm}>{dataLegivel(coletadoEm)}</time>.
@@ -188,7 +196,7 @@ export default async function Pagina() {
       </p>
       </div>
 
-      <section className={s.cartoes} aria-label="Totais da região">
+      <section className={s.cartoes} aria-label="Totais do Brasil">
         {capa.indicadores.map((ind) => (
           <article key={ind.codigo} className={s.cartao}>
             <h2 className={s.cartaoRotulo}>
@@ -208,8 +216,11 @@ export default async function Pagina() {
                 </span>
               )}
             </p>
+            {/* "agregado 5938, variável 37" era o nome da API, não do dado: a
+                tabela é o número que o IBGE mostra no SIDRA, e a variável
+                segue no endereço do link e no dicionário da planilha. */}
             <p className={s.cartaoFonte}>
-              IBGE, agregado {ind.agregado}, variável {ind.variavel}.{" "}
+              Fonte: IBGE, tabela {ind.agregado}.{" "}
               {/* O rótulo DIZ o que abre. Antes era "Ver a consulta na fonte",
                   que promete uma página e entrega a resposta crua da API —
                   um despejo de JSON na cara de quem só queria ver de onde o
@@ -219,7 +230,7 @@ export default async function Pagina() {
               {ind.origem ? (
                 <a href={ind.origem} rel="nofollow noopener"
                    className={s.linkTecnico}>
-                  consulta na API <span className={s.formato}>JSON</span>
+                  o dado bruto <span className={s.formato}>JSON</span>
                 </a>
               ) : null}
             </p>
@@ -246,7 +257,11 @@ export default async function Pagina() {
             Para onde vai o dinheiro
           </h2>
           <p className={s.secaoNota}>
-            Despesa <strong>liquidada</strong> — o que de fato foi gasto, não o
+            Despesa{" "}
+            <Termo chave="liquidada">
+              <strong>liquidada</strong>
+            </Termo>{" "}
+            — o que de fato foi gasto, não o
             orçado nem o empenhado — acumulada até o {pais.periodo}º bimestre de{" "}
             {pais.exercicio}, somada nos{" "}
             <strong>{br(pais.municipios)}</strong> municípios que entregaram o
@@ -297,7 +312,7 @@ export default async function Pagina() {
             Como se vive no Brasil
           </h2>
           <p className={s.secaoNota}>
-            Do <strong>Censo de 2022</strong>, somando os{" "}
+            Do <strong><Termo chave="censo">Censo de 2022</Termo></strong>, somando os{" "}
             {br(capa.linhas.length)} municípios. As duas colunas respondem
             perguntas diferentes: a primeira é a proporção no país, a segunda é
             o município do meio.
@@ -313,7 +328,8 @@ export default async function Pagina() {
           />
           <p className={s.secaoNota}>
             <strong>A distância entre as duas colunas é o achado.</strong> No
-            esgoto, a proporção do país é mais que o dobro da mediana municipal:
+            esgoto, a proporção do país é mais que o dobro da{" "}
+            <Termo chave="mediana">mediana</Termo> municipal:
             as cidades grandes concentram população e rede, então a maioria das
             casas tem ligação enquanto a maioria dos municípios não chega perto
             disso. Quem citar um dos números como se fosse o outro erra por
@@ -445,13 +461,13 @@ export default async function Pagina() {
 
       <footer className={s.rodape}>
         <p>
-          <strong>Procedência.</strong> Cada observação guarda quando foi
-          coletada e de qual endpoint veio. Valor ausente na fonte aparece como
+          <strong>Procedência.</strong> Cada número guarda quando foi
+          coletado e de qual endereço da fonte veio. Valor ausente na fonte aparece como
           “—”, nunca como zero: confundir “não sabemos” com “zero” é como um
           painel passa a mentir sem ninguém notar.
         </p>
         <p>
-          <strong>Fonte.</strong> {snapshot.fonte}. Snapshot gerado em{" "}
+          <strong>Fonte.</strong> {snapshot.fonte}. Base montada em{" "}
           <time dateTime={snapshot.geradoEm}>
             {dataLegivel(snapshot.geradoEm)}
           </time>

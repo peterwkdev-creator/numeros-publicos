@@ -105,6 +105,37 @@ function ancorasOrfas(html) {
   return { achados, conferidas };
 }
 
+/**
+ * As âncoras para OUTRA página: `/ajuda/#mediana`, na forma `destino#frag`.
+ *
+ * Entrou em 11/10/2026 com o `<Termo>` em popover e o "Como ler esta página",
+ * que põem em toda página de município um "Mais sobre isto" para uma seção da
+ * `/ajuda/`. Seção renomeada deixa o link bem formado e caindo no topo da
+ * ajuda: a rota existe, então `destinos` aprova, e `ancorasOrfas` só olha a
+ * própria página.
+ */
+function fragmentosExternos(html) {
+  const achados = new Set();
+  for (const [, href] of html.matchAll(/<a\b[^>]*?href="([^"]+)"/gs)) {
+    let destino = href.startsWith(SITE) ? href.slice(SITE.length) : href;
+    if (!destino.startsWith("/") || destino.startsWith("//")) continue;
+    const [semFrag, frag] = destino.split("#");
+    if (!frag) continue;
+    const rota = semFrag.split("?")[0];
+    achados.add(`${rota.endsWith("/") ? rota : `${rota}/`}#${frag}`);
+  }
+  return achados;
+}
+
+const idsPorRota = new Map();
+function idsDe(rotas, rota) {
+  if (!idsPorRota.has(rota)) {
+    const html = readFileSync(rotas.get(rota), "utf8");
+    idsPorRota.set(rota, new Set([...html.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1])));
+  }
+  return idsPorRota.get(rota);
+}
+
 const rotas = rotasGeradas();
 if (rotas.size === 0) {
   console.error("out/ não existe ou está vazio — rode `npm run build` antes.");
@@ -116,6 +147,7 @@ if (rotas.size === 0) {
   const orfas = new Map();
   let links = 0;
   let ancoras = 0;
+  let externas = 0;
 
   for (const [, arquivo] of rotas) {
     const html = readFileSync(arquivo, "utf8");
@@ -130,6 +162,13 @@ if (rotas.size === 0) {
     }
     const { achados, conferidas } = ancorasOrfas(html);
     ancoras += conferidas;
+    for (const fragmento of fragmentosExternos(html)) {
+      const [destino, frag] = fragmento.split("#");
+      // Rota inexistente já sai como link quebrado; aqui, só o fragmento.
+      if (!rotas.has(destino)) continue;
+      externas += 1;
+      if (!idsDe(rotas, destino).has(frag)) achados.push(`${fragmento} sem alvo`);
+    }
     for (const achado of achados) {
       if (!orfas.has(achado)) orfas.set(achado, []);
       orfas.get(achado).push(rota);
@@ -137,7 +176,7 @@ if (rotas.size === 0) {
   }
 
   console.log(`páginas: ${rotas.size} · destinos internos distintos: ${links}` +
-    ` · âncoras na própria página: ${ancoras}`);
+    ` · âncoras na própria página: ${ancoras} · âncoras em outra página: ${externas}`);
 
   if (orfas.size === 0) {
     console.log("âncoras: nenhuma sem alvo, nenhuma seção fora do sumário");

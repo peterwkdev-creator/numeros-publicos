@@ -1,0 +1,47 @@
+/* "Como ler esta página": discreto fechado, legível aberto. */
+.comoLer {
+  margin: 0 0 var(--e-6);
+  max-width: 60ch;
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  background: var(--superficie);
+}
+
+.comoLer summary {
+  cursor: pointer;
+  padding: var(--e-2) var(--e-4);
+  font-size: var(--texto-sm);
+  font-weight: 600;
+  color: var(--acento);
+  /* WCAG 2.5.8: o resumo é o alvo de toque inteiro. */
+  min-height: 24px;
+}
+
+.comoLer[open] summary {
+  border-bottom: 1px solid var(--borda);
+}
+
+.comoLer .lista {
+  margin: 0;
+  padding: var(--e-3) var(--e-4) var(--e-3) var(--e-8);
+}
+
+.lista {
+  line-height: 1.55;
+  font-size: var(--texto-sm);
+  color: var(--tinta-suave);
+}
+
+.lista li + li {
+  margin-top: var(--e-2);
+}
+
+.lista strong {
+  color: var(--tinta);
+}
+
+@media print {
+  .comoLer {
+    display: none;
+  }
+}

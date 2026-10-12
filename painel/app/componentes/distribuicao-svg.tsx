@@ -38,6 +38,11 @@ const A = 112;
 //: degrau de 12 as caixas se sobrepunham 2,9px. Com 7 o vão sobra.
 const M = { topo: 6, base: 44, esq: 4, dir: 4 };
 const DEGRAU = 16;
+
+/** 54 vira "54" e 51,3 vira "51,3": a régua com o número que ela marca,
+ *  sem casas que não existem (até 11/10/2026 dizia só "teto legal"). */
+const casas = (v: number) =>
+  Number.isInteger(v) ? 0 : Math.abs(v * 10 - Math.round(v * 10)) < 1e-9 ? 1 : 2;
 const FAIXAS = 24;
 
 export default function DistribuicaoSvg({
@@ -134,7 +139,7 @@ export default function DistribuicaoSvg({
               textAnchor={esquerda ? "end" : "start"}
               fontSize="7" fill="var(--tinta-fraca)"
             >
-              {texto}
+              {texto} {br(v, casas(v))}%
             </text>
           </g>
         ),

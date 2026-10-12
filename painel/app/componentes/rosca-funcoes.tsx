@@ -1,4 +1,4 @@
-import { br } from "@/lib/dados";
+import { br, escala } from "@/lib/dados";
 import type { FatiaFuncao } from "@/lib/fiscal";
 import { fatiasDaRosca, VIEW_BOX_ROSCA } from "@/lib/rosca";
 import estilos from "./rosca-funcoes.module.css";
@@ -61,6 +61,11 @@ export default function RoscaFuncoes({
 
   const maiores = arcos.slice(0, 2);
   const somaDuas = maiores.reduce((a, f) => a + f.percentual, 0);
+  // A mesma escala do resto do site, partida em duas linhas: "R$ 1,07
+  // trilhão" inteiro, no corpo do valor, não cabe no buraco de 124 unidades.
+  const { curto, exato } = escala(total);
+  const partes = /^(.*) (\S+)$/.exec(curto);
+  const [valor, unidade] = partes ? [partes[1]!, partes[2]!] : [curto, ""];
 
   return (
     <div className={estilos.bloco}>
@@ -84,32 +89,19 @@ export default function RoscaFuncoes({
         ))}
         {/* O total no buraco. `pointer-events: none` no CSS para não roubar o
             hover das fatias. */}
-        <text className={estilos.totalRotulo} x="0" y="-8">
+        <text className={estilos.totalRotulo} x="0" y="-14">
           total
         </text>
-        <text className={estilos.totalValor} x="0" y="12">
-          {compacto(total)}
+        <text className={estilos.totalValor} x="0" y="8">
+          <title>{exato}</title>
+          {valor}
         </text>
+        {unidade && (
+          <text className={estilos.totalRotulo} x="0" y="28">
+            {unidade}
+          </text>
+        )}
       </svg>
     </div>
   );
-}
-
-/**
- * O total em escala legível: "R$ 1,07 tri".
- *
- * O valor vem em reais e chega à casa do trilhão. Escrito por extenso não cabe
- * no buraco da rosca, e cortado não se lê — a escala resolve os dois, e o
- * número exato continua na tabela ao lado.
- */
-function compacto(valor: number): string {
-  const escalas: [number, string][] = [
-    [1e12, "tri"], [1e9, "bi"], [1e6, "mi"], [1e3, "mil"],
-  ];
-  for (const [divisor, sufixo] of escalas) {
-    if (Math.abs(valor) >= divisor) {
-      return `R$ ${br(valor / divisor, 2)} ${sufixo}`;
-    }
-  }
-  return `R$ ${br(valor)}`;
 }

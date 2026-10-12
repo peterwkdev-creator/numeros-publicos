@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 
 import { slugUf } from "../../lib/estado";
 import { atualizadoEm } from "../../lib/sitemap";
-import { lerBrasil, lerFiscal, lerSnapshot, SITE } from "../../lib/servidor";
+import { lerBrasil, lerCaged, lerFiscal, lerSnapshot, SITE } from "../../lib/servidor";
 
 /**
  * Tudo que não é página de município: a capa, a ajuda, o ranking, o país e os 27
@@ -10,10 +10,10 @@ import { lerBrasil, lerFiscal, lerSnapshot, SITE } from "../../lib/servidor";
  *
  * **O segmento `geral/` não tem página, e isso é de propósito.** Ele existe só
  * para dar endereço a este arquivo — a convenção do App Router publica um
- * `sitemap.ts` no caminho do segmento que o contém, e as 30 URLs aqui dentro
+ * `sitemap.ts` no caminho do segmento que o contém, e as 31 URLs aqui dentro
  * não pertencem a nenhuma das rotas reais do site.
  *
- * Elas ficam juntas porque são **trinta**, e um arquivo por página seria ruído
+ * Elas ficam juntas porque são **31**, e um arquivo por página seria ruído
  * no relatório de cobertura sem responder nada. A divisão por estado, do outro
  * lado, existe para responder uma pergunta concreta — ver
  * `app/municipio/sitemap.ts`.
@@ -22,8 +22,8 @@ import { lerBrasil, lerFiscal, lerSnapshot, SITE } from "../../lib/servidor";
 export const dynamic = "force-static";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [snapshot, fiscal, brasil] = await Promise.all([
-    lerSnapshot(), lerFiscal(), lerBrasil(),
+  const [snapshot, fiscal, brasil, caged] = await Promise.all([
+    lerSnapshot(), lerFiscal(), lerBrasil(), lerCaged(),
   ]);
   const atualizado = atualizadoEm(snapshot, fiscal);
   // A coleta das séries do país tem ritmo próprio: a data é a dela, e não a
@@ -57,6 +57,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: `${SITE}/ranking/gasto-com-pessoal/`,
       lastModified: atualizado,
       changeFrequency: "weekly",
+      priority: 0.9,
+    },
+    {
+      // A segunda página de cabeça: "cidades que mais geraram empregos". O
+      // dado muda uma vez por mês, com a competência nova do Caged.
+      url: `${SITE}/ranking/emprego-com-carteira/`,
+      lastModified: new Date(caged.coletadoEm ?? atualizado),
+      changeFrequency: "monthly",
       priority: 0.9,
     },
     {

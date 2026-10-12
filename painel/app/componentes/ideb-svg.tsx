@@ -20,8 +20,8 @@ import type { Trajetoria } from "../../lib/ideb";
  * ## A meta é linha tracejada, não segunda série
  *
  * Duas linhas cheias fariam o leitor comparar a forma delas; o que importa é a
- * distância entre uma e outra em cada edição. E as edições **sem meta** (2005 e
- * 2023) simplesmente não recebem marca — inventar um alvo para interpolar seria
+ * distância entre uma e outra em cada edição. E as edições **sem meta** (2005,
+ * 2023 e 2025) simplesmente não recebem marca — inventar um alvo para interpolar seria
  * pior que a lacuna.
  */
 

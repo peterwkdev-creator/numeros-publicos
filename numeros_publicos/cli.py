@@ -29,6 +29,8 @@ from .ibge import (
     serie as buscar_serie,
     transporte_http,
     url_serie,
+    regioes_imediatas,
+    url_municipios_do_brasil,
 )
 
 #: Os nove estados do Nordeste, por código IBGE. Explícito e não derivado:
@@ -861,6 +863,13 @@ def construir_parser() -> argparse.ArgumentParser:
                          "brasil.json atual, como está (o banco do runner "
                          "começa vazio)")
     be.set_defaults(func=brasil_exportar)
+    rx = sub.add_parser("regioes-exportar",
+                        help="gera o regioes.json (regiões imediatas do IBGE) "
+                             "que a página do município lê")
+    rx.add_argument("--saida", default="painel/dados/regioes.json")
+    rx.add_argument("--minimo", type=int, default=5500,
+                    help="municípios abaixo disto: recusa gravar")
+    rx.set_defaults(func=regioes_exportar)
     return p
 
 
@@ -1071,6 +1080,50 @@ def brasil_ingerir(args, transporte=None, dormir=None) -> int:
     for falha in r.falhas:
         print(f"[falha] {falha}; fica o dado anterior", file=sys.stderr)
     return SAIDA_PARCIAL if r.falhas else 0
+
+
+def regioes_exportar(args, transporte=None) -> int:
+    """Escreve o `regioes.json` (regiões imediatas) direto da API de
+    localidades do IBGE.
+
+    Sem banco, de propósito: é classificação, não série. Muda por resolução do
+    IBGE e não por coleta, cabe numa requisição só, e o que a página precisa é
+    o retrato atual. A guarda de tamanho existe porque uma resposta truncada
+    viraria municípios sem vizinho, e nada na página acusaria."""
+    import json as _json
+    from datetime import datetime, timezone
+    try:
+        regioes = regioes_imediatas(buscar_json(
+            transporte or transporte_http(timeout=60), url_municipios_do_brasil()))
+    except ErroIBGE as e:
+        print(f"[!] {e}", file=sys.stderr)
+        return 1
+    total = sum(len(r["municipios"]) for r in regioes)
+    if total < args.minimo:
+        print(f"[!] só {total} municípios na resposta (mínimo {args.minimo}); "
+              "arquivo intacto", file=sys.stderr)
+        return 1
+    dados = {
+        "geradoEm": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "fonte": {
+            "nome": "IBGE, Divisão Regional do Brasil em Regiões "
+                    "Geográficas Imediatas (2017), API de localidades",
+            "url": url_municipios_do_brasil(),
+        },
+        "regioes": regioes,
+    }
+    destino = Path_(args.saida)
+    if destino.exists():
+        velho = _json.loads(destino.read_text(encoding="utf-8"))
+        sem_data = lambda d: {k: v for k, v in d.items() if k != "geradoEm"}
+        if sem_data(velho) == sem_data(dados):
+            print(f"{destino} · NADA MUDOU — arquivo intacto.")
+            return 0
+    texto = _json.dumps(dados, ensure_ascii=False, separators=(",", ":"))
+    destino.write_text(texto, encoding="utf-8")
+    print(f"{destino} · {len(regioes)} regiões · {total} municípios · "
+          f"{br(len(texto.encode('utf-8')) / 1024, 1)} KB")
+    return 0
 
 
 def brasil_exportar(args) -> int:

@@ -62,9 +62,14 @@ export async function GET(
   // A série JÁ contém o período em destaque. Emitir os dois duplicaria a
   // observação no arquivo -- e observação repetida num CSV vira média errada
   // na planilha de quem baixou, em silêncio.
+  // O período em destaque pode ter vindo do RGF Simplificado (2º semestre,
+  // os mesmos 12 meses até dezembro): a fonte diz, porque o `periodo` diz 3.
+  const fonteRgf = f?.simplificado ? "SICONFI, RGF Simplificado 2º semestre" : "SICONFI";
+  const destaque = `${fiscal.exercicio}/${fiscal.periodo}`;
   for (const [ex, pe, , pct] of serie) {
     linhas.push([...comum, "Despesa com pessoal (% da RCL ajustada)",
-      `${ex}/${pe}`, pct, "%", "SICONFI", fiscal.coletadoEm ?? ""]);
+      `${ex}/${pe}`, pct, "%", `${ex}/${pe}` === destaque ? fonteRgf : "SICONFI",
+      fiscal.coletadoEm ?? ""]);
   }
 
   // O PAR em reais que produz aquele percentual, e aqui ele custa ZERO coluna:
@@ -77,12 +82,12 @@ export async function GET(
   // que a coleta não tem.
   if (f?.despesa != null) {
     linhas.push([...comum, "Despesa com pessoal (R$)",
-      `${fiscal.exercicio}/${fiscal.periodo}`, f.despesa, "R$", "SICONFI",
+      destaque, f.despesa, "R$", fonteRgf,
       fiscal.coletadoEm ?? ""]);
   }
   if (f?.rclAjustada != null) {
     linhas.push([...comum, "Receita corrente líquida ajustada (R$)",
-      `${fiscal.exercicio}/${fiscal.periodo}`, f.rclAjustada, "R$", "SICONFI",
+      destaque, f.rclAjustada, "R$", fonteRgf,
       fiscal.coletadoEm ?? ""]);
   }
   // A SITUAÇÃO do período em destaque, como linha e não como coluna — o

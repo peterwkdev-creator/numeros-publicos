@@ -471,8 +471,12 @@ class TestRetratoParaOPainel(unittest.TestCase):
             linhas = todas_as_ufs(data, 1675, q) + [("99999", 1675, "SP", f"01{m:02d}{ano}", 1000)]
             inss.gravar_pendentes(self.db, mes, f"PEND_{ano}{m:02d}.csv",
                                   inss.ler_pendentes(io.StringIO(csv_pendentes(linhas))))
+        # Três negativas da agência de automação: entram no país, não no DF.
+        automacao = [linha_negada(202608, 80, "Motivo", "DF", 23001240,
+                                  dt.date(2026, 8, 1), dt.date(2026, 8, 31))] * 3
         inss.gravar_indeferidos(self.db, "2026-08", "neg.xlsx", inss.ler_indeferidos(
-            [["t"], CAB_NEG, *negados_do_mes(202608, 80, ("Urbano", "Rural"))]))
+            [["t"], CAB_NEG, *negados_do_mes(202608, 80, ("Urbano", "Rural")),
+             *automacao]))
         self.r = inss.retrato(self.db)
 
     def tearDown(self) -> None:
@@ -487,6 +491,9 @@ class TestRetratoParaOPainel(unittest.TestCase):
         self.assertEqual(self.r["negados"]["mes"], "2026-08")
         self.assertEqual(set(self.r["fila"]), {"mes", "referencia", "mesAnterior",
                                               "arquivo", "gravadoEm"})
+        self.assertEqual(set(self.r["negados"]), {"mes", "arquivo", "gravadoEm",
+                                                 "foraDasUfs"})
+        self.assertEqual(self.r["negados"]["foraDasUfs"], {"n": 3, "total": 57})
 
     def test_grupo_carrega_prazo_nome_e_os_dois_lados(self) -> None:
         g = {x["chave"]: x for x in self.r["grupos"]}["salario-maternidade"]
@@ -496,15 +503,35 @@ class TestRetratoParaOPainel(unittest.TestCase):
         f = g["fila"]
         self.assertEqual(set(f), {"n", "mediana", "p75", "p90", "acima45", "acima90",
                                   "acimaDoPrazo", "publicavel", "medianaAnterior",
-                                  "porServico"})
+                                  "porServico", "porUf"})
         self.assertEqual(f["n"], 1027)
         self.assertTrue(f["publicavel"])
         # 1.000 pedidos criados em 01/07 têm 30 dias em 31/07: não passam de 30
         self.assertAlmostEqual(f["acimaDoPrazo"], 0.0)
         self.assertEqual(f["porServico"][0]["codigo"], 1675)
+        # o mesmo corte de 90 dias do índice, para as duas páginas concordarem
+        self.assertIn("acima90", f["porServico"][0])
         n = g["negados"]
         self.assertEqual(set(n["porClientela"]), {"urbano", "rural"})
-        self.assertFalse(n["publicavel"])       # 54 negativas < 1.000
+        self.assertFalse(n["publicavel"])       # 57 negativas < 1.000
+
+    def test_recorte_por_uf(self) -> None:
+        g = {x["chave"]: x for x in self.r["grupos"]}["salario-maternidade"]
+        f, n = g["fila"]["porUf"], g["negados"]["porUf"]
+        self.assertEqual(set(f), inss.UFS)
+        self.assertEqual(set(f["SP"]), {"n", "mediana", "acima45", "acima90",
+                                        "publicavel", "acimaDoPrazo"})
+        # SP tem os 1.000 de 01/07 além da linha de todas as UFs
+        self.assertEqual((f["SP"]["n"], f["SP"]["mediana"]), (1001, 30))
+        self.assertTrue(f["SP"]["publicavel"])
+        self.assertEqual(f["RJ"]["n"], 1)
+        self.assertFalse(f["RJ"]["publicavel"])
+        self.assertEqual(sum(x["n"] for x in f.values()), g["fila"]["n"])
+        # A automação fica fora do DF e dentro do país: 2 + 3 = 5 só no total
+        self.assertEqual(set(n), inss.UFS)
+        self.assertEqual(n["DF"]["n"], 2)
+        self.assertEqual(n["DF"]["mediana"], 10)
+        self.assertEqual(sum(x["n"] for x in n.values()) + 3, g["negados"]["n"])
 
     def test_grupo_sem_dado_sai_com_os_dois_lados_nulos(self) -> None:
         g = {x["chave"]: x for x in self.r["grupos"]}["auxilio-inclusao"]

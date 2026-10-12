@@ -6,7 +6,7 @@ import {
   unidadeDaColuna, valorDoIndicador,
 } from "@/lib/dados";
 import { slugUf } from "@/lib/estado";
-import { faixasEmLinha } from "@/lib/fiscal";
+import { faixasEmLinha, rotuloPeriodo } from "@/lib/fiscal";
 import { funcoesDoPais, panoramaEstados } from "@/lib/nacional";
 import MapaUf from "./componentes/mapa-uf";
 import { camadasPadrao } from "@/lib/mapa";
@@ -262,10 +262,11 @@ export default async function Pagina() {
               <strong>liquidada</strong>
             </Termo>{" "}
             — o que de fato foi gasto, não o
-            orçado nem o empenhado — acumulada até o {pais.periodo}º bimestre de{" "}
+            orçado nem o empenhado — acumulada até o {pais.periodo}º <Termo chave="bimestre">bimestre</Termo> de{" "}
             {pais.exercicio}, somada nos{" "}
             <strong>{br(pais.municipios)}</strong> municípios que entregaram o
-            relatório.
+            relatório. Fonte: Tesouro Nacional, SICONFI (
+            <Termo chave="rreo">RREO</Termo>).
           </p>
 
           {/* Rosca e tabela lado a lado, e cada uma faz o que a outra não faz:
@@ -319,10 +320,10 @@ export default async function Pagina() {
           </p>
           <TabelaCenso
             medidas={medidasPais}
-            comparacao={{
+            comparacoes={[{
               rotulo: "Mediana dos municípios",
               valores: medianasMunicipais,
-            }}
+            }]}
             rotuloValor="No Brasil"
             legenda="Brasil no Censo 2022, com a mediana dos municípios ao lado"
           />
@@ -348,13 +349,17 @@ export default async function Pagina() {
           que se sabe que a coleta está <strong>completa</strong>, e não apenas
           que um número está certo.
         </p>
-        <MapaUf camadas={camadasDoMapa} />
+        <MapaUf
+          camadas={camadasDoMapa}
+          nomes={Object.fromEntries(snapshot.ufs.map((u) => [u.sigla, u.nome]))}
+        />
 
         <div className={s.rolagem}>
           <table className={s.tabela}>
             <caption>
               Totais por unidade da federação, calculados a partir dos
-              municípios.
+              municípios. Fontes: IBGE e, na entrega do relatório, Tesouro
+              Nacional (SICONFI).
             </caption>
             <thead>
               <tr>
@@ -369,8 +374,10 @@ export default async function Pagina() {
                     por região, a tabela ainda desmente sozinha a leitura
                     regional que a taxa convida a fazer. */}
                 <th scope="col" className={s.numero}>
-                  Entregaram o relatório{" "}
-                  <span className={s.ausente}>(%)</span>
+                  Entregaram o <Termo chave="rgf">relatório fiscal</Termo>{" "}
+                  <span className={s.ausente}>
+                    ({rotuloPeriodo(fiscal.exercicio, fiscal.periodo)}, % dos municípios)
+                  </span>
                 </th>
                 {capa.indicadores.map((i) => (
 <th key={i.codigo} scope="col" className={s.numero}
@@ -408,7 +415,7 @@ export default async function Pagina() {
                   <th scope="row">
                     {/* O unico link interno que a home tinha para conteudo era
                         nenhum: a lista de municipios e componente de cliente,
-                        entao o HTML dela nao trazia `href` nenhum. Estes nove
+                        entao o HTML dela nao trazia `href` nenhum. Estes 27
                         links sao a raiz do grafo do site. */}
                     <Link href={`/estado/${slugUf(uf.sigla)}/`}>{uf.nome}</Link>{" "}
                     <span className={s.ausente}>({uf.sigla})</span>

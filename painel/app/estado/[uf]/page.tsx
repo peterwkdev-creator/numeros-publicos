@@ -7,14 +7,15 @@ import TiraEstados from "../../componentes/tira-estados";
 import Termo from "../../componentes/termo";
 import ComoLer from "../../componentes/como-ler";
 import {
-  br, concorda, dataCurta, dataPorExtenso, descricaoDe, escala, expandir, fracaoDe,
+  br, concorda, dataCurta, dataPorExtenso, descricaoDe, escala, escalaComSinal,
+  expandir, fracaoDe,
   milReaisParaReais, periodoDe,
 } from "../../../lib/dados";
 import { atualizadoEm } from "../../../lib/sitemap";
 import { resumirEstado, slugUf } from "../../../lib/estado";
-import { ROTULO_FAIXA } from "../../../lib/fiscal";
+import { nomeQuadrimestre, ROTULO_FAIXA } from "../../../lib/fiscal";
 import { medianaUltimaEdicao } from "../../../lib/ideb";
-import { panoramaEstados, posicaoNaLista } from "../../../lib/nacional";
+import { mediana, panoramaEstados, posicaoNaLista } from "../../../lib/nacional";
 import { deEstado, emContracao } from "../../../lib/estado";
 import { camadasPadrao } from "../../../lib/mapa";
 import { medidasDe, taxasCache } from "../../../lib/censo";
@@ -23,13 +24,21 @@ import TabelaCenso from "../../componentes/tabela-censo";
 import {
   FONTES, trilha, VARIAVEIS, catalogoDe, coberturaTemporal, palavrasChave, LICENCA_DADOS,
 } from "../../../lib/jsonld";
-import { lerFiscal, lerIdeb, lerSnapshot, SITE, cartaoSocial } from "../../../lib/servidor";
+import {
+  lerCaged, lerEmendas, lerFiscal, lerIdeb, lerInss, lerSnapshot, SITE, cartaoSocial,
+} from "../../../lib/servidor";
+import TabelaCaged from "../../componentes/tabela-caged";
+import { cagedDeVarios, comSinal, contagem, nomeCompetencia } from "../../../lib/caged";
+import {
+  emendasDeVarios, mesDeCorte, porHabitante, porHabitanteDaUf,
+} from "../../../lib/emendas";
+import { dataBr, dias, inssDaUf, mesPorExtenso, pct } from "../../../lib/inss";
 import estilos from "./estado.module.css";
 import NestaPagina from "../../componentes/nesta-pagina";
 import { atualDeFuncoes } from "../../../lib/fiscal";
 
 /**
- * Uma página por estado — nove delas.
+ * Uma página por estado — 27 delas.
  *
  * **Existe para consertar o grafo do site, não por simetria de navegação.**
  * Medido em 03/09/2026: das 1.794 páginas de município, 1.677 (93%) não
@@ -48,10 +57,14 @@ import { atualDeFuncoes } from "../../../lib/fiscal";
  */
 
 async function carregar() {
-  const [snapshot, fiscal, ideb, idebFinais] = await Promise.all([
+  const [snapshot, fiscal, ideb, idebFinais, caged, emendas, inss] = await Promise.all([
     lerSnapshot(), lerFiscal(), lerIdeb("anos_iniciais"), lerIdeb("anos_finais"),
+    lerCaged(), lerEmendas(), lerInss(),
   ]);
-  return { snapshot, fiscal, ideb, idebFinais, expandidos: expandir(snapshot) };
+  return {
+    snapshot, fiscal, ideb, idebFinais, caged, emendas, inss,
+    expandidos: expandir(snapshot),
+  };
 }
 
 export async function generateStaticParams() {
@@ -68,12 +81,14 @@ export async function generateMetadata(
   if (!r) return {};
 
   const acima = r.porFaixa["acima-legal"];
+  // Concordância: o Distrito Federal tem UM ente, e "dos 1 municípios" no
+  // título é o tipo de erro que faz o resultado de busca parecer gerado.
+  // O cartão social leva o mesmo título (desde 12/10/2026).
+  const titulo = r.uf.municipios === 1
+    ? `${r.uf.nome} — dados abertos`
+    : `${r.uf.nome} — dados abertos dos ${r.uf.municipios} municípios`;
   return {
-    // Concordância: o Distrito Federal tem UM ente, e "dos 1 municípios" no
-    // título é o tipo de erro que faz o resultado de busca parecer gerado.
-    title: r.uf.municipios === 1
-      ? `${r.uf.nome} — dados abertos`
-      : `${r.uf.nome} — dados abertos dos ${r.uf.municipios} municípios`,
+    title: titulo,
     // Ver a nota do recorte em `municipio/[slug]/page.tsx`: ~155 caracteres é
     // onde o Google trunca, e a cauda era a mesma frase nas nove páginas.
     // O que aparece no Google, ANTES de a pessoa ver qualquer contexto da
@@ -99,7 +114,7 @@ export async function generateMetadata(
     ),
     alternates: { canonical: `${SITE}/estado/${slugUf(r.uf.sigla)}/` },
     ...cartaoSocial(
-      `${r.uf.nome} — dados abertos`,
+      titulo,
       r.uf.municipios === 1
         ? `${r.uf.nome}, com procedência.`
         : `Os ${r.uf.municipios} municípios ${deEstado(r.uf.sigla)}, com procedência.`,
@@ -112,7 +127,8 @@ export default async function PaginaEstado(
   { params }: { params: Promise<{ uf: string }> },
 ) {
   const { uf } = await params;
-  const { snapshot, fiscal, ideb, idebFinais, expandidos } = await carregar();
+  const { snapshot, fiscal, ideb, idebFinais, caged, emendas, inss, expandidos } =
+    await carregar();
   const r = resumirEstado(snapshot, fiscal, expandidos, uf.toUpperCase());
   if (!r) notFound();
   // Os mesmos argumentos do sitemap geral, que é o que lista os estados.
@@ -128,6 +144,13 @@ export default async function PaginaEstado(
   // a varredura nacional fechada. Ver a nota de desenho em `lib/nacional.ts`.
   const panorama = panoramaEstados(fiscal);
   const meu = panorama.find((x) => x.uf === r.uf.sigla);
+  // Os dois pares de vizinhos da ressalva da entrega, lidos do dado: o texto
+  // era digitado ("86% e 15%") e ficou falso quando o RGF Simplificado entrou
+  // na conta. Sem contraste de 30 pontos nos dois pares, a frase sai.
+  const taxaDe = (uf: string) => panorama.find((x) => x.uf === uf)?.taxa ?? null;
+  const sc = taxaDe("SC"), rs = taxaDe("RS"), ba = taxaDe("BA"), ma = taxaDe("MA");
+  const contraste = sc !== null && rs !== null && ba !== null && ma !== null &&
+    Math.abs(sc - rs) >= 30 && Math.abs(ba - ma) >= 30;
   const posTaxa = meu
     ? posicaoNaLista(meu.taxa, panorama.map((x) => x.taxa))
     : null;
@@ -163,10 +186,33 @@ export default async function PaginaEstado(
   // contrario da pagina do municipio, onde a coluna vizinha e a MEDIANA
   // dos municipios e precisa da ressalva que separa as duas coisas.
   const medidasCenso = medidasDe(r.uf.totais);
+
+  // O Novo Caged somado nos municípios do estado (`cagedDeVarios`). Um teste
+  // cobra que os 27 estados mais o "não identificado" dão o número oficial do
+  // país; o do estado no sumário do MTE inclui ainda o que tem UF e não tem
+  // município, e a ressalva diz isso.
+  const cagedUf = cagedDeVarios(caged, r.municipios.map((m) => m.codigo));
+  const semMunicipio =
+    caged.naoIdentificado[0].reduce((s, x) => s + x, 0) +
+    caged.naoIdentificado[1].reduce((s, x) => s + x, 0);
+
+  // As emendas pagas às prefeituras do estado, somadas; por habitante do
+  // estado (a estimativa do IBGE, a mais perto do ano do dinheiro) e, por
+  // município, a mediana da mesma régua que a página de cada um usa.
+  const emendasUf = emendasDeVarios(emendas, r.municipios.map((m) => m.codigo));
+  const popEstimada = r.uf.totais["populacao-estimada"] ?? null;
+  const anoEstimada = periodoDe(snapshot, "populacao-estimada");
+  const emendasPh = porHabitante(emendasUf.cheio.reais, popEstimada);
+  const phMunicipios = porHabitanteDaUf(emendas, snapshot, r.uf.sigla);
+  const medianaPh = phMunicipios.length >= 5 ? mediana(phMunicipios) : null;
+
+  // O INSS pelas agências do estado, benefício a benefício, ao lado do país.
+  const inssUf = inss.fila ? inssDaUf(inss, r.uf.sigla) : [];
+  const esperaUf = inssUf.reduce((t, x) => t + (x.fila?.n ?? 0), 0);
   const taxasPais = taxasCache(snapshot.municipios, snapshot.colunas);
   const pop = r.uf.totais["populacao-censo-2022"] ?? null;
   const pibReais = milReaisParaReais(r.uf.totais["pib-municipal"] ?? null);
-  const quadrimestre = `${fiscal.periodo}º quadrimestre de ${fiscal.exercicio}`;
+  const quadrimestre = nomeQuadrimestre(fiscal.exercicio, fiscal.periodo);
   const bimestre = fiscal.funcoes
     ? `${fiscal.funcoes.periodo}º bimestre de ${atualDeFuncoes(fiscal.funcoes)?.exercicio ?? "?"}`
     : "";
@@ -324,7 +370,7 @@ export default async function PaginaEstado(
 
         {r.publicaram === 0 ? (
           <article className={`${estilos.cartao} ${estilos["como-estado"]}`}>
-            <h2 className={estilos.rotulo}>Limite legal</h2>
+            <h2 className={estilos.rotulo}>Teto legal</h2>
             <p className={`${estilos.valor} tabular`}>—</p>
             <p className={estilos.fonte}>
               {r.comoEstado === r.uf.municipios
@@ -334,7 +380,7 @@ export default async function PaginaEstado(
           </article>
         ) : (
         <article className={`${estilos.cartao} ${estilos.destaque}`}>
-          <h2 className={estilos.rotulo}>Acima do limite legal</h2>
+          <h2 className={estilos.rotulo}>Acima do teto legal</h2>
           <p className={`${estilos.valor} tabular`}>
             {br(r.porFaixa["acima-legal"])}
           </p>
@@ -381,6 +427,9 @@ export default async function PaginaEstado(
         { id: "no-pais", titulo: "No país" },
         medidasCenso.some((x) => x.percentual !== null) &&
           { id: "como-se-vive", titulo: "Como se vive" },
+        !!cagedUf && { id: "emprego", titulo: "Emprego com carteira" },
+        emendasUf.comPagamento > 0 && { id: "emendas", titulo: "Emendas parlamentares" },
+        inssUf.length > 0 && { id: "inss", titulo: "Pedidos ao INSS" },
         { id: "limite-de-pessoal", titulo: "Limite de pessoal" },
         !!r.funcoes && { id: "para-onde-vai", titulo: "Para onde vai o dinheiro" },
         (semRede > 0 || semRedeFinais > 0) && { id: "ideb", titulo: "IDEB" },
@@ -398,12 +447,12 @@ export default async function PaginaEstado(
         <h2 id="no-pais">{r.uf.nome} no país</h2>
         <p>
           Os 27 estados no mesmo indicador, com {r.uf.sigla} em destaque. Os
-          valores de cada um estão na{" "}
-          <Link href="/" prefetch={false}>tabela da capa</Link>.
+          valores de cada um estão na tabela logo após o mapa.
         </p>
         <MapaUf
           camadas={camadasPadrao(snapshot.ufs, panorama)}
           destaque={r.uf.sigla}
+          nomes={Object.fromEntries(snapshot.ufs.map((u) => [u.sigla, u.nome]))}
         />
       </section>
 
@@ -418,7 +467,8 @@ export default async function PaginaEstado(
           </p>
           <TabelaCenso
             medidas={medidasCenso}
-            comparacao={{ rotulo: "No Brasil", valores: taxasPais }}
+            comparacoes={[{ rotulo: "No Brasil", valores: taxasPais }]}
+            rotuloValor={r.uf.nome}
             legenda={`${r.uf.nome} no Censo 2022, com o Brasil ao lado`}
           />
           <p className={estilos.ressalva}>
@@ -430,6 +480,198 @@ export default async function PaginaEstado(
             proporções municipais, que daria a uma cidade de 3 mil habitantes o
             mesmo peso da capital. Fonte: IBGE, Censo Demográfico 2022, pelas
             APIs públicas de agregados.
+          </p>
+        </section>
+      )}
+
+      {cagedUf && (
+        <section className={estilos.texto} id="emprego">
+          <h2>Emprego com carteira {emContracao(de)}</h2>
+          <p>
+            Do <strong><Termo chave="caged">Novo Caged</Termo></strong>, do
+            Ministério do Trabalho,{" "}
+            {r.uf.municipios > 1 ? `somando os municípios ${de}` : emContracao(de)}. De{" "}
+            {nomeCompetencia(caged.competencias[0]!)} a{" "}
+            {nomeCompetencia(caged.competencia)} foram{" "}
+            <strong>{contagem(cagedUf.admissoes, "admissão", "admissões")}</strong>{" "}
+            e{" "}
+            <strong>
+              {contagem(cagedUf.desligamentos, "desligamento", "desligamentos")}
+            </strong>
+            : <Termo chave="saldo">saldo</Termo> de{" "}
+            <strong>{comSinal(cagedUf.saldo)}</strong>{" "}
+            {Math.abs(cagedUf.saldo) === 1 ? "vaga" : "vagas"}. Só em{" "}
+            {nomeCompetencia(caged.competencia)}, o saldo foi de{" "}
+            <strong>{comSinal(cagedUf.ultimo.saldo)}</strong>{" "}
+            {Math.abs(cagedUf.ultimo.saldo) === 1 ? "vaga" : "vagas"}.
+            {cagedUf.comDado > 1 && (
+              <>
+                {" "}
+                <strong>{fracaoDe(cagedUf.positivos, cagedUf.comDado)}</strong>{" "}
+                {concorda(cagedUf.positivos, cagedUf.comDado, "fechou", "fecharam")}{" "}
+                os 12 meses com mais contratações que desligamentos.
+              </>
+            )}{" "}
+            <Link
+              href={`/ranking/emprego-com-carteira/?uf=${r.uf.sigla.toLowerCase()}`}
+              prefetch={false}
+            >
+              O ranking dos municípios, com as cidades grandes {deEstado(r.uf.sigla)} por habitante
+            </Link>.
+          </p>
+          <TabelaCaged
+            meses={cagedUf.meses}
+            legenda={`${r.uf.nome} no Novo Caged, mês a mês` +
+              (r.uf.municipios > 1 ? ", somando os municípios" : "")}
+          />
+          <p className={estilos.ressalva}>
+            Só emprego <Termo chave="celetista">celetista</Termo>: servidor{" "}
+            <Termo chave="estatutario">estatutário</Termo> e quem trabalha por
+            conta própria não entram. Os meses já incluem as declarações
+            entregues fora do prazo e as exclusões feitas até{" "}
+            {nomeCompetencia(caged.competencia)}, e o mês mais recente ainda
+            pode mudar. Aqui só entra o que tem município: as{" "}
+            {br(semMunicipio)} movimentações que o Ministério não atribui a
+            município nenhum entram só no total do país, e por isso o número
+            que ele publica para o estado pode diferir um pouco. No país, os
+            mesmos 12 meses somam{" "}
+            <strong>{comSinal(caged.conferencia.doze.saldo)}</strong> vagas.{" "}
+            <a href={caged.conferencia.sumario}>Sumário executivo do MTE</a>.
+          </p>
+        </section>
+      )}
+
+      {emendasUf.comPagamento > 0 && emendasUf.cheio.reais !== null && (
+        <section className={estilos.texto} id="emendas">
+          <h2>Emendas parlamentares pagas aos municípios {de}</h2>
+          <p>
+            Em {emendasUf.cheio.ano}, as prefeituras e os fundos municipais {de}{" "}
+            receberam{" "}
+            <strong title={escalaComSinal(emendasUf.cheio.reais).exato}>
+              {escalaComSinal(emendasUf.cheio.reais).curto}
+            </strong>{" "}
+            em pagamentos de{" "}
+            <Termo chave="emenda-parlamentar">emendas parlamentares</Termo>
+            {emendasPh !== null && (
+              <>
+                : <strong>{"R$ "}{br(emendasPh, 2)}</strong> por habitante do
+                estado, pela população estimada de {anoEstimada}
+              </>
+            )}
+            . <strong>{fracaoDe(emendasUf.comPagamento, r.uf.municipios)}</strong>{" "}
+            {concorda(emendasUf.comPagamento, r.uf.municipios, "teve", "tiveram")}{" "}
+            algum pagamento no ano.
+            {emendasUf.parcial && (
+              emendasUf.parcial.reais === null ? (
+                <>
+                  {" "}Em {emendasUf.parcial.ano}, até {mesDeCorte(emendas.ultimoMes)},
+                  nenhum pagamento foi registrado.
+                </>
+              ) : (
+                <>
+                  {" "}Em {emendasUf.parcial.ano}, até {mesDeCorte(emendas.ultimoMes)},
+                  o saldo é de{" "}
+                  <strong title={escalaComSinal(emendasUf.parcial.reais).exato}>
+                    {escalaComSinal(emendasUf.parcial.reais).curto}
+                  </strong>.
+                </>
+              )
+            )}
+          </p>
+          {medianaPh !== null && (
+            <p>
+              Município a município, a{" "}
+              <Termo chave="mediana">mediana</Termo> é de{" "}
+              <strong>{"R$ "}{br(medianaPh, 2)}</strong> por habitante em{" "}
+              {emendasUf.cheio.ano}: metade dos {br(phMunicipios.length)} que
+              tiveram pagamento recebeu menos que isso, metade mais. A página de
+              cada município mostra o valor dele contra esta mediana, e a divisão
+              por tipo de emenda.
+            </p>
+          )}
+          <p className={estilos.ressalva}>
+            Conta o que a União <strong>pagou</strong> às prefeituras e aos
+            fundos municipais (como o de saúde), pelo mês do pagamento, e não o
+            que foi empenhado. Não entram os pagamentos ao próprio governo do
+            estado, a entidades e a empresas.{" "}
+            <strong>Até 2024, parte do dinheiro de emendas era paga ao Banco do
+            Brasil, sem o município de destino</strong>; por isso os anos
+            anteriores não se comparam com {emendasUf.cheio.ano}. Fonte:{" "}
+            {emendas.fonte}, arquivo de {dataCurta(emendas.dataArquivo)}.
+          </p>
+        </section>
+      )}
+
+      {inssUf.length > 0 && inss.fila && (
+        <section className={estilos.texto} id="inss">
+          <h2>Pedidos ao INSS {emContracao(de)}</h2>
+          <p>
+            Do Portal de Dados Abertos do INSS. Em{" "}
+            <strong>{dataBr(inss.fila.referencia)}</strong>, as agências {de}{" "}
+            tinham <strong>{br(esperaUf)}</strong> pedidos esperando decisão nos
+            benefícios abaixo. A <strong>espera típica</strong> é o meio da
+            fila: metade dos pedidos esperava havia mais do que isso. Ao lado,
+            a mesma conta no país, e quanto tempo levaram as negativas.
+          </p>
+          <div className={estilos.rolagem}>
+            <table className={estilos.lista}>
+              <caption>
+                Pedidos ao INSS {emContracao(de)}, por benefício: a fila em{" "}
+                {dataBr(inss.fila.referencia)}
+                {inss.negados && <> e as negativas de {mesPorExtenso(inss.negados.mes)}</>}
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Benefício</th>
+                  <th scope="col" className={estilos.num}>Pedidos em espera</th>
+                  <th scope="col" className={estilos.num}>Metade espera há mais de</th>
+                  <th scope="col" className={estilos.num}>No país</th>
+                  <th scope="col" className={estilos.num}>Há mais de 90 dias (% dos pedidos)</th>
+                  <th scope="col" className={estilos.num}>Metade negada em até</th>
+                </tr>
+              </thead>
+              <tbody>
+                {inssUf.map(({ grupo, fila, negados }) => (
+                  <tr key={grupo.chave}>
+                    <th scope="row">
+                      <Link href={`/inss/${grupo.chave}/`} prefetch={false}>
+                        {grupo.nomePopular.charAt(0).toUpperCase() +
+                          grupo.nomePopular.slice(1)}
+                      </Link>
+                    </th>
+                    <td className={`${estilos.num} tabular`}>{fila ? br(fila.n) : "—"}</td>
+                    <td className={`${estilos.num} tabular`}>
+                      {fila ? dias(fila.mediana) : "—"}
+                    </td>
+                    <td className={`${estilos.num} tabular`}>{dias(grupo.fila!.mediana)}</td>
+                    <td className={`${estilos.num} tabular`}>{fila ? pct(fila.acima90) : "—"}</td>
+                    <td className={`${estilos.num} tabular`}>
+                      {negados ? dias(negados.mediana) : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className={estilos.ressalva}>
+            A espera é a dos pedidos <strong>ainda sem decisão</strong>, contada
+            da criação do pedido até {dataBr(inss.fila.referencia)}; não é o
+            tempo até a decisão. A negativa conta do pedido ao &ldquo;não&rdquo;.
+            O estado é o da agência onde o pedido foi criado, na fila, e o da
+            que negou, nas negativas
+            {inss.negados && (
+              <>
+                : as {br(inss.negados.foraDasUfs.n)} negativas de{" "}
+                {mesPorExtenso(inss.negados.mes)} decididas pela agência de
+                automação do INSS, que atende o país inteiro (
+                {pct(inss.negados.foraDasUfs.n / inss.negados.foraDasUfs.total)}{" "}
+                do total), entram no país e em nenhum estado
+              </>
+            )}
+            . Travessão: menos de {br(inss.minimoPedidos)} pedidos no estado,
+            poucos para publicar. Fonte:{" "}
+            <a href={inss.fonte.url}>{inss.fonte.nome}</a>.{" "}
+            <Link href="/ajuda/#inss" prefetch={false}>Como ler estes números</Link>
           </p>
         </section>
       )}
@@ -480,12 +722,14 @@ export default async function PaginaEstado(
             aconteceu e faz o leitor procurar um problema inexistente. */}
         {r.porFaixa.implausivel > 0 ? (
           <p className={estilos.ressalva}>
-            A média acima <strong>exclui os {br(r.porFaixa.implausivel)}</strong>{" "}
-            implausíveis: percentuais fora da faixa de 0 a 100%, ou calculados
-            sobre uma receita corrente líquida que a declaração de receita do
-            próprio município desmente. Um município que declara 371% da receita
-            em pessoal move a média de duzentos quase dois pontos — e média
-            contaminada por erro de preenchimento é erro na página, não detalhe.
+            {/* Sem número de exemplo digitado: o texto dizia "371%" e "quase
+                dois pontos", verdade num caso e repetido nos 27 estados. */}
+            A média acima <strong>deixa de fora {r.porFaixa.implausivel === 1
+              ? "o município" : `os ${br(r.porFaixa.implausivel)} municípios`}</strong>{" "}
+            com percentual impossível: fora da faixa de 0 a 100% da receita, ou
+            calculado sobre uma receita corrente líquida que a declaração de
+            receita do próprio município desmente. É erro de preenchimento, e um
+            só pode mover a média do estado inteiro.
           </p>
         ) : r.baseMedia > 0 ? (
           <p className={estilos.ressalva}>
@@ -581,7 +825,9 @@ export default async function PaginaEstado(
             {/* `meu.municipios` não conta quem ainda não estava instalado:
                 sem estas palavras, MT diria "dos 141" e tem 142. */}
             {r.naoInstalados > 0 && " já instalados"} entregaram o
-            Relatório de Gestão Fiscal do {quadrimestre} —{" "}
+            Relatório de Gestão Fiscal do {quadrimestre}, ou o{" "}
+            <Termo chave="rgf-simplificado">simplificado</Termo> do 2º
+            semestre, que cobre os mesmos 12 meses —{" "}
             <strong>{br(meu.taxa, 0)}%</strong>. Entre as{" "}
             {br(panorama.length)} com relatório municipal,{" "}
             {posTaxa.abaixo === 0 ? (
@@ -597,6 +843,14 @@ export default async function PaginaEstado(
             .
           </p>
           <div className={estilos.grafico}>
+            {/* O título ficava só no <title> do SVG, que a tela não mostra:
+                quem via a tira não sabia o que era cada ponto. */}
+            <p className={estilos.fonte}>
+              Municípios que entregaram o relatório fiscal do {quadrimestre},
+              em % do total de cada estado. Cada ponto é uma unidade da
+              federação; o losango é {r.uf.nome}. Fonte: Tesouro Nacional,
+              SICONFI.
+            </p>
             <TiraEstados
               panorama={panorama}
               destaque={r.uf.sigla}
@@ -619,10 +873,16 @@ export default async function PaginaEstado(
               {br(Math.min(...panorama.map((x) => x.taxa)), 0)}% a{" "}
               {br(Math.max(...panorama.map((x) => x.taxa)), 0)}%
             </strong>{" "}
-            entre as unidades da federação, e{" "}
-            <strong>não é uma divisão regional</strong>: Santa Catarina entrega
-            86% e o Rio Grande do Sul 15%, vizinhos; a Bahia 99% e o Maranhão
-            49%, ambos no Nordeste. Entregar é obrigação da Lei de
+            entre as unidades da federação
+            {contraste ? (
+              <>
+                , e <strong>não é uma divisão regional</strong>: Santa Catarina
+                entrega {br(sc!, 0)}% e o Rio Grande do Sul {br(rs!, 0)}%,
+                vizinhos; a Bahia {br(ba!, 0)}% e o Maranhão {br(ma!, 0)}%,
+                ambos no Nordeste.
+              </>
+            ) : "."}{" "}
+            Entregar é obrigação da Lei de
             Responsabilidade Fiscal, mas não entregar tem causas que este painel
             não conhece — aqui está o número, não o motivo.
           </p>
@@ -647,11 +907,17 @@ export default async function PaginaEstado(
                 .
               </p>
               <div className={estilos.grafico}>
+                <p className={estilos.fonte}>
+                  Mediana do gasto com pessoal dos municípios de cada estado
+                  no {quadrimestre}, em % da receita corrente líquida, só onde
+                  a base é suficiente. O losango é {r.uf.nome}. Fonte: Tesouro
+                  Nacional, SICONFI.
+                </p>
                 <TiraEstados
                   panorama={panorama}
                   destaque={r.uf.sigla}
                   valorDe={(x) => x.mediana}
-                  formatar={(v) => `${br(v, 1)}%`}
+                  formatar={(v) => `${br(v, 2)}%`}
                   rotuloEixo="Mediana do gasto com pessoal, por estado"
                   descricao={
                     `As unidades da federação pela mediana do gasto com ` +
@@ -700,13 +966,17 @@ export default async function PaginaEstado(
       <div className={estilos.rolagem}>
         <table className={estilos.lista}>
           <caption className="so-leitor">
-            Municípios {de}, com população e gasto com pessoal.
+            Municípios {de}, com a população do Censo 2022 e o gasto com
+            pessoal no {quadrimestre}, em % da receita corrente líquida.
           </caption>
           <thead>
             <tr>
               <th scope="col">Município</th>
-              <th scope="col" className={estilos.num}>População</th>
-              <th scope="col" className={estilos.num}>Pessoal / RCL</th>
+              <th scope="col" className={estilos.num}>População (Censo 2022)</th>
+              <th scope="col" className={estilos.num}>
+                Gasto com pessoal{" "}
+                (% da <Termo chave="rcl">RCL</Termo>)
+              </th>
               <th scope="col" className={estilos.situacao}>Situação</th>
             </tr>
           </thead>

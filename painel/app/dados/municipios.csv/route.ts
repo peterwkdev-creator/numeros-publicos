@@ -65,6 +65,12 @@ export async function GET() {
     // Vazio é ano sem pagamento nenhum, e não zero. Até 2024 parte do
     // dinheiro ia ao Banco do Brasil sem o município, e por isso a série
     // NÃO se compara com 2025: a página diz, o XLSX diz no dicionário.
+    // A origem do percentual de pessoal, ANTES das emendas e não depois:
+    // elas ganham uma coluna por ano, e o que viesse atrás mudaria de lugar
+    // todo janeiro. `pessoal_periodo` diz 3, e para quem entrega o RGF
+    // Simplificado o número é do 2º semestre (os mesmos 12 meses até
+    // dezembro). Vazio é quem não entregou nenhum dos dois.
+    "pessoal_relatorio",
     "emendas_periodo",
     ...emendas.anos.map((ano) => `emendas_pagas_${ano}`),
   ];
@@ -127,6 +133,8 @@ export async function GET() {
       periodoCaged,
       cg?.admissoes ?? null, cg?.desligamentos ?? null,
       cg?.saldo ?? null, cg?.ultimo.saldo ?? null,
+      f?.simplificado ? "simplificado_semestral"
+        : f?.publicou ? "quadrimestral" : null,
       periodoEmendas,
       ...(emendasDe(emendas, m.codigo)?.anos.map((a) => a.reais) ??
         emendas.anos.map(() => null)),

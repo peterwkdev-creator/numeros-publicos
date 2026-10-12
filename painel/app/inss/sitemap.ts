@@ -18,8 +18,8 @@ export const dynamic = "force-static";
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const inss = await lerInss();
   const quando = dadoAtualizadoEm(inss);
-  return gruposComPagina(inss).map((g) => ({
-    url: `${SITE}/inss/${g.chave}/`,
+  return ["", ...gruposComPagina(inss).map((g) => `${g.chave}/`)].map((resto) => ({
+    url: `${SITE}/inss/${resto}`,
     ...(quando ? { lastModified: new Date(quando) } : {}),
     changeFrequency: "monthly" as const,
     priority: 0.8,

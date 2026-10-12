@@ -1,10 +1,12 @@
 "use client";
 
 import { useDeferredValue, useMemo, useState } from "react";
+import Link from "next/link";
 import {
-  br, expandirLinhas, type Indicador, type LinhaMunicipio,
+  br, expandirLinhas, rotuloCurto, unidadeDaColuna, type Indicador,
+  type LinhaMunicipio,
 } from "@/lib/dados";
-import { FAIXA_DA_LETRA, ROTULO_FAIXA, type Faixa } from "@/lib/fiscal";
+import { FAIXA_DA_LETRA, ROTULO_FAIXA, slugDe, type Faixa } from "@/lib/fiscal";
 import s from "./page.module.css";
 import m from "./municipios.module.css";
 
@@ -21,12 +23,12 @@ import m from "./municipios.module.css";
  *
  * Medido em 03/09/2026: com objetos expandidos, o payload da capa era 269 KB,
  * porque cada município repetia `codigo`, `nome`, `uf` e as três chaves de
- * indicador, 1.794 vezes. E como toda página linkava para a capa, o Next
+ * indicador, 1.794 vezes (o recorte de então). E como toda página linkava para a capa, o Next
  * pré-buscava esses 269 KB em todas elas.
  *
  * A expansão acontece uma vez aqui, no navegador, e custa milissegundos. O que
  * ela economiza é banda de quem visita — e é o que torna a expansão nacional
- * (5.570 municípios) viável em vez de proibitiva.
+ * (5.571 municípios) viável em vez de proibitiva.
  */
 
 const PAGINA = 50;
@@ -39,8 +41,9 @@ type Ordem = { coluna: string; desc: boolean };
  * As sete faixas existem no dado, mas oferecer as sete produziria um controle
  * que ninguém lê. Estas quatro são as perguntas que as pessoas de fato fazem —
  * e a última, "não entregou", é a que o site mais quer que se possa fazer:
- * são 2.326 municípios sobre os quais não se sabe nada, e sem um filtro eles
- * ficam diluídos entre os outros.
+ * são os municípios sobre os quais não se sabe nada, e sem um filtro eles
+ * ficam diluídos entre os outros. (Eram 2.326 até 11/10/2026, quando o site
+ * não lia o RGF Simplificado; 26 depois.)
  */
 const FILTROS_FAIXA: { valor: Faixa | ""; rotulo: string }[] = [
   { valor: "", rotulo: "Todas as situações" },
@@ -317,6 +320,16 @@ export function Municipios({
 
       <div className={s.rolagem}>
         <table className={s.tabela}>
+          {/* O cabeçalho diz o quê, não de quando: o ano de cada coluna e a
+              fonte ficam aqui, como na tabela de estados logo acima. */}
+          <caption>
+            Municípios do Brasil:{" "}
+            {indicadores
+              .map((i) => `${rotuloCurto(i.codigo, i.nome)} de ${i.periodo}`)
+              .join(", ")
+              .replace(/, ([^,]*)$/, " e $1")}
+            . Fonte: IBGE.
+          </caption>
           <thead>
             <tr>
               <th scope="col" aria-sort={aria(ordem, "nome")}>
@@ -341,7 +354,15 @@ export function Municipios({
                     className={`${m.ordenar} ${m.ordenarNumero}`}
                     onClick={() => ordenarPor(i.codigo)}
                   >
-                    {i.nome} {seta(ordem, i.codigo)}
+                    {/* O mesmo rótulo e a mesma unidade da tabela por
+                        estado: até 11/10/2026 esta coluna mostrava o nome
+                        cru do IBGE, e o PIB de São Paulo, em R$ mil, lia
+                        como R$ 1 bilhão. */}
+                    {rotuloCurto(i.codigo, i.nome)}
+                    {unidadeDaColuna(i.codigo) && (
+                      <span className={s.ausente}> ({unidadeDaColuna(i.codigo)})</span>
+                    )}{" "}
+                    {seta(ordem, i.codigo)}
                   </button>
                 </th>
               ))}
@@ -350,7 +371,14 @@ export function Municipios({
           <tbody>
             {visiveis.map((x) => (
               <tr key={x.codigo}>
-                <th scope="row">{x.nome}</th>
+                <th scope="row">
+                  {/* Link, e sem pré-busca: as 50 linhas visíveis são os
+                      únicos `href` de município na capa, e pré-buscar 50
+                      páginas a cada filtro pesaria mais que a capa. */}
+                  <Link href={`/municipio/${slugDe(x.nome, x.uf)}/`} prefetch={false}>
+                    {x.nome}
+                  </Link>
+                </th>
                 <td>{x.uf}</td>
                 {indicadores.map((i) => (
                   <td

@@ -27,31 +27,34 @@ import {
   compararFuncoes, faixaDaLinha, faixaDe, faixasEmLinha, FAIXA_DA_LETRA, funcoesDe,
   indexarFiscal, saltoSobreAHistoria, type LinhaFiscal,
   funcoesRecentesDe, LETRA_FAIXA, parDeFuncoes,
-  contiguos, indiceQuadrimestre, INSTALADO_EM, interrupcoes, naoInstaladosEm, pontoPlausivel, PRESTA_COMO_ESTADO,
-  receitaDe, receitaRecenteDe, rotuloReceita, ROTULO_FAIXA, saudeDe,
+  contiguos, indiceQuadrimestre, INSTALADO_EM, interrupcoes, naoInstaladosEm, nomePonto, pontoPlausivel, PRESTA_COMO_ESTADO, rotuloPonto,
+  nomeQuadrimestre, receitaDe, receitaRecenteDe, rotuloPeriodo, rotuloReceita, ROTULO_FAIXA, saudeDe,
   serieFuncoesDe, serieDePessoal, CODIGO_FAIXA, variacao, slugDe,
   type PontoSerie, type Receita,
 } from "../lib/fiscal.ts";
 import { posicaoEntre, posicaoNoEstado } from "../lib/posicao.ts";
-import { deEstado, emContracao } from "../lib/estado.ts";
+import { daMesmaRegiao, deEstado, emContracao, type SnapshotRegioes } from "../lib/estado.ts";
 import { trilha } from "../lib/jsonld.ts";
 import {
   atualizadoEm, caminhosDosFilhos, escaparXml, indiceDeSitemaps,
 } from "../lib/sitemap.ts";
-import { faixaDoValor, percentuaisPorUf } from "../lib/mapa.ts";
 import {
-  medianasCache, medianasDe, medidasDe, PARES_CENSO, rotuloDownload,
+  camadasPadrao, cssDasCamadas, dominio, FAIXAS, faixaDoValor, percentuaisPorUf,
+} from "../lib/mapa.ts";
+import {
+  linhasDaUf, medianasCache, medianasDe, medidasDe, PARES_CENSO, rotuloDownload,
   taxasCache, taxasDoPais, medidasDoPais,
 } from "../lib/censo.ts";
 import {
   EMPRESAS, medianaDaColuna, PARES_TRABALHO, RENDA_CENSO,
 } from "../lib/trabalho.ts";
 import {
-  cagedDe, comSinal, competenciaCurta, contagem, nomeCompetencia, totalDoPais,
-  type SnapshotCaged,
+  cagedDe, cagedDeVarios, comSinal, competenciaCurta, contagem, nomeCompetencia,
+  POPULACAO_MINIMA_POR_MIL, rankingCaged, totalDoPais, type SnapshotCaged,
 } from "../lib/caged.ts";
 import {
-  emendasDe, mesDeCorte, rotuloDoTipo, SEM_PREFEITURA, type SnapshotEmendas,
+  emendasDe, emendasDeVarios, mesDeCorte, porHabitante, porHabitanteDaUf, rotuloDoTipo, SEM_PREFEITURA,
+  type SnapshotEmendas,
 } from "../lib/emendas.ts";
 import { xlsx } from "../lib/xlsx.ts";
 import { ancoraDe, glossarioAZ, idDoVerbete } from "../lib/glossario.ts";
@@ -794,23 +797,61 @@ test("UF sem uma das pontas fica sem faixa, e não em 0%", () => {
   assert.equal(r["CC"], null, "denominador zero não é 0%, é ausência");
 });
 
-test("toda camada do mapa tem regra de cor no CSS", () => {
-  // A troca de indicador é CSS puro, e as chaves vivem em dois arquivos. Uma
-  // chave nova em `page.tsx` sem a regra correspondente deixaria o mapa inteiro
-  // na cor padrão -- sem erro, sem aviso, e com aparência de funcionar.
-  const lib = fs.readFileSync(
-    new URL("../lib/mapa.ts", import.meta.url), "utf-8");
-  const css = fs.readFileSync(
-    new URL("../app/componentes/mapa-uf.module.css", import.meta.url), "utf-8");
-  const bloco = lib.slice(lib.indexOf("export function camadasPadrao"));
-  const chaves = [...bloco.matchAll(/chave:\s*"([a-z-]+)"/g)].map((m) => m[1]);
-  assert.ok(chaves.length >= 2, `esperava camadas, achei ${chaves.length}`);
-  for (const c of chaves) {
-    assert.ok(css.includes(`input[value="${c}"]:checked`),
-      `camada "${c}" não tem regra de cor em mapa-uf.module.css`);
-    assert.ok(css.includes(`[data-${c}="4"]`),
-      `camada "${c}" não tem as cinco faixas no CSS`);
+test("faixaDoValor usa os extremos da camada, não 0 a 100", () => {
+  // Com 0-100 fixo, o ensino superior (8% a 33% entre os estados) caía inteiro
+  // nas duas primeiras faixas: um mapa de uma cor só.
+  assert.equal(faixaDoValor(10, 10, 40), 0);
+  assert.equal(faixaDoValor(39.9, 10, 40), 4);
+  assert.equal(faixaDoValor(5, 10, 40), 0, "abaixo do mínimo cai na primeira");
+  assert.equal(faixaDoValor(50, 10, 40), 4, "acima do máximo cai na última");
+  assert.equal(faixaDoValor(20, 40, 40), null, "domínio vazio não inventa faixa");
+});
+
+test("dominio arredonda os extremos para fora, e sem valor vale 0 a 100", () => {
+  assert.deepEqual(dominio({ A: 8.3, B: 32.9, C: null }, 10), { min: 0, max: 40 });
+  assert.deepEqual(dominio({ A: 52310, B: 9100 }, 10000), { min: 0, max: 60000 });
+  assert.deepEqual(dominio({ A: 30 }, 10), { min: 30, max: 40 },
+    "um valor só ainda dá uma rampa de largura positiva");
+  assert.deepEqual(dominio({ A: null }, 10), { min: 0, max: 100 });
+});
+
+test("cssDasCamadas cobre toda camada padrão, toda faixa e a ausência", () => {
+  // Gerado da mesma lista que desenha o mapa: a divergência entre camadas e
+  // regras de cor, que um teste antes vigiava, deixa de poder existir. Este
+  // teste cobra que o gerador cubra tudo e recuse chave que vire injeção.
+  const ufs = [{ sigla: "AA", totais: {} }];
+  const camadas = camadasPadrao(ufs, [{ uf: "AA", municipios: 1, taxa: 50, mediana: 40 }]);
+  assert.ok(camadas.length >= 11, `esperava 11 camadas, achei ${camadas.length}`);
+  const chaves = camadas.map((c) => c.chave);
+  assert.equal(new Set(chaves).size, chaves.length, "chave repetida");
+  const css = cssDasCamadas(chaves, { bloco: "b", uf: "u", texto: "t", extremos: "e" });
+  for (const k of chaves) {
+    for (let i = 0; i < FAIXAS; i++) {
+      assert.ok(css.includes(`input[value="${k}"]:checked) .u[data-${k}="${i}"]{fill:var(--mapa-${i})}`),
+        `camada "${k}" sem a faixa ${i}`);
+    }
+    assert.ok(css.includes(`.u[data-${k}="sem"]{fill:url(#mapa-sem-dado)`), `camada "${k}" sem hachura`);
+    assert.ok(css.includes(`.t[data-de="${k}"]{display:block}`), `camada "${k}" sem legenda`);
+    assert.ok(css.includes(`.e[data-de="${k}"]{display:contents}`), `camada "${k}" sem extremos`);
   }
+  assert.throws(() => cssDasCamadas(['x"]{}*{'], { bloco: "b", uf: "u", texto: "t", extremos: "e" }));
+});
+
+test("legenda do mapa não traz afirmação fixa sobre os estados", () => {
+  // A legenda da entrega dizia "estados vizinhos ficam em extremos opostos",
+  // digitado: verdade no dia, e continuaria impressa se o dado mudasse.
+  const camadas = camadasPadrao([], []);
+  for (const c of camadas) {
+    assert.doesNotMatch(c.legenda, /vizinh|extremos opostos|padrão regional/i, c.chave);
+  }
+});
+
+test("PIB por habitante do mapa usa a população do Censo 2022, em reais", () => {
+  const [c] = camadasPadrao(
+    [{ sigla: "AA", totais: { "pib-municipal": 1000, "populacao-censo-2022": 20 } }], [])
+    .filter((x) => x.chave === "pib-habitante");
+  assert.equal(c!.formato, "reais");
+  assert.equal(c!.valores["AA"], 50000, "1.000 mil reais / 20 pessoas = R$ 50 mil");
 });
 
 test("emContracao cobre as três preposições, e as 27 UFs", () => {
@@ -928,7 +969,7 @@ test("a página do município mantém a ressalva que separa mediana de taxa", ()
   // domicílios brasileiros têm esgoto, e são 64,7%.
   const muni = fs.readFileSync(
     new URL("../app/municipio/[slug]/page.tsx", import.meta.url), "utf-8");
-  assert.ok(muni.includes("A mediana ao lado é dos municípios, não do país"),
+  assert.ok(muni.includes("As medianas ao lado são dos municípios, não a taxa do estado nem a do país"),
     "a ressalva sumiu da página do município");
 });
 
@@ -1389,6 +1430,31 @@ test("contíguo é vizinhança NO TEMPO, não na lista", () => {
   // E o caso que o filtro de implausível cria sozinho: o ponto do meio sai da
   // lista, os vizinhos ficam adjacentes NO ARRAY e não no tempo.
   assert.equal(contiguos([2024, 1, true, 44], [2024, 3, true, 46]), false);
+});
+
+test("RGF Simplificado: o ano semestral não deve 1º nem 2º quadrimestre", () => {
+  // Um ponto por ano, o 2º semestre no lugar do 3º quadrimestre. Até
+  // 12/10/2026 cada ano contava como interrupção, e a página diria "não
+  // entregou relatório" de quem entregou todos.
+  const semestral: PontoSerie[] = [
+    [2020, 3, true, 40, true], [2021, 3, true, 41, true],
+    [2022, 3, true, 42, true], [2024, 3, true, 43, true],
+  ];
+  assert.equal(contiguos(semestral[0]!, semestral[1]!), true);
+  assert.equal(interrupcoes(semestral), 1, "2023 ficou de fora: esse buraco é real");
+
+  // Quem passou do quadrimestral ao semestral encosta também.
+  assert.equal(contiguos([2023, 3, true, 40], [2024, 3, true, 41, true]), true);
+  assert.equal(contiguos([2024, 1, true, 40], [2024, 3, true, 41, true]), true);
+  // Mas o 3º quadrimestre que faltou no ano anterior continua faltando.
+  assert.equal(contiguos([2023, 2, true, 40], [2024, 3, true, 41, true]), false);
+  // E sem a marca, o vão é o de sempre: o quadrimestral deve os três.
+  assert.equal(contiguos([2023, 3, true, 40], [2024, 3, true, 41]), false);
+
+  assert.equal(rotuloPonto([2024, 3, true, 41, true]), "2º sem. 2024");
+  assert.equal(rotuloPonto([2024, 3, true, 41]), "3º quadr. 2024");
+  assert.equal(nomePonto([2024, 3, true, 41, true]), "2º semestre de 2024");
+  assert.equal(nomePonto([2024, 3, true, 41, false]), "3º quadrimestre de 2024");
 });
 
 test("a distância no eixo é proporcional ao TEMPO, não à ordem", () => {
@@ -2434,6 +2500,21 @@ test("o cache das medianas separa os pares do Censo dos de trabalho", () => {
   assert.equal(medianasCache(linhas, colunas, PARES_TRABALHO), trabalho);
 });
 
+test("linhasDaUf separa por UF e devolve sempre o mesmo array", () => {
+  // O array é a chave do cache das medianas: um array novo por página
+  // recalcularia a mediana do estado 5.571 vezes, e calado.
+  const colunas = ["codigo", "uf", "esgoto-rede", "domicilios-total"];
+  const linhas = [[1, "AA", 10, 100], [2, "BB", 90, 100], [3, "AA", 30, 100],
+                  [4, "AA", 20, 100]];
+  const aa = linhasDaUf(linhas, colunas, "AA");
+  assert.deepEqual(aa.map((l) => l[0]), [1, 3, 4]);
+  assert.equal(linhasDaUf(linhas, colunas, "AA"), aa);
+  assert.equal(medianasCache(aa, colunas)["esgoto"], 20);
+  assert.equal(medianasCache(linhas, colunas)["esgoto"], 25);
+  assert.deepEqual(linhasDaUf(linhas, colunas, "ZZ"), []);
+  assert.deepEqual(linhasDaUf([[1, 10]], ["codigo", "esgoto-rede"], "AA"), []);
+});
+
 test("a mediana de uma coluna ignora quem não tem valor", () => {
   const colunas = ["codigo", "salario-medio-empresas"];
   const linhas = [[1, 2000], [2, null], [3, 3000], [4, 2500]];
@@ -2507,6 +2588,88 @@ test("cagedDe soma a janela, e município sem movimento é ZERO", () => {
   assert.equal(cagedDe(c, 1), null);
 });
 
+test("cagedDeVarios: os 27 estados mais o não identificado dão o país", () => {
+  // A soma por estado é a que a página do estado mostra. Se um município
+  // ficasse fora da sua UF, ou entrasse em duas, o país deixaria de fechar.
+  const c = CAGED();
+  const snapshot = JSON.parse(
+    fs.readFileSync(new URL("../dados/snapshot.json", import.meta.url), "utf-8"));
+  const porUf = new Map<string, number[]>();
+  for (const l of snapshot.municipios as [number, string, string][]) {
+    porUf.set(l[2], [...(porUf.get(l[2]) ?? []), l[0]]);
+  }
+  assert.equal(porUf.size, 27);
+  let a = c.naoIdentificado[0].reduce((s, x) => s + x, 0);
+  let d = c.naoIdentificado[1].reduce((s, x) => s + x, 0);
+  let municipios = 0;
+  for (const codigos of porUf.values()) {
+    const uf = cagedDeVarios(c, codigos)!;
+    a += uf.admissoes;
+    d += uf.desligamentos;
+    municipios += uf.comDado;
+  }
+  assert.deepEqual({ saldo: a - d, admissoes: a, desligamentos: d }, c.conferencia.doze);
+  assert.equal(municipios, c.municipios.length);
+});
+
+test("cagedDeVarios conta os positivos e ignora o código sem dado", () => {
+  const c: SnapshotCaged = {
+    ...CAGED(),
+    competencias: ["202606", "202607"],
+    municipios: [[2800308, [3, 1], [2, 4]], [2802106, [0, 0], [0, 0]],
+                 [2800100, [5, 2], [1, 1]]],
+  };
+  const v = cagedDeVarios(c, [2800308, 2802106, 2800100, 1])!;
+  assert.equal(v.comDado, 3);                // o código 1 não entra
+  assert.equal(v.positivos, 1);              // zero não é positivo
+  assert.equal(v.saldo, -2 + 0 + 5);
+  assert.deepEqual(v.ultimo, {
+    competencia: "202607", admissoes: 3, desligamentos: 5, saldo: -2,
+  });
+  assert.equal(cagedDeVarios(c, [1]), null);
+});
+
+test("rankingCaged ordena pelo saldo, desempata pelo nome e só põe cidade grande no por mil", () => {
+  const c: SnapshotCaged = {
+    ...CAGED(),
+    competencias: ["202606", "202607"],
+    municipios: [[1, [3, 1], [2, 4]], [2, [0, 0], [0, 0]], [3, [5, 2], [1, 1]],
+                 [4, [9, 0], [4, 0]], [9, [50, 0], [0, 0]]],
+  };
+  const identidade = {
+    colunas: ["codigo", "nome", "uf", "populacao-estimada"],
+    municipios: [[1, "Cedro", "AA", 200_000], [2, "Zebu", "AA", null],
+                 [3, "Barra", "BB", 400_000], [4, "Abaré", "BB", 99_999]],
+  } as unknown as Snapshot;
+  const r = rankingCaged(c, identidade);
+  // O código 9 não está no snapshot: sem nome, fica de fora.
+  // Barra e Abaré empatam em +5: vence o nome; o zero não é positivo.
+  assert.deepEqual(r.ordem.map((x) => [x.nome, x.saldo]),
+                   [["Abaré", 5], ["Barra", 5], ["Zebu", 0], ["Cedro", -2]]);
+  assert.deepEqual([r.positivos, r.negativos, r.zerados], [2, 1, 1]);
+  // Abaré tem 99.999 habitantes e Zebu nenhum: só Barra e Cedro por mil.
+  assert.equal(POPULACAO_MINIMA_POR_MIL, 100_000);
+  assert.deepEqual(r.porMil.map((x) => [x.nome, x.porMil]),
+                   [["Barra", 0.0125], ["Cedro", -0.01]]);
+  assert.equal(r.ordem[0]!.admissoes, 9);
+  assert.equal(r.ordem[0]!.desligamentos, 4);
+});
+
+test("rankingCaged soma o país do arquivo, menos o não identificado", () => {
+  // A lista é dos municípios: somada, tem de dar o total do país sem as
+  // movimentações sem município. Um município perdido ou contado duas vezes
+  // aparece aqui.
+  const c = CAGED();
+  const snapshot = JSON.parse(
+    fs.readFileSync(new URL("../dados/snapshot.json", import.meta.url), "utf-8"));
+  const r = rankingCaged(c, snapshot);
+  const ni = c.naoIdentificado[0].reduce((s, x) => s + x, 0) -
+    c.naoIdentificado[1].reduce((s, x) => s + x, 0);
+  assert.equal(r.ordem.length, c.municipios.length);
+  assert.equal(r.ordem.reduce((s, x) => s + x.saldo, 0) + ni, c.conferencia.doze.saldo);
+  assert.equal(r.positivos + r.negativos + r.zerados, r.ordem.length);
+});
+
 test("o saldo leva sinal, e o menos é o tipográfico", () => {
   assert.equal(comSinal(1234), "+1.234");
   assert.equal(comSinal(-56), "−56");
@@ -2515,7 +2678,8 @@ test("o saldo leva sinal, e o menos é o tipográfico", () => {
 
 test("mês e plural saem do dado", () => {
   assert.equal(nomeCompetencia("202603"), "março de 2026");
-  assert.equal(competenciaCurta("202512"), "dez/2025");
+  assert.equal(competenciaCurta("202512"), "dez. 2025");
+  assert.equal(competenciaCurta("202605"), "maio 2026");
   assert.equal(contagem(1, "admissão", "admissões"), "1 admissão");
   assert.equal(contagem(0, "admissão", "admissões"), "0 admissões");
   assert.equal(contagem(1500, "admissão", "admissões"), "1.500 admissões");
@@ -2589,6 +2753,47 @@ test("emendasDe: arquivo que termina em dezembro não tem ano parcial", () => {
   const um = emendasDe(EMENDAS_FICTICIO("202612", 2026), 1)!;
   assert.equal(um.cheio.ano, 2026);
   assert.equal(um.parcial, null);
+});
+
+test("porHabitante e porHabitanteDaUf: sem pagamento ou sem população, fica fora", () => {
+  assert.equal(porHabitante(1500, 100), 15);
+  assert.equal(porHabitante(-50, 10), -5);           // o estorno passa com o sinal
+  assert.equal(porHabitante(null, 100), null);
+  assert.equal(porHabitante(1500, null), null);
+  assert.equal(porHabitante(1500, 0), null);
+  const ind = (codigo: string) => ({
+    codigo, nome: codigo, unidade: "Pessoas", agregado: 1, variavel: 1,
+    periodo: "2026", origem: null, coletadoEm: null, totalRegiao: null,
+  });
+  const snap: Snapshot = {
+    geradoEm: "2026-10-11T00:00:00+00:00", fonte: "teste",
+    colunas: ["codigo", "nome", "uf", "populacao-estimada"],
+    indicadores: [ind("populacao-estimada")],
+    ufs: [],
+    municipios: [
+      [1, "Um", "AA", 100],     // 1.500 reais: 15 por habitante
+      [2, "Dois", "AA", 50],    // sem pagamento em 2025: fora
+      [3, "Três", "BB", null],  // sem população: fora
+    ],
+  };
+  const e = EMENDAS_FICTICIO();
+  assert.deepEqual(porHabitanteDaUf(e, snap, "AA"), [15]);
+  assert.deepEqual(porHabitanteDaUf(e, snap, "BB"), []);
+  assert.deepEqual(porHabitanteDaUf(e, snap, "ZZ"), []);
+});
+
+test("emendasDeVarios soma o conjunto, e ausência continua null", () => {
+  const e = EMENDAS_FICTICIO();
+  const v = emendasDeVarios(e, [1, 2, 3, 99]);
+  assert.equal(v.cheio.ano, 2025);
+  assert.ok(Math.abs(v.cheio.reais! - (1500 - 17056.34)) < 1e-9);
+  assert.equal(v.comPagamento, 2);           // o 2 não pagou em 2025; o 99 não existe
+  assert.deepEqual(v.parcial, { ano: 2026, reais: 2.5 });
+  const nada = emendasDeVarios(e, [2]);
+  assert.equal(nada.cheio.reais, null);      // nenhum pagamento: null, e não zero
+  assert.equal(nada.parcial!.reais, null);
+  assert.equal(nada.comPagamento, 0);
+  assert.equal(emendasDeVarios(EMENDAS_FICTICIO("202612", 2026), [1]).parcial, null);
 });
 
 test("mesDeCorte e rotuloDoTipo", () => {
@@ -2676,4 +2881,29 @@ test("todo link do Como ler aponta para uma seção que existe na /ajuda", () =>
     itens.filter((i) => i.ajuda && !ids.has(i.ajuda.ancora))
       .map((i) => `${tipo}: ${i.titulo} -> #${i.ajuda!.ancora}`));
   assert.deepEqual(faltam, []);
+});
+
+test("regiões imediatas: todo município do snapshot tem região, sem cruzar a UF", () => {
+  // Pega o regioes.json defasado: município novo no IBGE e fora do arquivo
+  // cairia em silêncio de volta na janela alfabética.
+  const snap = JSON.parse(fs.readFileSync("dados/snapshot.json", "utf-8"));
+  const regioes = JSON.parse(fs.readFileSync("dados/regioes.json", "utf-8")) as SnapshotRegioes;
+  const col = snap.colunas as string[];
+  const [iC, iU] = [col.indexOf("codigo"), col.indexOf("uf")];
+  const todos = (snap.municipios as unknown[][]).map((l) => ({ codigo: l[iC] as number, uf: l[iU] as string }));
+  const semRegiao = todos.filter((m) =>
+    daMesmaRegiao(regioes, todos.filter((x) => x.uf === m.uf), m.codigo) === null);
+  assert.deepEqual(semRegiao, []);
+  for (const r of regioes.regioes) {
+    const ufs = new Set(r.municipios.map((c) => todos.find((m) => m.codigo === c)?.uf));
+    assert.deepEqual([...ufs], [r.uf], `região ${r.nome} fora da UF`);
+  }
+  const df = todos.filter((m) => m.uf === "DF");
+  assert.deepEqual(daMesmaRegiao(regioes, df, df[0]!.codigo)?.vizinhos, []);
+});
+
+test("período do RGF: nunca 2024/3, que se lê como março de 2024", () => {
+  assert.equal(rotuloPeriodo(2024, 3), "3º quadr. 2024");
+  assert.equal(nomeQuadrimestre(2024, 3), "3º quadrimestre de 2024");
+  assert.doesNotMatch(rotuloPeriodo(2024, 3), /\d{4}\/\d/);
 });

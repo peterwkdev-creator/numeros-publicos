@@ -22,6 +22,7 @@
  */
 
 import type { FatiaFuncao } from "./fiscal";
+import { expandir, type Snapshot } from "./dados";
 
 /** `[código IBGE, centavos por ano, centavos por tipo no ano dos tipos]`. */
 export type LinhaEmendas = [number, (number | null)[], (number | null)[]];
@@ -126,6 +127,81 @@ export function emendasDe(e: SnapshotEmendas, codigo: number): EmendasMunicipio 
 
 const MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho",
   "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+
+/**
+ * Reais por habitante, ou `null` sem pagamento no ano ou sem população.
+ *
+ * A população é a ESTIMADA do IBGE, a mais perto do ano do dinheiro (o Censo
+ * de 2022 fica três anos atrás de 2025); a página diz o ano dela.
+ */
+export function porHabitante(
+  reais: number | null | undefined, populacao: number | null | undefined,
+): number | null {
+  return typeof reais === "number" && populacao ? reais / populacao : null;
+}
+
+const cachePorUf = new WeakMap<object, WeakMap<object, Map<string, number[]>>>();
+
+/**
+ * O valor por habitante, no ano cheio, de cada município da UF que teve
+ * pagamento e tem população: a régua contra a qual a página situa um deles.
+ *
+ * Calculado uma vez para as 27 UFs e guardado pela identidade dos dois
+ * arquivos: são 5.571 páginas pedindo a mesma lista.
+ */
+export function porHabitanteDaUf(e: SnapshotEmendas, snapshot: Snapshot, uf: string): number[] {
+  let porSnapshot = cachePorUf.get(e);
+  if (!porSnapshot) {
+    porSnapshot = new WeakMap();
+    cachePorUf.set(e, porSnapshot);
+  }
+  let porUf = porSnapshot.get(snapshot);
+  if (!porUf) {
+    porUf = new Map();
+    const i = e.anos.indexOf(e.anoTipos);
+    const pagos = new Map(e.municipios.map((l) => [l[0], reais(l[1][i])]));
+    for (const m of expandir(snapshot)) {
+      const v = porHabitante(pagos.get(m.codigo), m.valores["populacao-estimada"]);
+      if (v === null) continue;
+      const lista = porUf.get(m.uf);
+      if (lista) lista.push(v);
+      else porUf.set(m.uf, [v]);
+    }
+    porSnapshot.set(snapshot, porUf);
+  }
+  return porUf.get(uf) ?? [];
+}
+
+/**
+ * As emendas de um conjunto de municípios (os de um estado), somadas no ano
+ * cheio e no parcial, e quantos tiveram algum pagamento no ano cheio.
+ *
+ * Ausência continua não sendo zero: sem nenhum pagamento no conjunto, o ano
+ * sai `null`. Código ausente do arquivo não entra em nada.
+ */
+export function emendasDeVarios(e: SnapshotEmendas, codigos: Iterable<number>): {
+  cheio: AnoEmendas; parcial: AnoEmendas | null; comPagamento: number;
+} {
+  const ultimo = Number(e.ultimoMes.slice(0, 4));
+  const anoParcial = ultimo > e.anoTipos ? ultimo : null;
+  let cheio: number | null = null;
+  let parcial: number | null = null;
+  let comPagamento = 0;
+  for (const codigo of codigos) {
+    const um = emendasDe(e, codigo);
+    if (!um) continue;
+    if (um.cheio.reais !== null) {
+      cheio = (cheio ?? 0) + um.cheio.reais;
+      comPagamento += 1;
+    }
+    if (um.parcial?.reais != null) parcial = (parcial ?? 0) + um.parcial.reais;
+  }
+  return {
+    cheio: { ano: e.anoTipos, reais: cheio },
+    parcial: anoParcial === null ? null : { ano: anoParcial, reais: parcial },
+    comPagamento,
+  };
+}
 
 /** `"202609"` → `"setembro"`: o mês de corte do ano parcial. */
 export function mesDeCorte(ultimoMes: string): string {

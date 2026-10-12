@@ -17,10 +17,13 @@ export default function TabelaValores({
   linhas,
   valores,
   legenda,
+  rotuloValor = "Aqui",
 }: {
   linhas: ValorTrabalho[];
   valores: Record<string, number | null>;
   legenda: string;
+  /** O cabeçalho da coluna do valor: o nome do lugar, que "Aqui" não diz. */
+  rotuloValor?: string;
 }) {
   return (
     <div className={estilos.rolagem}>
@@ -29,7 +32,7 @@ export default function TabelaValores({
         <thead>
           <tr>
             <th scope="col">Indicador</th>
-            <th scope="col" className={estilos.num}>Aqui</th>
+            <th scope="col" className={estilos.num}>{rotuloValor}</th>
           </tr>
         </thead>
         <tbody>

@@ -33,8 +33,12 @@ const fonte = localFont({
   variable: "--fonte-texto",
 });
 
+// O título da capa é também o do cartão social: até 12/10/2026 o cartão dizia
+// só "Números Públicos", um nome a mais para a mesma página.
+const TITULO = "Números Públicos — dados abertos dos municípios brasileiros";
+
 export const metadata: Metadata = {
-  title: "Números Públicos — dados abertos dos municípios brasileiros",
+  title: TITULO,
   // ~155 caracteres: o Google trunca a partir daí. O que sobrou é o que
   // diferencia este site de qualquer outro que cite as mesmas fontes.
   description:
@@ -42,7 +46,7 @@ export const metadata: Metadata = {
     "municípios do Brasil — cada número com a sua fonte e data de coleta.",
   metadataBase: new URL("https://www.numerospublicos.com.br"),
   openGraph: {
-    title: "Números Públicos",
+    title: TITULO,
     description:
       "Dados abertos dos 5.571 municípios do Brasil, com procedência.",
     locale: "pt_BR",
@@ -55,7 +59,7 @@ export const metadata: Metadata = {
   // .claude/social-preview/gerar.mjs`, nunca editar o PNG à mão.
   twitter: {
     card: "summary_large_image",
-    title: "Números Públicos",
+    title: TITULO,
     description:
       "Dados abertos dos 5.571 municípios do Brasil, com procedência.",
   },
@@ -117,6 +121,13 @@ export default function RootLayout({
         <div className="rodape-site">
           <nav aria-label="Rodapé">
             <a href="/">Início</a>
+            {/* As seções que não são município nem estado. Até 11/10/2026 o
+                INSS, o Brasil e o ranking só se achavam pela /ajuda/ ou pela
+                busca: página que só o sitemap aponta, o Google rebaixa. */}
+            <a href="/brasil/">Brasil</a>
+            <a href="/ranking/gasto-com-pessoal/">Ranking do gasto com pessoal</a>
+            <a href="/ranking/emprego-com-carteira/">Ranking do emprego</a>
+            <a href="/inss/">Fila do INSS</a>
             <a href="/ajuda/">Ajuda</a>
             <a href="/ajuda/#erro">Achei um número errado</a>
             <a

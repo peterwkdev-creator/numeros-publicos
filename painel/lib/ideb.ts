@@ -31,7 +31,7 @@ export type PontoIdeb = [
   /** Índice em `edicoes`, não o ano — o array de anos sai uma vez só. */
   indice: number,
   observado: number,
-  /** A meta que o INEP fixou. `null` em 2005 e 2023 — ver `SEM_META`. */
+  /** A meta que o INEP fixou. `null` em 2005, 2023 e 2025 — ver `edicoesSemMeta`. */
   projecao: number | null,
 ];
 
@@ -49,7 +49,7 @@ export type SnapshotIdeb = {
    *
    * 2005 é a linha de base (as metas começam em 2007) e o primeiro ciclo do
    * IDEB encerrou em 2021 — a Portaria MEC 26/2024 criou grupo técnico para
-   * definir as novas. Exibir meta para 2023 inventaria um alvo que não existe,
+   * definir as novas. Exibir meta para 2023 ou 2025 inventaria um alvo que não existe,
    * e exibir travessão sem explicar pareceria defeito do painel.
    */
   edicoesSemMeta: number[];

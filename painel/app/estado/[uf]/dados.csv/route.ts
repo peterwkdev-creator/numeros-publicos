@@ -48,6 +48,9 @@ export async function GET(
     // e impostos/taxas NAO somam o total -- ha seis outras componentes.
     "receita_corrente_total", "receita_transferencias", "receita_impostos_taxas",
     "receita_exercicio", "receita_periodo",
+    // No fim, como na base completa (lá antes das emendas, que este não
+    // tem): quadrimestral ou simplificado_semestral.
+    "pessoal_relatorio",
   ];
 
   const acha = (
@@ -91,6 +94,8 @@ export async function GET(
       rc?.tributaria ?? null,
       fiscal.receita ? atualDeReceita(fiscal.receita)?.exercicio ?? null : null,
       fiscal.receita?.periodo ?? null,
+      m.fiscal?.simplificado ? "simplificado_semestral"
+        : m.fiscal?.publicou ? "quadrimestral" : null,
     ];
   });
 

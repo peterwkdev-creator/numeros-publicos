@@ -4,7 +4,7 @@ import Link from "next/link";
 import { br, dataCurta } from "../../../lib/dados";
 import { rankingPessoal } from "../../../lib/nacional";
 import { deEstado } from "../../../lib/estado";
-import { LIMITE_PLAUSIVEL } from "../../../lib/fiscal";
+import { LIMITE_PLAUSIVEL, nomeQuadrimestre } from "../../../lib/fiscal";
 import {
   catalogoDe, coberturaTemporal, FONTES, palavrasChave, trilha, LICENCA_DADOS,
 } from "../../../lib/jsonld";
@@ -183,7 +183,7 @@ export default async function Pagina() {
               prudencial próprio (57% ou 59,05%), e o rótulo exato seria falso
               para eles. O texto abaixo explica a faixa em palavras. */}
           <span className={estilos.rotulo}>
-            Entre o prudencial e o teto
+            Entre o limite prudencial e o teto
           </span>
           <span className={`${estilos.valor} tabular`}>
             {br(r.naFaixaPrudencial)}
@@ -208,15 +208,18 @@ export default async function Pagina() {
         <p>
           Dos <strong>{br(r.universo)}</strong> municípios brasileiros,{" "}
           <strong>{br(r.publicaram)}</strong> entregaram o Relatório de Gestão
-          Fiscal do {fiscal.periodo}º quadrimestre de {fiscal.exercicio}.
+          Fiscal do {nomeQuadrimestre(fiscal.exercicio, fiscal.periodo)} ou, os
+          que optaram pelo semestral, o{" "}
+          <Termo chave="rgf-simplificado">RGF Simplificado</Termo> do 2º
+          semestre, que cobre os mesmos 12 meses.
           Destes,{" "}
           <strong className={estilos.acima}>
             {br(r.acimaDoTeto.length)}
           </strong>{" "}
           declararam gasto com pessoal acima do teto de{" "}
           <strong>{br(legal, 0)}%</strong>, e{" "}
-          <strong>{br(r.naFaixaPrudencial)}</strong> estão entre o limite
-          prudencial e o teto — faixa em que a lei já exige medidas, mas em que
+          <strong>{br(r.naFaixaPrudencial)}</strong> estão entre o{" "}
+          <Termo chave="limite-prudencial">limite prudencial</Termo> e o teto — faixa em que a lei já exige medidas, mas em que
           não há infração.
           {/* O resto do site diz 5.571, e um número diferente sem explicação
               parece erro. A frase só sai quando a diferença é exatamente a
@@ -288,7 +291,8 @@ export default async function Pagina() {
           <caption>
             Municípios com gasto com pessoal acima de {br(legal, 0)}% da receita
             corrente líquida, do maior para o menor. Dado do{" "}
-            <strong>{fiscal.periodo}º quadrimestre de {fiscal.exercicio}</strong>.
+            <strong>{nomeQuadrimestre(fiscal.exercicio, fiscal.periodo)}</strong>{" "}
+            (no RGF Simplificado, do 2º semestre).
             Fonte: {fiscal.fonte}, coleta de{" "}
             {fiscal.coletadoEm ? dataCurta(fiscal.coletadoEm) : "data não registrada"}.
           </caption>
@@ -297,8 +301,11 @@ export default async function Pagina() {
               <th scope="col" className={estilos.posicao}>#</th>
               <th scope="col">Município</th>
               <th scope="col">UF</th>
-              <th scope="col" className={estilos.num}>Pessoal / RCL</th>
-              <th scope="col" className={estilos.num}>População</th>
+              <th scope="col" className={estilos.num}>
+                Gasto com pessoal{" "}
+                (% da <Termo chave="rcl">RCL</Termo>)
+              </th>
+              <th scope="col" className={estilos.num}>População (Censo 2022)</th>
             </tr>
           </thead>
           <tbody>

@@ -393,15 +393,17 @@
 
 /* Legenda de tabela visível. Uma `<caption>` escondida só para leitor de tela
    resolve para quem usa leitor de tela e para mais ninguém -- e aqui a dúvida
-   ("esta tabela é de qual etapa?") é de todo mundo. */
+   ("esta tabela é de qual etapa?") é de todo mundo.
+   Uma regra só desde 11/10/2026: havia uma segunda `.legenda` mais abaixo, e a
+   soma das duas punha em MAIÚSCULAS frases inteiras (o quê, unidade e fonte),
+   que é o texto mais difícil de ler em caixa alta. Serve também à legenda
+   de gráfico, num `<p>` logo abaixo do desenho. */
 .legenda {
   caption-side: top;
   text-align: left;
-  font-size: var(--texto-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--tinta-fraca);
   padding-bottom: var(--e-2);
+  font-size: 0.85rem;
+  color: var(--tinta-fraca);
 }
 
 /* "Ainda não consultado" é afirmação sobre NÓS, não sobre o município -- por
@@ -568,10 +570,3 @@
   color: var(--tinta-fraca);
 }
 
-.legenda {
-  caption-side: top;
-  text-align: left;
-  padding-bottom: 0.5rem;
-  font-size: 0.85rem;
-  color: var(--tinta-fraca);
-}

@@ -1,5 +1,8 @@
 import malha from "@/dados/malha-uf.json";
-import { FAIXAS, faixaDoValor, type CamadaMapa } from "@/lib/mapa";
+import {
+  cssDasCamadas, FAIXAS, faixaDoValor, formatarExtremo, formatarValor,
+  type CamadaMapa,
+} from "@/lib/mapa";
 import estilos from "./mapa-uf.module.css";
 
 /**
@@ -9,10 +12,9 @@ import estilos from "./mapa-uf.module.css";
  *
  * A tabela por estado já existe logo abaixo e continua sendo a fonte dos
  * valores. O mapa responde a outra pergunta, que nenhuma tabela de 27 linhas
- * responde de relance: **onde isso está**. E no caso deste site ele prova uma
- * afirmação que a página faz e não conseguia mostrar — que a taxa de entrega do
- * relatório fiscal **não é regional**: Santa Catarina entrega 86% e o Rio
- * Grande do Sul 15%, vizinhos.
+ * responde de relance: **onde isso está** — e se a diferença segue a região
+ * ou não. Este comentário já citou dois estados vizinhos com as taxas
+ * digitadas; número de estado se lê do dado, nunca daqui.
  *
  * ## A troca de indicador é CSS, não JavaScript
  *
@@ -23,20 +25,24 @@ import estilos from "./mapa-uf.module.css";
  * conta que esta página já pagou uma vez, quando 13 indicadores nas props
  * custariam +149 KB.
  *
- * O custo é 27 caminhos × 3 atributos, e 3 × 5 regras de CSS. A malha em si são
- * **9,2 KB comprimidos**, medidos.
+ * O custo é 27 caminhos × um atributo por camada, e 8 regras de CSS por
+ * camada, geradas por `cssDasCamadas` num `<style>` (ver lá por quê). A malha
+ * em si são **9,2 KB comprimidos**, medidos.
  *
  * ## O que o mapa NÃO é
  *
  * Não é instrumento de medida. A projeção é equiretangular com correção de
  * latitude — reconhecível, não exata. E ele **não substitui a tabela**: quem
- * usa leitor de tela recebe o `aria-label` e os valores logo abaixo, porque
- * cor não se lê em voz alta.
+ * usa leitor de tela recebe o `aria-label` e a tabela de valores que vem com o
+ * próprio mapa, porque cor não se lê em voz alta. A tabela mora AQUI, e não na
+ * página: até 11/10/2026 o `aria-label` mandava para "a tabela abaixo", e a da
+ * capa não tinha nem esgoto nem alfabetização.
  */
 
 export default function MapaUf({
   camadas,
   destaque,
+  nomes = {},
 }: {
   camadas: CamadaMapa[];
   /**
@@ -44,6 +50,8 @@ export default function MapaUf({
    * que é a pergunta que um mapa de 27 formas parecidas deixa em aberto.
    */
   destaque?: string;
+  /** Sigla para o nome, na tabela de valores. Sem ele, a tabela mostra a sigla. */
+  nomes?: Record<string, string>;
 }) {
   if (!camadas.length) return null;
   // O destacado vai POR ÚLTIMO: o SVG pinta na ordem do documento, e o
@@ -52,9 +60,17 @@ export default function MapaUf({
   // fronteira, que é quase todo ele.
   const siglas = Object.keys(malha.caminhos).sort()
     .sort((a, b) => Number(a === destaque) - Number(b === destaque));
+  const css = cssDasCamadas(camadas.map((c) => c.chave), {
+    bloco: estilos.bloco!, uf: estilos.uf!, texto: estilos.textoEscala!,
+    extremos: estilos.extremos!,
+  });
+  const linhas = Object.keys(malha.caminhos)
+    .map((sigla) => ({ sigla, nome: nomes[sigla] ?? sigla }))
+    .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
 
   return (
     <figure className={estilos.bloco}>
+      <style dangerouslySetInnerHTML={{ __html: css }} />
       <fieldset className={estilos.opcoes}>
         <legend className={estilos.legendaOpcoes}>Colorir o mapa por</legend>
         {camadas.map((c, i) => (
@@ -84,7 +100,7 @@ export default function MapaUf({
         aria-label={
           "Mapa dos 27 estados do Brasil, colorido pelo indicador selecionado" +
           (destaque ? `, com ${destaque} em destaque` : "") +
-          ". Os valores de cada estado estão na tabela abaixo."
+          ". Os valores de cada estado estão na tabela logo após o mapa."
         }
       >
         {/* A hachura de "sem dado".
@@ -110,7 +126,7 @@ export default function MapaUf({
         {siglas.map((sigla) => {
           const dados: Record<string, string> = {};
           for (const c of camadas) {
-            const f = faixaDoValor(c.valores[sigla] ?? null);
+            const f = faixaDoValor(c.valores[sigla] ?? null, c.min, c.max);
             dados[`data-${c.chave}`] = f === null ? "sem" : String(f);
           }
           return (
@@ -134,16 +150,56 @@ export default function MapaUf({
             {c.legenda}
           </span>
         ))}
+        {/* Os extremos são os DA CAMADA (ver `dominio`): com 0% e 100% fixos,
+            a rampa diria que o azul mais escuro do ensino superior é 100%. */}
         <span className={estilos.rampa} aria-hidden="true">
-          <span className={estilos.extremo}>0%</span>
-          {Array.from({ length: FAIXAS }, (_, i) => (
-            <span key={i} className={estilos.passo} data-faixa={i} />
+          {camadas.map((c) => (
+            <span key={c.chave} className={estilos.extremos} data-de={c.chave}>
+              <span className={estilos.extremo}>{formatarExtremo(c.min, c.formato)}</span>
+              {Array.from({ length: FAIXAS }, (_, i) => (
+                <span key={i} className={estilos.passo} data-faixa={i} />
+              ))}
+              <span className={estilos.extremo}>{formatarExtremo(c.max, c.formato)}</span>
+            </span>
           ))}
-          <span className={estilos.extremo}>100%</span>
           <span className={`${estilos.passo} ${estilos.passoSem}`} data-faixa="sem" />
           <span className={estilos.extremo}>sem dado</span>
         </span>
       </figcaption>
+
+      <details className={estilos.valores}>
+        <summary>Os valores do mapa, estado por estado</summary>
+        <div className={estilos.rolagem}>
+          <table className={estilos.tabela}>
+            <caption className="so-leitor">
+              Valor de cada estado em cada indicador do mapa.
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">Estado</th>
+                {camadas.map((c) => (
+                  <th key={c.chave} scope="col" className={estilos.numero}>
+                    {c.rotulo}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {linhas.map(({ sigla, nome }) => (
+                <tr key={sigla}
+                    className={sigla === destaque ? estilos.linhaDestaque : undefined}>
+                  <th scope="row">{nome}</th>
+                  {camadas.map((c) => (
+                    <td key={c.chave} className={`${estilos.numero} tabular`}>
+                      {formatarValor(c.valores[sigla] ?? null, c.formato)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </details>
     </figure>
   );
 }

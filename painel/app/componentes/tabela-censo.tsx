@@ -15,17 +15,18 @@ import estilos from "./tabela-censo.module.css";
  * acusa isso**, porque módulo CSS não é tipado a fundo; a tabela sairia sem
  * estilo, parecendo quase certa.
  *
- * ## A coluna de comparação é de quem chama, e as duas NÃO são a mesma coisa
+ * ## As colunas de comparação são de quem chama, e NÃO são a mesma coisa
  *
- * No município ela é a **mediana dos municípios**; no estado, a **taxa do
- * país**. Trocá-las de lugar seria erro grave e invisível: no esgoto, a mediana
+ * No município elas são a **mediana dos municípios** do estado e a do país;
+ * no estado, a **taxa do país**. Trocá-las de lugar seria erro grave e invisível: no esgoto, a mediana
  * municipal é 32,6% e a taxa nacional 64,7%, e as duas são corretas.
  *
- * Por isso o rótulo da coluna vem junto do valor, e não fixo no componente.
+ * Por isso o rótulo de cada coluna vem junto do valor, e não fixo no
+ * componente.
  */
 export default function TabelaCenso({
   medidas,
-  comparacao,
+  comparacoes,
   legenda,
   rotuloValor = "Aqui",
 }: {
@@ -36,12 +37,12 @@ export default function TabelaCenso({
    * "No Brasil" para saber sobre o que é a coluna.
    */
   rotuloValor?: string;
-  comparacao: {
-    /** O cabeçalho da terceira coluna. Diz CONTRA O QUÊ se compara. */
+  comparacoes: {
+    /** O cabeçalho da coluna. Diz CONTRA O QUÊ se compara. */
     rotulo: string;
     /** Por `chave` do par, em pontos percentuais. */
     valores: Record<string, number | null>;
-  };
+  }[];
   legenda: string;
 }) {
   return (
@@ -52,12 +53,13 @@ export default function TabelaCenso({
           <tr>
             <th scope="col">Indicador</th>
             <th scope="col" className={estilos.num}>{rotuloValor}</th>
-            <th scope="col" className={estilos.num}>{comparacao.rotulo}</th>
+            {comparacoes.map((c) => (
+              <th key={c.rotulo} scope="col" className={estilos.num}>{c.rotulo}</th>
+            ))}
           </tr>
         </thead>
         <tbody>
           {medidas.map((x) => {
-            const outro = comparacao.valores[x.chave] ?? null;
             return (
               <tr key={x.chave}>
                 <th scope="row">
@@ -82,9 +84,14 @@ export default function TabelaCenso({
                       : `${br(x.parte)} de ${br(x.total)}`}
                   </span>
                 </td>
-                <td className={`${estilos.num} tabular`}>
-                  {outro === null ? "—" : `${br(outro, 1)}%`}
-                </td>
+                {comparacoes.map((c) => {
+                  const outro = c.valores[x.chave] ?? null;
+                  return (
+                    <td key={c.rotulo} className={`${estilos.num} tabular`}>
+                      {outro === null ? "—" : `${br(outro, 1)}%`}
+                    </td>
+                  );
+                })}
               </tr>
             );
           })}

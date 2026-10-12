@@ -56,7 +56,7 @@ export type PanoramaUf = {
   base: number;
 };
 
-const MINIMO_MEDIANA = 10;
+export const MINIMO_MEDIANA = 10;
 
 /** A mediana de uma lista já filtrada. Vazia devolve `null`, nunca zero. */
 export function mediana(valores: number[]): number | null {
@@ -150,15 +150,15 @@ export function posicaoNaLista(
  * ## O total é a soma dos totais DECLARADOS
  *
  * E não a soma das funções. Os dois são iguais em todo município cujo relatório
- * fecha (**0 de 3.243 não fecharam**), e usar o declarado mantém a régua sendo
+ * fecha (**0 de 5.541 não fecharam** em 2024), e usar o declarado mantém a régua sendo
  * a da fonte, e não a nossa.
  *
  * ## O que este número NÃO é
  *
  * Não é o gasto público brasileiro: é o dos **municípios que entregaram o
- * RREO** — cerca de 58% deles. Quem chamar isto de "gasto dos municípios
- * brasileiros" está errado por quase metade, e por isso a cobertura sai junto,
- * no mesmo objeto, para nenhuma página poder publicar um sem o outro.
+ * RREO** (ou o RREO Simplificado). Até 11/10/2026 eram cerca de 58%, porque o
+ * motor não lia o Simplificado; a cobertura muda com a coleta, e por isso sai
+ * junto, no mesmo objeto, para nenhuma página poder publicar um sem o outro.
  */
 export type PanoramaFuncoes = {
   total: number;
@@ -298,8 +298,9 @@ export function identidadePorCodigo(
  * como acusação.
  *
  * 1. **O denominador é quem ENTREGOU**, e o número de quem não entregou vai
- *    junto. "361 de 5.570" faria parecer que 5.209 estão bem; a verdade é que
- *    sobre 2.326 não se sabe nada.
+ *    junto. "349 de 5.570" faria parecer que os outros estão bem; a verdade é
+ *    que sobre quem não entregou não se sabe nada (2.326 até 11/10/2026,
+ *    quando o site não lia o RGF Simplificado; 26 depois).
  * 2. **Quem presta contas como estado sai das duas contas** — o Distrito
  *    Federal entrega o RGF na esfera estadual porque não é município. Contá-lo
  *    como faltoso é a acusação que a faixa `como-estado` existe para impedir.

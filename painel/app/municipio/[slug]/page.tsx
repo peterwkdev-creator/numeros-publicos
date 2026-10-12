@@ -9,8 +9,8 @@ import {
 } from "../../../lib/dados";
 import { atualizadoEm } from "../../../lib/sitemap";
 import { aberturaFiscalDe, tituloFiscalDe } from "../../../lib/titulo";
-import { deEstado, slugUf, vizinhosDe } from "../../../lib/estado";
-import { medianasSaudeCache, rankingCache } from "../../../lib/nacional";
+import { daMesmaRegiao, deEstado, slugUf, vizinhosDe } from "../../../lib/estado";
+import { MINIMO_MEDIANA, medianasSaudeCache, rankingCache } from "../../../lib/nacional";
 import { posicaoEntre, posicaoNoEstado } from "../../../lib/posicao";
 import {
   FONTES_DA_BASE, trilha, VARIAVEIS_DA_BASE, catalogoDe, coberturaTemporal, identificadorIbge, LICENCA_DADOS,
@@ -20,11 +20,11 @@ import {
   compararFuncoes, DESLOCAMENTO_MINIMO, FUNCOES_DA_PORTARIA, funcoesRecentesDe,
   indexarFiscal, INSTALADO_EM, interrupcoes, rclDesmentida, receitaDe, receitaRecenteDe,
   SALTO_MINIMO, saltoSobreAHistoria,
-  ROTULO_FAIXA, rotuloPeriodo, saudeDe, serieDePessoal,
+  nomePonto, nomeQuadrimestre, ROTULO_FAIXA, saudeDe, serieDePessoal,
   slugDe, variacao,
 } from "../../../lib/fiscal";
 import { contarMetas, medianaGeral, trajetoriaDe } from "../../../lib/ideb";
-import { medianasCache, medidasDe, taxasCache } from "../../../lib/censo";
+import { linhasDaUf, medianasCache, medidasDe, taxasCache } from "../../../lib/censo";
 import TabelaCenso from "../../componentes/tabela-censo";
 import TabelaValores from "../../componentes/tabela-valores";
 import TabelaCaged from "../../componentes/tabela-caged";
@@ -33,17 +33,18 @@ import {
   EMPRESAS, medianaDaColunaCache, PARES_TRABALHO, RENDA_CENSO,
 } from "../../../lib/trabalho";
 import {
-  cartaoSocial, lerCaged, lerEmendas, lerFiscal, lerIdeb, lerSnapshot, SITE,
+  cartaoSocial, lerCaged, lerEmendas, lerFiscal, lerIdeb, lerRegioes, lerSnapshot,
+  SITE,
 } from "../../../lib/servidor";
 import ComposicaoBarras from "../../componentes/composicao-barras";
-import { emendasDe, mesDeCorte, SEM_PREFEITURA } from "../../../lib/emendas";
+import { emendasDe, porHabitante, porHabitanteDaUf, mesDeCorte, SEM_PREFEITURA } from "../../../lib/emendas";
 import DistribuicaoSvg from "../../componentes/distribuicao-svg";
 import IdebSvg from "../../componentes/ideb-svg";
 import Termo from "../../componentes/termo";
 import ComoLer from "../../componentes/como-ler";
 import NestaPagina from "../../componentes/nesta-pagina";
 import SerieSvg from "./serie-svg";
-import SaudeSvg from "./saude-svg";
+import SaudeSvg, { ANO_DO_PISO_CHEIO, PISO } from "./saude-svg";
 import estilos from "./municipio.module.css";
 import { atualDeFuncoes, serieFuncoesDe } from "../../../lib/fiscal";
 import SerieFuncoes from "../../componentes/serie-funcoes";
@@ -59,9 +60,9 @@ import SerieFuncoes from "../../componentes/serie-funcoes";
  */
 
 async function carregar() {
-  const [snapshot, fiscal, ideb, idebFinais, caged, emendas] = await Promise.all([
+  const [snapshot, fiscal, ideb, idebFinais, caged, emendas, regioes] = await Promise.all([
     lerSnapshot(), lerFiscal(), lerIdeb("anos_iniciais"), lerIdeb("anos_finais"),
-    lerCaged(), lerEmendas(),
+    lerCaged(), lerEmendas(), lerRegioes(),
   ]);
   const porCodigo = indexarFiscal(fiscal);
   const municipios = expandir(snapshot).map((m) => ({
@@ -69,7 +70,7 @@ async function carregar() {
     slug: slugDe(m.nome, m.uf),
     fiscal: porCodigo.get(m.codigo) ?? null,
   }));
-  return { snapshot, fiscal, ideb, idebFinais, caged, emendas, municipios };
+  return { snapshot, fiscal, ideb, idebFinais, caged, emendas, regioes, municipios };
 }
 
 export async function generateStaticParams() {
@@ -132,12 +133,15 @@ export async function generateMetadata(
     "Dados oficiais do IBGE, do Tesouro Nacional e do INEP.",
   );
 
+  // O cartão de quem compartilha leva o MESMO título da aba e do Google (até
+  // 12/10/2026 era "X (UF) — dados abertos", um nome a mais para a página).
+  const titulo = tituloFiscalDe(m.nome, m.uf, m.fiscal?.faixa, pessoal);
   return {
-    title: tituloFiscalDe(m.nome, m.uf, m.fiscal?.faixa, pessoal),
+    title: titulo,
     description: descricao,
     alternates: { canonical: `${SITE}/municipio/${m.slug}/` },
     ...cartaoSocial(
-      `${m.nome} (${m.uf}) — dados abertos`,
+      titulo,
       partes.join(" · ") || `Dados abertos de ${m.nome}/${m.uf}.`,
       `/municipio/${m.slug}/`,
     ),
@@ -148,7 +152,7 @@ export default async function PaginaMunicipio(
   { params }: { params: Promise<{ slug: string }> },
 ) {
   const { slug } = await params;
-  const { snapshot, fiscal, ideb, idebFinais, caged, emendas, municipios } =
+  const { snapshot, fiscal, ideb, idebFinais, caged, emendas, regioes, municipios } =
     await carregar();
   const m = municipios.find((x) => x.slug === slug);
   if (!m) notFound();
@@ -164,7 +168,12 @@ export default async function PaginaMunicipio(
   const doEstado = municipios
     .filter((x) => x.uf === m.uf)
     .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
-  const vizinhos = vizinhosDe(doEstado, m.codigo);
+  // Desde 11/10/2026, os vizinhos são os da mesma região imediata do IBGE,
+  // que espalha os links igual e é a lista que o leitor quer comparar; a
+  // janela alfabética fica só para município que o regioes.json não tenha.
+  const regiao = daMesmaRegiao(regioes, doEstado, m.codigo);
+  const pelaRegiao = !!regiao && regiao.vizinhos.length > 0;
+  const vizinhos = pelaRegiao ? regiao.vizinhos : vizinhosDe(doEstado, m.codigo);
 
   // O Censo 2022, em pares numerador/denominador. As medianas vêm do cache:
   // recalculá-las em cada uma das 5.571 páginas seriam 186 milhões de operações
@@ -187,6 +196,22 @@ export default async function PaginaMunicipio(
   const salario = m.valores["salario-medio-empresas"] ?? null;
   const medianaSalario = medianaDaColunaCache(
     snapshot.municipios, snapshot.colunas, "salario-medio-empresas");
+  // A régua do estado ao lado da do país, como no resto da página. Com menos
+  // de MINIMO_MEDIANA municípios ela diria pouco, e no DF, com um só, seria o
+  // próprio município: ali fica só a do país.
+  const linhasUf = linhasDaUf(snapshot.municipios, snapshot.colunas, m.uf);
+  const comUf = linhasUf.length >= MINIMO_MEDIANA;
+  const medianasUf = comUf ? medianasCache(linhasUf, snapshot.colunas) : null;
+  const medianasTrabalhoUf = comUf
+    ? medianasCache(linhasUf, snapshot.colunas, PARES_TRABALHO) : null;
+  const medianaRendaUf = comUf
+    ? medianaDaColunaCache(linhasUf, snapshot.colunas, RENDA_CENSO.codigo) : null;
+  const medianaSalarioUf = comUf
+    ? medianaDaColunaCache(linhasUf, snapshot.colunas, "salario-medio-empresas") : null;
+  const legendaMedianas = comUf
+    ? `com a mediana dos ${br(linhasUf.length)} municípios ${deEstado(m.uf)} ` +
+      `e a dos ${br(snapshot.municipios.length)} do país`
+    : `com a mediana dos ${br(snapshot.municipios.length)} municípios do país`;
   // O ano vem do snapshot: o cadastro ganha um ano novo por ano, e escrito
   // aqui ele envelheceria calado, como a "estimativa mais recente" de 2024.
   const anoEmpresas = periodoDe(snapshot, "empresas-atuantes");
@@ -213,6 +238,12 @@ export default async function PaginaMunicipio(
   // `periodoDe`). Escrito aqui, envelheceria em silêncio a cada publicação do
   // IBGE, como a "estimativa mais recente" que era de 2024 com a de 2026 no ar.
   const anoEstimada = periodoDe(snapshot, "populacao-estimada");
+  // As emendas por habitante, e onde isso cai entre os municípios do estado
+  // com pagamento no mesmo ano. Pela população estimada, a mais perto do ano
+  // do dinheiro; a frase diz o ano dela.
+  const emendasPh = porHabitante(emendasM?.cheio.reais, estimada);
+  const posEmendas = posicaoNoEstado(
+    emendasPh, porHabitanteDaUf(emendas, snapshot, m.uf));
   const anoPib = periodoDe(snapshot, "pib-municipal");
 
   // Onde este município cai entre os do estado. Vai em TODAS as páginas: se o
@@ -280,7 +311,13 @@ export default async function PaginaMunicipio(
     municipios.filter((x) => x.uf === m.uf).map((x) => comparavelNaFaixa(x.fiscal)),
   );
 
-  const quadrimestre = `${fiscal.periodo}º quadrimestre de ${fiscal.exercicio}`;
+  const quadrimestre = nomeQuadrimestre(fiscal.exercicio, fiscal.periodo);
+  // Quem tem menos de 50 mil habitantes pode entregar o RGF Simplificado
+  // semestral (art. 63 da LRF). O do 2º semestre cobre os mesmos 12 meses até
+  // dezembro do 3º quadrimestre, e é dele que vem o número desses municípios.
+  const periodoRgf = f?.simplificado
+    ? `2º semestre de ${fiscal.exercicio}`
+    : quadrimestre;
   // `serieDePessoal`, e não a série crua: o ponto que o cartão condena pela
   // RCL desmentida não pode sustentar a variação nem o traço do gráfico.
   const { todos: serie, usaveis, condenado } =
@@ -290,6 +327,10 @@ export default async function PaginaMunicipio(
   // publicado" deixa de ser o ponto de chegada da variação -- e a frase diz isso.
   const finalCondenado = serie.length > 0 && condenado(serie[serie.length - 1]!);
   const vazios = interrupcoes(usaveis);
+  // Quem entregou o RGF Simplificado em algum ano tem um ponto só nesse ano
+  // (o 2º semestre): "quadrimestre" deixa de nomear todo ponto da série.
+  const semestral = serie.some((p) => p[4] === true);
+  const umPeriodo = semestral ? "relatório" : "quadrimestre";
   // A aplicação em saúde (SIOPS). `saudeDe` já descarta os anos ausentes, e
   // devolve `null` quando o município não tem ponto nenhum -- Brasília e Boa
   // Esperança do Norte/MT são os dois casos, e os dois são fato da fonte:
@@ -558,7 +599,7 @@ export default async function PaginaMunicipio(
         </article>
 
         <article className={`${estilos.cartao} ${estilos[f?.faixa ?? "nao-consultado"]}`}>
-          <h2 className={estilos.rotulo}>Despesa com pessoal</h2>
+          <h2 className={estilos.rotulo}>Gasto com pessoal</h2>
           <p className={`${estilos.valor} tabular`}>
             {f?.percentual === null || f?.percentual === undefined
               ? "—"
@@ -612,7 +653,8 @@ export default async function PaginaMunicipio(
             <Termo chave="rcl">
               receita corrente líquida ajustada
             </Termo>{" "}
-            · {quadrimestre} · SICONFI
+            · {periodoRgf}
+            {f?.simplificado ? " · RGF Simplificado" : ""} · SICONFI
           </p>
         </article>
       </section>
@@ -641,7 +683,10 @@ export default async function PaginaMunicipio(
           { id: "como-se-vive", titulo: "Como se vive" },
         (temCensoTrabalho || temEmpresas || cagedM !== null) &&
           { id: "trabalho-e-renda", titulo: "Trabalho e renda" },
-        vizinhos.length > 0 && { id: "outros-municipios", titulo: "Outros municípios" },
+        vizinhos.length > 0 && {
+          id: "outros-municipios",
+          titulo: pelaRegiao ? "Municípios da região" : "Outros municípios",
+        },
         { id: "baixar", titulo: "Baixar os dados" },
       ]} />
 
@@ -696,7 +741,7 @@ export default async function PaginaMunicipio(
           <p>
             {m.nome} declarou <strong>{br(f.percentual, 2)}%</strong> da sua
             receita corrente líquida ajustada comprometidos com pessoal no{" "}
-            {quadrimestre} —{" "}
+            {periodoRgf} —{" "}
             {/* Três causas, e cada uma pede a sua frase. A terceira entrou em
                 22/09/2026: oito municípios com 71% a 99% declarados estavam
                 no ranking de "acima do limite legal", e a frase antiga diria
@@ -747,9 +792,18 @@ export default async function PaginaMunicipio(
           </p>
         ) : f?.percentual !== null && f?.percentual !== undefined ? (
           <p>
-            No {quadrimestre}, {m.nome} declarou{" "}
+            No {periodoRgf}, {m.nome} declarou{" "}
             <strong>{br(f.percentual, 2)}%</strong> da sua receita corrente líquida
-            ajustada comprometidos com pessoal. A Lei de Responsabilidade Fiscal
+            ajustada comprometidos com pessoal.
+            {f.simplificado && (
+              <>
+                {" "}O número vem do{" "}
+                <Termo chave="rgf-simplificado">RGF Simplificado</Termo>, o
+                relatório semestral que municípios com menos de 50 mil habitantes
+                podem entregar no lugar do quadrimestral; o do 2º semestre cobre
+                os mesmos 12 meses, até dezembro.
+              </>
+            )} A Lei de Responsabilidade Fiscal
             fixa <strong>{br(fiscal.limites.legal, 2)}%</strong> como teto para o
             Executivo municipal, e{" "}
             <strong>{br(f.limitePrudencial ?? fiscal.limites.prudencial, 2)}%</strong>{" "}
@@ -803,8 +857,9 @@ export default async function PaginaMunicipio(
         ) : f?.publicou === false ? (
           <>
             <p>
-              <strong>{m.nome} não entregou</strong> o Relatório de Gestão Fiscal
-              do {quadrimestre} ao SICONFI. Isso não significa que o município
+              <strong>{m.nome} não entregou</strong> ao SICONFI o Relatório de
+              Gestão Fiscal do {quadrimestre}, nem o RGF Simplificado do 2º
+              semestre, que cobre o mesmo período. Isso não significa que o município
               gaste zero com pessoal — significa que o dado <em>não existe</em> na
               base do Tesouro Nacional. Ausência não é número, e este painel não a
               converte em um.
@@ -837,7 +892,7 @@ export default async function PaginaMunicipio(
           O percentual <strong>não é recalculado aqui</strong>: ele vem
           calculado e declarado pelo próprio município. Este painel não
           interpreta, não acusa e não declara ninguém em descumprimento —
-          mostra o número publicado ao lado do limite legal.{" "}
+          mostra o número publicado ao lado do teto legal.{" "}
           <Link href="/ajuda/#pessoal">O que é RCL ajustada?</Link>
         </p>
       </section>
@@ -846,7 +901,7 @@ export default async function PaginaMunicipio(
         <section className={estilos.texto} id="isso-e-muito">
           <h2>Isso é muito?</h2>
           <p>
-            O limite legal responde <em>se está dentro da lei</em>. Não responde
+            O teto legal responde <em>se está dentro da lei</em>. Não responde
             se {m.nome} é um caso isolado ou se boa parte do estado está no
             mesmo lugar — e as duas situações pedem leituras opostas do mesmo
             número.
@@ -871,6 +926,16 @@ export default async function PaginaMunicipio(
               municipio={m.nome}
               conjunto={deEstado(m.uf)}
             />
+            {/* Como ler, pela FORMA de cada marca e não pela cor: até
+                11/10/2026 o gráfico não dizia o que eram as colunas nem a
+                linha cheia, e quem não lê a descrição para leitor de tela
+                ficava sem a chave. */}
+            <p className={estilos.legenda}>
+              Cada coluna é um grupo de municípios {deEstado(m.uf)} com gasto
+              parecido: quanto mais alta, mais municípios ali. A linha cheia
+              com o ponto é {m.nome}; as tracejadas, o limite prudencial e o
+              teto legal.
+            </p>
           </div>
 
           {/* O contexto NACIONAL, e só para quem passou do teto.
@@ -901,9 +966,9 @@ export default async function PaginaMunicipio(
             Entram na comparação apenas os que <strong>entregaram</strong> o
             relatório e cujo percentual está entre 0 e 100%. Quem não entregou
             não tem número — tratá-lo como zero o poria no fim da fila por não
-            ter prestado contas, que é o inverso da verdade. E um município que
-            declarou 371% empurraria todos os outros um degrau, por causa de um
-            erro de preenchimento.
+            ter prestado contas, que é o inverso da verdade. E um percentual
+            acima de 100% é erro de preenchimento: contado, empurraria todos os
+            outros um degrau.
           </p>
         </section>
       )}
@@ -914,7 +979,7 @@ export default async function PaginaMunicipio(
           <p>
             {delta === null ? (
               <>
-                Não há dois quadrimestres com valor plausível o bastante para
+                Não há dois {semestral ? "relatórios" : "quadrimestres"} com valor plausível o bastante para
                 falar em tendência — a tabela abaixo mostra o que foi publicado.
               </>
             ) : delta > 0 ? (
@@ -922,14 +987,14 @@ export default async function PaginaMunicipio(
                 O comprometimento com pessoal <strong>subiu {br(delta, 2)} ponto
                 {Math.abs(delta) >= 2 ? "s" : ""} percentua
                 {Math.abs(delta) >= 2 ? "is" : "l"}</strong> entre o primeiro e o
-                último quadrimestre {finalCondenado ? "com valor plausível" : "publicado"}.
+                último {umPeriodo} {finalCondenado ? "com valor plausível" : "publicado"}.
               </>
             ) : delta < 0 ? (
               <>
                 O comprometimento com pessoal <strong>caiu {br(Math.abs(delta), 2)}{" "}
                 ponto{Math.abs(delta) >= 2 ? "s" : ""} percentua
                 {Math.abs(delta) >= 2 ? "is" : "l"}</strong> entre o primeiro e o
-                último quadrimestre {finalCondenado ? "com valor plausível" : "publicado"}.
+                último {umPeriodo} {finalCondenado ? "com valor plausível" : "publicado"}.
               </>
             ) : (
               <>O comprometimento com pessoal ficou <strong>estável</strong>.</>
@@ -969,10 +1034,19 @@ export default async function PaginaMunicipio(
 
           <div className={estilos.rolagem}>
             <table className={estilos.serie}>
+              <caption className={estilos.legenda}>
+                Gasto com pessoal de {m.nome} em cada {umPeriodo} entregue, em %
+                da receita corrente líquida. Fonte: Tesouro Nacional, SICONFI.
+              </caption>
               <thead>
                 <tr>
-                  <th scope="col">Quadrimestre</th>
-                  <th scope="col" className={estilos.num}>Pessoal / RCL</th>
+                  <th scope="col">
+                    {semestral ? "Período" : <Termo chave="quadrimestre">Quadrimestre</Termo>}
+                  </th>
+                  <th scope="col" className={estilos.num}>
+                    Gasto com pessoal{" "}
+                    (% da <Termo chave="rcl">RCL</Termo>)
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -985,7 +1059,7 @@ export default async function PaginaMunicipio(
                   const fora = condenado(ponto);
                   return (
                     <tr key={`${ex}-${pe}`}>
-                      <th scope="row">{rotuloPeriodo(ex, pe)}</th>
+                      <th scope="row">{nomePonto(ponto)}</th>
                       <td
                         className={`${estilos.num} tabular ${fora ? estilos.implausivel : ""}`}
                       >
@@ -1004,6 +1078,14 @@ export default async function PaginaMunicipio(
             Quadrimestre sem linha é quadrimestre em que o município{" "}
             <strong>não entregou</strong> o relatório — não zero, e não
             estabilidade.{" "}
+            {semestral && (
+              <>
+                Nos anos em que {m.nome} entregou o{" "}
+                <Termo chave="rgf-simplificado">RGF Simplificado</Termo>, semestral,
+                não há 1º nem 2º quadrimestre a entregar: o 2º semestre aparece
+                no lugar do 3º quadrimestre, e o gráfico liga os anos.{" "}
+              </>
+            )}
             <Link href="/ajuda/#travessao">Por que aparece “—”?</Link>
           </p>
         </section>
@@ -1079,6 +1161,37 @@ export default async function PaginaMunicipio(
           <div className={estilos.grafico}>
             <SaudeSvg pontos={saude.pontos} municipio={m.nome} />
           </div>
+          {/* A tabela que o texto do gráfico promete. Até 11/10/2026 ele dizia
+              "os mesmos valores estão na tabela abaixo" e não havia tabela: o
+              eixo não tem número, e quem quisesse o valor de um ano não tinha
+              onde ler. A marca segue a régua do gráfico, 15% desde 2004. */}
+          <div className={estilos.rolagem}>
+            <table className={estilos.serie}>
+              <caption className={estilos.legenda}>
+                Recursos próprios aplicados em saúde por {m.nome}, em % da
+                receita própria de impostos, ano a ano. Fonte: {saude.fonte}.
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Ano</th>
+                  <th scope="col" className={estilos.num}>Aplicado em saúde</th>
+                </tr>
+              </thead>
+              <tbody>
+                {saude.pontos.map(([ano, v]) => (
+                  <tr key={ano}>
+                    <th scope="row">{ano}</th>
+                    <td className={`${estilos.num} tabular`}>
+                      {br(v, 2)}%
+                      {ano >= ANO_DO_PISO_CHEIO && v < PISO && (
+                        <span className={estilos.marca}> abaixo do mínimo</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
           <p className={estilos.ressalva}>
             {saude.rotulo}. Fonte: {saude.fonte}
             {saude.coletadoEm ? `, coleta de ${dataCurta(saude.coletadoEm)}` : ""}.
@@ -1151,7 +1264,7 @@ export default async function PaginaMunicipio(
             até o bimestre — o que de fato foi gasto, não o que foi orçado nem o
             que foi <Termo chave="empenhada">empenhado</Termo>. {m.nome}{" "}
             declarou gasto em <strong>{funcoes.fatias.length}</strong> das{" "}
-            {FUNCOES_DA_PORTARIA} funções previstas na Portaria MOG 42/1999, e a
+            {FUNCOES_DA_PORTARIA} <Termo chave="funcao">funções</Termo> previstas na Portaria MOG 42/1999, e a
             soma delas fecha com o total que o próprio município declarou.
             Fonte: {fiscal.funcoes?.fonte}.{" "}
             <Link href="/ajuda/#funcao">O que é despesa liquidada?</Link>
@@ -1319,13 +1432,15 @@ export default async function PaginaMunicipio(
                   <>
                     A <strong>composição</strong> do gasto, porém, ficou
                     praticamente igual: nenhuma função mudou de fatia em mais de{" "}
-                    {br(DESLOCAMENTO_MINIMO, 1)} ponto percentual.
+                    {br(DESLOCAMENTO_MINIMO, 1)}{" "}
+                    <Termo chave="pontos-percentuais">ponto percentual</Termo>.
                   </>
                 ) : (
                   <>
                     E a <strong>composição</strong> mudou: abaixo, as funções cujo
                     peso no orçamento se deslocou mais de{" "}
-                    {br(DESLOCAMENTO_MINIMO, 1)} ponto percentual.
+                    {br(DESLOCAMENTO_MINIMO, 1)}{" "}
+                    <Termo chave="pontos-percentuais">ponto percentual</Termo>.
                   </>
                 )}
               </p>
@@ -1374,28 +1489,53 @@ export default async function PaginaMunicipio(
               </p>
               <SerieFuncoes pontos={serieFuncoes} />
               <div className={estilos.rolagem}>
+                {/* Os valores do gráfico, que até 11/10/2026 dizia "estão na
+                    tabela abaixo" sobre uma tabela que só tinha o total: o
+                    percentual de cada função, por ano, não estava escrito em
+                    lugar nenhum. Uma linha por função, na ordem das barras. */}
                 <table className={estilos.serie}>
                   <caption className={estilos.legenda}>
-                    Total declarado por {m.nome} em cada{" "}
-                    {fiscal.funcoes?.periodo}º bimestre, em valores nominais
+                    Despesa de {m.nome} por função, em % do total declarado até
+                    o {fiscal.funcoes?.periodo}º <Termo chave="bimestre">bimestre</Termo>{" "}
+                    de cada ano; o total, em reais nominais. Fonte: Tesouro
+                    Nacional, SICONFI (<Termo chave="rreo">RREO</Termo>).
                   </caption>
                   <thead>
                     <tr>
-                      <th scope="col">Ano</th>
-                      <th scope="col" className={estilos.num}>
-                        Total declarado
-                      </th>
+                      <th scope="col">Função</th>
+                      {serieFuncoes.map((p) => (
+                        <th scope="col" className={estilos.num} key={p.exercicio}>
+                          {p.exercicio}
+                        </th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {serieFuncoes.map((p) => (
-                      <tr key={p.exercicio}>
-                        <th scope="row">{p.exercicio}</th>
-                        <td className={`${estilos.num} tabular`}>
-                          {p.total === null ? "—" : `R$ ${br(p.total)}`}
-                        </td>
+                    {serieFuncoes[0]!.fatias.map((f, i) => (
+                      <tr key={f.nome}>
+                        <th scope="row">{f.nome.charAt(0).toUpperCase() + f.nome.slice(1)}</th>
+                        {serieFuncoes.map((p) => {
+                          const pct = p.fatias[i]?.percentual ?? null;
+                          return (
+                            <td className={`${estilos.num} tabular`} key={p.exercicio}>
+                              {pct === null ? "—" : `${br(pct, 1)}%`}
+                            </td>
+                          );
+                        })}
                       </tr>
                     ))}
+                    <tr>
+                      <th scope="row">Total declarado</th>
+                      {serieFuncoes.map((p) => (
+                        <td
+                          className={`${estilos.num} tabular`}
+                          key={p.exercicio}
+                          title={p.total === null ? undefined : escala(p.total).exato}
+                        >
+                          {p.total === null ? "—" : escala(p.total).curto}
+                        </td>
+                      ))}
+                    </tr>
                   </tbody>
                 </table>
               </div>
@@ -1489,6 +1629,25 @@ export default async function PaginaMunicipio(
               {emendasM.parcial && (
                 <> nem em {emendasM.parcial.ano}, até {mesDeCorte(emendas.ultimoMes)}</>
               )}.
+            </p>
+          )}
+          {emendasM.cheio.reais !== null && emendasM.cheio.reais > 0 &&
+            emendasPh !== null && (
+            <p>
+              Por habitante, são <strong>{"R$ "}{br(emendasPh, 2)}</strong> em{" "}
+              {emendasM.cheio.ano}, pela população estimada de {anoEstimada}
+              {posEmendas ? (
+                <>
+                  : fica{" "}
+                  <strong>
+                    {emendasPh > posEmendas.mediana ? "acima da"
+                      : emendasPh < posEmendas.mediana ? "abaixo da" : "igual à"}
+                  </strong>{" "}
+                  <Termo chave="mediana">mediana</Termo> dos{" "}
+                  {br(posEmendas.de)} municípios {deEstado(m.uf)} com pagamento
+                  no ano, que é <strong>{"R$ "}{br(posEmendas.mediana, 2)}</strong>.
+                </>
+              ) : "."}
             </p>
           )}
           {emendasM.cheio.reais !== null && emendasM.cheio.reais > 0 &&
@@ -1732,7 +1891,7 @@ export default async function PaginaMunicipio(
 
           {ideb.edicoesSemMeta.length > 0 && (
             <p className={estilos.ressalva}>
-              <strong>Sem meta</strong> em {ideb.edicoesSemMeta.join(" e ")}{" "}
+              <strong>Sem meta</strong> em {new Intl.ListFormat("pt-BR").format(ideb.edicoesSemMeta.map(String))}{" "}
               porque o INEP não publicou uma: 2005 é a linha de base, e o
               primeiro ciclo do IDEB encerrou em 2021, com as novas metas ainda
               em definição (Portaria MEC 26/2024). Travessão aqui é ausência de
@@ -1763,17 +1922,21 @@ export default async function PaginaMunicipio(
           </p>
           <TabelaCenso
             medidas={medidas}
-            comparacao={{
-              rotulo: "Mediana dos municípios",
-              valores: medianas,
-            }}
-            legenda={`${m.nome} (${m.uf}) no Censo 2022, com a mediana dos ` +
-                     `${br(snapshot.municipios.length)} municípios do país`}
+            comparacoes={[
+              ...(medianasUf ? [{ rotulo: "Mediana do estado", valores: medianasUf }] : []),
+              { rotulo: "Mediana do país", valores: medianas },
+            ]}
+            rotuloValor={m.nome}
+            legenda={`${m.nome} (${m.uf}) no Censo 2022, ${legendaMedianas}`}
           />
           <p className={estilos.ressalva}>
-            <strong>A mediana ao lado é dos municípios, não do país.</strong> São
-            coisas diferentes, e o esgoto mostra por quê: metade dos municípios
-            fica abaixo de{" "}
+            <strong>
+              {comUf
+                ? "As medianas ao lado são dos municípios, não a taxa do estado nem a do país."
+                : "A mediana ao lado é dos municípios, não a taxa do país."}
+            </strong>{" "}
+            São coisas diferentes, e o esgoto mostra por quê:
+            metade dos municípios do país fica abaixo de{" "}
             <strong>{br(medianas["esgoto"] ?? 0, 1)}%</strong>, e ainda assim{" "}
             <strong>{br(taxasPais["esgoto"] ?? 0, 1)}%</strong> dos domicílios
             brasileiros têm ligação à rede — porque as cidades grandes concentram
@@ -1800,12 +1963,13 @@ export default async function PaginaMunicipio(
               </p>
               <TabelaCenso
                 medidas={medidasTrabalho}
-                comparacao={{
-                  rotulo: "Mediana dos municípios",
-                  valores: medianasTrabalho,
-                }}
-                legenda={`${m.nome} (${m.uf}) no Censo 2022, com a mediana dos ` +
-                         `${br(snapshot.municipios.length)} municípios do país`}
+                comparacoes={[
+                  ...(medianasTrabalhoUf
+                    ? [{ rotulo: "Mediana do estado", valores: medianasTrabalhoUf }] : []),
+                  { rotulo: "Mediana do país", valores: medianasTrabalho },
+                ]}
+                rotuloValor={m.nome}
+                legenda={`${m.nome} (${m.uf}) no Censo 2022, ${legendaMedianas}`}
               />
               {renda !== null && (
                 <p>
@@ -1814,7 +1978,12 @@ export default async function PaginaMunicipio(
                   trabalhos
                   {medianaRenda !== null && (
                     <>
-                      {" "}(a mediana dos municípios é {"R$ "}{br(medianaRenda)})
+                      {" "}(a mediana dos municípios
+                      {medianaRendaUf !== null && (
+                        <> {deEstado(m.uf)} é {"R$ "}{br(medianaRendaUf)}; a do país,</>
+                      )}
+                      {medianaRendaUf === null && <> do país é</>}
+                      {" "}{"R$ "}{br(medianaRenda)})
                     </>
                   )}
                   . É a média que o IBGE publica, e uma média se move com
@@ -1841,13 +2010,22 @@ export default async function PaginaMunicipio(
               <TabelaValores
                 linhas={EMPRESAS}
                 valores={m.valores}
+                rotuloValor={m.nome}
                 legenda={`${m.nome} (${m.uf}) no Cadastro Central de ` +
                          `Empresas de ${anoEmpresas}`}
               />
               {salario !== null && medianaSalario !== null && (
                 <p>
-                  A mediana do salário médio entre os municípios do país é{" "}
-                  <strong>{"R$ "}{br(medianaSalario)}</strong>.
+                  Pondo os municípios do país em ordem de salário médio, o
+                  do meio paga{" "}
+                  <strong>{"R$ "}{br(medianaSalario)}</strong>: metade fica
+                  abaixo disso, metade acima.
+                  {medianaSalarioUf !== null && (
+                    <>
+                      {" "}Entre os municípios {deEstado(m.uf)}, o do meio paga{" "}
+                      <strong>{"R$ "}{br(medianaSalarioUf)}</strong>.
+                    </>
+                  )}
                 </p>
               )}
             </>
@@ -1867,16 +2045,22 @@ export default async function PaginaMunicipio(
                 <strong>
                   {contagem(cagedM.desligamentos, "desligamento", "desligamentos")}
                 </strong>
-                : <Termo chave="saldo">saldo</Termo> de <strong>{comSinal(cagedM.saldo)}</strong>. Só em{" "}
+                : <Termo chave="saldo">saldo</Termo> de <strong>{comSinal(cagedM.saldo)}</strong>{" "}
+                {Math.abs(cagedM.saldo) === 1 ? "vaga" : "vagas"}. Só em{" "}
                 {nomeCompetencia(caged.competencia)}, o saldo foi de{" "}
-                <strong>{comSinal(cagedM.ultimo.saldo)}</strong>.
+                <strong>{comSinal(cagedM.ultimo.saldo)}</strong>{" "}
+                {Math.abs(cagedM.ultimo.saldo) === 1 ? "vaga" : "vagas"}.{" "}
+                <Link href="/ranking/emprego-com-carteira/" prefetch={false}>
+                  Os municípios que mais abriram e mais fecharam vagas
+                </Link>.
               </p>
               <TabelaCaged
                 meses={cagedM.meses}
                 legenda={`${m.nome} (${m.uf}) no Novo Caged, mês a mês`}
               />
               <p className={estilos.ressalva}>
-                Só emprego celetista: servidor estatutário e quem trabalha por
+                Só emprego <Termo chave="celetista">celetista</Termo>: servidor{" "}
+                <Termo chave="estatutario">estatutário</Termo> e quem trabalha por
                 conta própria não entram. Os meses já incluem as declarações
                 entregues fora do prazo e as exclusões feitas até{" "}
                 {nomeCompetencia(caged.competencia)}, como o número oficial
@@ -1919,7 +2103,21 @@ export default async function PaginaMunicipio(
 
       {vizinhos.length > 0 && (
         <section className={estilos.texto} id="outros-municipios">
-          <h2>Outros municípios {deEstado(m.uf)}</h2>
+          <h2>
+            {pelaRegiao
+              ? `Outros municípios da região de ${regiao.nome}`
+              : `Outros municípios ${deEstado(m.uf)}`}
+          </h2>
+          {pelaRegiao && (
+            <p>
+              A <strong>região imediata</strong>, do IBGE, reúne os municípios
+              ligados a uma mesma cidade-polo, aonde a população vai para
+              comprar, trabalhar, estudar e se tratar. Nesta são{" "}
+              {br(regiao.vizinhos.length + 1)} municípios, {m.nome} incluído.
+              Fonte: IBGE, Divisão Regional do Brasil em Regiões Geográficas
+              Imediatas (2017).
+            </p>
+          )}
           <ul className={estilos.vizinhos}>
             {vizinhos.map((v) => (
               <li key={v.codigo}>

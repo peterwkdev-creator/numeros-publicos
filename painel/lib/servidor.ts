@@ -7,6 +7,7 @@ import type { SnapshotIdeb } from "./ideb";
 import type { SnapshotInss } from "./inss";
 import type { SnapshotCaged } from "./caged";
 import type { SnapshotEmendas } from "./emendas";
+import type { SnapshotRegioes } from "./estado";
 import type { SnapshotBrasil } from "./brasil";
 
 /**
@@ -68,6 +69,16 @@ export async function lerIdeb(
  * ritmos diferentes, e fundi-los convidaria a juntar números que não se somam.
  */
 let cacheInss: SnapshotInss | null = null;
+
+/** As regiões imediatas do IBGE, para os "outros municípios" (11/10/2026). */
+let cacheRegioes: SnapshotRegioes | null = null;
+
+export async function lerRegioes(): Promise<SnapshotRegioes> {
+  if (cacheRegioes) return cacheRegioes;
+  const arquivo = path.join(process.cwd(), "dados", "regioes.json");
+  cacheRegioes = JSON.parse(await readFile(arquivo, "utf-8")) as SnapshotRegioes;
+  return cacheRegioes;
+}
 
 export async function lerInss(): Promise<SnapshotInss> {
   if (cacheInss) return cacheInss;

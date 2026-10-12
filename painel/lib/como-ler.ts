@@ -22,7 +22,7 @@ export type ItemComoLer = {
   ajuda?: { ancora: string; rotulo: string };
 };
 
-export type TipoDePagina = "municipio" | "estado" | "brasil" | "ranking";
+export type TipoDePagina = "municipio" | "estado" | "brasil" | "ranking" | "rankingEmprego";
 
 const FONTE: ItemComoLer = {
   titulo: "A fonte e a data ficam junto do número",
@@ -111,6 +111,27 @@ export const COMO_LER: Record<TipoDePagina, ItemComoLer[]> = {
     {
       titulo: "Filtre pelo estado",
       texto: "O filtro acima da tabela mostra só os municípios de um estado; o nome de cada município leva à página dele. As declarações implausíveis ficam numa lista à parte, abaixo.",
+    },
+    FONTE,
+    TERMOS,
+  ],
+  rankingEmprego: [
+    {
+      titulo: "O que a lista mostra",
+      texto: "O saldo do emprego com carteira de cada município nos últimos 12 meses: as admissões menos os desligamentos. As duas primeiras tabelas trazem os maiores e os menores saldos.",
+      ajuda: { ancora: "caged", rotulo: "Emprego com carteira: o Novo Caged" },
+    },
+    {
+      titulo: "Conta onde a empresa está",
+      texto: "A vaga entra no município do estabelecimento que contratou ou desligou, e não no de quem mora lá: quem trabalha na cidade vizinha conta na vizinha.",
+    },
+    {
+      titulo: "Por mil habitantes, só nas cidades grandes",
+      texto: "Em número de vagas, cidades de tamanhos diferentes não se comparam. A última tabela divide o saldo pela população, e só nas cidades de 100 mil habitantes ou mais, onde uma empresa sozinha não decide a conta.",
+    },
+    {
+      titulo: "Filtre pelo estado",
+      texto: "O filtro acima da tabela por mil habitantes mostra só as cidades de um estado; o nome de cada município leva à página dele, com o saldo mês a mês.",
     },
     FONTE,
     TERMOS,

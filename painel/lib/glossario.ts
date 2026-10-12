@@ -179,9 +179,14 @@ export const GLOSSARIO = {
     curta: "O relatório da despesa com pessoal comparada aos limites da Lei de Responsabilidade Fiscal. O município o entrega a cada quadrimestre; com menos de 50 mil habitantes, pode optar por um simplificado, a cada semestre.",
     secao: "relatorios",
   },
+  "rgf-simplificado": {
+    termo: "RGF Simplificado",
+    curta: "A versão semestral do Relatório de Gestão Fiscal, que a Lei de Responsabilidade Fiscal (art. 63) permite ao município com menos de 50 mil habitantes. A do 2º semestre cobre os 12 meses até dezembro, o mesmo período do 3º quadrimestre.",
+    secao: "relatorios",
+  },
   rreo: {
     termo: "RREO (Relatório Resumido da Execução Orçamentária)",
-    curta: "O relatório que o município entrega a cada bimestre, com a receita e a despesa acumuladas no ano.",
+    curta: "O relatório que o município entrega a cada bimestre, com a receita e a despesa acumuladas no ano. Quem optou pelo relatório fiscal semestral entrega a versão simplificada, também bimestral e com as mesmas contas.",
     secao: "relatorios",
   },
   saldo: {
@@ -191,7 +196,7 @@ export const GLOSSARIO = {
   },
   "sem-relatorio": {
     termo: "Sem relatório entregue",
-    curta: "O relatório quadrimestral do município não está no SICONFI, a base do Tesouro. Isso não quer dizer que gaste zero com pessoal: quer dizer que o site não tem o número. Município com menos de 50 mil habitantes pode publicar um relatório semestral simplificado, que o site ainda não lê.",
+    curta: "Nem o relatório quadrimestral nem o semestral simplificado do município estão no SICONFI, a base do Tesouro. Isso não quer dizer que gaste zero com pessoal: quer dizer que o site não tem o número.",
     secao: "travessao",
   },
   siconfi: {

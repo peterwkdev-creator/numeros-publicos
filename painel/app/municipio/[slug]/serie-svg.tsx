@@ -4,7 +4,7 @@ import {
   indiceQuadrimestre,
   interrupcoes,
   pontoPlausivel,
-  rotuloPeriodo,
+  rotuloPonto,
   type PontoSerie,
 } from "../../../lib/fiscal";
 
@@ -123,14 +123,15 @@ export default function SerieSvg({
   const subiu = ultimo[3] > primeiro[3];
 
   const rotulo =
-    `Despesa com pessoal de ${municipio} em ${bons.length} quadrimestres: ` +
-    bons.map((p) => `${rotuloPeriodo(p[0], p[1])}, ${br(p[3], 2)}%`).join("; ") +
+    `Gasto com pessoal de ${municipio} em ${bons.length} ` +
+    `${bons.some((p) => p[4] === true) ? "relatórios" : "quadrimestres"}: ` +
+    bons.map((p) => `${rotuloPonto(p)}, ${br(p[3], 2)}%`).join("; ") +
     `. ${subiu ? "Terminou acima" : "Terminou abaixo"} do primeiro valor. ` +
     // Quem ouve o gráfico precisa saber do buraco tanto quanto quem o vê: a
     // linha interrompida é informação, e sem isto ela se perderia.
     (buracos
       ? `A série tem ${buracos === 1 ? "uma interrupção" : `${buracos} interrupções`}` +
-        `, em quadrimestres sem relatório entregue. `
+        `, em períodos sem relatório entregue. `
       : "") +
     `Limite prudencial ${br(prudencial, 2)}%, teto legal ${br(legal, 2)}%. ` +
     `Os mesmos valores estão na tabela abaixo.`;
@@ -192,10 +193,10 @@ export default function SerieSvg({
 
       {/* Só o primeiro e o último rótulo: seis datas no eixo viram borrão. */}
       <text x={M.esq} y={A - 4} fontSize="8" fill="var(--tinta-fraca)">
-        {rotuloPeriodo(primeiro[0], primeiro[1])}
+        {rotuloPonto(primeiro)}
       </text>
       <text x={L - M.dir} y={A - 4} fontSize="8" textAnchor="end" fill="var(--tinta-fraca)">
-        {rotuloPeriodo(ultimo[0], ultimo[1])}
+        {rotuloPonto(ultimo)}
       </text>
     </svg>
   );

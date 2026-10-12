@@ -31,9 +31,10 @@ const L = 300;
 const A = 78;
 const M = { topo: 10, base: 18, esq: 4, dir: 4 };
 
-/** O primeiro ano em que os 15% valem cheios — ver o comentário acima. */
-const ANO_DO_PISO_CHEIO = 2004;
-const PISO = 15;
+/** O primeiro ano em que os 15% valem cheios — ver o comentário acima.
+ *  Exportados para a tabela da página marcar os mesmos anos que o gráfico. */
+export const ANO_DO_PISO_CHEIO = 2004;
+export const PISO = 15;
 
 export default function SaudeSvg({
   pontos,

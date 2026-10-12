@@ -128,6 +128,28 @@ function fragmentosExternos(html) {
 }
 
 const idsPorRota = new Map();
+/**
+ * O título do cartão social (`og:title`, `twitter:title`) tem de ser o da aba.
+ * Até 12/10/2026 o município e o estado davam um nome a mais à mesma página
+ * ("X (UF) — dados abertos" no cartão, outro no Google), e só o HTML pronto
+ * mostra o que cada rota herdou do layout. Devolve os achados da página.
+ */
+function titulosDiferentes(html) {
+  const cabeca = html.slice(0, html.indexOf("</head>"));
+  // Página fora do índice (o 404) não é compartilhada: herda o cartão.
+  if (/<meta name="robots" content="noindex/.test(cabeca)) return [];
+  const limpo = (s) => s.replace(/&amp;/g, "&").replace(/&quot;/g, '"')
+    .replace(/&#x27;|&#39;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">");
+  const aba = cabeca.match(/<title>([^<]*)<\/title>/);
+  if (!aba) return [];
+  const achados = [];
+  for (const prop of ["og:title", "twitter:title"]) {
+    const m = cabeca.match(new RegExp(`<meta (?:property|name)="${prop}" content="([^"]*)"`));
+    if (m && limpo(m[1]) !== limpo(aba[1])) achados.push(`${prop} ≠ <title>`);
+  }
+  return achados;
+}
+
 function idsDe(rotas, rota) {
   if (!idsPorRota.has(rota)) {
     const html = readFileSync(rotas.get(rota), "utf8");
@@ -145,6 +167,8 @@ if (rotas.size === 0) {
   const quebrados = new Map();
   // achado de âncora -> páginas onde ele ocorre
   const orfas = new Map();
+  // título do cartão diferente do da aba -> páginas
+  const titulos = new Map();
   let links = 0;
   let ancoras = 0;
   let externas = 0;
@@ -162,6 +186,10 @@ if (rotas.size === 0) {
     }
     const { achados, conferidas } = ancorasOrfas(html);
     ancoras += conferidas;
+    for (const achado of titulosDiferentes(html)) {
+      if (!titulos.has(achado)) titulos.set(achado, []);
+      titulos.get(achado).push(rota);
+    }
     for (const fragmento of fragmentosExternos(html)) {
       const [destino, frag] = fragmento.split("#");
       // Rota inexistente já sai como link quebrado; aqui, só o fragmento.
@@ -183,6 +211,18 @@ if (rotas.size === 0) {
   } else {
     console.error(`\nÂNCORAS ÓRFÃS: ${orfas.size}\n`);
     for (const [achado, paginas] of [...orfas].sort((a, b) => b[1].length - a[1].length)) {
+      console.error(`  ${achado}`);
+      console.error(`     em ${paginas.length} página(s): ` +
+        `${paginas.slice(0, 3).join(", ")}${paginas.length > 3 ? " …" : ""}`);
+    }
+    process.exitCode = 1;
+  }
+
+  if (titulos.size === 0) {
+    console.log("cartão social: og:title e twitter:title iguais ao <title> em toda página indexável");
+  } else {
+    console.error(`\nCARTÃO SOCIAL COM OUTRO TÍTULO: ${titulos.size}\n`);
+    for (const [achado, paginas] of titulos) {
       console.error(`  ${achado}`);
       console.error(`     em ${paginas.length} página(s): ` +
         `${paginas.slice(0, 3).join(", ")}${paginas.length > 3 ? " …" : ""}`);

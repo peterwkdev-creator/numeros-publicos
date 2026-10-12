@@ -635,6 +635,15 @@ def _por_grupo(dist: dict[str, Counter]) -> list[tuple]:
 
 PORTAL_PUBLICO = "https://dadosabertos.inss.gov.br/dataset/"
 
+#: A "APS de Automatização de Processos" (DF) decide sozinha pedidos do país
+#: inteiro: 6,7% das negativas de agosto de 2026, e o DF, com 1,4% da
+#: população, aparecia com 8,1% delas. A UF dos negados é a da agência que
+#: decidiu, então essas negativas entram no total do país e ficam FORA do
+#: recorte por UF; o retrato diz quantas são (medido em 11/10/2026).
+APS_AUTOMACAO = 23001240
+
+_CHAVES_RECORTE = ("n", "mediana", "acima45", "acima90", "publicavel")
+
 
 def _json_da(contagem: Counter, prazo: int | None, anterior: Counter | None = None) -> dict:
     r = resumo(contagem)
@@ -668,27 +677,43 @@ def retrato(db: ArmazemINSS) -> dict:
     def fila_de(mes):
         por: dict[str, Counter] = {}
         por_serv: dict[int, Counter] = {}
+        por_uf: dict[str, dict[str, Counter]] = {}
         for l in db.con.execute(
-                "SELECT servico, idade_dias, SUM(quantidade) q FROM pendente"
-                " WHERE mes = ? GROUP BY servico, idade_dias", (mes,)):
+                "SELECT servico, uf, idade_dias, SUM(quantidade) q FROM pendente"
+                " WHERE mes = ? GROUP BY servico, uf, idade_dias", (mes,)):
             g = inss_grupos.grupo_do_servico(l["servico"])
             if g is not None:
                 por.setdefault(g.chave, Counter())[l["idade_dias"]] += l["q"]
                 por_serv.setdefault(l["servico"], Counter())[l["idade_dias"]] += l["q"]
-        return por, por_serv
+                if l["uf"] in UFS:
+                    por_uf.setdefault(g.chave, {}).setdefault(
+                        l["uf"], Counter())[l["idade_dias"]] += l["q"]
+        return por, por_serv, por_uf
 
-    fila, fila_serv = fila_de(meses_fila[0]) if meses_fila else ({}, {})
+    fila, fila_serv, fila_uf = fila_de(meses_fila[0]) if meses_fila else ({}, {}, {})
     anterior = fila_de(meses_fila[1])[0] if len(meses_fila) > 1 else {}
 
     negados: dict[str, dict[str, Counter]] = {}
+    negados_uf: dict[str, dict[str, Counter]] = {}
+    automacao = total_negados = 0
     if meses_neg:
         for l in db.con.execute(
-                "SELECT especie, clientela, dias, SUM(quantidade) q FROM negado"
-                " WHERE mes = ? GROUP BY especie, clientela, dias", (meses_neg[0],)):
+                "SELECT especie, clientela, uf, aps = ? auto, dias, SUM(quantidade) q"
+                " FROM negado WHERE mes = ? GROUP BY especie, clientela, uf, auto, dias",
+                (APS_AUTOMACAO, meses_neg[0])):
+            total_negados += l["q"]
+            automacao += l["q"] if l["auto"] else 0
             g = inss_grupos.grupo_da_especie(l["especie"])
             if g is not None:
                 por_cli = negados.setdefault(g.chave, {})
                 por_cli.setdefault(l["clientela"], Counter())[l["dias"]] += l["q"]
+                if not l["auto"] and l["uf"] in UFS:
+                    negados_uf.setdefault(g.chave, {}).setdefault(
+                        l["uf"], Counter())[l["dias"]] += l["q"]
+
+    def recorte(c: Counter, prazo: int | None = None, com_prazo: bool = False) -> dict:
+        j = _json_da(c, prazo)
+        return {k: j[k] for k in _CHAVES_RECORTE + (("acimaDoPrazo",) if com_prazo else ())}
 
     grupos = []
     for g in inss_grupos.GRUPOS:
@@ -697,19 +722,20 @@ def retrato(db: ArmazemINSS) -> dict:
             f = _json_da(fila[g.chave], g.prazo_acordo, anterior.get(g.chave, Counter()))
             f["porServico"] = sorted(
                 ({"codigo": s, "nome": nomes_serv.get(s, "?"),
-                  **{k: v for k, v in _json_da(fila_serv[s], g.prazo_acordo).items()
-                     if k in ("n", "mediana", "acima45", "publicavel")}}
+                  **recorte(fila_serv[s], g.prazo_acordo)}
                  for s in g.servicos if s in fila_serv),
                 key=lambda x: -x["n"])
+            f["porUf"] = {uf: recorte(c, g.prazo_acordo, com_prazo=True)
+                          for uf, c in sorted(fila_uf.get(g.chave, {}).items())}
         n = None
         if g.chave in negados:
             total = sum(negados[g.chave].values(), Counter())
             n = _json_da(total, None)
             n.pop("acimaDoPrazo")
             n["porClientela"] = {
-                cli: {k: v for k, v in _json_da(c, None).items()
-                      if k in ("n", "mediana", "acima45", "publicavel")}
-                for cli, c in sorted(negados[g.chave].items())}
+                cli: recorte(c) for cli, c in sorted(negados[g.chave].items())}
+            n["porUf"] = {uf: recorte(c)
+                          for uf, c in sorted(negados_uf.get(g.chave, {}).items())}
         grupos.append({"chave": g.chave, "nome": g.nome, "nomePopular": g.nome_popular,
                        "prazoAcordo": g.prazo_acordo,
                        "prazoContaDoPedido": g.prazo_conta_do_pedido,
@@ -729,7 +755,8 @@ def retrato(db: ArmazemINSS) -> dict:
             "mesAnterior": meses_fila[1] if len(meses_fila) > 1 else None,
             **meta(mf, "pendentes")},
         "negados": None if not meses_neg else {
-            "mes": meses_neg[0], **meta(meses_neg[0], "indeferidos")},
+            "mes": meses_neg[0], **meta(meses_neg[0], "indeferidos"),
+            "foraDasUfs": {"n": automacao, "total": total_negados}},
         "minimoPedidos": inss_grupos.MINIMO_PEDIDOS,
         "grupos": grupos,
     }

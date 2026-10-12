@@ -139,53 +139,18 @@
    `:has()` porque o input mora dentro do `fieldset`, e o combinador `~` só
    alcança irmãos. Baseline desde dezembro de 2023, seguro em 2026.
 
-   As chaves aqui (`esgoto`, `alfabetizacao`, `entrega`) sao as mesmas de
-   `CAMADAS` em `page.tsx`, e um teste cobra que as duas listas nao divirjam:
-   uma chave sem regra deixaria o mapa inteiro na cor padrao, sem nada
-   quebrar e sem nada acusar. */
+   As regras por camada NÃO moram aqui: saem de `cssDasCamadas` (lib/mapa.ts)
+   num `<style>` do componente, a partir da mesma lista que desenha o mapa.
+   Até 11/10/2026 eram escritas à mão, três chaves, e uma chave sem regra
+   deixava o mapa inteiro na cor padrão sem nada acusar.
 
-.bloco:has(input[value="esgoto"]:checked) .uf[data-esgoto="0"],
-.bloco:has(input[value="alfabetizacao"]:checked) .uf[data-alfabetizacao="0"],
-.bloco:has(input[value="entrega"]:checked) .uf[data-entrega="0"] { fill: var(--mapa-0); }
-
-.bloco:has(input[value="esgoto"]:checked) .uf[data-esgoto="1"],
-.bloco:has(input[value="alfabetizacao"]:checked) .uf[data-alfabetizacao="1"],
-.bloco:has(input[value="entrega"]:checked) .uf[data-entrega="1"] { fill: var(--mapa-1); }
-
-.bloco:has(input[value="esgoto"]:checked) .uf[data-esgoto="2"],
-.bloco:has(input[value="alfabetizacao"]:checked) .uf[data-alfabetizacao="2"],
-.bloco:has(input[value="entrega"]:checked) .uf[data-entrega="2"] { fill: var(--mapa-2); }
-
-.bloco:has(input[value="esgoto"]:checked) .uf[data-esgoto="3"],
-.bloco:has(input[value="alfabetizacao"]:checked) .uf[data-alfabetizacao="3"],
-.bloco:has(input[value="entrega"]:checked) .uf[data-entrega="3"] { fill: var(--mapa-3); }
-
-.bloco:has(input[value="esgoto"]:checked) .uf[data-esgoto="4"],
-.bloco:has(input[value="alfabetizacao"]:checked) .uf[data-alfabetizacao="4"],
-.bloco:has(input[value="entrega"]:checked) .uf[data-entrega="4"] { fill: var(--mapa-4); }
-
-/* "Sem dado" = fundo da pagina + contorno TRACEJADO.
+   "Sem dado" = hachura + contorno da tinta fraca, também gerado lá.
    Medido em 06/09/2026: o cinza anterior tinha 1,12:1 de contraste com a faixa
    de 0-20% no tema claro e 1,05:1 no escuro -- 1:1 seria cor identica, e o
-   minimo para distincao grafica e 3:1. Na pratica eram a mesma cor, e o
-   Distrito Federal (que presta contas como estado, nao como municipio) saia
-   indistinguivel de um estado que quase nao entrega.
-
-   Branco puro resolveria no claro e MENTIRIA no escuro: la a rampa vai de
-   escuro para claro, entao branco leria como o valor maximo -- o oposto de
-   "nao sabemos". O fundo da pagina e o unico valor que fica fora da rampa nos
-   dois temas.
-
-   E o tracejado e o que carrega o significado sem depender de cor nenhuma:
-   funciona em daltonismo, em alto contraste forcado e no papel. */
-.bloco:has(input[value="esgoto"]:checked) .uf[data-esgoto="sem"],
-.bloco:has(input[value="alfabetizacao"]:checked) .uf[data-alfabetizacao="sem"],
-.bloco:has(input[value="entrega"]:checked) .uf[data-entrega="sem"] {
-  fill: url(#mapa-sem-dado);
-  stroke: var(--tinta-fraca);
-  stroke-width: 2;
-  stroke-dasharray: none;
-}
+   minimo para distincao grafica e 3:1. Branco puro resolveria no claro e
+   MENTIRIA no escuro: la a rampa vai de escuro para claro, entao branco leria
+   como o valor maximo. A hachura carrega o significado sem depender de cor
+   nenhuma: funciona em daltonismo, em alto contraste forcado e no papel. */
 
 /* As duas metades da hachura. Precisam ser classe e nao atributo: `fill` como
    atributo do SVG nao resolve `var()`, e sairia literal. */
@@ -195,11 +160,9 @@
   stroke-width: 3;
 }
 
-/* Só a legenda do indicador escolhido aparece. */
+/* Só a legenda e os extremos da camada escolhida aparecem. */
 .textoEscala { display: none; }
-.bloco:has(input[value="esgoto"]:checked) .textoEscala[data-de="esgoto"],
-.bloco:has(input[value="alfabetizacao"]:checked) .textoEscala[data-de="alfabetizacao"],
-.bloco:has(input[value="entrega"]:checked) .textoEscala[data-de="entrega"] { display: block; }
+.extremos { display: none; }
 
 .escala {
   max-width: 34rem;
@@ -228,9 +191,6 @@
 .passo[data-faixa="2"] { background: var(--mapa-2); }
 .passo[data-faixa="3"] { background: var(--mapa-3); }
 .passo[data-faixa="4"] { background: var(--mapa-4); }
-/* A amostra da legenda repete o tracejado, senao ela vira um retangulo da cor
-   do fundo e some -- e a legenda deixaria de explicar justamente o caso que
-   mais precisa de explicacao. */
 /* A amostra da legenda repete a hachura, senao ela vira um retangulo da cor do
    fundo e some -- e a legenda deixaria de explicar justamente o caso que mais
    precisa de explicacao. */
@@ -247,6 +207,42 @@
 }
 
 .extremo { font-size: 0.76rem; color: var(--tinta-fraca); white-space: nowrap; }
+
+/* --- os valores, em tabela ----------------------------------------------
+   Recolhida: o mapa é a leitura de relance, a tabela é a de conferência. */
+.valores {
+  max-width: 48rem;
+  margin: 1rem auto 0;
+  font-size: 0.85rem;
+}
+
+.valores summary {
+  cursor: pointer;
+  color: var(--acento);
+  font-weight: 600;
+  padding: 0.3rem 0;
+}
+
+.rolagem { overflow-x: auto; margin-top: 0.5rem; }
+
+.tabela { border-collapse: collapse; width: 100%; }
+
+.tabela th,
+.tabela td {
+  padding: 0.3rem 0.5rem;
+  border-bottom: 1px solid var(--borda);
+  text-align: left;
+  vertical-align: bottom;
+}
+
+.tabela thead th { font-weight: 600; color: var(--tinta-suave); }
+.tabela tbody th { font-weight: 500; white-space: nowrap; }
+.tabela .numero { text-align: right; white-space: nowrap; }
+.linhaDestaque { background: var(--acento-suave); }
+
+@media print {
+  .valores { display: none; }
+}
 
 /* --- a UF em destaque ------------------------------------------------------
    **Vai no FIM do arquivo, e isso não é organização: é correção.** `.uf` e

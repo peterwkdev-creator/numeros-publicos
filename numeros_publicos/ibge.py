@@ -180,6 +180,45 @@ def url_ufs_do_brasil() -> str:
     return f"{BASE}/api/v1/localidades/estados"
 
 
+def regioes_imediatas(bruto: object) -> list[dict]:
+    """As regiões geográficas imediatas do IBGE, com os municípios de cada uma.
+
+    É a divisão regional vigente desde 2017 (substituiu a microrregião): cada
+    região reúne os municípios ligados a uma mesma cidade-polo, aonde a
+    população vai comprar, trabalhar, estudar e se tratar. A página do
+    município a usa para os "outros municípios": os vizinhos de verdade, no
+    lugar da janela em ordem alfabética.
+
+    Medido em 11/10/2026 na lista nacional: 510 regiões, todas dentro de uma
+    UF, de 1 município (o Distrito Federal) a 47 (Campina Grande/PB), mediana
+    9; nenhum dos 5.571 sem região. Município sem `regiao-imediata` LEVANTA em
+    vez de ficar de fora: um vizinho a menos não se nota na página.
+    """
+    if not isinstance(bruto, list):
+        raise ErroIBGE("a lista de municípios não veio como lista")
+    regioes: dict[int, dict] = {}
+    for m in bruto:
+        try:
+            ri = m["regiao-imediata"]
+            uf = ri["regiao-intermediaria"]["UF"]["sigla"]
+            codigo = int(ri["id"])
+            r = regioes.setdefault(codigo, {
+                "codigo": codigo, "nome": ri["nome"], "uf": uf,
+                "municipios": []})
+            r["municipios"].append(int(m["id"]))
+        except (KeyError, TypeError, ValueError) as e:
+            trecho = json.dumps(m, ensure_ascii=False)[:160]
+            raise ErroIBGE(f"município sem região imediata: {trecho}") from e
+        if r["uf"] != uf:
+            # A página lista os vizinhos entre os municípios do estado; uma
+            # região que cruzasse a divisa perderia metade em silêncio.
+            raise ErroIBGE(f"região imediata {codigo} em duas UFs")
+    saida = sorted(regioes.values(), key=lambda r: r["codigo"])
+    for r in saida:
+        r["municipios"].sort()
+    return saida
+
+
 def url_ufs_da_regiao(regiao: int = REGIAO_NORDESTE) -> str:
     return f"{BASE}/api/v1/localidades/regioes/{regiao}/estados"
 

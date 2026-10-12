@@ -101,9 +101,10 @@ export function resumirEstado(
   const porCodigo = new Map(
     fiscal.municipios.map((linha) => {
       const [codigo, , , , publicou, percentual, limitePrudencial, despesa,
-        rclAjustada] = linha;
+        rclAjustada, simplificado] = linha;
       return [codigo, {
         publicou, percentual, limitePrudencial, despesa, rclAjustada,
+        simplificado,
         // `faixaDaLinha`, e não `faixaDe`: é ela que sabe quando o percentual
         // foi calculado sobre uma RCL que a receita do município desmente.
         faixa: faixaDaLinha(fiscal, linha),
@@ -162,7 +163,7 @@ export function resumirEstado(
  * o estado. A fatia sai da soma, no fim.
  *
  * O total é a soma dos totais **declarados**, e não a soma das funções: são
- * iguais em todo município cujo relatório fecha (0 de 1.414 não fecharam), e
+ * iguais em todo município cujo relatório fecha (0 de 5.541 no país em 2024), e
  * usar o declarado mantém a régua sendo a da fonte, não a nossa.
  */
 function somarFuncoes(
@@ -214,6 +215,47 @@ export function vizinhosDe(
     saida.push(doEstado[(i + k) % doEstado.length]!);
   }
   return saida;
+}
+
+/** As regiões geográficas imediatas, de `python -m numeros_publicos regioes-exportar`. */
+export type SnapshotRegioes = {
+  geradoEm: string;
+  fonte: { nome: string; url: string };
+  regioes: { codigo: number; nome: string; uf: string; municipios: number[] }[];
+};
+
+const indiceRegioes = new WeakMap<SnapshotRegioes, Map<number, SnapshotRegioes["regioes"][number]>>();
+
+/**
+ * Os outros municípios da mesma região imediata do IBGE, na ordem de `doEstado`.
+ *
+ * **Vizinhos de verdade, no lugar da janela alfabética** (11/10/2026). A região
+ * imediata reúne os municípios ligados a uma mesma cidade-polo, então a lista
+ * é a que o leitor quer comparar. E espalha os links tão bem quanto a janela,
+ * que existia para isso: cada município recebe link de todos os da sua região,
+ * e só o Distrito Federal é região de um município só.
+ *
+ * `null` quando o município não está em região nenhuma (o arquivo ficou para
+ * trás de um município novo): a página volta para `vizinhosDe`.
+ */
+export function daMesmaRegiao<T extends { codigo: number }>(
+  regioes: SnapshotRegioes,
+  doEstado: T[],
+  codigo: number,
+): { nome: string; vizinhos: T[] } | null {
+  let indice = indiceRegioes.get(regioes);
+  if (!indice) {
+    indice = new Map();
+    for (const r of regioes.regioes) for (const c of r.municipios) indice.set(c, r);
+    indiceRegioes.set(regioes, indice);
+  }
+  const r = indice.get(codigo);
+  if (!r) return null;
+  const membros = new Set(r.municipios);
+  return {
+    nome: r.nome,
+    vizinhos: doEstado.filter((m) => m.codigo !== codigo && membros.has(m.codigo)),
+  };
 }
 
 /**

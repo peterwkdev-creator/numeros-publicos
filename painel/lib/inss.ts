@@ -30,8 +30,11 @@ export type RecorteInss = {
   n: number;
   mediana: number;
   acima45: number;
+  acima90: number;
   publicavel: boolean;
 };
+
+export type RecorteUfInss = RecorteInss & { acimaDoPrazo: number | null };
 
 export type FilaInss = ResumoInss & {
   /** Fração acima do prazo do acordo; null quando o grupo não tem prazo. */
@@ -39,10 +42,17 @@ export type FilaInss = ResumoInss & {
   /** A mediana no mês anterior, para a tendência; null sem mês anterior. */
   medianaAnterior: number | null;
   porServico: (RecorteInss & { codigo: number; nome: string })[];
+  /** Pela UF da agência onde o pedido foi criado; só as que têm pedido. */
+  porUf: Record<string, RecorteUfInss>;
 };
 
 export type NegadosInss = ResumoInss & {
   porClientela: Partial<Record<"urbano" | "rural", RecorteInss>>;
+  /**
+   * Pela UF da agência que negou. Sem as negativas da agência de automação,
+   * que decide pelo país inteiro (ver `foraDasUfs` no retrato).
+   */
+  porUf: Record<string, RecorteInss>;
 };
 
 export type GrupoInss = {
@@ -67,7 +77,13 @@ export type SnapshotInss = {
     arquivo: string | null;
     gravadoEm: string | null;
   } | null;
-  negados: { mes: string; arquivo: string | null; gravadoEm: string | null } | null;
+  negados: {
+    mes: string;
+    arquivo: string | null;
+    gravadoEm: string | null;
+    /** As negativas da agência de automação: no país, em nenhuma UF. */
+    foraDasUfs: { n: number; total: number };
+  } | null;
   minimoPedidos: number;
   grupos: GrupoInss[];
 };
@@ -112,6 +128,31 @@ export function grupoPorChave(s: SnapshotInss, chave: string): GrupoInss | undef
  */
 export function gruposComPagina(s: SnapshotInss): GrupoInss[] {
   return s.grupos.filter((g) => g.fila?.publicavel);
+}
+
+/**
+ * O INSS de uma UF, benefício a benefício: a fila e os negados dela, cada lado
+ * só quando passa do mínimo de pedidos (abaixo, `null`, e a página põe
+ * travessão). Fica de fora o benefício sem página ou sem nenhum lado
+ * publicável na UF. Do maior número de pedidos em espera para o menor.
+ */
+export function inssDaUf(s: SnapshotInss, uf: string): {
+  grupo: GrupoInss;
+  fila: RecorteUfInss | null;
+  negados: RecorteInss | null;
+}[] {
+  return gruposComPagina(s)
+    .map((grupo) => {
+      const f = grupo.fila?.porUf[uf];
+      const n = grupo.negados?.porUf[uf];
+      return {
+        grupo,
+        fila: f?.publicavel ? f : null,
+        negados: n?.publicavel ? n : null,
+      };
+    })
+    .filter((x) => x.fila || x.negados)
+    .sort((a, b) => (b.fila?.n ?? 0) - (a.fila?.n ?? 0));
 }
 
 /**

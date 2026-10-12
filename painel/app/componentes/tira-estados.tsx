@@ -106,7 +106,7 @@ export default function TiraEstados({
           />
           {/* Centrado sobre o losango, menos perto das pontas: ali o rótulo
               começa ou termina no losango, senão metade dele sairia do
-              desenho (com a fonte de 11 do telefone, "MA 51,3%" tem ~45). */}
+              desenho (com a fonte de 11 do telefone, "MA 51,32%" tem ~50). */}
           <text
             x={x(meu.v) < 30 ? x(meu.v) - 5 : x(meu.v) > L - 30 ? x(meu.v) + 5 : x(meu.v)}
             y={y - 11}

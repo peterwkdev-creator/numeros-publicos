@@ -22,6 +22,7 @@ from numeros_publicos.ibge import (
     Resposta,
     buscar_json,
     municipios,
+    regioes_imediatas,
     transporte_http,
     url_municipios_da_uf,
 )
@@ -192,6 +193,36 @@ class TestMunicipios(unittest.TestCase):
         self.assertTrue(all(m.uf_sigla == "SE" for m in lista))
         self.assertTrue(all(m.regiao == "Nordeste" for m in lista))
         self.assertEqual(len({m.codigo for m in lista}), 75)   # sem duplicata
+
+
+class TesteRegioesImediatas(unittest.TestCase):
+    """Contra a resposta real de Sergipe: 75 municípios em 6 regiões."""
+
+    def test_agrupa_todos_os_municipios_sem_perder_nenhum(self):
+        bruto = json.loads(SERGIPE)
+        r = regioes_imediatas(bruto)
+        self.assertEqual(len(r), 6)
+        self.assertEqual(sum(len(x["municipios"]) for x in r), 75)
+        self.assertEqual({x["uf"] for x in r}, {"SE"})
+        self.assertEqual(sorted(c for x in r for c in x["municipios"]),
+                         sorted(int(m["id"]) for m in bruto))
+        self.assertEqual([x["codigo"] for x in r], sorted(x["codigo"] for x in r))
+
+    def test_municipio_sem_regiao_levanta_em_vez_de_sumir(self):
+        bruto = json.loads(SERGIPE)
+        bruto[3]["regiao-imediata"] = None
+        with self.assertRaises(ErroIBGE):
+            regioes_imediatas(bruto)
+
+    def test_regiao_em_duas_ufs_levanta(self):
+        bruto = json.loads(SERGIPE)
+        uf = dict(bruto[1]["regiao-imediata"]["regiao-intermediaria"]["UF"],
+                  sigla="AL")
+        bruto[1]["regiao-imediata"] = dict(
+            bruto[0]["regiao-imediata"],
+            **{"regiao-intermediaria": {"UF": uf}})
+        with self.assertRaises(ErroIBGE):
+            regioes_imediatas(bruto)
 
 
 if __name__ == "__main__":

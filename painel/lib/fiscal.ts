@@ -60,6 +60,12 @@ export type LinhaFiscal = [
   limitePrudencial: number | null,
   despesa: number | null,
   rclAjustada: number | null,
+  /**
+   * `true` = o número veio do RGF Simplificado do 2º semestre (art. 63 da
+   * LRF, município com menos de 50 mil habitantes), que cobre os mesmos 12
+   * meses até dezembro do 3º quadrimestre. `null` quando não entregou nenhum.
+   */
+  simplificado: boolean | null,
 ];
 
 export type SnapshotFiscal = {
@@ -589,17 +595,41 @@ export function serieFuncoesDe(
   return pontos;
 }
 
-/** Um ponto da série: exercício, quadrimestre, publicou, percentual. */
+/** Um ponto da série: exercício, quadrimestre, publicou, percentual e se veio
+ *  do RGF Simplificado — semestral, sem 1º e 2º quadrimestres no ano (desde
+ *  12/10/2026; ponto sem a marca é quadrimestral). Ver `contiguos`. */
 export type PontoSerie = [
   exercicio: number,
   periodo: number,
   publicou: boolean,
   percentual: number,
+  simplificado?: boolean,
 ];
 
-/** O rótulo curto de um período: `2024/3`. */
+/**
+ * O rótulo curto de um período, para eixo e leitura de tela: `3º quadr. 2024`.
+ *
+ * Era `2024/3` até 11/10/2026, e quem não conhece o RGF lê "março de 2024".
+ * O formato é o mesmo do `1º tri. 1996` da página do Brasil.
+ */
 export function rotuloPeriodo(exercicio: number, periodo: number): string {
-  return `${exercicio}/${periodo}`;
+  return `${periodo}º quadr. ${exercicio}`;
+}
+
+/** Por extenso, para tabela e frase: `3º quadrimestre de 2024`. Uma definição
+ *  só: até 11/10/2026 a frase estava copiada em quatro páginas. */
+export function nomeQuadrimestre(exercicio: number, periodo: number): string {
+  return `${periodo}º quadrimestre de ${exercicio}`;
+}
+
+/** O rótulo curto de um PONTO da série: o do RGF Simplificado é semestre. */
+export function rotuloPonto(p: PontoSerie): string {
+  return p[4] === true ? `2º sem. ${p[0]}` : rotuloPeriodo(p[0], p[1]);
+}
+
+/** Por extenso, para tabela e frase: `2º semestre de 2024` no Simplificado. */
+export function nomePonto(p: PontoSerie): string {
+  return p[4] === true ? `2º semestre de ${p[0]}` : nomeQuadrimestre(p[0], p[1]);
 }
 
 /** Quadrimestres por exercício no RGF. Três, e não quatro: o nome engana. */
@@ -624,9 +654,21 @@ export function indiceQuadrimestre(exercicio: number, periodo: number): number {
   return exercicio * QUADRIMESTRES_POR_ANO + (periodo - 1);
 }
 
-/** Dois pontos são vizinhos NO TEMPO, e não só na lista? */
+/**
+ * Dois pontos são vizinhos NO TEMPO, e não só na lista?
+ *
+ * **Quem entrega o RGF Simplificado não deve 1º nem 2º quadrimestre** naquele
+ * ano: o ponto dele é o 2º semestre, posto no 3º quadrimestre. Então o ano
+ * anterior encosta nele. Sem isso, cada ano de um município semestral contava
+ * como interrupção, e a página dizia "não entregou relatório" de quem
+ * entregou todos — ~2.300 municípios, achado antes de ir ao ar, em 12/10/2026.
+ */
 export function contiguos(a: PontoSerie, b: PontoSerie): boolean {
-  return indiceQuadrimestre(b[0], b[1]) - indiceQuadrimestre(a[0], a[1]) === 1;
+  const ate = b[4] === true && b[1] === QUADRIMESTRES_POR_ANO
+    ? indiceQuadrimestre(b[0], 1)
+    : indiceQuadrimestre(b[0], b[1]);
+  const passo = ate - indiceQuadrimestre(a[0], a[1]);
+  return passo === 1 || (b[4] === true && passo === 0);
 }
 
 /**
@@ -698,6 +740,8 @@ export type Fiscal = {
   limitePrudencial: number | null;
   despesa: number | null;
   rclAjustada: number | null;
+  /** Veio do RGF Simplificado semestral; ver `LinhaFiscal`. */
+  simplificado: boolean | null;
   faixa: Faixa;
 };
 
@@ -713,7 +757,7 @@ export type Fiscal = {
  */
 export const ROTULO_FAIXA: Record<Faixa, string> = {
   implausivel: "Valor implausível — provável erro de preenchimento",
-  "acima-legal": "Acima do limite legal",
+  "acima-legal": "Acima do teto legal",
   "acima-prudencial": "Acima do limite prudencial",
   abaixo: "Dentro do limite",
   "sem-dado": "Sem relatório entregue",
@@ -845,6 +889,8 @@ export function faixaDe(
  * (RGF) — o denominador do percentual — tem mediana **1,041**, p95 1,16 e
  * p99 2,03. São duas declarações do mesmo caixa, e na prática batem. Acima de
  * 2,0 a RCL é que está baixa demais, e o percentual de pessoal sai inflado.
+ * Remedido em 12/10/2026, com o RGF e o RREO Simplificados: 5.539 municípios,
+ * mediana 1,039, p95 1,16, p99 1,41; 36 acima de 2,0 e 6 abaixo de 0,5.
  *
  * **O limite NÃO tem folga sobre o p99, e o argumento é outro:** todos os 34
  * municípios acima de 2,0 foram examinados um a um. 26 já eram implausíveis
@@ -1016,13 +1062,14 @@ export function indexarFiscal(s: SnapshotFiscal): Map<number, Fiscal> {
   const mapa = new Map<number, Fiscal>();
   for (const linha of s.municipios) {
     const [codigo, , , , publicou, percentual, limitePrudencial,
-      despesa, rclAjustada] = linha;
+      despesa, rclAjustada, simplificado] = linha;
     mapa.set(codigo, {
       publicou,
       percentual,
       limitePrudencial,
       despesa,
       rclAjustada,
+      simplificado,
       faixa: faixaDaLinha(s, linha),
     });
   }

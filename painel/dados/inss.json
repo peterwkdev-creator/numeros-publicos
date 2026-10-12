@@ -1,5 +1,5 @@
 {
- "geradoEm": "2026-09-27T01:42:08+00:00",
+ "geradoEm": "2026-10-11T23:00:07+00:00",
  "fonte": {
   "nome": "INSS — Portal de Dados Abertos",
   "url": "https://dadosabertos.inss.gov.br/dataset/"
@@ -14,7 +14,11 @@
  "negados": {
   "mes": "2026-08",
   "arquivo": "INDEFERIDOS+DADOS+ABERTOS_AGOSTO+2026.xlsx",
-  "gravadoEm": "2026-09-26T23:51:21+00:00"
+  "gravadoEm": "2026-09-26T23:51:21+00:00",
+  "foraDasUfs": {
+   "n": 59025,
+   "total": 882589
+  }
  },
  "minimoPedidos": 1000,
  "grupos": [
@@ -41,6 +45,7 @@
       "n": 415992,
       "mediana": 15,
       "acima45": 0.2797,
+      "acima90": 0.2028,
       "publicavel": true
      },
      {
@@ -49,6 +54,7 @@
       "n": 528,
       "mediana": 288,
       "acima45": 0.911,
+      "acima90": 0.8087,
       "publicavel": false
      },
      {
@@ -57,6 +63,7 @@
       "n": 488,
       "mediana": 323,
       "acima45": 0.8955,
+      "acima90": 0.7828,
       "publicavel": false
      },
      {
@@ -65,6 +72,7 @@
       "n": 479,
       "mediana": 127,
       "acima45": 0.6764,
+      "acima90": 0.5762,
       "publicavel": false
      },
      {
@@ -73,6 +81,7 @@
       "n": 285,
       "mediana": 1718,
       "acima45": 1.0,
+      "acima90": 1.0,
       "publicavel": false
      },
      {
@@ -81,6 +90,7 @@
       "n": 214,
       "mediana": 231,
       "acima45": 0.8879,
+      "acima90": 0.8084,
       "publicavel": false
      },
      {
@@ -89,6 +99,7 @@
       "n": 45,
       "mediana": 74,
       "acima45": 0.6444,
+      "acima90": 0.3778,
       "publicavel": false
      },
      {
@@ -97,9 +108,228 @@
       "n": 6,
       "mediana": 2124,
       "acima45": 1.0,
+      "acima90": 1.0,
       "publicavel": false
      }
-    ]
+    ],
+    "porUf": {
+     "AC": {
+      "n": 1120,
+      "mediana": 18,
+      "acima45": 0.2911,
+      "acima90": 0.1714,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2911
+     },
+     "AL": {
+      "n": 7110,
+      "mediana": 23,
+      "acima45": 0.3944,
+      "acima90": 0.3053,
+      "publicavel": true,
+      "acimaDoPrazo": 0.3944
+     },
+     "AM": {
+      "n": 4702,
+      "mediana": 18,
+      "acima45": 0.2805,
+      "acima90": 0.1872,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2805
+     },
+     "AP": {
+      "n": 785,
+      "mediana": 22,
+      "acima45": 0.3452,
+      "acima90": 0.2408,
+      "publicavel": false,
+      "acimaDoPrazo": 0.3452
+     },
+     "BA": {
+      "n": 34654,
+      "mediana": 39,
+      "acima45": 0.4745,
+      "acima90": 0.3848,
+      "publicavel": true,
+      "acimaDoPrazo": 0.4745
+     },
+     "CE": {
+      "n": 20401,
+      "mediana": 25,
+      "acima45": 0.4003,
+      "acima90": 0.3149,
+      "publicavel": true,
+      "acimaDoPrazo": 0.4003
+     },
+     "DF": {
+      "n": 6278,
+      "mediana": 16,
+      "acima45": 0.2464,
+      "acima90": 0.15,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2464
+     },
+     "ES": {
+      "n": 8381,
+      "mediana": 15,
+      "acima45": 0.2599,
+      "acima90": 0.1877,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2599
+     },
+     "GO": {
+      "n": 14640,
+      "mediana": 17,
+      "acima45": 0.269,
+      "acima90": 0.1824,
+      "publicavel": true,
+      "acimaDoPrazo": 0.269
+     },
+     "MA": {
+      "n": 15264,
+      "mediana": 60,
+      "acima45": 0.536,
+      "acima90": 0.4498,
+      "publicavel": true,
+      "acimaDoPrazo": 0.536
+     },
+     "MG": {
+      "n": 45007,
+      "mediana": 11,
+      "acima45": 0.2226,
+      "acima90": 0.1507,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2226
+     },
+     "MS": {
+      "n": 5816,
+      "mediana": 14,
+      "acima45": 0.2203,
+      "acima90": 0.1444,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2203
+     },
+     "MT": {
+      "n": 8097,
+      "mediana": 17,
+      "acima45": 0.2655,
+      "acima90": 0.1857,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2655
+     },
+     "PA": {
+      "n": 10832,
+      "mediana": 24,
+      "acima45": 0.3472,
+      "acima90": 0.2485,
+      "publicavel": true,
+      "acimaDoPrazo": 0.3472
+     },
+     "PB": {
+      "n": 9928,
+      "mediana": 17,
+      "acima45": 0.328,
+      "acima90": 0.2282,
+      "publicavel": true,
+      "acimaDoPrazo": 0.328
+     },
+     "PE": {
+      "n": 18482,
+      "mediana": 27,
+      "acima45": 0.4142,
+      "acima90": 0.317,
+      "publicavel": true,
+      "acimaDoPrazo": 0.4142
+     },
+     "PI": {
+      "n": 13551,
+      "mediana": 30,
+      "acima45": 0.415,
+      "acima90": 0.3071,
+      "publicavel": true,
+      "acimaDoPrazo": 0.415
+     },
+     "PR": {
+      "n": 22239,
+      "mediana": 9,
+      "acima45": 0.1966,
+      "acima90": 0.1287,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1966
+     },
+     "RJ": {
+      "n": 22493,
+      "mediana": 9,
+      "acima45": 0.1982,
+      "acima90": 0.1374,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1982
+     },
+     "RN": {
+      "n": 6707,
+      "mediana": 15,
+      "acima45": 0.2939,
+      "acima90": 0.2116,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2939
+     },
+     "RO": {
+      "n": 3980,
+      "mediana": 28,
+      "acima45": 0.4078,
+      "acima90": 0.3284,
+      "publicavel": true,
+      "acimaDoPrazo": 0.4078
+     },
+     "RR": {
+      "n": 730,
+      "mediana": 18,
+      "acima45": 0.2904,
+      "acima90": 0.1863,
+      "publicavel": false,
+      "acimaDoPrazo": 0.2904
+     },
+     "RS": {
+      "n": 21329,
+      "mediana": 9,
+      "acima45": 0.1803,
+      "acima90": 0.1209,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1803
+     },
+     "SC": {
+      "n": 19839,
+      "mediana": 10,
+      "acima45": 0.2215,
+      "acima90": 0.1521,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2215
+     },
+     "SE": {
+      "n": 5126,
+      "mediana": 24,
+      "acima45": 0.4046,
+      "acima90": 0.325,
+      "publicavel": true,
+      "acimaDoPrazo": 0.4046
+     },
+     "SP": {
+      "n": 87901,
+      "mediana": 10,
+      "acima45": 0.1713,
+      "acima90": 0.109,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1713
+     },
+     "TO": {
+      "n": 2645,
+      "mediana": 35,
+      "acima45": 0.4495,
+      "acima90": 0.358,
+      "publicavel": true,
+      "acimaDoPrazo": 0.4495
+     }
+    }
    },
    "negados": {
     "n": 343737,
@@ -114,12 +344,205 @@
       "n": 24513,
       "mediana": 11,
       "acima45": 0.2208,
+      "acima90": 0.1358,
       "publicavel": true
      },
      "urbano": {
       "n": 319224,
       "mediana": 10,
       "acima45": 0.1232,
+      "acima90": 0.0687,
+      "publicavel": true
+     }
+    },
+    "porUf": {
+     "AC": {
+      "n": 998,
+      "mediana": 9,
+      "acima45": 0.1483,
+      "acima90": 0.0581,
+      "publicavel": false
+     },
+     "AL": {
+      "n": 6742,
+      "mediana": 10,
+      "acima45": 0.1922,
+      "acima90": 0.1259,
+      "publicavel": true
+     },
+     "AM": {
+      "n": 4004,
+      "mediana": 9,
+      "acima45": 0.1279,
+      "acima90": 0.0632,
+      "publicavel": true
+     },
+     "AP": {
+      "n": 670,
+      "mediana": 9,
+      "acima45": 0.1522,
+      "acima90": 0.0851,
+      "publicavel": false
+     },
+     "BA": {
+      "n": 26110,
+      "mediana": 11,
+      "acima45": 0.2413,
+      "acima90": 0.1692,
+      "publicavel": true
+     },
+     "CE": {
+      "n": 16511,
+      "mediana": 11,
+      "acima45": 0.224,
+      "acima90": 0.1578,
+      "publicavel": true
+     },
+     "DF": {
+      "n": 5537,
+      "mediana": 9,
+      "acima45": 0.1103,
+      "acima90": 0.0462,
+      "publicavel": true
+     },
+     "ES": {
+      "n": 6318,
+      "mediana": 9,
+      "acima45": 0.0916,
+      "acima90": 0.0431,
+      "publicavel": true
+     },
+     "GO": {
+      "n": 9744,
+      "mediana": 9,
+      "acima45": 0.1318,
+      "acima90": 0.0711,
+      "publicavel": true
+     },
+     "MA": {
+      "n": 12031,
+      "mediana": 11,
+      "acima45": 0.3108,
+      "acima90": 0.2302,
+      "publicavel": true
+     },
+     "MG": {
+      "n": 38572,
+      "mediana": 9,
+      "acima45": 0.0808,
+      "acima90": 0.0341,
+      "publicavel": true
+     },
+     "MS": {
+      "n": 4884,
+      "mediana": 9,
+      "acima45": 0.0917,
+      "acima90": 0.0422,
+      "publicavel": true
+     },
+     "MT": {
+      "n": 5920,
+      "mediana": 10,
+      "acima45": 0.1351,
+      "acima90": 0.0698,
+      "publicavel": true
+     },
+     "PA": {
+      "n": 9228,
+      "mediana": 9,
+      "acima45": 0.1779,
+      "acima90": 0.1028,
+      "publicavel": true
+     },
+     "PB": {
+      "n": 7499,
+      "mediana": 10,
+      "acima45": 0.1634,
+      "acima90": 0.0815,
+      "publicavel": true
+     },
+     "PE": {
+      "n": 14000,
+      "mediana": 11,
+      "acima45": 0.2239,
+      "acima90": 0.1412,
+      "publicavel": true
+     },
+     "PI": {
+      "n": 10960,
+      "mediana": 11,
+      "acima45": 0.2577,
+      "acima90": 0.1582,
+      "publicavel": true
+     },
+     "PR": {
+      "n": 18147,
+      "mediana": 9,
+      "acima45": 0.0829,
+      "acima90": 0.03,
+      "publicavel": true
+     },
+     "RJ": {
+      "n": 22797,
+      "mediana": 9,
+      "acima45": 0.0699,
+      "acima90": 0.0333,
+      "publicavel": true
+     },
+     "RN": {
+      "n": 5831,
+      "mediana": 9,
+      "acima45": 0.1195,
+      "acima90": 0.0587,
+      "publicavel": true
+     },
+     "RO": {
+      "n": 3110,
+      "mediana": 10,
+      "acima45": 0.1913,
+      "acima90": 0.1344,
+      "publicavel": true
+     },
+     "RR": {
+      "n": 495,
+      "mediana": 10,
+      "acima45": 0.1758,
+      "acima90": 0.0949,
+      "publicavel": false
+     },
+     "RS": {
+      "n": 20011,
+      "mediana": 9,
+      "acima45": 0.0625,
+      "acima90": 0.0246,
+      "publicavel": true
+     },
+     "SC": {
+      "n": 15855,
+      "mediana": 9,
+      "acima45": 0.0831,
+      "acima90": 0.0349,
+      "publicavel": true
+     },
+     "SE": {
+      "n": 4277,
+      "mediana": 11,
+      "acima45": 0.2114,
+      "acima90": 0.148,
+      "publicavel": true
+     },
+     "SP": {
+      "n": 71321,
+      "mediana": 10,
+      "acima45": 0.0677,
+      "acima90": 0.0236,
+      "publicavel": true
+     },
+     "TO": {
+      "n": 2161,
+      "mediana": 10,
+      "acima45": 0.2355,
+      "acima90": 0.162,
       "publicavel": true
      }
     }
@@ -148,9 +571,228 @@
       "n": 414822,
       "mediana": 50,
       "acima45": 0.5176,
+      "acima90": 0.3508,
       "publicavel": true
      }
-    ]
+    ],
+    "porUf": {
+     "AC": {
+      "n": 3857,
+      "mediana": 53,
+      "acima45": 0.5349,
+      "acima90": 0.3679,
+      "publicavel": true,
+      "acimaDoPrazo": 0.3679
+     },
+     "AL": {
+      "n": 14996,
+      "mediana": 77,
+      "acima45": 0.6122,
+      "acima90": 0.4636,
+      "publicavel": true,
+      "acimaDoPrazo": 0.4636
+     },
+     "AM": {
+      "n": 10558,
+      "mediana": 50,
+      "acima45": 0.5186,
+      "acima90": 0.3467,
+      "publicavel": true,
+      "acimaDoPrazo": 0.3467
+     },
+     "AP": {
+      "n": 3476,
+      "mediana": 49,
+      "acima45": 0.5069,
+      "acima90": 0.3058,
+      "publicavel": true,
+      "acimaDoPrazo": 0.3058
+     },
+     "BA": {
+      "n": 41490,
+      "mediana": 66,
+      "acima45": 0.596,
+      "acima90": 0.3973,
+      "publicavel": true,
+      "acimaDoPrazo": 0.3973
+     },
+     "CE": {
+      "n": 56020,
+      "mediana": 78,
+      "acima45": 0.6243,
+      "acima90": 0.4668,
+      "publicavel": true,
+      "acimaDoPrazo": 0.4668
+     },
+     "DF": {
+      "n": 4353,
+      "mediana": 51,
+      "acima45": 0.5199,
+      "acima90": 0.3462,
+      "publicavel": true,
+      "acimaDoPrazo": 0.3462
+     },
+     "ES": {
+      "n": 4858,
+      "mediana": 29,
+      "acima45": 0.3394,
+      "acima90": 0.2089,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2089
+     },
+     "GO": {
+      "n": 14413,
+      "mediana": 51,
+      "acima45": 0.5267,
+      "acima90": 0.3713,
+      "publicavel": true,
+      "acimaDoPrazo": 0.3713
+     },
+     "MA": {
+      "n": 24958,
+      "mediana": 72,
+      "acima45": 0.6112,
+      "acima90": 0.4294,
+      "publicavel": true,
+      "acimaDoPrazo": 0.4294
+     },
+     "MG": {
+      "n": 20297,
+      "mediana": 28,
+      "acima45": 0.3091,
+      "acima90": 0.1626,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1626
+     },
+     "MS": {
+      "n": 3733,
+      "mediana": 39,
+      "acima45": 0.4637,
+      "acima90": 0.3482,
+      "publicavel": true,
+      "acimaDoPrazo": 0.3482
+     },
+     "MT": {
+      "n": 5813,
+      "mediana": 43,
+      "acima45": 0.4636,
+      "acima90": 0.3107,
+      "publicavel": true,
+      "acimaDoPrazo": 0.3107
+     },
+     "PA": {
+      "n": 19930,
+      "mediana": 53,
+      "acima45": 0.5387,
+      "acima90": 0.3812,
+      "publicavel": true,
+      "acimaDoPrazo": 0.3812
+     },
+     "PB": {
+      "n": 23571,
+      "mediana": 65,
+      "acima45": 0.5842,
+      "acima90": 0.4138,
+      "publicavel": true,
+      "acimaDoPrazo": 0.4138
+     },
+     "PE": {
+      "n": 37545,
+      "mediana": 65,
+      "acima45": 0.596,
+      "acima90": 0.4084,
+      "publicavel": true,
+      "acimaDoPrazo": 0.4084
+     },
+     "PI": {
+      "n": 14477,
+      "mediana": 67,
+      "acima45": 0.6146,
+      "acima90": 0.4165,
+      "publicavel": true,
+      "acimaDoPrazo": 0.4165
+     },
+     "PR": {
+      "n": 10116,
+      "mediana": 30,
+      "acima45": 0.3441,
+      "acima90": 0.196,
+      "publicavel": true,
+      "acimaDoPrazo": 0.196
+     },
+     "RJ": {
+      "n": 19979,
+      "mediana": 30,
+      "acima45": 0.3528,
+      "acima90": 0.2105,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2105
+     },
+     "RN": {
+      "n": 12985,
+      "mediana": 60,
+      "acima45": 0.5595,
+      "acima90": 0.414,
+      "publicavel": true,
+      "acimaDoPrazo": 0.414
+     },
+     "RO": {
+      "n": 3000,
+      "mediana": 67,
+      "acima45": 0.5917,
+      "acima90": 0.4277,
+      "publicavel": true,
+      "acimaDoPrazo": 0.4277
+     },
+     "RR": {
+      "n": 1315,
+      "mediana": 44,
+      "acima45": 0.4859,
+      "acima90": 0.3156,
+      "publicavel": true,
+      "acimaDoPrazo": 0.3156
+     },
+     "RS": {
+      "n": 10769,
+      "mediana": 30,
+      "acima45": 0.3557,
+      "acima90": 0.2009,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2009
+     },
+     "SC": {
+      "n": 6458,
+      "mediana": 36,
+      "acima45": 0.4179,
+      "acima90": 0.2544,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2544
+     },
+     "SE": {
+      "n": 8281,
+      "mediana": 67,
+      "acima45": 0.6079,
+      "acima90": 0.4095,
+      "publicavel": true,
+      "acimaDoPrazo": 0.4095
+     },
+     "SP": {
+      "n": 33249,
+      "mediana": 24,
+      "acima45": 0.2606,
+      "acima90": 0.1039,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1039
+     },
+     "TO": {
+      "n": 4325,
+      "mediana": 88,
+      "acima45": 0.655,
+      "acima90": 0.4973,
+      "publicavel": true,
+      "acimaDoPrazo": 0.4973
+     }
+    }
    },
    "negados": {
     "n": 212072,
@@ -165,12 +807,205 @@
       "n": 6072,
       "mediana": 50,
       "acima45": 0.5275,
+      "acima90": 0.3478,
       "publicavel": true
      },
      "urbano": {
       "n": 206000,
       "mediana": 46,
       "acima45": 0.5049,
+      "acima90": 0.318,
+      "publicavel": true
+     }
+    },
+    "porUf": {
+     "AC": {
+      "n": 1855,
+      "mediana": 45,
+      "acima45": 0.4997,
+      "acima90": 0.3008,
+      "publicavel": true
+     },
+     "AL": {
+      "n": 7318,
+      "mediana": 62,
+      "acima45": 0.573,
+      "acima90": 0.4135,
+      "publicavel": true
+     },
+     "AM": {
+      "n": 5046,
+      "mediana": 44,
+      "acima45": 0.4895,
+      "acima90": 0.2887,
+      "publicavel": true
+     },
+     "AP": {
+      "n": 1401,
+      "mediana": 64,
+      "acima45": 0.611,
+      "acima90": 0.3826,
+      "publicavel": true
+     },
+     "BA": {
+      "n": 19839,
+      "mediana": 74,
+      "acima45": 0.6216,
+      "acima90": 0.4424,
+      "publicavel": true
+     },
+     "CE": {
+      "n": 26651,
+      "mediana": 67,
+      "acima45": 0.6154,
+      "acima90": 0.4237,
+      "publicavel": true
+     },
+     "DF": {
+      "n": 3213,
+      "mediana": 55,
+      "acima45": 0.5415,
+      "acima90": 0.3607,
+      "publicavel": true
+     },
+     "ES": {
+      "n": 2600,
+      "mediana": 30,
+      "acima45": 0.2731,
+      "acima90": 0.1277,
+      "publicavel": true
+     },
+     "GO": {
+      "n": 6843,
+      "mediana": 55,
+      "acima45": 0.5582,
+      "acima90": 0.3738,
+      "publicavel": true
+     },
+     "MA": {
+      "n": 10164,
+      "mediana": 66,
+      "acima45": 0.6157,
+      "acima90": 0.4262,
+      "publicavel": true
+     },
+     "MG": {
+      "n": 13331,
+      "mediana": 27,
+      "acima45": 0.2898,
+      "acima90": 0.1256,
+      "publicavel": true
+     },
+     "MS": {
+      "n": 2322,
+      "mediana": 30,
+      "acima45": 0.3583,
+      "acima90": 0.2485,
+      "publicavel": true
+     },
+     "MT": {
+      "n": 3447,
+      "mediana": 38,
+      "acima45": 0.4456,
+      "acima90": 0.2611,
+      "publicavel": true
+     },
+     "PA": {
+      "n": 9434,
+      "mediana": 51,
+      "acima45": 0.5358,
+      "acima90": 0.3498,
+      "publicavel": true
+     },
+     "PB": {
+      "n": 9941,
+      "mediana": 71,
+      "acima45": 0.6172,
+      "acima90": 0.4344,
+      "publicavel": true
+     },
+     "PE": {
+      "n": 16369,
+      "mediana": 71,
+      "acima45": 0.6342,
+      "acima90": 0.4282,
+      "publicavel": true
+     },
+     "PI": {
+      "n": 5932,
+      "mediana": 80,
+      "acima45": 0.6666,
+      "acima90": 0.4638,
+      "publicavel": true
+     },
+     "PR": {
+      "n": 6759,
+      "mediana": 33,
+      "acima45": 0.3826,
+      "acima90": 0.1758,
+      "publicavel": true
+     },
+     "RJ": {
+      "n": 11880,
+      "mediana": 30,
+      "acima45": 0.3362,
+      "acima90": 0.1481,
+      "publicavel": true
+     },
+     "RN": {
+      "n": 6566,
+      "mediana": 49,
+      "acima45": 0.5215,
+      "acima90": 0.3708,
+      "publicavel": true
+     },
+     "RO": {
+      "n": 1856,
+      "mediana": 38,
+      "acima45": 0.4682,
+      "acima90": 0.3362,
+      "publicavel": true
+     },
+     "RR": {
+      "n": 600,
+      "mediana": 47,
+      "acima45": 0.52,
+      "acima90": 0.28,
+      "publicavel": false
+     },
+     "RS": {
+      "n": 6724,
+      "mediana": 33,
+      "acima45": 0.384,
+      "acima90": 0.1774,
+      "publicavel": true
+     },
+     "SC": {
+      "n": 3920,
+      "mediana": 41,
+      "acima45": 0.4605,
+      "acima90": 0.2401,
+      "publicavel": true
+     },
+     "SE": {
+      "n": 4467,
+      "mediana": 77,
+      "acima45": 0.6494,
+      "acima90": 0.439,
+      "publicavel": true
+     },
+     "SP": {
+      "n": 21357,
+      "mediana": 27,
+      "acima45": 0.2792,
+      "acima90": 0.084,
+      "publicavel": true
+     },
+     "TO": {
+      "n": 2192,
+      "mediana": 68,
+      "acima45": 0.5762,
+      "acima90": 0.4316,
       "publicavel": true
      }
     }
@@ -199,9 +1034,228 @@
       "n": 54124,
       "mediana": 29,
       "acima45": 0.3128,
+      "acima90": 0.1485,
       "publicavel": true
      }
-    ]
+    ],
+    "porUf": {
+     "AC": {
+      "n": 184,
+      "mediana": 31,
+      "acima45": 0.3641,
+      "acima90": 0.2228,
+      "publicavel": false,
+      "acimaDoPrazo": 0.2228
+     },
+     "AL": {
+      "n": 503,
+      "mediana": 28,
+      "acima45": 0.3419,
+      "acima90": 0.1889,
+      "publicavel": false,
+      "acimaDoPrazo": 0.1889
+     },
+     "AM": {
+      "n": 1562,
+      "mediana": 29,
+      "acima45": 0.3406,
+      "acima90": 0.2093,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2093
+     },
+     "AP": {
+      "n": 263,
+      "mediana": 32,
+      "acima45": 0.3878,
+      "acima90": 0.2471,
+      "publicavel": false,
+      "acimaDoPrazo": 0.2471
+     },
+     "BA": {
+      "n": 4367,
+      "mediana": 25,
+      "acima45": 0.3096,
+      "acima90": 0.1356,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1356
+     },
+     "CE": {
+      "n": 2663,
+      "mediana": 28,
+      "acima45": 0.3087,
+      "acima90": 0.1314,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1314
+     },
+     "DF": {
+      "n": 587,
+      "mediana": 29,
+      "acima45": 0.3424,
+      "acima90": 0.2078,
+      "publicavel": false,
+      "acimaDoPrazo": 0.2078
+     },
+     "ES": {
+      "n": 996,
+      "mediana": 24,
+      "acima45": 0.24,
+      "acima90": 0.0753,
+      "publicavel": false,
+      "acimaDoPrazo": 0.0753
+     },
+     "GO": {
+      "n": 1692,
+      "mediana": 30,
+      "acima45": 0.3369,
+      "acima90": 0.1909,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1909
+     },
+     "MA": {
+      "n": 737,
+      "mediana": 26,
+      "acima45": 0.3284,
+      "acima90": 0.1682,
+      "publicavel": false,
+      "acimaDoPrazo": 0.1682
+     },
+     "MG": {
+      "n": 3914,
+      "mediana": 25,
+      "acima45": 0.2384,
+      "acima90": 0.082,
+      "publicavel": true,
+      "acimaDoPrazo": 0.082
+     },
+     "MS": {
+      "n": 1121,
+      "mediana": 31,
+      "acima45": 0.3711,
+      "acima90": 0.223,
+      "publicavel": true,
+      "acimaDoPrazo": 0.223
+     },
+     "MT": {
+      "n": 855,
+      "mediana": 32,
+      "acima45": 0.3789,
+      "acima90": 0.2281,
+      "publicavel": false,
+      "acimaDoPrazo": 0.2281
+     },
+     "PA": {
+      "n": 2703,
+      "mediana": 29,
+      "acima45": 0.3215,
+      "acima90": 0.1831,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1831
+     },
+     "PB": {
+      "n": 1013,
+      "mediana": 29,
+      "acima45": 0.3662,
+      "acima90": 0.1698,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1698
+     },
+     "PE": {
+      "n": 3649,
+      "mediana": 27,
+      "acima45": 0.2984,
+      "acima90": 0.123,
+      "publicavel": true,
+      "acimaDoPrazo": 0.123
+     },
+     "PI": {
+      "n": 399,
+      "mediana": 28,
+      "acima45": 0.3383,
+      "acima90": 0.1629,
+      "publicavel": false,
+      "acimaDoPrazo": 0.1629
+     },
+     "PR": {
+      "n": 2747,
+      "mediana": 36,
+      "acima45": 0.3921,
+      "acima90": 0.1944,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1944
+     },
+     "RJ": {
+      "n": 7214,
+      "mediana": 29,
+      "acima45": 0.2838,
+      "acima90": 0.1347,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1347
+     },
+     "RN": {
+      "n": 765,
+      "mediana": 25,
+      "acima45": 0.2824,
+      "acima90": 0.119,
+      "publicavel": false,
+      "acimaDoPrazo": 0.119
+     },
+     "RO": {
+      "n": 347,
+      "mediana": 31,
+      "acima45": 0.389,
+      "acima90": 0.2392,
+      "publicavel": false,
+      "acimaDoPrazo": 0.2392
+     },
+     "RR": {
+      "n": 855,
+      "mediana": 52,
+      "acima45": 0.5392,
+      "acima90": 0.3754,
+      "publicavel": false,
+      "acimaDoPrazo": 0.3754
+     },
+     "RS": {
+      "n": 2257,
+      "mediana": 35,
+      "acima45": 0.3722,
+      "acima90": 0.2025,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2025
+     },
+     "SC": {
+      "n": 1339,
+      "mediana": 38,
+      "acima45": 0.422,
+      "acima90": 0.2203,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2203
+     },
+     "SE": {
+      "n": 400,
+      "mediana": 32,
+      "acima45": 0.365,
+      "acima90": 0.1725,
+      "publicavel": false,
+      "acimaDoPrazo": 0.1725
+     },
+     "SP": {
+      "n": 10778,
+      "mediana": 25,
+      "acima45": 0.2719,
+      "acima90": 0.1036,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1036
+     },
+     "TO": {
+      "n": 214,
+      "mediana": 32,
+      "acima45": 0.3645,
+      "acima90": 0.1729,
+      "publicavel": false,
+      "acimaDoPrazo": 0.1729
+     }
+    }
    },
    "negados": {
     "n": 19697,
@@ -216,13 +1270,206 @@
       "n": 395,
       "mediana": 41,
       "acima45": 0.4608,
+      "acima90": 0.238,
       "publicavel": false
      },
      "urbano": {
       "n": 19302,
       "mediana": 45,
       "acima45": 0.4938,
+      "acima90": 0.2143,
       "publicavel": true
+     }
+    },
+    "porUf": {
+     "AC": {
+      "n": 63,
+      "mediana": 70,
+      "acima45": 0.619,
+      "acima90": 0.4127,
+      "publicavel": false
+     },
+     "AL": {
+      "n": 200,
+      "mediana": 46,
+      "acima45": 0.505,
+      "acima90": 0.29,
+      "publicavel": false
+     },
+     "AM": {
+      "n": 467,
+      "mediana": 51,
+      "acima45": 0.5375,
+      "acima90": 0.2591,
+      "publicavel": false
+     },
+     "AP": {
+      "n": 92,
+      "mediana": 61,
+      "acima45": 0.5652,
+      "acima90": 0.337,
+      "publicavel": false
+     },
+     "BA": {
+      "n": 1559,
+      "mediana": 47,
+      "acima45": 0.5247,
+      "acima90": 0.2553,
+      "publicavel": true
+     },
+     "CE": {
+      "n": 845,
+      "mediana": 55,
+      "acima45": 0.5728,
+      "acima90": 0.2627,
+      "publicavel": false
+     },
+     "DF": {
+      "n": 387,
+      "mediana": 38,
+      "acima45": 0.4548,
+      "acima90": 0.2532,
+      "publicavel": false
+     },
+     "ES": {
+      "n": 326,
+      "mediana": 36,
+      "acima45": 0.3926,
+      "acima90": 0.1534,
+      "publicavel": false
+     },
+     "GO": {
+      "n": 703,
+      "mediana": 35,
+      "acima45": 0.4139,
+      "acima90": 0.2063,
+      "publicavel": false
+     },
+     "MA": {
+      "n": 297,
+      "mediana": 48,
+      "acima45": 0.532,
+      "acima90": 0.2727,
+      "publicavel": false
+     },
+     "MG": {
+      "n": 1481,
+      "mediana": 35,
+      "acima45": 0.3653,
+      "acima90": 0.131,
+      "publicavel": true
+     },
+     "MS": {
+      "n": 390,
+      "mediana": 43,
+      "acima45": 0.4821,
+      "acima90": 0.2718,
+      "publicavel": false
+     },
+     "MT": {
+      "n": 372,
+      "mediana": 39,
+      "acima45": 0.4462,
+      "acima90": 0.2796,
+      "publicavel": false
+     },
+     "PA": {
+      "n": 920,
+      "mediana": 36,
+      "acima45": 0.4446,
+      "acima90": 0.237,
+      "publicavel": false
+     },
+     "PB": {
+      "n": 337,
+      "mediana": 50,
+      "acima45": 0.543,
+      "acima90": 0.273,
+      "publicavel": false
+     },
+     "PE": {
+      "n": 1086,
+      "mediana": 52,
+      "acima45": 0.5405,
+      "acima90": 0.2238,
+      "publicavel": true
+     },
+     "PI": {
+      "n": 161,
+      "mediana": 62,
+      "acima45": 0.5901,
+      "acima90": 0.3292,
+      "publicavel": false
+     },
+     "PR": {
+      "n": 1070,
+      "mediana": 57,
+      "acima45": 0.5879,
+      "acima90": 0.2626,
+      "publicavel": true
+     },
+     "RJ": {
+      "n": 2202,
+      "mediana": 60,
+      "acima45": 0.609,
+      "acima90": 0.2157,
+      "publicavel": true
+     },
+     "RN": {
+      "n": 280,
+      "mediana": 46,
+      "acima45": 0.5036,
+      "acima90": 0.2143,
+      "publicavel": false
+     },
+     "RO": {
+      "n": 140,
+      "mediana": 45,
+      "acima45": 0.5,
+      "acima90": 0.2643,
+      "publicavel": false
+     },
+     "RR": {
+      "n": 221,
+      "mediana": 72,
+      "acima45": 0.6697,
+      "acima90": 0.3394,
+      "publicavel": false
+     },
+     "RS": {
+      "n": 834,
+      "mediana": 57,
+      "acima45": 0.6151,
+      "acima90": 0.3213,
+      "publicavel": false
+     },
+     "SC": {
+      "n": 523,
+      "mediana": 65,
+      "acima45": 0.631,
+      "acima90": 0.2849,
+      "publicavel": false
+     },
+     "SE": {
+      "n": 159,
+      "mediana": 59,
+      "acima45": 0.566,
+      "acima90": 0.2956,
+      "publicavel": false
+     },
+     "SP": {
+      "n": 4467,
+      "mediana": 27,
+      "acima45": 0.3891,
+      "acima90": 0.1289,
+      "publicavel": true
+     },
+     "TO": {
+      "n": 113,
+      "mediana": 34,
+      "acima45": 0.3982,
+      "acima90": 0.1858,
+      "publicavel": false
      }
     }
    }
@@ -250,9 +1497,228 @@
       "n": 124382,
       "mediana": 100,
       "acima45": 0.6422,
+      "acima90": 0.523,
       "publicavel": true
      }
-    ]
+    ],
+    "porUf": {
+     "AC": {
+      "n": 297,
+      "mediana": 102,
+      "acima45": 0.6667,
+      "acima90": 0.532,
+      "publicavel": false,
+      "acimaDoPrazo": 0.6094
+     },
+     "AL": {
+      "n": 1031,
+      "mediana": 157,
+      "acima45": 0.6731,
+      "acima90": 0.5936,
+      "publicavel": true,
+      "acimaDoPrazo": 0.6411
+     },
+     "AM": {
+      "n": 1244,
+      "mediana": 122,
+      "acima45": 0.6592,
+      "acima90": 0.5587,
+      "publicavel": true,
+      "acimaDoPrazo": 0.615
+     },
+     "AP": {
+      "n": 386,
+      "mediana": 158,
+      "acima45": 0.7565,
+      "acima90": 0.6451,
+      "publicavel": false,
+      "acimaDoPrazo": 0.7202
+     },
+     "BA": {
+      "n": 5486,
+      "mediana": 156,
+      "acima45": 0.7357,
+      "acima90": 0.6303,
+      "publicavel": true,
+      "acimaDoPrazo": 0.6949
+     },
+     "CE": {
+      "n": 5694,
+      "mediana": 226,
+      "acima45": 0.7733,
+      "acima90": 0.6751,
+      "publicavel": true,
+      "acimaDoPrazo": 0.7383
+     },
+     "DF": {
+      "n": 1387,
+      "mediana": 132,
+      "acima45": 0.6943,
+      "acima90": 0.5847,
+      "publicavel": true,
+      "acimaDoPrazo": 0.6489
+     },
+     "ES": {
+      "n": 2592,
+      "mediana": 135,
+      "acima45": 0.6586,
+      "acima90": 0.5525,
+      "publicavel": true,
+      "acimaDoPrazo": 0.6192
+     },
+     "GO": {
+      "n": 9959,
+      "mediana": 147,
+      "acima45": 0.6816,
+      "acima90": 0.6179,
+      "publicavel": true,
+      "acimaDoPrazo": 0.6543
+     },
+     "MA": {
+      "n": 3172,
+      "mediana": 186,
+      "acima45": 0.7405,
+      "acima90": 0.6428,
+      "publicavel": true,
+      "acimaDoPrazo": 0.7021
+     },
+     "MG": {
+      "n": 7719,
+      "mediana": 42,
+      "acima45": 0.465,
+      "acima90": 0.3332,
+      "publicavel": true,
+      "acimaDoPrazo": 0.4095
+     },
+     "MS": {
+      "n": 2432,
+      "mediana": 105,
+      "acima45": 0.5987,
+      "acima90": 0.5181,
+      "publicavel": true,
+      "acimaDoPrazo": 0.56
+     },
+     "MT": {
+      "n": 5434,
+      "mediana": 155,
+      "acima45": 0.7247,
+      "acima90": 0.6148,
+      "publicavel": true,
+      "acimaDoPrazo": 0.6866
+     },
+     "PA": {
+      "n": 3206,
+      "mediana": 149,
+      "acima45": 0.7071,
+      "acima90": 0.6036,
+      "publicavel": true,
+      "acimaDoPrazo": 0.6656
+     },
+     "PB": {
+      "n": 2631,
+      "mediana": 135,
+      "acima45": 0.6899,
+      "acima90": 0.5701,
+      "publicavel": true,
+      "acimaDoPrazo": 0.6473
+     },
+     "PE": {
+      "n": 4976,
+      "mediana": 205,
+      "acima45": 0.7811,
+      "acima90": 0.6811,
+      "publicavel": true,
+      "acimaDoPrazo": 0.7422
+     },
+     "PI": {
+      "n": 2582,
+      "mediana": 129,
+      "acima45": 0.7029,
+      "acima90": 0.5724,
+      "publicavel": true,
+      "acimaDoPrazo": 0.6553
+     },
+     "PR": {
+      "n": 5296,
+      "mediana": 42,
+      "acima45": 0.4568,
+      "acima90": 0.234,
+      "publicavel": true,
+      "acimaDoPrazo": 0.3627
+     },
+     "RJ": {
+      "n": 7336,
+      "mediana": 154,
+      "acima45": 0.6648,
+      "acima90": 0.5796,
+      "publicavel": true,
+      "acimaDoPrazo": 0.6178
+     },
+     "RN": {
+      "n": 2157,
+      "mediana": 185,
+      "acima45": 0.7668,
+      "acima90": 0.6532,
+      "publicavel": true,
+      "acimaDoPrazo": 0.7172
+     },
+     "RO": {
+      "n": 1165,
+      "mediana": 140,
+      "acima45": 0.6515,
+      "acima90": 0.5665,
+      "publicavel": true,
+      "acimaDoPrazo": 0.6249
+     },
+     "RR": {
+      "n": 251,
+      "mediana": 136,
+      "acima45": 0.7331,
+      "acima90": 0.6016,
+      "publicavel": false,
+      "acimaDoPrazo": 0.6773
+     },
+     "RS": {
+      "n": 7121,
+      "mediana": 38,
+      "acima45": 0.4168,
+      "acima90": 0.1981,
+      "publicavel": true,
+      "acimaDoPrazo": 0.3275
+     },
+     "SC": {
+      "n": 8638,
+      "mediana": 41,
+      "acima45": 0.4505,
+      "acima90": 0.2284,
+      "publicavel": true,
+      "acimaDoPrazo": 0.3649
+     },
+     "SE": {
+      "n": 979,
+      "mediana": 170,
+      "acima45": 0.7794,
+      "acima90": 0.665,
+      "publicavel": false,
+      "acimaDoPrazo": 0.7457
+     },
+     "SP": {
+      "n": 29897,
+      "mediana": 141,
+      "acima45": 0.6825,
+      "acima90": 0.5885,
+      "publicavel": true,
+      "acimaDoPrazo": 0.6429
+     },
+     "TO": {
+      "n": 1314,
+      "mediana": 134,
+      "acima45": 0.7123,
+      "acima90": 0.5944,
+      "publicavel": true,
+      "acimaDoPrazo": 0.6689
+     }
+    }
    },
    "negados": {
     "n": 59402,
@@ -267,13 +1733,206 @@
       "n": 1552,
       "mediana": 114,
       "acima45": 0.7957,
+      "acima90": 0.5573,
       "publicavel": true
      },
      "urbano": {
       "n": 57850,
       "mediana": 128,
       "acima45": 0.8012,
+      "acima90": 0.5792,
       "publicavel": true
+     }
+    },
+    "porUf": {
+     "AC": {
+      "n": 103,
+      "mediana": 76,
+      "acima45": 0.8835,
+      "acima90": 0.4369,
+      "publicavel": false
+     },
+     "AL": {
+      "n": 873,
+      "mediana": 154,
+      "acima45": 0.8499,
+      "acima90": 0.6277,
+      "publicavel": false
+     },
+     "AM": {
+      "n": 350,
+      "mediana": 177,
+      "acima45": 0.8514,
+      "acima90": 0.6371,
+      "publicavel": false
+     },
+     "AP": {
+      "n": 102,
+      "mediana": 104,
+      "acima45": 0.7353,
+      "acima90": 0.6373,
+      "publicavel": false
+     },
+     "BA": {
+      "n": 6208,
+      "mediana": 160,
+      "acima45": 0.8315,
+      "acima90": 0.6247,
+      "publicavel": true
+     },
+     "CE": {
+      "n": 3118,
+      "mediana": 182,
+      "acima45": 0.865,
+      "acima90": 0.6956,
+      "publicavel": true
+     },
+     "DF": {
+      "n": 702,
+      "mediana": 171,
+      "acima45": 0.8875,
+      "acima90": 0.6952,
+      "publicavel": false
+     },
+     "ES": {
+      "n": 663,
+      "mediana": 147,
+      "acima45": 0.8235,
+      "acima90": 0.6154,
+      "publicavel": false
+     },
+     "GO": {
+      "n": 1010,
+      "mediana": 122,
+      "acima45": 0.8436,
+      "acima90": 0.5683,
+      "publicavel": true
+     },
+     "MA": {
+      "n": 1202,
+      "mediana": 160,
+      "acima45": 0.8777,
+      "acima90": 0.6364,
+      "publicavel": true
+     },
+     "MG": {
+      "n": 6709,
+      "mediana": 114,
+      "acima45": 0.7801,
+      "acima90": 0.5567,
+      "publicavel": true
+     },
+     "MS": {
+      "n": 1240,
+      "mediana": 138,
+      "acima45": 0.8492,
+      "acima90": 0.6331,
+      "publicavel": true
+     },
+     "MT": {
+      "n": 1722,
+      "mediana": 129,
+      "acima45": 0.8304,
+      "acima90": 0.5732,
+      "publicavel": true
+     },
+     "PA": {
+      "n": 1439,
+      "mediana": 110,
+      "acima45": 0.7596,
+      "acima90": 0.5476,
+      "publicavel": true
+     },
+     "PB": {
+      "n": 1421,
+      "mediana": 182,
+      "acima45": 0.898,
+      "acima90": 0.6882,
+      "publicavel": true
+     },
+     "PE": {
+      "n": 1900,
+      "mediana": 169,
+      "acima45": 0.8621,
+      "acima90": 0.6626,
+      "publicavel": true
+     },
+     "PI": {
+      "n": 1325,
+      "mediana": 118,
+      "acima45": 0.7781,
+      "acima90": 0.5691,
+      "publicavel": true
+     },
+     "PR": {
+      "n": 4429,
+      "mediana": 85,
+      "acima45": 0.7489,
+      "acima90": 0.4796,
+      "publicavel": true
+     },
+     "RJ": {
+      "n": 4542,
+      "mediana": 131,
+      "acima45": 0.7878,
+      "acima90": 0.5735,
+      "publicavel": true
+     },
+     "RN": {
+      "n": 812,
+      "mediana": 156,
+      "acima45": 0.8424,
+      "acima90": 0.6429,
+      "publicavel": false
+     },
+     "RO": {
+      "n": 485,
+      "mediana": 148,
+      "acima45": 0.8021,
+      "acima90": 0.5897,
+      "publicavel": false
+     },
+     "RR": {
+      "n": 166,
+      "mediana": 105,
+      "acima45": 0.8795,
+      "acima90": 0.6205,
+      "publicavel": false
+     },
+     "RS": {
+      "n": 5114,
+      "mediana": 79,
+      "acima45": 0.7171,
+      "acima90": 0.4687,
+      "publicavel": true
+     },
+     "SC": {
+      "n": 4061,
+      "mediana": 69,
+      "acima45": 0.6838,
+      "acima90": 0.4117,
+      "publicavel": true
+     },
+     "SE": {
+      "n": 563,
+      "mediana": 222,
+      "acima45": 0.8686,
+      "acima90": 0.7176,
+      "publicavel": false
+     },
+     "SP": {
+      "n": 8409,
+      "mediana": 162,
+      "acima45": 0.8322,
+      "acima90": 0.6352,
+      "publicavel": true
+     },
+     "TO": {
+      "n": 734,
+      "mediana": 163,
+      "acima45": 0.8787,
+      "acima90": 0.639,
+      "publicavel": false
      }
     }
    }
@@ -301,6 +1960,7 @@
       "n": 93207,
       "mediana": 24,
       "acima45": 0.2467,
+      "acima90": 0.0691,
       "publicavel": true
      },
      {
@@ -309,6 +1969,7 @@
       "n": 78867,
       "mediana": 22,
       "acima45": 0.1611,
+      "acima90": 0.0329,
       "publicavel": true
      },
      {
@@ -317,6 +1978,7 @@
       "n": 15587,
       "mediana": 98,
       "acima45": 0.7284,
+      "acima90": 0.5303,
       "publicavel": true
      },
      {
@@ -325,6 +1987,7 @@
       "n": 2676,
       "mediana": 178,
       "acima45": 0.8042,
+      "acima90": 0.704,
       "publicavel": true
      },
      {
@@ -333,6 +1996,7 @@
       "n": 71,
       "mediana": 95,
       "acima45": 0.7746,
+      "acima90": 0.5352,
       "publicavel": false
      },
      {
@@ -341,9 +2005,228 @@
       "n": 2,
       "mediana": 1722,
       "acima45": 1.0,
+      "acima90": 1.0,
       "publicavel": false
      }
-    ]
+    ],
+    "porUf": {
+     "AC": {
+      "n": 589,
+      "mediana": 25,
+      "acima45": 0.2377,
+      "acima90": 0.0764,
+      "publicavel": false,
+      "acimaDoPrazo": 0.0764
+     },
+     "AL": {
+      "n": 2809,
+      "mediana": 23,
+      "acima45": 0.2289,
+      "acima90": 0.0716,
+      "publicavel": true,
+      "acimaDoPrazo": 0.0716
+     },
+     "AM": {
+      "n": 2859,
+      "mediana": 27,
+      "acima45": 0.2837,
+      "acima90": 0.0986,
+      "publicavel": true,
+      "acimaDoPrazo": 0.0986
+     },
+     "AP": {
+      "n": 491,
+      "mediana": 25,
+      "acima45": 0.2627,
+      "acima90": 0.0957,
+      "publicavel": false,
+      "acimaDoPrazo": 0.0957
+     },
+     "BA": {
+      "n": 15148,
+      "mediana": 22,
+      "acima45": 0.219,
+      "acima90": 0.0771,
+      "publicavel": true,
+      "acimaDoPrazo": 0.0771
+     },
+     "CE": {
+      "n": 9164,
+      "mediana": 24,
+      "acima45": 0.2268,
+      "acima90": 0.0841,
+      "publicavel": true,
+      "acimaDoPrazo": 0.0841
+     },
+     "DF": {
+      "n": 1694,
+      "mediana": 35,
+      "acima45": 0.4132,
+      "acima90": 0.219,
+      "publicavel": true,
+      "acimaDoPrazo": 0.219
+     },
+     "ES": {
+      "n": 4240,
+      "mediana": 25,
+      "acima45": 0.2844,
+      "acima90": 0.1094,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1094
+     },
+     "GO": {
+      "n": 6326,
+      "mediana": 30,
+      "acima45": 0.3263,
+      "acima90": 0.1454,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1454
+     },
+     "MA": {
+      "n": 11640,
+      "mediana": 21,
+      "acima45": 0.1454,
+      "acima90": 0.0363,
+      "publicavel": true,
+      "acimaDoPrazo": 0.0363
+     },
+     "MG": {
+      "n": 22748,
+      "mediana": 25,
+      "acima45": 0.2669,
+      "acima90": 0.0908,
+      "publicavel": true,
+      "acimaDoPrazo": 0.0908
+     },
+     "MS": {
+      "n": 2572,
+      "mediana": 29,
+      "acima45": 0.3165,
+      "acima90": 0.1271,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1271
+     },
+     "MT": {
+      "n": 3424,
+      "mediana": 29,
+      "acima45": 0.2944,
+      "acima90": 0.1054,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1054
+     },
+     "PA": {
+      "n": 8865,
+      "mediana": 25,
+      "acima45": 0.2359,
+      "acima90": 0.0734,
+      "publicavel": true,
+      "acimaDoPrazo": 0.0734
+     },
+     "PB": {
+      "n": 4137,
+      "mediana": 22,
+      "acima45": 0.2386,
+      "acima90": 0.0933,
+      "publicavel": true,
+      "acimaDoPrazo": 0.0933
+     },
+     "PE": {
+      "n": 9659,
+      "mediana": 23,
+      "acima45": 0.223,
+      "acima90": 0.0761,
+      "publicavel": true,
+      "acimaDoPrazo": 0.0761
+     },
+     "PI": {
+      "n": 3783,
+      "mediana": 22,
+      "acima45": 0.1975,
+      "acima90": 0.06,
+      "publicavel": true,
+      "acimaDoPrazo": 0.06
+     },
+     "PR": {
+      "n": 11902,
+      "mediana": 25,
+      "acima45": 0.2855,
+      "acima90": 0.12,
+      "publicavel": true,
+      "acimaDoPrazo": 0.12
+     },
+     "RJ": {
+      "n": 10937,
+      "mediana": 24,
+      "acima45": 0.2699,
+      "acima90": 0.1053,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1053
+     },
+     "RN": {
+      "n": 3581,
+      "mediana": 23,
+      "acima45": 0.2248,
+      "acima90": 0.0787,
+      "publicavel": true,
+      "acimaDoPrazo": 0.0787
+     },
+     "RO": {
+      "n": 1409,
+      "mediana": 26,
+      "acima45": 0.2661,
+      "acima90": 0.0951,
+      "publicavel": true,
+      "acimaDoPrazo": 0.0951
+     },
+     "RR": {
+      "n": 344,
+      "mediana": 29,
+      "acima45": 0.3256,
+      "acima90": 0.125,
+      "publicavel": false,
+      "acimaDoPrazo": 0.125
+     },
+     "RS": {
+      "n": 9498,
+      "mediana": 25,
+      "acima45": 0.2688,
+      "acima90": 0.1078,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1078
+     },
+     "SC": {
+      "n": 6345,
+      "mediana": 27,
+      "acima45": 0.2925,
+      "acima90": 0.1371,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1371
+     },
+     "SE": {
+      "n": 2229,
+      "mediana": 23,
+      "acima45": 0.2355,
+      "acima90": 0.0843,
+      "publicavel": true,
+      "acimaDoPrazo": 0.0843
+     },
+     "SP": {
+      "n": 32476,
+      "mediana": 25,
+      "acima45": 0.2961,
+      "acima90": 0.1399,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1399
+     },
+     "TO": {
+      "n": 1541,
+      "mediana": 29,
+      "acima45": 0.2706,
+      "acima90": 0.072,
+      "publicavel": true,
+      "acimaDoPrazo": 0.072
+     }
+    }
    },
    "negados": {
     "n": 70861,
@@ -358,13 +2241,206 @@
       "n": 20650,
       "mediana": 39,
       "acima45": 0.348,
+      "acima90": 0.052,
       "publicavel": true
      },
      "urbano": {
       "n": 50211,
       "mediana": 38,
       "acima45": 0.3816,
+      "acima90": 0.1061,
       "publicavel": true
+     }
+    },
+    "porUf": {
+     "AC": {
+      "n": 147,
+      "mediana": 41,
+      "acima45": 0.4082,
+      "acima90": 0.1497,
+      "publicavel": false
+     },
+     "AL": {
+      "n": 658,
+      "mediana": 41,
+      "acima45": 0.4422,
+      "acima90": 0.1383,
+      "publicavel": false
+     },
+     "AM": {
+      "n": 675,
+      "mediana": 39,
+      "acima45": 0.3822,
+      "acima90": 0.0859,
+      "publicavel": false
+     },
+     "AP": {
+      "n": 119,
+      "mediana": 42,
+      "acima45": 0.4454,
+      "acima90": 0.1092,
+      "publicavel": false
+     },
+     "BA": {
+      "n": 3829,
+      "mediana": 39,
+      "acima45": 0.3787,
+      "acima90": 0.0883,
+      "publicavel": true
+     },
+     "CE": {
+      "n": 2001,
+      "mediana": 39,
+      "acima45": 0.3653,
+      "acima90": 0.0925,
+      "publicavel": true
+     },
+     "DF": {
+      "n": 669,
+      "mediana": 39,
+      "acima45": 0.3886,
+      "acima90": 0.0957,
+      "publicavel": false
+     },
+     "ES": {
+      "n": 937,
+      "mediana": 39,
+      "acima45": 0.4301,
+      "acima90": 0.1163,
+      "publicavel": false
+     },
+     "GO": {
+      "n": 1638,
+      "mediana": 43,
+      "acima45": 0.4695,
+      "acima90": 0.1178,
+      "publicavel": true
+     },
+     "MA": {
+      "n": 1551,
+      "mediana": 38,
+      "acima45": 0.3559,
+      "acima90": 0.0787,
+      "publicavel": true
+     },
+     "MG": {
+      "n": 6175,
+      "mediana": 41,
+      "acima45": 0.441,
+      "acima90": 0.125,
+      "publicavel": true
+     },
+     "MS": {
+      "n": 859,
+      "mediana": 41,
+      "acima45": 0.4179,
+      "acima90": 0.0896,
+      "publicavel": false
+     },
+     "MT": {
+      "n": 1097,
+      "mediana": 40,
+      "acima45": 0.4002,
+      "acima90": 0.0866,
+      "publicavel": true
+     },
+     "PA": {
+      "n": 1464,
+      "mediana": 41,
+      "acima45": 0.4242,
+      "acima90": 0.1134,
+      "publicavel": true
+     },
+     "PB": {
+      "n": 822,
+      "mediana": 41,
+      "acima45": 0.4282,
+      "acima90": 0.1156,
+      "publicavel": false
+     },
+     "PE": {
+      "n": 1981,
+      "mediana": 39,
+      "acima45": 0.3751,
+      "acima90": 0.0899,
+      "publicavel": true
+     },
+     "PI": {
+      "n": 1030,
+      "mediana": 38,
+      "acima45": 0.366,
+      "acima90": 0.0913,
+      "publicavel": true
+     },
+     "PR": {
+      "n": 3406,
+      "mediana": 40,
+      "acima45": 0.4134,
+      "acima90": 0.1127,
+      "publicavel": true
+     },
+     "RJ": {
+      "n": 3808,
+      "mediana": 35,
+      "acima45": 0.3409,
+      "acima90": 0.0819,
+      "publicavel": true
+     },
+     "RN": {
+      "n": 764,
+      "mediana": 40,
+      "acima45": 0.4071,
+      "acima90": 0.0903,
+      "publicavel": false
+     },
+     "RO": {
+      "n": 341,
+      "mediana": 43,
+      "acima45": 0.4604,
+      "acima90": 0.0704,
+      "publicavel": false
+     },
+     "RR": {
+      "n": 118,
+      "mediana": 43,
+      "acima45": 0.4322,
+      "acima90": 0.1441,
+      "publicavel": false
+     },
+     "RS": {
+      "n": 2658,
+      "mediana": 41,
+      "acima45": 0.4406,
+      "acima90": 0.158,
+      "publicavel": true
+     },
+     "SC": {
+      "n": 1486,
+      "mediana": 41,
+      "acima45": 0.4448,
+      "acima90": 0.1682,
+      "publicavel": true
+     },
+     "SE": {
+      "n": 469,
+      "mediana": 41,
+      "acima45": 0.4115,
+      "acima90": 0.1066,
+      "publicavel": false
+     },
+     "SP": {
+      "n": 9372,
+      "mediana": 36,
+      "acima45": 0.355,
+      "acima90": 0.1187,
+      "publicavel": true
+     },
+     "TO": {
+      "n": 373,
+      "mediana": 46,
+      "acima45": 0.504,
+      "acima90": 0.1153,
+      "publicavel": false
      }
     }
    }
@@ -392,6 +2468,7 @@
       "n": 66109,
       "mediana": 31,
       "acima45": 0.3634,
+      "acima90": 0.1583,
       "publicavel": true
      },
      {
@@ -400,6 +2477,7 @@
       "n": 40494,
       "mediana": 102,
       "acima45": 0.7341,
+      "acima90": 0.5428,
       "publicavel": true
      },
      {
@@ -408,6 +2486,7 @@
       "n": 1040,
       "mediana": 289,
       "acima45": 0.8558,
+      "acima90": 0.7731,
       "publicavel": true
      },
      {
@@ -416,9 +2495,228 @@
       "n": 87,
       "mediana": 200,
       "acima45": 0.8276,
+      "acima90": 0.7126,
       "publicavel": false
      }
-    ]
+    ],
+    "porUf": {
+     "AC": {
+      "n": 91,
+      "mediana": 52,
+      "acima45": 0.5604,
+      "acima90": 0.3407,
+      "publicavel": false,
+      "acimaDoPrazo": 0.3407
+     },
+     "AL": {
+      "n": 765,
+      "mediana": 49,
+      "acima45": 0.519,
+      "acima90": 0.3373,
+      "publicavel": false,
+      "acimaDoPrazo": 0.3373
+     },
+     "AM": {
+      "n": 850,
+      "mediana": 65,
+      "acima45": 0.6141,
+      "acima90": 0.4071,
+      "publicavel": false,
+      "acimaDoPrazo": 0.4071
+     },
+     "AP": {
+      "n": 96,
+      "mediana": 63,
+      "acima45": 0.5729,
+      "acima90": 0.3854,
+      "publicavel": false,
+      "acimaDoPrazo": 0.3854
+     },
+     "BA": {
+      "n": 3903,
+      "mediana": 46,
+      "acima45": 0.5058,
+      "acima90": 0.3031,
+      "publicavel": true,
+      "acimaDoPrazo": 0.3031
+     },
+     "CE": {
+      "n": 2172,
+      "mediana": 54,
+      "acima45": 0.5571,
+      "acima90": 0.3762,
+      "publicavel": true,
+      "acimaDoPrazo": 0.3762
+     },
+     "DF": {
+      "n": 1502,
+      "mediana": 66,
+      "acima45": 0.5992,
+      "acima90": 0.4234,
+      "publicavel": true,
+      "acimaDoPrazo": 0.4234
+     },
+     "ES": {
+      "n": 2279,
+      "mediana": 50,
+      "acima45": 0.5327,
+      "acima90": 0.3054,
+      "publicavel": true,
+      "acimaDoPrazo": 0.3054
+     },
+     "GO": {
+      "n": 2134,
+      "mediana": 65,
+      "acima45": 0.5904,
+      "acima90": 0.4072,
+      "publicavel": true,
+      "acimaDoPrazo": 0.4072
+     },
+     "MA": {
+      "n": 824,
+      "mediana": 55,
+      "acima45": 0.5692,
+      "acima90": 0.3362,
+      "publicavel": false,
+      "acimaDoPrazo": 0.3362
+     },
+     "MG": {
+      "n": 12645,
+      "mediana": 42,
+      "acima45": 0.4539,
+      "acima90": 0.2426,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2426
+     },
+     "MS": {
+      "n": 944,
+      "mediana": 59,
+      "acima45": 0.5572,
+      "acima90": 0.3877,
+      "publicavel": false,
+      "acimaDoPrazo": 0.3877
+     },
+     "MT": {
+      "n": 1258,
+      "mediana": 67,
+      "acima45": 0.6097,
+      "acima90": 0.399,
+      "publicavel": true,
+      "acimaDoPrazo": 0.399
+     },
+     "PA": {
+      "n": 1450,
+      "mediana": 58,
+      "acima45": 0.5593,
+      "acima90": 0.351,
+      "publicavel": true,
+      "acimaDoPrazo": 0.351
+     },
+     "PB": {
+      "n": 1073,
+      "mediana": 63,
+      "acima45": 0.5909,
+      "acima90": 0.3868,
+      "publicavel": true,
+      "acimaDoPrazo": 0.3868
+     },
+     "PE": {
+      "n": 2523,
+      "mediana": 51,
+      "acima45": 0.5252,
+      "acima90": 0.3282,
+      "publicavel": true,
+      "acimaDoPrazo": 0.3282
+     },
+     "PI": {
+      "n": 544,
+      "mediana": 49,
+      "acima45": 0.5092,
+      "acima90": 0.2831,
+      "publicavel": false,
+      "acimaDoPrazo": 0.2831
+     },
+     "PR": {
+      "n": 8918,
+      "mediana": 45,
+      "acima45": 0.4919,
+      "acima90": 0.2809,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2809
+     },
+     "RJ": {
+      "n": 6557,
+      "mediana": 36,
+      "acima45": 0.418,
+      "acima90": 0.2356,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2356
+     },
+     "RN": {
+      "n": 981,
+      "mediana": 49,
+      "acima45": 0.5148,
+      "acima90": 0.3231,
+      "publicavel": false,
+      "acimaDoPrazo": 0.3231
+     },
+     "RO": {
+      "n": 312,
+      "mediana": 65,
+      "acima45": 0.5673,
+      "acima90": 0.4071,
+      "publicavel": false,
+      "acimaDoPrazo": 0.4071
+     },
+     "RR": {
+      "n": 70,
+      "mediana": 50,
+      "acima45": 0.5286,
+      "acima90": 0.3286,
+      "publicavel": false,
+      "acimaDoPrazo": 0.3286
+     },
+     "RS": {
+      "n": 9898,
+      "mediana": 44,
+      "acima45": 0.4869,
+      "acima90": 0.2746,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2746
+     },
+     "SC": {
+      "n": 9271,
+      "mediana": 50,
+      "acima45": 0.5211,
+      "acima90": 0.3293,
+      "publicavel": true,
+      "acimaDoPrazo": 0.3293
+     },
+     "SE": {
+      "n": 709,
+      "mediana": 58,
+      "acima45": 0.5571,
+      "acima90": 0.3724,
+      "publicavel": false,
+      "acimaDoPrazo": 0.3724
+     },
+     "SP": {
+      "n": 35712,
+      "mediana": 50,
+      "acima45": 0.5191,
+      "acima90": 0.3271,
+      "publicavel": true,
+      "acimaDoPrazo": 0.3271
+     },
+     "TO": {
+      "n": 249,
+      "mediana": 58,
+      "acima45": 0.5904,
+      "acima90": 0.3614,
+      "publicavel": false,
+      "acimaDoPrazo": 0.3614
+     }
+    }
    },
    "negados": {
     "n": 44587,
@@ -433,13 +2731,206 @@
       "n": 387,
       "mediana": 67,
       "acima45": 0.6718,
+      "acima90": 0.3463,
       "publicavel": false
      },
      "urbano": {
       "n": 44200,
       "mediana": 40,
       "acima45": 0.4628,
+      "acima90": 0.2326,
       "publicavel": true
+     }
+    },
+    "porUf": {
+     "AC": {
+      "n": 43,
+      "mediana": 71,
+      "acima45": 0.6047,
+      "acima90": 0.3721,
+      "publicavel": false
+     },
+     "AL": {
+      "n": 289,
+      "mediana": 37,
+      "acima45": 0.3945,
+      "acima90": 0.1557,
+      "publicavel": false
+     },
+     "AM": {
+      "n": 283,
+      "mediana": 0,
+      "acima45": 0.3498,
+      "acima90": 0.1449,
+      "publicavel": false
+     },
+     "AP": {
+      "n": 30,
+      "mediana": 64,
+      "acima45": 0.5667,
+      "acima90": 0.4333,
+      "publicavel": false
+     },
+     "BA": {
+      "n": 1707,
+      "mediana": 1,
+      "acima45": 0.355,
+      "acima90": 0.1798,
+      "publicavel": true
+     },
+     "CE": {
+      "n": 815,
+      "mediana": 34,
+      "acima45": 0.3706,
+      "acima90": 0.1583,
+      "publicavel": false
+     },
+     "DF": {
+      "n": 453,
+      "mediana": 33,
+      "acima45": 0.362,
+      "acima90": 0.1479,
+      "publicavel": false
+     },
+     "ES": {
+      "n": 850,
+      "mediana": 47,
+      "acima45": 0.5082,
+      "acima90": 0.2553,
+      "publicavel": false
+     },
+     "GO": {
+      "n": 612,
+      "mediana": 35,
+      "acima45": 0.4134,
+      "acima90": 0.2239,
+      "publicavel": false
+     },
+     "MA": {
+      "n": 348,
+      "mediana": 51,
+      "acima45": 0.5402,
+      "acima90": 0.2874,
+      "publicavel": false
+     },
+     "MG": {
+      "n": 5187,
+      "mediana": 44,
+      "acima45": 0.4887,
+      "acima90": 0.2206,
+      "publicavel": true
+     },
+     "MS": {
+      "n": 334,
+      "mediana": 36,
+      "acima45": 0.4162,
+      "acima90": 0.2305,
+      "publicavel": false
+     },
+     "MT": {
+      "n": 424,
+      "mediana": 40,
+      "acima45": 0.4623,
+      "acima90": 0.2335,
+      "publicavel": false
+     },
+     "PA": {
+      "n": 558,
+      "mediana": 39,
+      "acima45": 0.4444,
+      "acima90": 0.2437,
+      "publicavel": false
+     },
+     "PB": {
+      "n": 357,
+      "mediana": 39,
+      "acima45": 0.4454,
+      "acima90": 0.2437,
+      "publicavel": false
+     },
+     "PE": {
+      "n": 1030,
+      "mediana": 1,
+      "acima45": 0.3621,
+      "acima90": 0.1835,
+      "publicavel": true
+     },
+     "PI": {
+      "n": 253,
+      "mediana": 42,
+      "acima45": 0.4783,
+      "acima90": 0.2688,
+      "publicavel": false
+     },
+     "PR": {
+      "n": 3631,
+      "mediana": 55,
+      "acima45": 0.5569,
+      "acima90": 0.2861,
+      "publicavel": true
+     },
+     "RJ": {
+      "n": 3643,
+      "mediana": 10,
+      "acima45": 0.2923,
+      "acima90": 0.1271,
+      "publicavel": true
+     },
+     "RN": {
+      "n": 394,
+      "mediana": 37,
+      "acima45": 0.4137,
+      "acima90": 0.1904,
+      "publicavel": false
+     },
+     "RO": {
+      "n": 103,
+      "mediana": 34,
+      "acima45": 0.3689,
+      "acima90": 0.1748,
+      "publicavel": false
+     },
+     "RR": {
+      "n": 28,
+      "mediana": 60,
+      "acima45": 0.5357,
+      "acima90": 0.25,
+      "publicavel": false
+     },
+     "RS": {
+      "n": 4146,
+      "mediana": 61,
+      "acima45": 0.6015,
+      "acima90": 0.3319,
+      "publicavel": true
+     },
+     "SC": {
+      "n": 2937,
+      "mediana": 55,
+      "acima45": 0.571,
+      "acima90": 0.2874,
+      "publicavel": true
+     },
+     "SE": {
+      "n": 246,
+      "mediana": 36,
+      "acima45": 0.3862,
+      "acima90": 0.187,
+      "publicavel": false
+     },
+     "SP": {
+      "n": 14181,
+      "mediana": 39,
+      "acima45": 0.4593,
+      "acima90": 0.245,
+      "publicavel": true
+     },
+     "TO": {
+      "n": 113,
+      "mediana": 51,
+      "acima45": 0.5221,
+      "acima90": 0.3186,
+      "publicavel": false
      }
     }
    }
@@ -467,6 +2958,7 @@
       "n": 76832,
       "mediana": 25,
       "acima45": 0.2978,
+      "acima90": 0.1351,
       "publicavel": true
      },
      {
@@ -475,6 +2967,7 @@
       "n": 25303,
       "mediana": 28,
       "acima45": 0.3345,
+      "acima90": 0.1448,
       "publicavel": true
      },
      {
@@ -483,6 +2976,7 @@
       "n": 946,
       "mediana": 224,
       "acima45": 0.8404,
+      "acima90": 0.7262,
       "publicavel": false
      },
      {
@@ -491,9 +2985,228 @@
       "n": 8,
       "mediana": 1880,
       "acima45": 1.0,
+      "acima90": 1.0,
       "publicavel": false
      }
-    ]
+    ],
+    "porUf": {
+     "AC": {
+      "n": 399,
+      "mediana": 37,
+      "acima45": 0.4085,
+      "acima90": 0.188,
+      "publicavel": false,
+      "acimaDoPrazo": 0.3008
+     },
+     "AL": {
+      "n": 1764,
+      "mediana": 32,
+      "acima45": 0.3804,
+      "acima90": 0.1689,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2778
+     },
+     "AM": {
+      "n": 1409,
+      "mediana": 30,
+      "acima45": 0.3542,
+      "acima90": 0.1405,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2534
+     },
+     "AP": {
+      "n": 250,
+      "mediana": 37,
+      "acima45": 0.38,
+      "acima90": 0.168,
+      "publicavel": false,
+      "acimaDoPrazo": 0.268
+     },
+     "BA": {
+      "n": 8114,
+      "mediana": 28,
+      "acima45": 0.3567,
+      "acima90": 0.1576,
+      "publicavel": true,
+      "acimaDoPrazo": 0.256
+     },
+     "CE": {
+      "n": 4606,
+      "mediana": 31,
+      "acima45": 0.365,
+      "acima90": 0.1711,
+      "publicavel": true,
+      "acimaDoPrazo": 0.269
+     },
+     "DF": {
+      "n": 1102,
+      "mediana": 32,
+      "acima45": 0.3893,
+      "acima90": 0.1978,
+      "publicavel": true,
+      "acimaDoPrazo": 0.3249
+     },
+     "ES": {
+      "n": 2059,
+      "mediana": 27,
+      "acima45": 0.2817,
+      "acima90": 0.1088,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1938
+     },
+     "GO": {
+      "n": 3842,
+      "mediana": 32,
+      "acima45": 0.3688,
+      "acima90": 0.1861,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2858
+     },
+     "MA": {
+      "n": 4022,
+      "mediana": 29,
+      "acima45": 0.3389,
+      "acima90": 0.1198,
+      "publicavel": true,
+      "acimaDoPrazo": 0.225
+     },
+     "MG": {
+      "n": 11665,
+      "mediana": 25,
+      "acima45": 0.2802,
+      "acima90": 0.127,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2061
+     },
+     "MS": {
+      "n": 1491,
+      "mediana": 31,
+      "acima45": 0.3722,
+      "acima90": 0.1751,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2817
+     },
+     "MT": {
+      "n": 1918,
+      "mediana": 30,
+      "acima45": 0.3368,
+      "acima90": 0.1486,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2518
+     },
+     "PA": {
+      "n": 3694,
+      "mediana": 32,
+      "acima45": 0.359,
+      "acima90": 0.1478,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2634
+     },
+     "PB": {
+      "n": 2195,
+      "mediana": 29,
+      "acima45": 0.369,
+      "acima90": 0.1658,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2556
+     },
+     "PE": {
+      "n": 4793,
+      "mediana": 30,
+      "acima45": 0.3468,
+      "acima90": 0.1544,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2514
+     },
+     "PI": {
+      "n": 2175,
+      "mediana": 34,
+      "acima45": 0.3811,
+      "acima90": 0.1641,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2676
+     },
+     "PR": {
+      "n": 6054,
+      "mediana": 23,
+      "acima45": 0.2775,
+      "acima90": 0.1472,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2134
+     },
+     "RJ": {
+      "n": 8148,
+      "mediana": 29,
+      "acima45": 0.3208,
+      "acima90": 0.1429,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2482
+     },
+     "RN": {
+      "n": 1882,
+      "mediana": 31,
+      "acima45": 0.3799,
+      "acima90": 0.1918,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2885
+     },
+     "RO": {
+      "n": 741,
+      "mediana": 35,
+      "acima45": 0.3873,
+      "acima90": 0.1808,
+      "publicavel": false,
+      "acimaDoPrazo": 0.2996
+     },
+     "RR": {
+      "n": 185,
+      "mediana": 31,
+      "acima45": 0.3459,
+      "acima90": 0.1405,
+      "publicavel": false,
+      "acimaDoPrazo": 0.2486
+     },
+     "RS": {
+      "n": 6058,
+      "mediana": 23,
+      "acima45": 0.2694,
+      "acima90": 0.1322,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2049
+     },
+     "SC": {
+      "n": 3831,
+      "mediana": 23,
+      "acima45": 0.2681,
+      "acima90": 0.143,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2127
+     },
+     "SE": {
+      "n": 1118,
+      "mediana": 35,
+      "acima45": 0.3891,
+      "acima90": 0.1789,
+      "publicavel": true,
+      "acimaDoPrazo": 0.3032
+     },
+     "SP": {
+      "n": 18560,
+      "mediana": 22,
+      "acima45": 0.2372,
+      "acima90": 0.1124,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1806
+     },
+     "TO": {
+      "n": 1014,
+      "mediana": 37,
+      "acima45": 0.3945,
+      "acima90": 0.1736,
+      "publicavel": true,
+      "acimaDoPrazo": 0.3028
+     }
+    }
    },
    "negados": {
     "n": 26196,
@@ -508,13 +3221,206 @@
       "n": 6072,
       "mediana": 46,
       "acima45": 0.5003,
+      "acima90": 0.1299,
       "publicavel": true
      },
      "urbano": {
       "n": 20124,
       "mediana": 48,
       "acima45": 0.5314,
+      "acima90": 0.1361,
       "publicavel": true
+     }
+    },
+    "porUf": {
+     "AC": {
+      "n": 113,
+      "mediana": 59,
+      "acima45": 0.6814,
+      "acima90": 0.2035,
+      "publicavel": false
+     },
+     "AL": {
+      "n": 534,
+      "mediana": 55,
+      "acima45": 0.6086,
+      "acima90": 0.1854,
+      "publicavel": false
+     },
+     "AM": {
+      "n": 371,
+      "mediana": 44,
+      "acima45": 0.4798,
+      "acima90": 0.1105,
+      "publicavel": false
+     },
+     "AP": {
+      "n": 65,
+      "mediana": 64,
+      "acima45": 0.6615,
+      "acima90": 0.1846,
+      "publicavel": false
+     },
+     "BA": {
+      "n": 2518,
+      "mediana": 48,
+      "acima45": 0.5429,
+      "acima90": 0.1585,
+      "publicavel": true
+     },
+     "CE": {
+      "n": 1351,
+      "mediana": 49,
+      "acima45": 0.544,
+      "acima90": 0.1717,
+      "publicavel": true
+     },
+     "DF": {
+      "n": 312,
+      "mediana": 48,
+      "acima45": 0.5417,
+      "acima90": 0.141,
+      "publicavel": false
+     },
+     "ES": {
+      "n": 451,
+      "mediana": 48,
+      "acima45": 0.5366,
+      "acima90": 0.1131,
+      "publicavel": false
+     },
+     "GO": {
+      "n": 645,
+      "mediana": 50,
+      "acima45": 0.5628,
+      "acima90": 0.1364,
+      "publicavel": false
+     },
+     "MA": {
+      "n": 1726,
+      "mediana": 45,
+      "acima45": 0.4994,
+      "acima90": 0.1101,
+      "publicavel": true
+     },
+     "MG": {
+      "n": 2548,
+      "mediana": 50,
+      "acima45": 0.5546,
+      "acima90": 0.1381,
+      "publicavel": true
+     },
+     "MS": {
+      "n": 291,
+      "mediana": 50,
+      "acima45": 0.5498,
+      "acima90": 0.1375,
+      "publicavel": false
+     },
+     "MT": {
+      "n": 428,
+      "mediana": 54,
+      "acima45": 0.5607,
+      "acima90": 0.1285,
+      "publicavel": false
+     },
+     "PA": {
+      "n": 1034,
+      "mediana": 53,
+      "acima45": 0.6015,
+      "acima90": 0.1393,
+      "publicavel": true
+     },
+     "PB": {
+      "n": 578,
+      "mediana": 51,
+      "acima45": 0.5588,
+      "acima90": 0.192,
+      "publicavel": false
+     },
+     "PE": {
+      "n": 1456,
+      "mediana": 50,
+      "acima45": 0.5495,
+      "acima90": 0.1518,
+      "publicavel": true
+     },
+     "PI": {
+      "n": 753,
+      "mediana": 49,
+      "acima45": 0.5352,
+      "acima90": 0.1461,
+      "publicavel": false
+     },
+     "PR": {
+      "n": 1079,
+      "mediana": 46,
+      "acima45": 0.5079,
+      "acima90": 0.1084,
+      "publicavel": true
+     },
+     "RJ": {
+      "n": 2078,
+      "mediana": 49,
+      "acima45": 0.564,
+      "acima90": 0.1256,
+      "publicavel": true
+     },
+     "RN": {
+      "n": 514,
+      "mediana": 48,
+      "acima45": 0.5389,
+      "acima90": 0.1829,
+      "publicavel": false
+     },
+     "RO": {
+      "n": 167,
+      "mediana": 51,
+      "acima45": 0.5749,
+      "acima90": 0.1617,
+      "publicavel": false
+     },
+     "RR": {
+      "n": 53,
+      "mediana": 50,
+      "acima45": 0.566,
+      "acima90": 0.0943,
+      "publicavel": false
+     },
+     "RS": {
+      "n": 1112,
+      "mediana": 48,
+      "acima45": 0.5396,
+      "acima90": 0.098,
+      "publicavel": true
+     },
+     "SC": {
+      "n": 672,
+      "mediana": 43,
+      "acima45": 0.4643,
+      "acima90": 0.1086,
+      "publicavel": false
+     },
+     "SE": {
+      "n": 315,
+      "mediana": 53,
+      "acima45": 0.6127,
+      "acima90": 0.1524,
+      "publicavel": false
+     },
+     "SP": {
+      "n": 4670,
+      "mediana": 41,
+      "acima45": 0.4199,
+      "acima90": 0.112,
+      "publicavel": true
+     },
+     "TO": {
+      "n": 270,
+      "mediana": 58,
+      "acima45": 0.6,
+      "acima90": 0.1593,
+      "publicavel": false
      }
     }
    }
@@ -542,6 +3448,7 @@
       "n": 76787,
       "mediana": 11,
       "acima45": 0.093,
+      "acima90": 0.0143,
       "publicavel": true
      },
      {
@@ -550,6 +3457,7 @@
       "n": 43890,
       "mediana": 18,
       "acima45": 0.1164,
+      "acima90": 0.0133,
       "publicavel": true
      },
      {
@@ -558,9 +3466,228 @@
       "n": 1440,
       "mediana": 169,
       "acima45": 0.7715,
+      "acima90": 0.6542,
       "publicavel": true
      }
-    ]
+    ],
+    "porUf": {
+     "AC": {
+      "n": 1716,
+      "mediana": 17,
+      "acima45": 0.1189,
+      "acima90": 0.0192,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2547
+     },
+     "AL": {
+      "n": 2122,
+      "mediana": 10,
+      "acima45": 0.1037,
+      "acima90": 0.0193,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2059
+     },
+     "AM": {
+      "n": 6680,
+      "mediana": 18,
+      "acima45": 0.1344,
+      "acima90": 0.0234,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2653
+     },
+     "AP": {
+      "n": 1696,
+      "mediana": 18,
+      "acima45": 0.1179,
+      "acima90": 0.0189,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2777
+     },
+     "BA": {
+      "n": 8032,
+      "mediana": 11,
+      "acima45": 0.1168,
+      "acima90": 0.02,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2103
+     },
+     "CE": {
+      "n": 4655,
+      "mediana": 10,
+      "acima45": 0.0995,
+      "acima90": 0.0215,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2241
+     },
+     "DF": {
+      "n": 2057,
+      "mediana": 20,
+      "acima45": 0.2115,
+      "acima90": 0.018,
+      "publicavel": true,
+      "acimaDoPrazo": 0.3223
+     },
+     "ES": {
+      "n": 2505,
+      "mediana": 15,
+      "acima45": 0.1301,
+      "acima90": 0.0299,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2399
+     },
+     "GO": {
+      "n": 5632,
+      "mediana": 17,
+      "acima45": 0.1076,
+      "acima90": 0.0197,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2312
+     },
+     "MA": {
+      "n": 6179,
+      "mediana": 14,
+      "acima45": 0.0942,
+      "acima90": 0.012,
+      "publicavel": true,
+      "acimaDoPrazo": 0.234
+     },
+     "MG": {
+      "n": 11060,
+      "mediana": 15,
+      "acima45": 0.1299,
+      "acima90": 0.0249,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2468
+     },
+     "MS": {
+      "n": 2189,
+      "mediana": 17,
+      "acima45": 0.106,
+      "acima90": 0.0146,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2275
+     },
+     "MT": {
+      "n": 3818,
+      "mediana": 17,
+      "acima45": 0.1328,
+      "acima90": 0.0236,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2528
+     },
+     "PA": {
+      "n": 14123,
+      "mediana": 18,
+      "acima45": 0.1113,
+      "acima90": 0.0159,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2551
+     },
+     "PB": {
+      "n": 2232,
+      "mediana": 10,
+      "acima45": 0.1156,
+      "acima90": 0.0242,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2025
+     },
+     "PE": {
+      "n": 5273,
+      "mediana": 11,
+      "acima45": 0.1075,
+      "acima90": 0.0241,
+      "publicavel": true,
+      "acimaDoPrazo": 0.219
+     },
+     "PI": {
+      "n": 2101,
+      "mediana": 14,
+      "acima45": 0.0976,
+      "acima90": 0.0171,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2399
+     },
+     "PR": {
+      "n": 5589,
+      "mediana": 14,
+      "acima45": 0.0696,
+      "acima90": 0.0174,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1528
+     },
+     "RJ": {
+      "n": 4538,
+      "mediana": 10,
+      "acima45": 0.1401,
+      "acima90": 0.0355,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2439
+     },
+     "RN": {
+      "n": 1516,
+      "mediana": 13,
+      "acima45": 0.1108,
+      "acima90": 0.0303,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2408
+     },
+     "RO": {
+      "n": 1696,
+      "mediana": 17,
+      "acima45": 0.0955,
+      "acima90": 0.0153,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2282
+     },
+     "RR": {
+      "n": 779,
+      "mediana": 17,
+      "acima45": 0.1014,
+      "acima90": 0.0193,
+      "publicavel": false,
+      "acimaDoPrazo": 0.2542
+     },
+     "RS": {
+      "n": 4214,
+      "mediana": 14,
+      "acima45": 0.0738,
+      "acima90": 0.0154,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1519
+     },
+     "SC": {
+      "n": 3882,
+      "mediana": 14,
+      "acima45": 0.0724,
+      "acima90": 0.016,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1641
+     },
+     "SE": {
+      "n": 1214,
+      "mediana": 11,
+      "acima45": 0.0964,
+      "acima90": 0.014,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2125
+     },
+     "SP": {
+      "n": 14503,
+      "mediana": 9,
+      "acima45": 0.0839,
+      "acima90": 0.0292,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1551
+     },
+     "TO": {
+      "n": 2116,
+      "mediana": 18,
+      "acima45": 0.1664,
+      "acima90": 0.0246,
+      "publicavel": true,
+      "acimaDoPrazo": 0.3053
+     }
+    }
    },
    "negados": {
     "n": 100265,
@@ -575,13 +3702,206 @@
       "n": 20058,
       "mediana": 19,
       "acima45": 0.1683,
+      "acima90": 0.0121,
       "publicavel": true
      },
      "urbano": {
       "n": 80207,
       "mediana": 6,
       "acima45": 0.117,
+      "acima90": 0.0134,
       "publicavel": true
+     }
+    },
+    "porUf": {
+     "AC": {
+      "n": 348,
+      "mediana": 29,
+      "acima45": 0.2213,
+      "acima90": 0.0287,
+      "publicavel": false
+     },
+     "AL": {
+      "n": 1595,
+      "mediana": 5,
+      "acima45": 0.0621,
+      "acima90": 0.0019,
+      "publicavel": true
+     },
+     "AM": {
+      "n": 1501,
+      "mediana": 29,
+      "acima45": 0.2265,
+      "acima90": 0.0266,
+      "publicavel": true
+     },
+     "AP": {
+      "n": 306,
+      "mediana": 30,
+      "acima45": 0.219,
+      "acima90": 0.0131,
+      "publicavel": false
+     },
+     "BA": {
+      "n": 9559,
+      "mediana": 6,
+      "acima45": 0.0951,
+      "acima90": 0.0058,
+      "publicavel": true
+     },
+     "CE": {
+      "n": 6043,
+      "mediana": 5,
+      "acima45": 0.0789,
+      "acima90": 0.0043,
+      "publicavel": true
+     },
+     "DF": {
+      "n": 872,
+      "mediana": 17,
+      "acima45": 0.1491,
+      "acima90": 0.0252,
+      "publicavel": false
+     },
+     "ES": {
+      "n": 760,
+      "mediana": 17,
+      "acima45": 0.1697,
+      "acima90": 0.0105,
+      "publicavel": false
+     },
+     "GO": {
+      "n": 1776,
+      "mediana": 29,
+      "acima45": 0.2021,
+      "acima90": 0.0175,
+      "publicavel": true
+     },
+     "MA": {
+      "n": 3648,
+      "mediana": 4,
+      "acima45": 0.0965,
+      "acima90": 0.0058,
+      "publicavel": true
+     },
+     "MG": {
+      "n": 4394,
+      "mediana": 20,
+      "acima45": 0.2091,
+      "acima90": 0.0162,
+      "publicavel": true
+     },
+     "MS": {
+      "n": 805,
+      "mediana": 28,
+      "acima45": 0.154,
+      "acima90": 0.0186,
+      "publicavel": false
+     },
+     "MT": {
+      "n": 1162,
+      "mediana": 28,
+      "acima45": 0.1945,
+      "acima90": 0.0172,
+      "publicavel": true
+     },
+     "PA": {
+      "n": 2190,
+      "mediana": 29,
+      "acima45": 0.2201,
+      "acima90": 0.0192,
+      "publicavel": true
+     },
+     "PB": {
+      "n": 1742,
+      "mediana": 5,
+      "acima45": 0.1206,
+      "acima90": 0.0092,
+      "publicavel": true
+     },
+     "PE": {
+      "n": 4023,
+      "mediana": 5,
+      "acima45": 0.1693,
+      "acima90": 0.0072,
+      "publicavel": true
+     },
+     "PI": {
+      "n": 2150,
+      "mediana": 4,
+      "acima45": 0.0688,
+      "acima90": 0.0051,
+      "publicavel": true
+     },
+     "PR": {
+      "n": 1934,
+      "mediana": 24,
+      "acima45": 0.0951,
+      "acima90": 0.0114,
+      "publicavel": true
+     },
+     "RJ": {
+      "n": 3331,
+      "mediana": 5,
+      "acima45": 0.0757,
+      "acima90": 0.0066,
+      "publicavel": true
+     },
+     "RN": {
+      "n": 1532,
+      "mediana": 5,
+      "acima45": 0.1103,
+      "acima90": 0.0098,
+      "publicavel": true
+     },
+     "RO": {
+      "n": 416,
+      "mediana": 13,
+      "acima45": 0.149,
+      "acima90": 0.024,
+      "publicavel": false
+     },
+     "RR": {
+      "n": 251,
+      "mediana": 29,
+      "acima45": 0.2191,
+      "acima90": 0.0199,
+      "publicavel": false
+     },
+     "RS": {
+      "n": 1624,
+      "mediana": 25,
+      "acima45": 0.1281,
+      "acima90": 0.0129,
+      "publicavel": true
+     },
+     "SC": {
+      "n": 1349,
+      "mediana": 24,
+      "acima45": 0.1342,
+      "acima90": 0.0141,
+      "publicavel": true
+     },
+     "SE": {
+      "n": 1106,
+      "mediana": 9,
+      "acima45": 0.1474,
+      "acima90": 0.0235,
+      "publicavel": true
+     },
+     "SP": {
+      "n": 10443,
+      "mediana": 6,
+      "acima45": 0.0717,
+      "acima90": 0.0133,
+      "publicavel": true
+     },
+     "TO": {
+      "n": 530,
+      "mediana": 29,
+      "acima45": 0.2547,
+      "acima90": 0.0358,
+      "publicavel": false
      }
     }
    }
@@ -609,6 +3929,7 @@
       "n": 7601,
       "mediana": 25,
       "acima45": 0.2817,
+      "acima90": 0.0651,
       "publicavel": true
      },
      {
@@ -617,9 +3938,228 @@
       "n": 837,
       "mediana": 35,
       "acima45": 0.3823,
+      "acima90": 0.1314,
       "publicavel": false
      }
-    ]
+    ],
+    "porUf": {
+     "AC": {
+      "n": 55,
+      "mediana": 37,
+      "acima45": 0.4182,
+      "acima90": 0.0545,
+      "publicavel": false,
+      "acimaDoPrazo": 0.2909
+     },
+     "AL": {
+      "n": 92,
+      "mediana": 38,
+      "acima45": 0.4348,
+      "acima90": 0.1848,
+      "publicavel": false,
+      "acimaDoPrazo": 0.3043
+     },
+     "AM": {
+      "n": 65,
+      "mediana": 23,
+      "acima45": 0.2923,
+      "acima90": 0.0769,
+      "publicavel": false,
+      "acimaDoPrazo": 0.1538
+     },
+     "AP": {
+      "n": 17,
+      "mediana": 56,
+      "acima45": 0.5294,
+      "acima90": 0.2353,
+      "publicavel": false,
+      "acimaDoPrazo": 0.4118
+     },
+     "BA": {
+      "n": 247,
+      "mediana": 31,
+      "acima45": 0.4008,
+      "acima90": 0.1498,
+      "publicavel": false,
+      "acimaDoPrazo": 0.2996
+     },
+     "CE": {
+      "n": 208,
+      "mediana": 39,
+      "acima45": 0.4038,
+      "acima90": 0.1779,
+      "publicavel": false,
+      "acimaDoPrazo": 0.2837
+     },
+     "DF": {
+      "n": 151,
+      "mediana": 29,
+      "acima45": 0.3444,
+      "acima90": 0.0861,
+      "publicavel": false,
+      "acimaDoPrazo": 0.2185
+     },
+     "ES": {
+      "n": 294,
+      "mediana": 30,
+      "acima45": 0.2959,
+      "acima90": 0.051,
+      "publicavel": false,
+      "acimaDoPrazo": 0.1905
+     },
+     "GO": {
+      "n": 280,
+      "mediana": 28,
+      "acima45": 0.3036,
+      "acima90": 0.05,
+      "publicavel": false,
+      "acimaDoPrazo": 0.2036
+     },
+     "MA": {
+      "n": 71,
+      "mediana": 43,
+      "acima45": 0.4507,
+      "acima90": 0.1549,
+      "publicavel": false,
+      "acimaDoPrazo": 0.3803
+     },
+     "MG": {
+      "n": 1301,
+      "mediana": 27,
+      "acima45": 0.2767,
+      "acima90": 0.0469,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1852
+     },
+     "MS": {
+      "n": 264,
+      "mediana": 31,
+      "acima45": 0.3295,
+      "acima90": 0.0682,
+      "publicavel": false,
+      "acimaDoPrazo": 0.2197
+     },
+     "MT": {
+      "n": 237,
+      "mediana": 28,
+      "acima45": 0.3038,
+      "acima90": 0.0633,
+      "publicavel": false,
+      "acimaDoPrazo": 0.1899
+     },
+     "PA": {
+      "n": 119,
+      "mediana": 31,
+      "acima45": 0.3109,
+      "acima90": 0.0756,
+      "publicavel": false,
+      "acimaDoPrazo": 0.1933
+     },
+     "PB": {
+      "n": 138,
+      "mediana": 43,
+      "acima45": 0.4783,
+      "acima90": 0.1739,
+      "publicavel": false,
+      "acimaDoPrazo": 0.3551
+     },
+     "PE": {
+      "n": 395,
+      "mediana": 35,
+      "acima45": 0.4177,
+      "acima90": 0.1797,
+      "publicavel": false,
+      "acimaDoPrazo": 0.2962
+     },
+     "PI": {
+      "n": 63,
+      "mediana": 44,
+      "acima45": 0.4921,
+      "acima90": 0.127,
+      "publicavel": false,
+      "acimaDoPrazo": 0.3492
+     },
+     "PR": {
+      "n": 703,
+      "mediana": 23,
+      "acima45": 0.2276,
+      "acima90": 0.0555,
+      "publicavel": false,
+      "acimaDoPrazo": 0.138
+     },
+     "RJ": {
+      "n": 385,
+      "mediana": 30,
+      "acima45": 0.3247,
+      "acima90": 0.0831,
+      "publicavel": false,
+      "acimaDoPrazo": 0.2208
+     },
+     "RN": {
+      "n": 86,
+      "mediana": 34,
+      "acima45": 0.3372,
+      "acima90": 0.0814,
+      "publicavel": false,
+      "acimaDoPrazo": 0.2093
+     },
+     "RO": {
+      "n": 106,
+      "mediana": 32,
+      "acima45": 0.3774,
+      "acima90": 0.1038,
+      "publicavel": false,
+      "acimaDoPrazo": 0.1981
+     },
+     "RR": {
+      "n": 32,
+      "mediana": 32,
+      "acima45": 0.375,
+      "acima90": 0.0625,
+      "publicavel": false,
+      "acimaDoPrazo": 0.1875
+     },
+     "RS": {
+      "n": 653,
+      "mediana": 24,
+      "acima45": 0.2343,
+      "acima90": 0.0521,
+      "publicavel": false,
+      "acimaDoPrazo": 0.1501
+     },
+     "SC": {
+      "n": 479,
+      "mediana": 23,
+      "acima45": 0.2067,
+      "acima90": 0.0313,
+      "publicavel": false,
+      "acimaDoPrazo": 0.1211
+     },
+     "SE": {
+      "n": 60,
+      "mediana": 38,
+      "acima45": 0.4167,
+      "acima90": 0.1333,
+      "publicavel": false,
+      "acimaDoPrazo": 0.3167
+     },
+     "SP": {
+      "n": 1859,
+      "mediana": 23,
+      "acima45": 0.2335,
+      "acima90": 0.0473,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1495
+     },
+     "TO": {
+      "n": 78,
+      "mediana": 38,
+      "acima45": 0.4615,
+      "acima90": 0.0897,
+      "publicavel": false,
+      "acimaDoPrazo": 0.3077
+     }
+    }
    },
    "negados": {
     "n": 4684,
@@ -634,13 +4174,206 @@
       "n": 194,
       "mediana": 65,
       "acima45": 0.7165,
+      "acima90": 0.2216,
       "publicavel": false
      },
      "urbano": {
       "n": 4490,
       "mediana": 45,
       "acima45": 0.4984,
+      "acima90": 0.1102,
       "publicavel": true
+     }
+    },
+    "porUf": {
+     "AC": {
+      "n": 24,
+      "mediana": 62,
+      "acima45": 0.6667,
+      "acima90": 0.25,
+      "publicavel": false
+     },
+     "AL": {
+      "n": 41,
+      "mediana": 56,
+      "acima45": 0.6341,
+      "acima90": 0.1707,
+      "publicavel": false
+     },
+     "AM": {
+      "n": 30,
+      "mediana": 53,
+      "acima45": 0.5667,
+      "acima90": 0.2333,
+      "publicavel": false
+     },
+     "AP": {
+      "n": 11,
+      "mediana": 79,
+      "acima45": 0.7273,
+      "acima90": 0.3636,
+      "publicavel": false
+     },
+     "BA": {
+      "n": 124,
+      "mediana": 69,
+      "acima45": 0.6452,
+      "acima90": 0.2661,
+      "publicavel": false
+     },
+     "CE": {
+      "n": 84,
+      "mediana": 71,
+      "acima45": 0.7262,
+      "acima90": 0.2024,
+      "publicavel": false
+     },
+     "DF": {
+      "n": 95,
+      "mediana": 58,
+      "acima45": 0.6316,
+      "acima90": 0.1579,
+      "publicavel": false
+     },
+     "ES": {
+      "n": 132,
+      "mediana": 56,
+      "acima45": 0.5909,
+      "acima90": 0.1061,
+      "publicavel": false
+     },
+     "GO": {
+      "n": 100,
+      "mediana": 49,
+      "acima45": 0.58,
+      "acima90": 0.13,
+      "publicavel": false
+     },
+     "MA": {
+      "n": 41,
+      "mediana": 60,
+      "acima45": 0.7317,
+      "acima90": 0.2195,
+      "publicavel": false
+     },
+     "MG": {
+      "n": 634,
+      "mediana": 52,
+      "acima45": 0.5757,
+      "acima90": 0.1167,
+      "publicavel": false
+     },
+     "MS": {
+      "n": 111,
+      "mediana": 59,
+      "acima45": 0.6216,
+      "acima90": 0.1622,
+      "publicavel": false
+     },
+     "MT": {
+      "n": 128,
+      "mediana": 52,
+      "acima45": 0.5938,
+      "acima90": 0.1172,
+      "publicavel": false
+     },
+     "PA": {
+      "n": 61,
+      "mediana": 54,
+      "acima45": 0.6721,
+      "acima90": 0.2131,
+      "publicavel": false
+     },
+     "PB": {
+      "n": 55,
+      "mediana": 71,
+      "acima45": 0.7636,
+      "acima90": 0.2727,
+      "publicavel": false
+     },
+     "PE": {
+      "n": 155,
+      "mediana": 56,
+      "acima45": 0.6452,
+      "acima90": 0.1677,
+      "publicavel": false
+     },
+     "PI": {
+      "n": 40,
+      "mediana": 64,
+      "acima45": 0.75,
+      "acima90": 0.2,
+      "publicavel": false
+     },
+     "PR": {
+      "n": 419,
+      "mediana": 43,
+      "acima45": 0.4749,
+      "acima90": 0.1026,
+      "publicavel": false
+     },
+     "RJ": {
+      "n": 228,
+      "mediana": 46,
+      "acima45": 0.5263,
+      "acima90": 0.114,
+      "publicavel": false
+     },
+     "RN": {
+      "n": 53,
+      "mediana": 60,
+      "acima45": 0.717,
+      "acima90": 0.1887,
+      "publicavel": false
+     },
+     "RO": {
+      "n": 49,
+      "mediana": 67,
+      "acima45": 0.6939,
+      "acima90": 0.2245,
+      "publicavel": false
+     },
+     "RR": {
+      "n": 9,
+      "mediana": 51,
+      "acima45": 0.5556,
+      "acima90": 0.2222,
+      "publicavel": false
+     },
+     "RS": {
+      "n": 397,
+      "mediana": 42,
+      "acima45": 0.4534,
+      "acima90": 0.0655,
+      "publicavel": false
+     },
+     "SC": {
+      "n": 262,
+      "mediana": 39,
+      "acima45": 0.4046,
+      "acima90": 0.0687,
+      "publicavel": false
+     },
+     "SE": {
+      "n": 30,
+      "mediana": 63,
+      "acima45": 0.7333,
+      "acima90": 0.2333,
+      "publicavel": false
+     },
+     "SP": {
+      "n": 1329,
+      "mediana": 35,
+      "acima45": 0.3672,
+      "acima90": 0.0707,
+      "publicavel": true
+     },
+     "TO": {
+      "n": 41,
+      "mediana": 60,
+      "acima45": 0.6585,
+      "acima90": 0.1463,
+      "publicavel": false
      }
     }
    }
@@ -668,6 +4401,7 @@
       "n": 2428,
       "mediana": 178,
       "acima45": 0.8517,
+      "acima90": 0.7236,
       "publicavel": true
      },
      {
@@ -676,9 +4410,228 @@
       "n": 147,
       "mediana": 249,
       "acima45": 0.9184,
+      "acima90": 0.7823,
       "publicavel": false
      }
-    ]
+    ],
+    "porUf": {
+     "AC": {
+      "n": 6,
+      "mediana": 77,
+      "acima45": 0.8333,
+      "acima90": 0.3333,
+      "publicavel": false,
+      "acimaDoPrazo": null
+     },
+     "AL": {
+      "n": 46,
+      "mediana": 659,
+      "acima45": 0.8913,
+      "acima90": 0.7826,
+      "publicavel": false,
+      "acimaDoPrazo": null
+     },
+     "AM": {
+      "n": 37,
+      "mediana": 94,
+      "acima45": 0.8378,
+      "acima90": 0.5405,
+      "publicavel": false,
+      "acimaDoPrazo": null
+     },
+     "AP": {
+      "n": 8,
+      "mediana": 69,
+      "acima45": 0.875,
+      "acima90": 0.5,
+      "publicavel": false,
+      "acimaDoPrazo": null
+     },
+     "BA": {
+      "n": 189,
+      "mediana": 318,
+      "acima45": 0.9101,
+      "acima90": 0.7725,
+      "publicavel": false,
+      "acimaDoPrazo": null
+     },
+     "CE": {
+      "n": 118,
+      "mediana": 326,
+      "acima45": 0.9068,
+      "acima90": 0.8136,
+      "publicavel": false,
+      "acimaDoPrazo": null
+     },
+     "DF": {
+      "n": 54,
+      "mediana": 121,
+      "acima45": 0.8148,
+      "acima90": 0.6111,
+      "publicavel": false,
+      "acimaDoPrazo": null
+     },
+     "ES": {
+      "n": 50,
+      "mediana": 281,
+      "acima45": 0.82,
+      "acima90": 0.78,
+      "publicavel": false,
+      "acimaDoPrazo": null
+     },
+     "GO": {
+      "n": 85,
+      "mediana": 110,
+      "acima45": 0.8,
+      "acima90": 0.5647,
+      "publicavel": false,
+      "acimaDoPrazo": null
+     },
+     "MA": {
+      "n": 77,
+      "mediana": 262,
+      "acima45": 0.8831,
+      "acima90": 0.7662,
+      "publicavel": false,
+      "acimaDoPrazo": null
+     },
+     "MG": {
+      "n": 283,
+      "mediana": 430,
+      "acima45": 0.8905,
+      "acima90": 0.7986,
+      "publicavel": false,
+      "acimaDoPrazo": null
+     },
+     "MS": {
+      "n": 34,
+      "mediana": 76,
+      "acima45": 0.7353,
+      "acima90": 0.5,
+      "publicavel": false,
+      "acimaDoPrazo": null
+     },
+     "MT": {
+      "n": 34,
+      "mediana": 121,
+      "acima45": 0.7647,
+      "acima90": 0.6176,
+      "publicavel": false,
+      "acimaDoPrazo": null
+     },
+     "PA": {
+      "n": 71,
+      "mediana": 107,
+      "acima45": 0.8873,
+      "acima90": 0.6197,
+      "publicavel": false,
+      "acimaDoPrazo": null
+     },
+     "PB": {
+      "n": 57,
+      "mediana": 275,
+      "acima45": 0.8947,
+      "acima90": 0.7895,
+      "publicavel": false,
+      "acimaDoPrazo": null
+     },
+     "PE": {
+      "n": 127,
+      "mediana": 335,
+      "acima45": 0.9213,
+      "acima90": 0.811,
+      "publicavel": false,
+      "acimaDoPrazo": null
+     },
+     "PI": {
+      "n": 38,
+      "mediana": 463,
+      "acima45": 0.9211,
+      "acima90": 0.7895,
+      "publicavel": false,
+      "acimaDoPrazo": null
+     },
+     "PR": {
+      "n": 143,
+      "mediana": 158,
+      "acima45": 0.8252,
+      "acima90": 0.7133,
+      "publicavel": false,
+      "acimaDoPrazo": null
+     },
+     "RJ": {
+      "n": 262,
+      "mediana": 248,
+      "acima45": 0.9008,
+      "acima90": 0.7863,
+      "publicavel": false,
+      "acimaDoPrazo": null
+     },
+     "RN": {
+      "n": 33,
+      "mediana": 322,
+      "acima45": 0.8485,
+      "acima90": 0.7576,
+      "publicavel": false,
+      "acimaDoPrazo": null
+     },
+     "RO": {
+      "n": 21,
+      "mediana": 134,
+      "acima45": 0.8095,
+      "acima90": 0.619,
+      "publicavel": false,
+      "acimaDoPrazo": null
+     },
+     "RR": {
+      "n": 7,
+      "mediana": 131,
+      "acima45": 0.8571,
+      "acima90": 0.7143,
+      "publicavel": false,
+      "acimaDoPrazo": null
+     },
+     "RS": {
+      "n": 173,
+      "mediana": 150,
+      "acima45": 0.815,
+      "acima90": 0.6763,
+      "publicavel": false,
+      "acimaDoPrazo": null
+     },
+     "SC": {
+      "n": 123,
+      "mediana": 149,
+      "acima45": 0.8211,
+      "acima90": 0.6829,
+      "publicavel": false,
+      "acimaDoPrazo": null
+     },
+     "SE": {
+      "n": 31,
+      "mediana": 289,
+      "acima45": 0.9677,
+      "acima90": 0.8387,
+      "publicavel": false,
+      "acimaDoPrazo": null
+     },
+     "SP": {
+      "n": 456,
+      "mediana": 198,
+      "acima45": 0.7961,
+      "acima90": 0.6952,
+      "publicavel": false,
+      "acimaDoPrazo": null
+     },
+     "TO": {
+      "n": 12,
+      "mediana": 112,
+      "acima45": 0.8333,
+      "acima90": 0.6667,
+      "publicavel": false,
+      "acimaDoPrazo": null
+     }
+    }
    },
    "negados": {
     "n": 611,
@@ -693,12 +4646,198 @@
       "n": 7,
       "mediana": 0,
       "acima45": 0.1429,
+      "acima90": 0.1429,
       "publicavel": false
      },
      "urbano": {
       "n": 604,
       "mediana": 34,
       "acima45": 0.4619,
+      "acima90": 0.3593,
+      "publicavel": false
+     }
+    },
+    "porUf": {
+     "AL": {
+      "n": 3,
+      "mediana": 0,
+      "acima45": 0.3333,
+      "acima90": 0.3333,
+      "publicavel": false
+     },
+     "AM": {
+      "n": 10,
+      "mediana": 228,
+      "acima45": 0.9,
+      "acima90": 0.9,
+      "publicavel": false
+     },
+     "AP": {
+      "n": 5,
+      "mediana": 2,
+      "acima45": 0.4,
+      "acima90": 0.4,
+      "publicavel": false
+     },
+     "BA": {
+      "n": 24,
+      "mediana": 0,
+      "acima45": 0.4583,
+      "acima90": 0.4583,
+      "publicavel": false
+     },
+     "CE": {
+      "n": 12,
+      "mediana": 1,
+      "acima45": 0.3333,
+      "acima90": 0.3333,
+      "publicavel": false
+     },
+     "DF": {
+      "n": 18,
+      "mediana": 1,
+      "acima45": 0.3889,
+      "acima90": 0.3889,
+      "publicavel": false
+     },
+     "ES": {
+      "n": 13,
+      "mediana": 39,
+      "acima45": 0.3846,
+      "acima90": 0.2308,
+      "publicavel": false
+     },
+     "GO": {
+      "n": 20,
+      "mediana": 132,
+      "acima45": 0.55,
+      "acima90": 0.55,
+      "publicavel": false
+     },
+     "MA": {
+      "n": 11,
+      "mediana": 2,
+      "acima45": 0.4545,
+      "acima90": 0.4545,
+      "publicavel": false
+     },
+     "MG": {
+      "n": 52,
+      "mediana": 34,
+      "acima45": 0.3654,
+      "acima90": 0.25,
+      "publicavel": false
+     },
+     "MS": {
+      "n": 3,
+      "mediana": 0,
+      "acima45": 0.3333,
+      "acima90": 0.3333,
+      "publicavel": false
+     },
+     "MT": {
+      "n": 12,
+      "mediana": 2,
+      "acima45": 0.4167,
+      "acima90": 0.4167,
+      "publicavel": false
+     },
+     "PA": {
+      "n": 17,
+      "mediana": 162,
+      "acima45": 0.7059,
+      "acima90": 0.7059,
+      "publicavel": false
+     },
+     "PB": {
+      "n": 5,
+      "mediana": 0,
+      "acima45": 0.2,
+      "acima90": 0.2,
+      "publicavel": false
+     },
+     "PE": {
+      "n": 25,
+      "mediana": 2,
+      "acima45": 0.48,
+      "acima90": 0.48,
+      "publicavel": false
+     },
+     "PI": {
+      "n": 7,
+      "mediana": 1,
+      "acima45": 0.4286,
+      "acima90": 0.4286,
+      "publicavel": false
+     },
+     "PR": {
+      "n": 57,
+      "mediana": 132,
+      "acima45": 0.7368,
+      "acima90": 0.5789,
+      "publicavel": false
+     },
+     "RJ": {
+      "n": 43,
+      "mediana": 0,
+      "acima45": 0.1395,
+      "acima90": 0.0698,
+      "publicavel": false
+     },
+     "RN": {
+      "n": 2,
+      "mediana": 0,
+      "acima45": 0.0,
+      "acima90": 0.0,
+      "publicavel": false
+     },
+     "RO": {
+      "n": 4,
+      "mediana": 273,
+      "acima45": 0.75,
+      "acima90": 0.75,
+      "publicavel": false
+     },
+     "RR": {
+      "n": 2,
+      "mediana": 121,
+      "acima45": 1.0,
+      "acima90": 1.0,
+      "publicavel": false
+     },
+     "RS": {
+      "n": 63,
+      "mediana": 132,
+      "acima45": 0.746,
+      "acima90": 0.5714,
+      "publicavel": false
+     },
+     "SC": {
+      "n": 51,
+      "mediana": 82,
+      "acima45": 0.6667,
+      "acima90": 0.4902,
+      "publicavel": false
+     },
+     "SE": {
+      "n": 2,
+      "mediana": 0,
+      "acima45": 0.0,
+      "acima90": 0.0,
+      "publicavel": false
+     },
+     "SP": {
+      "n": 148,
+      "mediana": 2,
+      "acima45": 0.2432,
+      "acima90": 0.0946,
+      "publicavel": false
+     },
+     "TO": {
+      "n": 2,
+      "mediana": 120,
+      "acima45": 1.0,
+      "acima90": 1.0,
       "publicavel": false
      }
     }

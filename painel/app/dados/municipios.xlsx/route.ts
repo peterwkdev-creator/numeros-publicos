@@ -1,5 +1,5 @@
 import { dataCurta, expandir } from "../../../lib/dados";
-import { funcoesDe, indexarFiscal, naoInstaladosEm, receitaDe, ROTULO_FAIXA } from "../../../lib/fiscal";
+import { funcoesDe, indexarFiscal, naoInstaladosEm, nomeQuadrimestre, receitaDe, ROTULO_FAIXA } from "../../../lib/fiscal";
 import { trajetoriaDe } from "../../../lib/ideb";
 import {
   lerCaged, lerEmendas, lerFiscal, lerIdeb, lerSnapshot, SITE,
@@ -69,6 +69,8 @@ export async function GET() {
     "Caged: admissões em 12 meses", "Caged: desligamentos em 12 meses",
     "Caged: saldo em 12 meses", "Caged: saldo do último mês",
     // No fim, como no CSV: coluna nova no meio desloca as de quem já baixou.
+    // Antes das emendas, que ganham uma coluna por ano. Ver o CSV.
+    "Relatório do pessoal",
     ...emendas.anos.map(rotuloEmendas),
   ];
 
@@ -103,6 +105,8 @@ export async function GET() {
       ...((cg) => [cg?.admissoes ?? null, cg?.desligamentos ?? null,
                    cg?.saldo ?? null, cg?.ultimo.saldo ?? null])(
         cagedDe(caged, m.codigo)),
+      f?.simplificado ? "RGF Simplificado, 2º semestre"
+        : f?.publicou ? "RGF quadrimestral" : null,
       ...(emendasDe(emendas, m.codigo)?.anos.map((a) => a.reais) ??
         emendas.anos.map(() => null)),
     ];
@@ -141,18 +145,18 @@ export async function GET() {
        "—", "calculado"],
       ["Despesa liquidada total (R$)",
        "O que de fato foi gasto no exercício até o bimestre — não o orçado nem o empenhado. Acumulado no ano.",
-       "R$", "SICONFI — RREO Anexo 02"],
-      ["Educação (R$)", "Despesa liquidada na função orçamentária Educação.", "R$", "SICONFI — RREO Anexo 02"],
-      ["Saúde (R$)", "Despesa liquidada na função orçamentária Saúde.", "R$", "SICONFI — RREO Anexo 02"],
+       "R$", "SICONFI — RREO ou RREO Simplificado, Anexo 02"],
+      ["Educação (R$)", "Despesa liquidada na função orçamentária Educação.", "R$", "SICONFI — RREO ou RREO Simplificado, Anexo 02"],
+      ["Saúde (R$)", "Despesa liquidada na função orçamentária Saúde.", "R$", "SICONFI — RREO ou RREO Simplificado, Anexo 02"],
       ["Receita corrente total (R$)",
        "O que de fato entrou no caixa até o bimestre, acumulado no ano — não o que foi orçado. Só receita CORRENTE: não inclui empréstimos nem venda de bens, que são receita de capital e não custeiam o dia a dia.",
-       "R$", "SICONFI — RREO Anexo 01"],
+       "R$", "SICONFI — RREO ou RREO Simplificado, Anexo 01"],
       ["Transferências correntes (R$)",
        "O que a União, o estado e os fundos repassam. É a maior origem na esmagadora maioria dos municípios brasileiros.",
-       "R$", "SICONFI — RREO Anexo 01"],
+       "R$", "SICONFI — RREO ou RREO Simplificado, Anexo 01"],
       ["Impostos, taxas e contribuição de melhoria (R$)",
        "O que o próprio município cobra de quem mora e trabalha nele. ATENÇÃO: esta coluna e a anterior NÃO somam a receita corrente total — há outras seis origens (contribuições, patrimonial, agropecuária, industrial, serviços e outras receitas correntes) que não cabem nesta planilha. Para a decomposição completa, use o CSV de cada município.",
-       "R$", "SICONFI — RREO Anexo 01"],
+       "R$", "SICONFI — RREO ou RREO Simplificado, Anexo 01"],
       ["IDEB anos iniciais", "Índice da rede MUNICIPAL, 1º ao 5º ano. Escala de 0 a 10.", "índice", "INEP"],
       ["IDEB anos finais",
        "Índice da rede MUNICIPAL, 6º ao 9º ano. NÃO se compara com os anos iniciais: provas e escalas próprias.",
@@ -187,6 +191,9 @@ export async function GET() {
         "R$", "CGU — Portal da Transparência",
       ]),
       [],
+      ["Relatório do pessoal",
+       "De qual relatório vêm as quatro colunas de pessoal. Município com menos de 50 mil habitantes pode optar pelo RGF Simplificado, semestral: para ele o número é do 2º semestre, que cobre os mesmos 12 meses até dezembro do 3º quadrimestre. Vazio: não entregou nenhum dos dois.",
+       "—", "SICONFI — RGF Anexo 01"],
       ["Célula vazia", "Significa AUSÊNCIA, nunca zero. O dado não existe na fonte.", "—", "—"],
     ],
   };
@@ -199,7 +206,7 @@ export async function GET() {
       ["Fonte", "O que traz", "Coletado em"],
       [snapshot.fonte, "População, PIB e estimativa populacional", snapshot.geradoEm.slice(0, 10)],
       [fiscal.fonte,
-       `Despesa com pessoal, ${fiscal.periodo}º quadrimestre de ${fiscal.exercicio}`,
+       `Despesa com pessoal, ${nomeQuadrimestre(fiscal.exercicio, fiscal.periodo)} (ou o 2º semestre, no RGF Simplificado)`,
        fiscal.coletadoEm?.slice(0, 10) ?? "—"],
       // A serie inteira, uma linha por exercicio: a procedencia tem de dizer
       // de QUANDO e cada numero, e um so ano esconderia os outros quatro.

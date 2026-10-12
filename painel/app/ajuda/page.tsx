@@ -3,11 +3,11 @@ import Link from "next/link";
 
 import { br, dataCurta, expandir, inteiroImpresso, periodoDe } from "../../lib/dados";
 import {
-  faixaDaLinha, FUNCOES_DA_PORTARIA, LIMITE_PLAUSIVEL,
+  faixaDaLinha, FUNCOES_DA_PORTARIA, LIMITE_PLAUSIVEL, nomeQuadrimestre,
 } from "../../lib/fiscal";
 import { conjuntoDoSite, siteDe, trilha } from "../../lib/jsonld";
 import { gruposComPagina } from "../../lib/inss";
-import { lerFiscal, lerIdeb, lerInss, lerSnapshot, SITE } from "../../lib/servidor";
+import { cartaoSocial, lerFiscal, lerIdeb, lerInss, lerSnapshot, SITE } from "../../lib/servidor";
 import estilos from "./ajuda.module.css";
 import { anteriorDeFuncoes, atualDeFuncoes, naoInstaladosEm } from "../../lib/fiscal";
 import { glossarioAZ, idDoVerbete } from "../../lib/glossario";
@@ -46,13 +46,13 @@ export const metadata: Metadata = {
     "O que significa cada número: RCL ajustada, limite prudencial, despesa " +
     "liquidada, IDEB, e por que às vezes aparece um travessão.",
   alternates: { canonical: `${SITE}/ajuda/` },
-  openGraph: {
-    title: TITULO,
-    description: "Como ler os números, de onde eles vêm e o que fazer com eles.",
-    url: `${SITE}/ajuda/`,
-    locale: "pt_BR",
-    type: "article",
-  },
+  // Pelo `cartaoSocial`, como as outras páginas: o `openGraph` à mão deixava o
+  // `twitter:title` herdado do layout.
+  ...cartaoSocial(
+    TITULO,
+    "Como ler os números, de onde eles vêm e o que fazer com eles.",
+    "/ajuda/",
+  ),
 };
 
 export default async function PaginaAjuda() {
@@ -67,7 +67,9 @@ export default async function PaginaAjuda() {
   const naoInstalados = naoInstaladosEm(fiscal.exercicio);
   const obrigados = c.consultados - naoInstalados;
   const naoPublicaram = obrigados - c.publicaram;
-  const quadrimestre = `${fiscal.periodo}º quadrimestre de ${fiscal.exercicio}`;
+  // Quem entregou o RGF Simplificado semestral no lugar do quadrimestral.
+  const simplificados = fiscal.municipios.filter((l) => l[9] === true).length;
+  const quadrimestre = nomeQuadrimestre(fiscal.exercicio, fiscal.periodo);
   const f = fiscal.funcoes;
 
   // O efeito real dos implausíveis sobre a média nacional, CALCULADO.
@@ -167,7 +169,7 @@ export default async function PaginaAjuda() {
           <li><a href="#travessao">Por que aparece “—” no lugar de um número</a></li>
           <li><a href="#mediana">Média, mediana e pontos percentuais</a></li>
           <li><a href="#relatorios">Os relatórios fiscais: RGF, RREO e o SICONFI</a></li>
-          <li><a href="#pessoal">Despesa com pessoal, RCL e os dois limites</a></li>
+          <li><a href="#pessoal">Gasto com pessoal, RCL e os dois limites</a></li>
           <li><a href="#implausivel">O que quer dizer “valor implausível”</a></li>
           <li><a href="#funcao">Despesa por função, e o que é “liquidada”</a></li>
           <li><a href="#comparacao">Por que a comparação é entre anos</a></li>
@@ -213,6 +215,12 @@ export default async function PaginaAjuda() {
           </Link>
         </h3>
         <ListaComoLer tipo="ranking" naAjuda />
+        <h3 className={estilos.subtitulo}>
+          <Link href="/ranking/emprego-com-carteira/" prefetch={false}>
+            O ranking do emprego com carteira
+          </Link>
+        </h3>
+        <ListaComoLer tipo="rankingEmprego" naAjuda />
       </section>
 
       <section className={estilos.bloco} id="travessao">
@@ -224,11 +232,12 @@ export default async function PaginaAjuda() {
         <p>
           No {quadrimestre}, <strong>{br(naoPublicaram)}</strong> dos{" "}
           {br(obrigados)} municípios consultados
-          {naoInstalados > 0 && " que já estavam instalados"} não têm o Relatório
-          de Gestão Fiscal quadrimestral no SICONFI. Isso não significa que
-          gastem zero com pessoal: significa que o site não tem o número.
-          Parte deles tem menos de 50 mil habitantes e pode ter optado pelo
-          relatório semestral simplificado, que o site ainda não lê (veja{" "}
+          {naoInstalados > 0 && " que já estavam instalados"} não têm no
+          SICONFI nem o Relatório de Gestão Fiscal quadrimestral nem o
+          semestral simplificado. Isso não significa que gastem zero com
+          pessoal: significa que o site não tem o número. Outros{" "}
+          <strong>{br(simplificados)}</strong> entregaram só o simplificado, e o
+          número deles aparece normalmente (veja{" "}
           <a href="#relatorios">os relatórios fiscais</a>).
         </p>
         <p>
@@ -243,8 +252,8 @@ export default async function PaginaAjuda() {
         <ul className={estilos.lista}>
           <li>
             <strong>Sem relatório entregue</strong> — perguntamos pelo
-            relatório quadrimestral, e ele não está no SICONFI. Ou o município
-            não o entregou, ou optou pelo semestral simplificado.
+            relatório quadrimestral e pelo semestral simplificado, e nenhum dos
+            dois está no SICONFI.
           </li>
           <li>
             <strong>Ainda não consultado</strong> — nós é que ainda não
@@ -315,15 +324,20 @@ export default async function PaginaAjuda() {
             os limites da lei. O município com menos de 50 mil habitantes pode
             optar por publicá-lo a cada <strong>semestre</strong>, numa versão
             simplificada (art. 63 da lei).{" "}
-            <strong>O site, por ora, lê só o quadrimestral</strong>: quem
-            optou pelo semestral aparece sem o número.
+            Para quem optou pelo semestral, o site lê o{" "}
+            <strong>do 2º semestre</strong>, que cobre os mesmos 12 meses do 3º
+            quadrimestre: foram <strong>{br(simplificados)}</strong> municípios
+            em {fiscal.exercicio}. Nos dois primeiros quadrimestres eles ficam
+            sem ponto na série, porque nenhum semestre coincide com eles.
           </li>
           <li>
             <strong>RREO, o Relatório Resumido da Execução
             Orçamentária</strong> — a cada <strong>bimestre</strong>, com a
             receita e a despesa acumuladas desde janeiro. Dele vêm{" "}
             <a href="#funcao">a despesa por função</a> e a composição da
-            receita. O último bimestre do ano traz o ano inteiro.
+            receita. O último bimestre do ano traz o ano inteiro. Quem optou
+            pelo RGF semestral entrega o <strong>RREO Simplificado</strong>,
+            que continua bimestral e tem as mesmas contas: o site lê os dois.
           </li>
         </ul>
         <p>
@@ -334,7 +348,7 @@ export default async function PaginaAjuda() {
       </section>
 
       <section className={estilos.bloco} id="pessoal">
-        <h2>Despesa com pessoal, RCL e os dois limites</h2>
+        <h2>Gasto com pessoal, RCL e os dois limites</h2>
         <p>
           <strong>Receita corrente líquida (RCL)</strong> é o que sobra da
           arrecadação do município depois de descontar transferências que ele é
@@ -344,7 +358,8 @@ export default async function PaginaAjuda() {
         </p>
         <p>
           O percentual que este site mostra é{" "}
-          <strong>despesa com pessoal ÷ RCL ajustada</strong>. A Lei de
+          <strong>gasto com pessoal ÷ RCL ajustada</strong> (a lei diz
+          <em>despesa com pessoal</em>). A Lei de
           Responsabilidade Fiscal fixa dois patamares para o Executivo
           municipal:
         </p>
@@ -668,6 +683,14 @@ export default async function PaginaAjuda() {
             meses juntos dizem mais.
           </li>
         </ul>
+        <p>
+          <Link href="/ranking/emprego-com-carteira/" prefetch={false}>
+            O ranking do emprego com carteira
+          </Link>{" "}
+          põe os municípios lado a lado: os maiores e os menores saldos dos 12
+          meses, e o saldo por mil habitantes nas cidades de 100 mil
+          habitantes ou mais.
+        </p>
       </section>
 
       <section className={estilos.bloco} id="brasil">

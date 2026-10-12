@@ -16,6 +16,9 @@
  *   a competência mais recente, que ainda pode mudar no mês seguinte.
  */
 
+import { rotuloPeriodo } from "./brasil";
+import type { Snapshot } from "./dados";
+
 /** `[código IBGE, admissões × 12, desligamentos × 12]`, do mês mais velho ao mais novo. */
 export type LinhaCaged = [number, number[], number[]];
 
@@ -62,9 +65,12 @@ export function nomeCompetencia(c: string): string {
   return `${NOMES[Number(c.slice(4)) - 1]} de ${c.slice(0, 4)}`;
 }
 
-/** `"202607"` → `"jul/2026"`, para a coluna da tabela. */
+/**
+ * `"202607"` → `"jul. 2026"`, para a coluna da tabela: a mesma abreviatura
+ * das séries do Brasil (`rotuloPeriodo`), com ponto e "maio" inteiro.
+ */
 export function competenciaCurta(c: string): string {
-  return `${NOMES[Number(c.slice(4)) - 1]!.slice(0, 3)}/${c.slice(0, 4)}`;
+  return rotuloPeriodo(`${c.slice(0, 4)}-${c.slice(4)}`);
 }
 
 /**
@@ -101,6 +107,45 @@ export function cagedDe(c: SnapshotCaged, codigo: number): CagedMunicipio | null
 }
 
 /**
+ * Os 12 meses de um conjunto de municípios (os de um estado), somados, e
+ * quantos deles fecharam a janela com saldo positivo.
+ *
+ * É a soma dos municípios, e não o número do estado no sumário do MTE: as
+ * movimentações sem município identificado (`naoIdentificado`, só no total do
+ * país) ficam de fora, e a página diz isso. Código ausente do arquivo não
+ * conta como zero nem entra no denominador de `positivos`.
+ */
+export function cagedDeVarios(
+  c: SnapshotCaged, codigos: Iterable<number>,
+): (CagedMunicipio & { comDado: number; positivos: number }) | null {
+  const n = c.competencias.length;
+  const adm = new Array<number>(n).fill(0);
+  const des = new Array<number>(n).fill(0);
+  let comDado = 0;
+  let positivos = 0;
+  for (const codigo of codigos) {
+    const um = cagedDe(c, codigo);
+    if (!um) continue;
+    comDado += 1;
+    if (um.saldo > 0) positivos += 1;
+    um.meses.forEach((m, i) => {
+      adm[i]! += m.admissoes;
+      des[i]! += m.desligamentos;
+    });
+  }
+  if (comDado === 0) return null;
+  const meses = c.competencias.map((competencia, i) => ({
+    competencia, admissoes: adm[i]!, desligamentos: des[i]!, saldo: adm[i]! - des[i]!,
+  }));
+  const admissoes = adm.reduce((s, x) => s + x, 0);
+  const desligamentos = des.reduce((s, x) => s + x, 0);
+  return {
+    meses, admissoes, desligamentos, saldo: admissoes - desligamentos,
+    ultimo: meses[n - 1]!, comDado, positivos,
+  };
+}
+
+/**
  * Os 12 meses do PAÍS, somando os municípios e o "não identificado".
  *
  * Existe para a página poder dizer o total nacional **a partir do dado**, e
@@ -122,4 +167,82 @@ export function totalDoPais(c: SnapshotCaged): Bloco {
 /** `1 admissão`, `0 admissões`, `1.234 admissões`: o plural sai do número. */
 export function contagem(n: number, singular: string, plural: string): string {
   return `${n.toLocaleString("pt-BR")} ${n === 1 ? singular : plural}`;
+}
+
+/**
+ * Abaixo disto o saldo por mil habitantes não entra na lista: num município
+ * de 2 mil habitantes, uma empresa que abre ou fecha move o número por mil
+ * mais que a economia de uma capital, e o topo seria só de cidades pequenas.
+ */
+export const POPULACAO_MINIMA_POR_MIL = 100_000;
+
+export type LinhaRankingCaged = {
+  codigo: number;
+  nome: string;
+  uf: string;
+  saldo: number;
+  admissoes: number;
+  desligamentos: number;
+  /** A estimativa de população do IBGE, ou `null` se o snapshot não a tem. */
+  populacao: number | null;
+  /** Saldo por mil habitantes; `null` sem população. */
+  porMil: number | null;
+};
+
+export type RankingCaged = {
+  /** Todos os municípios do arquivo, do maior saldo ao menor. */
+  ordem: LinhaRankingCaged[];
+  positivos: number;
+  negativos: number;
+  zerados: number;
+  /** Só os de `POPULACAO_MINIMA_POR_MIL` habitantes ou mais, por mil desc. */
+  porMil: LinhaRankingCaged[];
+};
+
+/**
+ * O ranking dos 12 meses: o saldo de cada município, e o mesmo saldo por mil
+ * habitantes nas cidades grandes.
+ *
+ * Nome e UF vêm do snapshot do IBGE (de onde as páginas nascem), casados pelo
+ * código; o número vem de `cagedDe`, o mesmo da página do município. Código do
+ * Caged sem município no snapshot fica de fora: sem nome, não há o que listar.
+ * Empate de saldo desempata pelo nome e depois pelo código, para a ordem não
+ * depender da ordem do arquivo.
+ */
+export function rankingCaged(c: SnapshotCaged, identidade: Snapshot): RankingCaged {
+  const iPop = identidade.colunas.indexOf("populacao-estimada");
+  const nomes = new Map<number, { nome: string; uf: string; populacao: number | null }>();
+  for (const l of identidade.municipios) {
+    const pop = iPop < 0 ? null : l[iPop];
+    nomes.set(l[0] as number, {
+      nome: l[1] as string,
+      uf: l[2] as string,
+      populacao: typeof pop === "number" && pop > 0 ? pop : null,
+    });
+  }
+  const ordem: LinhaRankingCaged[] = [];
+  for (const l of c.municipios) {
+    const id = nomes.get(l[0]);
+    const um = cagedDe(c, l[0]);
+    if (!id || !um) continue;
+    ordem.push({
+      codigo: l[0], nome: id.nome, uf: id.uf,
+      saldo: um.saldo, admissoes: um.admissoes, desligamentos: um.desligamentos,
+      populacao: id.populacao,
+      porMil: id.populacao === null ? null : (um.saldo * 1000) / id.populacao,
+    });
+  }
+  const desempate = (a: LinhaRankingCaged, b: LinhaRankingCaged) =>
+    a.nome.localeCompare(b.nome, "pt-BR") || a.codigo - b.codigo;
+  ordem.sort((a, b) => b.saldo - a.saldo || desempate(a, b));
+  const porMil = ordem
+    .filter((x) => x.populacao !== null && x.populacao >= POPULACAO_MINIMA_POR_MIL)
+    .sort((a, b) => b.porMil! - a.porMil! || desempate(a, b));
+  return {
+    ordem,
+    positivos: ordem.filter((x) => x.saldo > 0).length,
+    negativos: ordem.filter((x) => x.saldo < 0).length,
+    zerados: ordem.filter((x) => x.saldo === 0).length,
+    porMil,
+  };
 }

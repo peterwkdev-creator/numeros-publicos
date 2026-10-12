@@ -7,6 +7,7 @@ import {
   dataBr, dias, grupoPorChave, gruposComPagina, mesPorExtenso, pct, tendencia,
   type GrupoInss, type SnapshotInss,
 } from "../../../lib/inss";
+import { deEstado, slugUf } from "../../../lib/estado";
 import { catalogoDe, trilha } from "../../../lib/jsonld";
 import { cartaoSocial, lerInss, SITE } from "../../../lib/servidor";
 import estilos from "./inss.module.css";
@@ -98,6 +99,21 @@ export default async function Pagina({ params }: Params) {
     : [];
   const mostraClientela = clientelas.length === 2 && clientelas.every(([, r]) => r?.publicavel);
   const frase = tendencia(g, s);
+  // Por estado da agência: só as UFs com algum lado acima do mínimo, em ordem
+  // de nome. Com menos de 5 UFs, a tabela diria pouco e a seção some.
+  const porEstado = Object.keys(f.porUf)
+    .map((uf) => {
+      const fu = f.porUf[uf];
+      const nu = neg?.porUf[uf];
+      return {
+        uf, nome: deEstado(uf).slice(3),
+        fila: fu?.publicavel ? fu : null,
+        negados: nu?.publicavel ? nu : null,
+      };
+    })
+    .filter((x) => x.fila || x.negados)
+    .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+  const estadosFora = Object.keys(f.porUf).length - porEstado.length;
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -133,6 +149,7 @@ export default async function Pagina({ params }: Params) {
             "@context": "https://schema.org",
             ...trilha(SITE, [
               { nome: "Números Públicos", caminho: "/" },
+              { nome: "INSS", caminho: "/inss/" },
               { nome: inicialMaiuscula(nome), caminho },
             ]),
           }),
@@ -140,6 +157,8 @@ export default async function Pagina({ params }: Params) {
       />
       <nav className={estilos.trilha} aria-label="Você está em">
         <Link href="/" prefetch={false}>Números Públicos</Link>
+        <span aria-hidden="true"> › </span>
+        <Link href="/inss/" prefetch={false}>INSS</Link>
         <span aria-hidden="true"> › </span>
         <span aria-current="page">{inicialMaiuscula(nome)}</span>
       </nav>
@@ -252,9 +271,9 @@ export default async function Pagina({ params }: Params) {
               <thead>
                 <tr>
                   <th scope="col">Serviço</th>
-                  <th scope="col" className={estilos.num}>Em espera</th>
+                  <th scope="col" className={estilos.num}>Pedidos em espera</th>
                   <th scope="col" className={estilos.num}>Metade espera há mais de</th>
-                  <th scope="col" className={estilos.num}>Há mais de 45 dias</th>
+                  <th scope="col" className={estilos.num}>Há mais de 90 dias (% dos pedidos)</th>
                 </tr>
               </thead>
               <tbody>
@@ -263,7 +282,7 @@ export default async function Pagina({ params }: Params) {
                     <th scope="row">{x.nome}</th>
                     <td className={`${estilos.num} tabular`}>{br(x.n)}</td>
                     <td className={`${estilos.num} tabular`}>{dias(x.mediana)}</td>
-                    <td className={`${estilos.num} tabular`}>{pct(x.acima45)}</td>
+                    <td className={`${estilos.num} tabular`}>{pct(x.acima90)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -278,20 +297,20 @@ export default async function Pagina({ params }: Params) {
           <div className={estilos.rolagem}>
             <table className={estilos.lista}>
               <caption>
-                Pedidos de {nome} negados em {mesPorExtenso(s.negados.mes)}, pela
-                clientela que o INSS registra.
+                Pedidos de {nome} negados em {mesPorExtenso(s.negados.mes)}, pelo
+                tipo de segurado que o INSS registra: urbano ou rural.
               </caption>
               <thead>
                 <tr>
-                  <th scope="col">Clientela</th>
+                  <th scope="col">Segurado</th>
                   <th scope="col" className={estilos.num}>Negados</th>
-                  <th scope="col" className={estilos.num}>Metade em até</th>
+                  <th scope="col" className={estilos.num}>Metade negada em até</th>
                 </tr>
               </thead>
               <tbody>
                 {clientelas.map(([c, r]) => r && (
                   <tr key={c}>
-                    <th scope="row">{c === "urbano" ? "Urbana" : "Rural"}</th>
+                    <th scope="row">{c === "urbano" ? "Urbano" : "Rural"}</th>
                     <td className={`${estilos.num} tabular`}>{br(r.n)}</td>
                     <td className={`${estilos.num} tabular`}>{dias(r.mediana)}</td>
                   </tr>
@@ -299,6 +318,77 @@ export default async function Pagina({ params }: Params) {
               </tbody>
             </table>
           </div>
+        </section>
+      )}
+
+      {porEstado.length >= 5 && (
+        <section className={estilos.texto} id="por-estado">
+          <h2>Por estado</h2>
+          <p>
+            A mesma conta nas agências de cada estado. No país, metade dos
+            pedidos de {nome} esperava havia mais de{" "}
+            <strong>{dias(f.mediana)}</strong>
+            {neg && <>, e metade das negativas saiu em até <strong>{dias(neg.mediana)}</strong></>}
+            .
+          </p>
+          <div className={estilos.rolagem}>
+            <table className={estilos.lista}>
+              <caption>
+                Pedidos de {nome} por estado da agência: a fila em {ref}
+                {neg && s.negados && <> e as negativas de {mesPorExtenso(s.negados.mes)}</>}.
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Estado</th>
+                  <th scope="col" className={estilos.num}>Pedidos em espera</th>
+                  <th scope="col" className={estilos.num}>Metade espera há mais de</th>
+                  <th scope="col" className={estilos.num}>Há mais de 90 dias (% dos pedidos)</th>
+                  <th scope="col" className={estilos.num}>Metade negada em até</th>
+                </tr>
+              </thead>
+              <tbody>
+                {porEstado.map((x) => (
+                  <tr key={x.uf}>
+                    <th scope="row">
+                      <Link href={`/estado/${slugUf(x.uf)}/#inss`} prefetch={false}>
+                        {x.nome}
+                      </Link>
+                    </th>
+                    <td className={`${estilos.num} tabular`}>{x.fila ? br(x.fila.n) : "—"}</td>
+                    <td className={`${estilos.num} tabular`}>
+                      {x.fila ? dias(x.fila.mediana) : "—"}
+                    </td>
+                    <td className={`${estilos.num} tabular`}>
+                      {x.fila ? pct(x.fila.acima90) : "—"}
+                    </td>
+                    <td className={`${estilos.num} tabular`}>
+                      {x.negados ? dias(x.negados.mediana) : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className={estilos.ressalva}>
+            O estado é o da agência onde o pedido foi criado, na fila, e o da
+            que negou, nas negativas
+            {s.negados && (
+              <>
+                ; as negativas decididas pela agência de automação do INSS, que
+                atende o país inteiro, entram só no total do país (
+                {pct(s.negados.foraDasUfs.n / s.negados.foraDasUfs.total)} de
+                todas as negativas de {mesPorExtenso(s.negados.mes)})
+              </>
+            )}
+            . Travessão: menos de {br(s.minimoPedidos)} pedidos no estado.
+            {estadosFora > 0 && (
+              <>
+                {" "}{estadosFora === 1 ? "Um estado fica" : `${br(estadosFora)} estados ficam`}{" "}
+                fora da tabela, com menos de {br(s.minimoPedidos)} pedidos nos
+                dois lados.
+              </>
+            )}
+          </p>
         </section>
       )}
 
@@ -321,6 +411,23 @@ export default async function Pagina({ params }: Params) {
             oscila ao acaso de um mês para o outro.
           </li>
         </ul>
+      </section>
+
+      {/* Até 11/10/2026 uma página de benefício não apontava para outra: só
+          a /ajuda/ as ligava, e o leitor que queria comparar voltava à busca. */}
+      <section className={estilos.texto} aria-labelledby="outros-beneficios">
+        <h2 id="outros-beneficios">Outros benefícios</h2>
+        <p>
+          {gruposComPagina(s).filter((x) => x.chave !== g.chave).map((x, i, todos) => (
+            <span key={x.chave}>
+              <Link href={`/inss/${x.chave}/`} prefetch={false}>
+                {inicialMaiuscula(x.nomePopular)}
+              </Link>
+              {i < todos.length - 1 ? " · " : ""}
+            </span>
+          ))}
+          . <Link href="/inss/" prefetch={false}>Todos numa tabela só</Link>.
+        </p>
       </section>
 
       <section className={estilos.texto}>

@@ -9,7 +9,8 @@ import { test } from "node:test";
 import fs from "node:fs";
 
 import {
-  dataBr, dias, gruposComPagina, mesPorExtenso, pct, tendencia, type SnapshotInss,
+  dataBr, dias, gruposComPagina, inssDaUf, mesPorExtenso, pct, tendencia,
+  type SnapshotInss,
 } from "../lib/inss.ts";
 
 const real = JSON.parse(
@@ -27,8 +28,41 @@ test("inss: o JSON real tem as chaves que o tipo declara", () => {
     if (g.fila) {
       assert.ok(Array.isArray(g.fila.porServico), g.chave);
       assert.equal(g.fila.acimaDoPrazo === null, g.prazoAcordo === null, g.chave);
+      // o recorte por UF soma a fila do país: nenhum pedido sem UF
+      const soma = Object.values(g.fila.porUf).reduce((t, x) => t + x.n, 0);
+      assert.equal(soma, g.fila.n, g.chave);
+    }
+    if (g.negados) {
+      // a automação fica fora das UFs, e só ela
+      const soma = Object.values(g.negados.porUf).reduce((t, x) => t + x.n, 0);
+      assert.ok(soma <= g.negados.n, g.chave);
     }
   }
+  const fora = real.negados!.foraDasUfs;
+  assert.ok(fora.n > 0 && fora.n < fora.total);
+});
+
+test("inss: inssDaUf traz só o lado publicável, e some o benefício sem nenhum", () => {
+  const base = real.grupos.find((g) => g.fila && g.negados)!;
+  const recorte = (n: number) => ({
+    n, mediana: 10, acima45: 0, acima90: 0, publicavel: n >= 1000, acimaDoPrazo: null,
+  });
+  const s: SnapshotInss = {
+    ...real,
+    grupos: [
+      { ...base, chave: "menor", fila: { ...base.fila!, porUf: { ZZ: recorte(1000) } },
+        negados: { ...base.negados!, porUf: { ZZ: recorte(999) } } },
+      { ...base, chave: "maior", fila: { ...base.fila!, porUf: { ZZ: recorte(5000) } },
+        negados: { ...base.negados!, porUf: { ZZ: recorte(2000) } } },
+      { ...base, chave: "pouco", fila: { ...base.fila!, porUf: { ZZ: recorte(10) } },
+        negados: { ...base.negados!, porUf: {} } },
+    ],
+  };
+  const r = inssDaUf(s, "ZZ");
+  assert.deepEqual(r.map((x) => x.grupo.chave), ["maior", "menor"]);
+  assert.equal(r[1]!.negados, null);        // 999 negados: travessão, não número
+  assert.equal(r[0]!.negados!.n, 2000);
+  assert.deepEqual(inssDaUf(s, "YY"), []);
 });
 
 test("inss: só ganha rota o grupo com fila publicável", () => {

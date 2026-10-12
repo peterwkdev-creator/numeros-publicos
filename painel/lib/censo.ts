@@ -405,6 +405,41 @@ export function medidasDoPaisCache(
   return calculado;
 }
 
+const cacheUf = new WeakMap<object, Map<string, (number | string | null)[][]>>();
+
+/**
+ * As linhas dos municípios de uma UF, e **sempre o mesmo array** para a mesma
+ * UF: é ele a chave dos caches (`medianasCache`, `medianaDaColunaCache`), e
+ * assim a mediana do estado sai uma vez por UF, não uma vez por página.
+ * Sem a coluna `uf`, devolve vazio: melhor nenhuma mediana do estado que a
+ * do país com o nome trocado.
+ */
+export function linhasDaUf(
+  linhas: (number | string | null)[][],
+  colunas: string[],
+  uf: string,
+): (number | string | null)[][] {
+  let porUf = cacheUf.get(linhas);
+  if (!porUf) {
+    porUf = new Map();
+    const i = colunas.indexOf("uf");
+    for (const l of linhas) {
+      const u = i < 0 ? null : l[i];
+      if (typeof u !== "string") continue;
+      const lista = porUf.get(u);
+      if (lista) lista.push(l);
+      else porUf.set(u, [l]);
+    }
+    cacheUf.set(linhas, porUf);
+  }
+  let lista = porUf.get(uf);
+  if (!lista) {
+    lista = [];
+    porUf.set(uf, lista);
+  }
+  return lista;
+}
+
 /** A mediana de uma lista. Vazia devolve `null`, nunca zero. */
 export function mediana(valores: number[]): number | null {
   if (!valores.length) return null;

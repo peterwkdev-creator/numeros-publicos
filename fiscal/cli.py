@@ -74,7 +74,8 @@ def cmd_ingerir(args, transporte: Transporte, dormir: Dormir) -> int:
         alvos = [r[0] for r in con.execute(
             "SELECT codigo_ibge FROM ente WHERE esfera='M' ORDER BY codigo_ibge")]
         feitos = set() if args.recomecar else armazem.ja_coletados(
-            con, args.exercicio, args.periodo)
+            con, args.exercicio, args.periodo,
+            so_publicados=args.refazer_ausentes)
     if not alvos:
         print("Nenhum ente no banco. Rode `ingerir-entes` primeiro.", file=sys.stderr)
         return 2
@@ -170,7 +171,8 @@ def cmd_ingerir_funcoes(args, transporte: Transporte, dormir: Dormir) -> int:
         alvos = [r[0] for r in con.execute(
             "SELECT codigo_ibge FROM ente WHERE esfera='M' ORDER BY codigo_ibge")]
         feitos = set() if args.recomecar else armazem.ja_consultados_funcoes(
-            con, args.exercicio, args.periodo)
+            con, args.exercicio, args.periodo,
+            so_publicados=args.refazer_ausentes)
     if not alvos:
         print("Nenhum ente no banco. Rode `ingerir-entes` primeiro.", file=sys.stderr)
         return 2
@@ -227,7 +229,8 @@ def cmd_ingerir_receita(args, transporte: Transporte, dormir: Dormir) -> int:
         alvos = [r[0] for r in con.execute(
             "SELECT codigo_ibge FROM ente WHERE esfera='M' ORDER BY codigo_ibge")]
         feitos = set() if args.recomecar else armazem.ja_consultados_receita(
-            con, args.exercicio, args.periodo)
+            con, args.exercicio, args.periodo,
+            so_publicados=args.refazer_ausentes)
     if not alvos:
         print("Nenhum ente no banco. Rode `ingerir-entes` primeiro.", file=sys.stderr)
         return 2
@@ -904,10 +907,25 @@ def cmd_exportar(args, *_) -> int:
     with armazem.abrir(args.banco) as con:
         universo = con.execute(
             "SELECT COUNT(*) FROM ente WHERE esfera='M'").fetchone()[0]
+        if args.exercicio is None:
+            # O último exercício perguntado a TODOS, a mesma regra da função e
+            # da receita: com a coleta de um ano novo pela metade, o site fica
+            # no anterior em vez de dizer "não entregou" de quem não foi
+            # perguntado. Era `2024` cravado até 11/10/2026, com 2025 publicado.
+            r = con.execute(
+                "SELECT MAX(exercicio) FROM (SELECT exercicio FROM pessoal"
+                "  WHERE periodo=? GROUP BY exercicio"
+                "  HAVING COUNT(DISTINCT codigo_ibge) >= ?)",
+                (args.periodo, universo)).fetchone()[0]
+            if r is None:
+                print("Nenhum exercício consultado para todos os municípios.",
+                      file=sys.stderr)
+                return 2
+            args.exercicio = r
         linhas = con.execute(
             "SELECT e.codigo_ibge, e.nome, e.uf, e.populacao,"
             "       p.publicou, p.percentual, p.limite_prudencial, p.despesa,"
-            "       p.rcl, p.rcl_ajustada"
+            "       p.rcl, p.rcl_ajustada, p.fonte"
             "  FROM ente e LEFT JOIN pessoal p"
             "    ON p.codigo_ibge = e.codigo_ibge AND p.exercicio=? AND p.periodo=?"
             " WHERE e.esfera='M' ORDER BY e.uf, e.nome",
@@ -958,12 +976,17 @@ def cmd_exportar(args, *_) -> int:
             "municipiosIbge": universo + MUNICIPIOS_SO_NO_IBGE,
         },
         "colunas": ["codigo", "nome", "uf", "populacao", "publicou",
-                    "percentual", "limitePrudencial", "despesa", "rclAjustada"],
+                    "percentual", "limitePrudencial", "despesa", "rclAjustada",
+                    "simplificado"],
         "municipios": [
             [l["codigo_ibge"], l["nome"], l["uf"], l["populacao"],
              None if l["publicou"] is None else bool(l["publicou"]),
              l["percentual"], l["limite_prudencial"], l["despesa"],
-             l["rcl_ajustada"]]
+             l["rcl_ajustada"],
+             # De qual relatório veio o número: o quadrimestral ou o
+             # simplificado semestral (`armazem.FONTE_SIMPLIFICADO`).
+             None if not l["publicou"] else
+             l["fonte"] == armazem.FONTE_SIMPLIFICADO]
             for l in linhas
         ],
         # A série histórica de TODOS os períodos já coletados, separada dos
@@ -1072,6 +1095,8 @@ def montar() -> argparse.ArgumentParser:
         if nome.startswith("ingerir"):
             s.add_argument("--pausa", type=float, default=PAUSA_PADRAO)
             s.add_argument("--recomecar", action="store_true")
+            s.add_argument("--refazer-ausentes", action="store_true",
+                           help="pergunta de novo a quem ficou sem relatorio")
 
     for nome, ajuda in (("ingerir", "varre o RGF, retomável"),
                         ("resumo", "contagem e média por UF"),
@@ -1079,7 +1104,11 @@ def montar() -> argparse.ArgumentParser:
                         ("conferir", "coerência interna do que foi lido"),
                         ("exportar", "gera o snapshot que o painel lê")):
         s = sub.add_parser(nome, help=ajuda)
-        s.add_argument("--exercicio", type=int, default=2024)
+        if nome == "exportar":
+            s.add_argument("--exercicio", type=int, default=None,
+                           help="o padrao e o ultimo perguntado a todos os municipios")
+        else:
+            s.add_argument("--exercicio", type=int, default=2024)
         s.add_argument("--periodo", type=int, default=3, choices=(1, 2, 3))
         if nome == "conferir":
             s.add_argument("--tolerancia", type=float, default=0.05,
@@ -1090,6 +1119,8 @@ def montar() -> argparse.ArgumentParser:
         if nome == "ingerir":
             s.add_argument("--pausa", type=float, default=PAUSA_PADRAO)
             s.add_argument("--recomecar", action="store_true")
+            s.add_argument("--refazer-ausentes", action="store_true",
+                           help="pergunta de novo a quem ficou sem relatorio")
             s.add_argument("--limite", type=int, default=0,
                            help="para so N municipios nesta execucao")
         if nome == "listar":

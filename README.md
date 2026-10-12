@@ -15,15 +15,16 @@ request**, in 200+ lines of chart-of-accounts per query, with no comparison and
 no reading. In practice nobody looks.
 
 > **Status: the national sweep is complete.** For the third quarter of 2024,
-> all **5,570** municipalities were consulted: **3,244 filed** their report and
-> 2,326 did not, with **zero divergences** across all 3,244. Everything below
-> runs against the live API today.
+> all **5,570** municipalities were consulted and **5,544 filed**: 3,245 the
+> four-monthly report and 2,299 the **simplified half-yearly** one (see below).
+> Everything below runs against the live API today.
 >
-> **The historical series is still Northeast-only.** Five earlier quarters
-> (2023 Q1 through 2024 Q2) cover 1,793 municipalities; only the latest quarter
-> is national. Sweeping the rest is one command per quarter and about an hour
-> each — it simply has not been run yet, and saying so is cheaper than letting
-> a reader assume the series is national.
+> **The first and second four-month periods cover only the four-monthly
+> filers.** Municipalities under 50,000 people may file half-yearly instead
+> (art. 63 of the Fiscal Responsibility Law), and the first half-year matches
+> no four-month period, so 2020–2024 Q1 and Q2 hold about 3,300 filers each.
+> The third period does match: the second half-year covers the same twelve
+> months to December.
 
 ## Run it
 
@@ -45,7 +46,8 @@ python -m fiscal ingerir --limite 25      # stop after 25, to try it out
 python -m fiscal resumo                   # count and average per state
 python -m fiscal listar --acima-do-limite # only those over the threshold
 python -m fiscal conferir                 # internal consistency, reported not fixed
-python -m fiscal exportar                 # the snapshot the panel reads
+python -m fiscal exportar                 # the snapshot the panel reads (latest year asked of all)
+python -m fiscal ingerir --refazer-ausentes  # ask again only those recorded as not filed
 ```
 
 ### Health spending, 26 years in 26 requests
@@ -147,42 +149,42 @@ login.
 
 ## The numbers, nationally
 
-The complete sweep of 2024's third quarter, all **5,570** municipalities:
+The complete sweep of 2024's third quarter, all **5,570** municipalities
+(measured 11/10/2026):
 
 | | |
 |---|---|
-| Filed a report | **3,244** (58%) |
-| **Did not file at all** | **2,326** (42%) |
-| Over the 54% legal cap | **335** |
-| Between 51.3% and 54% (prudential band) | 278 |
+| Filed the four-monthly report | **3,245** |
+| Filed the simplified half-yearly report | **2,299** |
+| **Did not file at all** | **26** (0.5%) |
+| Over the 54% legal cap | **349** |
+| Between 51.3% and 54% (prudential band) | 368 |
 | Filings outside 0–100%, kept and labelled | 26 |
-| Average of the plausible filings | 45.48% |
-| Median | 45.00% |
+| Average of the plausible filings | 44.15% |
+| Median | 43.86% |
 
-The bands above are **disjoint**: 335 are over the legal cap and a further 278
-sit between the two thresholds. Adding them gives the 613 over the prudential
+The bands above are **disjoint**: 349 are over the legal cap and a further 368
+sit between the two thresholds. Adding them gives the 717 over the prudential
 limit.
-
-**The filing rate is the finding, not the spending.** It ranges from 100% to
-14% across states and follows no regional line: Santa Catarina files 86% and
-neighbouring Rio Grande do Sul 15%; Bahia files 99% and Maranhão 49%, both in
-the Northeast. Whatever explains it, it is not geography.
 
 **Sergipe averages 51.97% across the whole state** — the state mean sits above
 the prudential threshold. Among municipalities over 200,000 people: Lauro de
 Freitas/BA 70.25%, Imperatriz/MA 60.64%, Paulista/PE 55.30%.
 
-**Two in five municipalities did not file at all** — 2,326 of 5,570. That was
-one in five while only the Northeast was swept, which is exactly why the claim
-is worth re-measuring rather than carrying forward.
+**Until 11/10/2026 this README said two in five municipalities did not file
+at all** — 2,326 of 5,570, with Santa Catarina at 86% and Rio Grande do Sul at
+15%. It was wrong. Those municipalities had filed the **simplified report**
+(`co_tipo_demonstrativo=RGF Simplificado`, `in_periodicidade=S`), which the
+four-monthly query never reaches. Every state now files 88% or more
+(Amapá is the lowest).
 
-The absence is real, not a query artifact, and the check that proves it needs a
-**control**: querying non-filers and getting nothing back proves nothing, since
-that is also what a broken query returns. Probing municipalities the system
-records as *having* filed, in the same run, returned 116 to 168 rows each —
-including inside Rio Grande do Sul, where only 15% file. Zero and non-zero out
-of the same probe, in the same minute, is what separates "this state does not
-file" from "my query is wrong".
+The check that "proved" the absence had a control, and the control was not
+enough: probing known filers in the same run, and getting rows back, proves the
+**query** works, not that it asks for the right **kind** of report. An empty
+list from an API is a fact about the question. The same trap sat in the budget
+execution report, where 2,327 municipalities filed the **RREO Simplificado**;
+both readers now ask the simplified report when the regular one comes back
+empty, and record which one the number came from.
 
 ## License
 

@@ -28,7 +28,8 @@ CREATE TABLE IF NOT EXISTS ente (
 
 -- Uma linha por ente/exercicio/periodo. `publicou` separa as duas ausencias
 -- que nunca podem virar a mesma coisa:
---   publicou = 0  -> o ente NAO entregou o relatorio (items: [] com HTTP 200)
+--   publicou = 0  -> o ente NAO entregou o relatorio (items: [] com HTTP 200;
+--                    no 3o quadrimestre, nem o RGF Simplificado semestral)
 --   publicou = 1 com percentual NULL -> entregou, mas sem aquele campo
 -- Zero em `percentual` continua significando zero de verdade.
 CREATE TABLE IF NOT EXISTS pessoal (
@@ -154,8 +155,15 @@ CREATE TABLE IF NOT EXISTS coleta (
 """
 
 FONTE = "SICONFI/Tesouro Nacional — RGF Anexo 01"
+#: O 3º quadrimestre de quem optou pelo semestral (art. 63 da LRF): o
+#: `fonte` é o que separa as duas origens na tabela `pessoal`.
+FONTE_SIMPLIFICADO = "SICONFI/Tesouro Nacional — RGF Simplificado Anexo 01, 2º semestre"
 FONTE_FUNCOES = "SICONFI/Tesouro Nacional — RREO Anexo 02"
 FONTE_RECEITA = "SICONFI/Tesouro Nacional — RREO Anexo 01"
+#: Quem optou pelo semestral (art. 63 da LRF) entrega o RREO Simplificado:
+#: mesmo bimestre, mesmas contas. O `fonte` separa as duas origens.
+FONTE_FUNCOES_SIMPLIFICADO = "SICONFI/Tesouro Nacional — RREO Simplificado Anexo 02"
+FONTE_RECEITA_SIMPLIFICADO = "SICONFI/Tesouro Nacional — RREO Simplificado Anexo 01"
 FONTE_SAUDE = "SIOPS/Ministério da Saúde — TabNet/DATASUS"
 
 
@@ -165,7 +173,10 @@ def agora() -> str:
 
 @contextmanager
 def abrir(caminho: str | Path) -> Iterator[sqlite3.Connection]:
-    con = sqlite3.connect(caminho)
+    # 30 s de espera pelo trinco, e nao os 5 do padrao: em 11/10/2026 duas
+    # recoletas em paralelo no mesmo banco derrubaram uma delas com
+    # "database is locked" depois de 470 municipios.
+    con = sqlite3.connect(caminho, timeout=30)
     con.row_factory = sqlite3.Row
     try:
         con.executescript(ESQUEMA)
@@ -216,14 +227,20 @@ def gravar_pessoal(
          p.rcl if p else None, p.rcl_ajustada if p else None,
          p.despesa if p else None,
          p.percentual if p else None, p.limite_prudencial if p else None,
-         FONTE, agora()),
+         FONTE_SIMPLIFICADO if p and p.simplificado else FONTE, agora()),
     )
 
 
-def ja_coletados(con: sqlite3.Connection, exercicio: int, periodo: int) -> set[int]:
-    """Quem já foi perguntado neste período -- a base da retomada."""
+def ja_coletados(con: sqlite3.Connection, exercicio: int, periodo: int,
+                 *, so_publicados: bool = False) -> set[int]:
+    """Quem já foi perguntado neste período -- a base da retomada.
+
+    `so_publicados` devolve só quem entregou, para perguntar de novo a quem
+    ficou como "não publicou" (o caso do RGF Simplificado, em 11/10/2026).
+    """
     return {r[0] for r in con.execute(
-        "SELECT codigo_ibge FROM pessoal WHERE exercicio=? AND periodo=?",
+        "SELECT codigo_ibge FROM pessoal WHERE exercicio=? AND periodo=?"
+        + (" AND publicou=1" if so_publicados else ""),
         (exercicio, periodo))}
 
 
@@ -302,7 +319,8 @@ def gravar_funcoes(con: sqlite3.Connection, codigo_ibge: int, exercicio: int,
         "INSERT INTO despesa_funcao (codigo_ibge, exercicio, periodo, funcao,"
         " valor, total_declarado, fonte, coletado_em) VALUES (?,?,?,?,?,?,?,?)",
         [(codigo_ibge, exercicio, periodo, nome, valor, f.total,
-          FONTE_FUNCOES, agora_) for nome, valor in f.valores.items()])
+          FONTE_FUNCOES_SIMPLIFICADO if f.simplificado else FONTE_FUNCOES,
+          agora_) for nome, valor in f.valores.items()])
 
 
 def gravar_receita(con: sqlite3.Connection, codigo_ibge: int, exercicio: int,
@@ -335,7 +353,8 @@ def gravar_receita(con: sqlite3.Connection, codigo_ibge: int, exercicio: int,
         "INSERT INTO receita (codigo_ibge, exercicio, periodo, conta,"
         " valor, total_declarado, fonte, coletado_em) VALUES (?,?,?,?,?,?,?,?)",
         [(codigo_ibge, exercicio, periodo, conta, valor, r.total,
-          FONTE_RECEITA, agora_) for conta, valor in r.valores.items()])
+          FONTE_RECEITA_SIMPLIFICADO if r.simplificado else FONTE_RECEITA,
+          agora_) for conta, valor in r.valores.items()])
 
 
 def gravar_saude(con: sqlite3.Connection, uf: str, indicador: str,
@@ -386,14 +405,18 @@ def cobertura_saude(con: sqlite3.Connection, indicador: str) -> dict:
 
 
 def ja_consultados_funcoes(con: sqlite3.Connection, exercicio: int,
-                           periodo: int) -> set[int]:
+                           periodo: int, *, so_publicados: bool = False) -> set[int]:
+    """`so_publicados`: ver `ja_coletados` (o caso do RREO Simplificado)."""
     return {r[0] for r in con.execute(
-        "SELECT codigo_ibge FROM funcao_consulta WHERE exercicio=? AND periodo=?",
+        "SELECT codigo_ibge FROM funcao_consulta WHERE exercicio=? AND periodo=?"
+        + (" AND publicou=1" if so_publicados else ""),
         (exercicio, periodo))}
 
 
 def ja_consultados_receita(con: sqlite3.Connection, exercicio: int,
-                           periodo: int) -> set[int]:
+                           periodo: int, *, so_publicados: bool = False) -> set[int]:
+    """`so_publicados`: ver `ja_coletados` (o caso do RREO Simplificado)."""
     return {r[0] for r in con.execute(
-        "SELECT codigo_ibge FROM receita_consulta WHERE exercicio=? AND periodo=?",
+        "SELECT codigo_ibge FROM receita_consulta WHERE exercicio=? AND periodo=?"
+        + (" AND publicou=1" if so_publicados else ""),
         (exercicio, periodo))}

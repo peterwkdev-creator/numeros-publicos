@@ -28,6 +28,19 @@ from fiscal.siconfi import (
 )
 
 FIX = Path(__file__).parent / "fixtures"
+def transporte_seq(*corpos: dict):
+    """Uma resposta por pedido, na ordem, e guarda as URLs pedidas."""
+    fila = list(corpos)
+
+    def t(url: str) -> Resposta:
+        t.pedidas.append(url)
+        return Resposta(200, json.dumps(fila.pop(0)))
+    t.pedidas = []
+    return t
+
+
+VAZIO = {"items": [], "hasMore": False, "count": 0}
+
 CORPUS = json.loads((FIX / "rreo_a01_imperatriz.json").read_text(encoding="utf-8"))
 CORPUS_INTRA = json.loads(
     (FIX / "rreo_a01_mata_grande.json").read_text(encoding="utf-8"))
@@ -349,6 +362,34 @@ class TestDeclaracaoIncompletaQueAReguaAprova(unittest.TestCase):
         # Sem a segunda fonte, a razão não existe — ausência de régua não é
         # reprovação, pela mesma regra do `fecha` sem total.
         self.assertIsNone(classificar_receita(100.0, 80.0, None))
+
+
+
+class TestRreoSimplificado(unittest.TestCase):
+    """O Anexo 01 do RREO Simplificado: mesma pergunta, mesmas contas. A
+    fixture é a resposta real de Alvinlândia/SP, 2025, 6º bimestre."""
+
+    def setUp(self):
+        a01 = json.loads((FIX / "rreo_simplificado_a01.json").read_text(encoding="utf-8"))
+        self.t = transporte_seq(VAZIO, a01["resposta"])
+        self.r = receita(3501509, 2025, 6, self.t, dormir=lambda _: None)
+
+    def test_le_o_simplificado_quando_falta_o_rreo(self):
+        self.assertTrue(self.r.simplificado)
+        self.assertEqual(self.r.total, 30592888.26)
+        self.assertEqual(self.r.valores["Impostos"], 1935051.48)
+        self.assertTrue(self.r.fecha)
+
+    def test_pede_o_anexo_01_do_simplificado(self):
+        self.assertEqual(len(self.t.pedidas), 2)
+        self.assertIn("co_tipo_demonstrativo=RREO+Simplificado&", self.t.pedidas[1])
+        self.assertIn("no_anexo=RREO-Anexo+01", self.t.pedidas[1])
+        self.assertIn("nr_periodo=6", self.t.pedidas[1])
+
+    def test_os_dois_vazios_e_nao_publicou(self):
+        t = transporte_seq(VAZIO, VAZIO)
+        self.assertIsNone(receita(1, 2025, 6, t, dormir=lambda _: None))
+        self.assertEqual(len(t.pedidas), 2)
 
 
 if __name__ == "__main__":

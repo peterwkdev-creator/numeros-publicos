@@ -6,8 +6,10 @@ import unittest
 from pathlib import Path
 
 from fiscal.armazem import (
-    _apagar_fatia, abrir, abrir_coleta, fechar_coleta, gravar_entes,
-    gravar_funcoes, gravar_pessoal, gravar_receita, ja_coletados,
+    FONTE, FONTE_FUNCOES, FONTE_FUNCOES_SIMPLIFICADO, FONTE_RECEITA,
+    FONTE_RECEITA_SIMPLIFICADO, FONTE_SIMPLIFICADO, _apagar_fatia, abrir, abrir_coleta,
+    fechar_coleta, gravar_entes, gravar_funcoes, gravar_pessoal, gravar_receita,
+    ja_coletados, ja_consultados_funcoes, ja_consultados_receita,
 )
 from fiscal.siconfi import Ente, Funcoes, Pessoal, Receita
 
@@ -119,6 +121,29 @@ class TestRetomada(BancoTemporario):
         with abrir(self.caminho) as con:
             self.assertEqual(ja_coletados(con, 2024, 3), set())
 
+    def test_so_publicados_deixa_os_ausentes_para_perguntar_de_novo(self):
+        # `ingerir --refazer-ausentes`: a recoleta do RGF Simplificado.
+        with abrir(self.caminho) as con:
+            gravar_pessoal(con, 1, 2024, 3, Pessoal(1, 2024, 3, None, None, None, 30.0, 51.3))
+            gravar_pessoal(con, 2, 2024, 3, None)
+        with abrir(self.caminho) as con:
+            self.assertEqual(ja_coletados(con, 2024, 3, so_publicados=True), {1})
+
+
+class TestFonteDoSimplificado(BancoTemporario):
+    """O `fonte` separa o 3º quadrimestre do RGF Simplificado semestral; é o
+    que a exportação lê para dizer de onde veio o número."""
+
+    def test_fonte_diz_qual_relatorio(self):
+        with abrir(self.caminho) as con:
+            gravar_pessoal(con, 1, 2024, 3, Pessoal(1, 2024, 3, None, None, None, 30.0, 51.3))
+            gravar_pessoal(con, 2, 2024, 3, Pessoal(2, 2024, 3, None, None, None, 33.75, 51.3,
+                                                    simplificado=True))
+        with abrir(self.caminho) as con:
+            fontes = dict(con.execute("SELECT codigo_ibge, fonte FROM pessoal"))
+        self.assertEqual(fontes[1], FONTE)
+        self.assertEqual(fontes[2], FONTE_SIMPLIFICADO)
+
 
 class TestRegistroDaColeta(BancoTemporario):
     """A coleta que falhou também fica registrada -- execução sem rastro é
@@ -216,6 +241,37 @@ class TestReleituraSubstituiAFatia(BancoTemporario):
         with abrir(self.caminho) as con:
             with self.assertRaises(ValueError):
                 _apagar_fatia(con, "ente", 2705002, 2024, 6)
+
+
+
+class TestRreoSimplificadoNoBanco(BancoTemporario):
+    """O `fonte` separa o RREO do RREO Simplificado, e `--refazer-ausentes`
+    pergunta de novo só a quem ficou sem relatório."""
+
+    def test_fonte_diz_qual_relatorio(self):
+        with abrir(self.caminho) as con:
+            gravar_funcoes(con, 1, 2025, 6, Funcoes(1, 2025, 6, 3.0, {"Saúde": 3.0}))
+            gravar_funcoes(con, 2, 2025, 6, Funcoes(2, 2025, 6, 3.0, {"Saúde": 3.0},
+                                                    simplificado=True))
+            gravar_receita(con, 1, 2025, 6, Receita(1, 2025, 6, 5.0, {"CONTRIBUIÇÕES": 5.0}))
+            gravar_receita(con, 2, 2025, 6, Receita(2, 2025, 6, 5.0, {"CONTRIBUIÇÕES": 5.0},
+                                                    simplificado=True))
+        with abrir(self.caminho) as con:
+            f = dict(con.execute("SELECT codigo_ibge, fonte FROM despesa_funcao"))
+            r = dict(con.execute("SELECT codigo_ibge, fonte FROM receita"))
+        self.assertEqual((f[1], f[2]), (FONTE_FUNCOES, FONTE_FUNCOES_SIMPLIFICADO))
+        self.assertEqual((r[1], r[2]), (FONTE_RECEITA, FONTE_RECEITA_SIMPLIFICADO))
+
+    def test_so_publicados_deixa_os_ausentes_para_perguntar_de_novo(self):
+        with abrir(self.caminho) as con:
+            gravar_funcoes(con, 1, 2025, 6, Funcoes(1, 2025, 6, 3.0, {"Saúde": 3.0}))
+            gravar_funcoes(con, 2, 2025, 6, None)
+            gravar_receita(con, 1, 2025, 6, Receita(1, 2025, 6, 5.0, {"CONTRIBUIÇÕES": 5.0}))
+            gravar_receita(con, 2, 2025, 6, None)
+        with abrir(self.caminho) as con:
+            self.assertEqual(ja_consultados_funcoes(con, 2025, 6), {1, 2})
+            self.assertEqual(ja_consultados_funcoes(con, 2025, 6, so_publicados=True), {1})
+            self.assertEqual(ja_consultados_receita(con, 2025, 6, so_publicados=True), {1})
 
 
 if __name__ == "__main__":

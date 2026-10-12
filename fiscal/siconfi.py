@@ -107,6 +107,9 @@ class Pessoal:
     despesa: float | None
     percentual: float | None
     limite_prudencial: float | None
+    #: Veio do RGF Simplificado do 2º semestre, não do 3º quadrimestre -- ver
+    #: `url_rgf`. A janela é a mesma (os 12 meses até dezembro).
+    simplificado: bool = False
 
     @property
     def acima_do_prudencial(self) -> bool | None:
@@ -244,20 +247,31 @@ def entes(
     return saida
 
 
-def url_rgf(exercicio: int, periodo: int, codigo_ibge: int) -> str:
+def url_rgf(exercicio: int, periodo: int, codigo_ibge: int,
+            *, simplificado: bool = False) -> str:
     """RGF Anexo 01 (despesa com pessoal) do Executivo municipal.
 
     `id_ente` é obrigatório na prática: sem ele a API devolve `items: []` com
     HTTP **200** -- resposta vazia, não erro. E **repetir o parâmetro não busca
     dois entes**: volta um só, em silêncio. Daí uma requisição por município.
+
+    `simplificado=True` pede o **RGF Simplificado semestral** (art. 63 da LRF:
+    município com menos de 50 mil habitantes pode optar por ele) do 2º
+    semestre, que cobre os mesmos 12 meses até dezembro do 3º quadrimestre.
+    Por isso só existe para `periodo=3`: o 1º semestre (até junho) não
+    coincide com o 1º (abril) nem com o 2º (agosto) quadrimestre. Medido em
+    11/10/2026: dos 2.326 municípios sem RGF quadrimestral em 2024/3, 39 de
+    40 sorteados tinham o simplificado, com os mesmos `cod_conta` e colunas.
     """
     if not 1 <= periodo <= 3:
         raise ValueError(f"quadrimestre fora de 1..3: {periodo!r}")
+    if simplificado and periodo != 3:
+        raise ValueError("o RGF Simplificado só equivale ao 3º quadrimestre")
     q = urllib.parse.urlencode({
         "an_exercicio": exercicio,
-        "in_periodicidade": "Q",
-        "nr_periodo": periodo,
-        "co_tipo_demonstrativo": "RGF",
+        "in_periodicidade": "S" if simplificado else "Q",
+        "nr_periodo": 2 if simplificado else periodo,
+        "co_tipo_demonstrativo": "RGF Simplificado" if simplificado else "RGF",
         "no_anexo": "RGF-Anexo 01",
         "co_esfera": "M",
         "co_poder": "E",
@@ -295,6 +309,20 @@ def pessoal(
         dormir=dormir,
     )
     itens = d["items"]
+    simplificado = False
+    if not itens and periodo == 3:
+        # Sem o quadrimestral, o ente pode ter optado pelo semestral (art. 63
+        # da LRF). Gravar "não publicou" sem perguntar foi o erro até
+        # 11/10/2026: 2.326 municípios "sem relatório", quase todos com ele.
+        dormir(PAUSA_PADRAO)
+        d = buscar(
+            url_rgf(exercicio, periodo, codigo_ibge, simplificado=True),
+            f"o RGF Simplificado de {codigo_ibge} em {exercicio}/2º semestre",
+            transporte,
+            dormir=dormir,
+        )
+        itens = d["items"]
+        simplificado = True
     if not itens:
         return None
     return Pessoal(
@@ -306,6 +334,7 @@ def pessoal(
         despesa=_linha(itens, CONTA_PESSOAL, COLUNA_VALOR),
         percentual=_linha(itens, CONTA_PESSOAL, COLUNA_PERCENTUAL),
         limite_prudencial=_linha(itens, CONTA_PRUDENCIAL, COLUNA_PERCENTUAL),
+        simplificado=simplificado,
     )
 
 # ---------------------------------------------------------------- despesa por função
@@ -352,6 +381,9 @@ class Funcoes:
     periodo: int
     total: float | None
     valores: dict[str, float]
+    #: Veio do **RREO Simplificado** (art. 63 da LRF), não do RREO -- ver
+    #: `url_rreo`. Mesmo bimestre, mesmos anexos e mesmas contas.
+    simplificado: bool = False
 
     @property
     def soma(self) -> float:
@@ -465,6 +497,9 @@ class Receita:
     periodo: int
     total: float | None
     valores: dict[str, float]
+    #: Veio do **RREO Simplificado** (art. 63 da LRF), não do RREO -- ver
+    #: `url_rreo`. Mesmo bimestre, mesmos anexos e mesmas contas.
+    simplificado: bool = False
 
     @property
     def soma(self) -> float:
@@ -479,17 +514,45 @@ class Receita:
         return abs(self.soma - self.total) <= max(1.0, abs(self.total) * 1e-9)
 
 
-def url_rreo_receita(exercicio: int, periodo: int, codigo_ibge: int) -> str:
+def _rreo(url_de, anexo: str, codigo_ibge: int, exercicio: int, periodo: int,
+          transporte: Transporte, dormir: Dormir) -> tuple[list[dict], bool]:
+    """Os itens do anexo no RREO e, se vier vazio, no RREO Simplificado.
+
+    Gravar "não publicou" sem a segunda pergunta foi o erro até 11/10/2026:
+    2.327 municípios sem "para onde vai o dinheiro" nem receita, com os dois
+    anexos publicados no Simplificado. Devolve `(itens, simplificado)`.
+    """
+    d = buscar(
+        url_de(exercicio, periodo, codigo_ibge),
+        f"o RREO {anexo} de {codigo_ibge} em {exercicio}/{periodo}",
+        transporte,
+        dormir=dormir,
+    )
+    if d["items"]:
+        return d["items"], False
+    dormir(PAUSA_PADRAO)
+    d = buscar(
+        url_de(exercicio, periodo, codigo_ibge, simplificado=True),
+        f"o RREO Simplificado {anexo} de {codigo_ibge} em {exercicio}/{periodo}",
+        transporte,
+        dormir=dormir,
+    )
+    return d["items"], True
+
+
+def url_rreo_receita(exercicio: int, periodo: int, codigo_ibge: int,
+                     *, simplificado: bool = False) -> str:
     """RREO Anexo 01 (Balanço Orçamentário) de um ente.
 
-    Bimestral como o Anexo 02, `nr_periodo` de 1 a 6.
+    Bimestral como o Anexo 02, `nr_periodo` de 1 a 6. `simplificado`: ver
+    `url_rreo`.
     """
     if not 1 <= periodo <= 6:
         raise ValueError(f"bimestre fora de 1..6: {periodo!r}")
     q = urllib.parse.urlencode({
         "an_exercicio": exercicio,
         "nr_periodo": periodo,
-        "co_tipo_demonstrativo": "RREO",
+        "co_tipo_demonstrativo": "RREO Simplificado" if simplificado else "RREO",
         "no_anexo": "RREO-Anexo 01",
         "co_esfera": "M",
         "id_ente": codigo_ibge,
@@ -519,13 +582,8 @@ def receita(
     dormir: Dormir = time.sleep,
 ) -> Receita | None:
     """A composição da receita de um ente, ou `None` se ele não publicou."""
-    d = buscar(
-        url_rreo_receita(exercicio, periodo, codigo_ibge),
-        f"o RREO Anexo 01 de {codigo_ibge} em {exercicio}/{periodo}",
-        transporte,
-        dormir=dormir,
-    )
-    itens = d["items"]
+    itens, simplificado = _rreo(url_rreo_receita, "Anexo 01", codigo_ibge,
+                                exercicio, periodo, transporte, dormir)
     if not itens:
         return None
     valores = {}
@@ -537,21 +595,28 @@ def receita(
     total = _receita_de(itens, COD_TOTAL)
     if total is None and not valores:
         return None
-    return Receita(codigo_ibge, exercicio, periodo, total, valores)
+    return Receita(codigo_ibge, exercicio, periodo, total, valores, simplificado)
 
 
-def url_rreo(exercicio: int, periodo: int, codigo_ibge: int) -> str:
+def url_rreo(exercicio: int, periodo: int, codigo_ibge: int,
+             *, simplificado: bool = False) -> str:
     """RREO Anexo 02 (despesa por função) de um ente.
 
     O RREO é **bimestral** -- `nr_periodo` de 1 a 6 --, enquanto o RGF é
     quadrimestral de 1 a 3. Confundir os dois devolve vazio sem dizer por quê.
+
+    `simplificado=True` pede o **RREO Simplificado** (art. 63 da LRF), o tipo
+    que o SICONFI dá a quem optou pelo RGF semestral. Ao contrário do RGF, ele
+    continua **bimestral**: mesmo `nr_periodo`, mesmos anexos, mesmas contas.
+    Medido em 11/10/2026: dos 30 sorteados em 2025/6, os 12 sem RREO tinham o
+    Simplificado (Anexos 01 e 02), e o leitor fechou soma com total em todos.
     """
     if not 1 <= periodo <= 6:
         raise ValueError(f"bimestre fora de 1..6: {periodo!r}")
     q = urllib.parse.urlencode({
         "an_exercicio": exercicio,
         "nr_periodo": periodo,
-        "co_tipo_demonstrativo": "RREO",
+        "co_tipo_demonstrativo": "RREO Simplificado" if simplificado else "RREO",
         "no_anexo": "RREO-Anexo 02",
         "co_esfera": "M",
         "id_ente": codigo_ibge,
@@ -577,13 +642,8 @@ def funcoes(
     dormir: Dormir = time.sleep,
 ) -> Funcoes | None:
     """A despesa por função de um ente, ou `None` se ele não publicou."""
-    d = buscar(
-        url_rreo(exercicio, periodo, codigo_ibge),
-        f"o RREO de {codigo_ibge} em {exercicio}/{periodo}",
-        transporte,
-        dormir=dormir,
-    )
-    itens = d["items"]
+    itens, simplificado = _rreo(url_rreo, "Anexo 02", codigo_ibge,
+                                exercicio, periodo, transporte, dormir)
     if not itens:
         return None
     valores = {}
@@ -598,4 +658,4 @@ def funcoes(
          and CONTA_TOTAL_DESPESAS in (x.get("conta") or "")),
         None,
     )
-    return Funcoes(codigo_ibge, exercicio, periodo, total, valores)
+    return Funcoes(codigo_ibge, exercicio, periodo, total, valores, simplificado)

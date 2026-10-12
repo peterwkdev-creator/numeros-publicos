@@ -59,8 +59,59 @@ class TestVazioNaoEErroNemZero(unittest.TestCase):
     def test_e_nao_repete(self):
         # Repetir uma resposta legítima é gastar uma hora de varredura à toa.
         t = transporte_fixo(ok(fixture("rgf_vazio.json")))
-        pessoal(2927408, 2024, 3, t, dormir=lambda _: None)
+        pessoal(2927408, 2024, 2, t, dormir=lambda _: None)
         self.assertEqual(len(t.pedidas), 1)
+
+    def test_no_3o_quadrimestre_pergunta_o_simplificado_uma_vez(self):
+        # Duas perguntas diferentes, não a mesma repetida: o quadrimestral e,
+        # vazio ele, o semestral do art. 63 da LRF.
+        t = transporte_fixo(ok(fixture("rgf_vazio.json")))
+        self.assertIsNone(pessoal(2927408, 2024, 3, t, dormir=lambda _: None))
+        self.assertEqual(len(t.pedidas), 2)
+        self.assertIn("in_periodicidade=Q", t.pedidas[0])
+        self.assertIn("in_periodicidade=S", t.pedidas[1])
+
+
+class TestRgfSimplificado(unittest.TestCase):
+    """Quem tem menos de 50 mil habitantes pode entregar o RGF semestral
+    (art. 63 da LRF). Até 11/10/2026 o motor só perguntava o quadrimestral e
+    gravava "não publicou" para 2.326 municípios, quase todos com o
+    semestral entregue. A fixture é a resposta real de Echaporã/SP."""
+
+    def setUp(self):
+        self.t = transporte_fixo(ok(fixture("rgf_vazio.json")),
+                                 ok(fixture("rgf_simplificado.json")))
+        self.p = pessoal(3514700, 2024, 3, self.t, dormir=lambda _: None)
+
+    def test_le_o_simplificado_quando_falta_o_quadrimestral(self):
+        self.assertTrue(self.p.simplificado)
+        self.assertEqual(self.p.percentual, 33.75)
+        self.assertEqual(self.p.despesa, 15922107.46)
+        self.assertEqual(self.p.limite_prudencial, 51.3)
+
+    def test_rcl_e_a_do_limite_legal_e_a_ajustada_e_o_denominador(self):
+        # `ReceitaCorrenteLiquidaLimiteLegal` casa o prefixo `CONTA_RCL`.
+        self.assertEqual(self.p.rcl, 48552772.07)
+        self.assertEqual(self.p.rcl_ajustada, 47174684.07)
+        self.assertAlmostEqual(self.p.despesa / self.p.rcl_ajustada * 100,
+                               self.p.percentual, places=2)
+
+    def test_pede_o_2o_semestre_do_mesmo_exercicio(self):
+        url = self.t.pedidas[1]
+        self.assertIn("nr_periodo=2", url)
+        self.assertIn("an_exercicio=2024", url)
+        self.assertIn("co_tipo_demonstrativo=RGF+Simplificado", url)
+
+    def test_quadrimestral_presente_nao_pergunta_o_simplificado(self):
+        t = transporte_fixo(ok(fixture("rgf_salvador.json")))
+        p = pessoal(2927408, 2024, 3, t, dormir=lambda _: None)
+        self.assertFalse(p.simplificado)
+        self.assertEqual(len(t.pedidas), 1)
+
+    def test_semestre_so_equivale_ao_3o_quadrimestre(self):
+        for periodo in (1, 2):
+            with self.assertRaises(ValueError):
+                url_rgf(2024, periodo, 3514700, simplificado=True)
 
 
 class TestLeituraDoPlanoDeContas(unittest.TestCase):

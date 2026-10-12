@@ -60,8 +60,10 @@ class ContratoEntreLinguagens(unittest.TestCase):
             ])
             gravar_pessoal(con, 2927408, 2024, 3, Pessoal(
                 2927408, 2024, 3, 1.04e10, 1.02e10, 3.3e9, 32.37, 51.3))
+            # Simplificado só para o teste da coluna: o corpus é fictício.
             gravar_pessoal(con, 2507507, 2024, 3, Pessoal(
-                2507507, 2024, 3, 1e9, 9.8e8, 5.2e8, 52.69, 51.3))
+                2507507, 2024, 3, 1e9, 9.8e8, 5.2e8, 52.69, 51.3,
+                simplificado=True))
             gravar_pessoal(con, 2111300, 2024, 3, None)   # não publicou
             # A receita dos TRÊS entes, porque o bloco só sai com o exercício
             # completo — varrido pela metade, ele é `None` de propósito.
@@ -135,6 +137,13 @@ class OQueOSnapshotPromete(unittest.TestCase):
         self.assertTrue(nao, "o corpus de teste precisa de um que não publicou")
         for l in nao:
             self.assertIsNone(l[j], "ausência virou número")
+
+    def test_simplificado_diz_de_qual_relatorio_veio_o_numero(self):
+        i = self.snapshot["colunas"].index("simplificado")
+        por_codigo = {l[0]: l[i] for l in self.snapshot["municipios"]}
+        self.assertIs(por_codigo[2927408], False)
+        self.assertIs(por_codigo[2507507], True)
+        self.assertIsNone(por_codigo[2111300], "não entregou nenhum dos dois")
 
     def test_a_fonte_e_a_data_de_coleta_viajam_com_o_dado(self):
         self.assertIn("SICONFI", self.snapshot["fonte"])
@@ -585,6 +594,44 @@ class ATravaDoCarimbo(unittest.TestCase):
         c = {"geradoEm": 2, "receita": {"exercicios": [{"coletadoEm": 2, "v": 6}]}}
         self.assertEqual(_sem_carimbos(a), _sem_carimbos(b))
         self.assertNotEqual(_sem_carimbos(a), _sem_carimbos(c))
+
+
+
+class TestExercicioPadrao(unittest.TestCase):
+    """Sem `--exercicio`, o exportar usa o último exercício perguntado a TODOS
+    os municípios: com 2025 pela metade, o site fica em 2024 em vez de dizer
+    "não entregou" de quem ainda não foi perguntado."""
+
+    def setUp(self):
+        self.dir = tempfile.TemporaryDirectory()
+        self.banco = str(Path(self.dir.name) / "t.db")
+        self.saida = Path(self.dir.name) / "s.json"
+        with abrir(self.banco) as con:
+            gravar_entes(con, [Ente(2927408, "Salvador", "BA", "NE", "M", 1, "1"),
+                               Ente(2507507, "João Pessoa", "PB", "NE", "M", 2, "2")])
+            for ex in (2024, 2025):
+                gravar_pessoal(con, 2927408, ex, 3, Pessoal(
+                    2927408, ex, 3, 1e10, 9.9e9, 3.3e9, 32.37, 51.3))
+            gravar_pessoal(con, 2507507, 2024, 3, None)
+
+    def tearDown(self):
+        self.dir.cleanup()
+
+    def exercicio(self):
+        r = subprocess.run(
+            [sys.executable, "-m", "fiscal", "--banco", self.banco, "exportar",
+             "--saida", str(self.saida)],
+            cwd=RAIZ, capture_output=True, text=True, encoding="utf-8")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        return json.loads(self.saida.read_text(encoding="utf-8"))["exercicio"]
+
+    def test_ano_pela_metade_nao_e_exportado(self):
+        self.assertEqual(self.exercicio(), 2024)
+
+    def test_ano_completo_passa_a_ser_o_exportado(self):
+        with abrir(self.banco) as con:
+            gravar_pessoal(con, 2507507, 2025, 3, None)
+        self.assertEqual(self.exercicio(), 2025)
 
 
 if __name__ == "__main__":

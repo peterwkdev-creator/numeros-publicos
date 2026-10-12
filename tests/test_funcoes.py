@@ -21,6 +21,20 @@ def transporte_fixo(corpo: dict):
     return t
 
 
+def transporte_seq(*corpos: dict):
+    """Uma resposta por pedido, na ordem, e guarda as URLs pedidas."""
+    fila = list(corpos)
+
+    def t(url: str) -> Resposta:
+        t.pedidas.append(url)
+        return Resposta(200, json.dumps(fila.pop(0)))
+    t.pedidas = []
+    return t
+
+
+VAZIO = {"items": [], "hasMore": False, "count": 0}
+
+
 def ler():
     return funcoes(2927408, 2024, 6, transporte_fixo(CORPUS["resposta"]),
                    dormir=lambda _: None)
@@ -125,6 +139,43 @@ class TestUrl(unittest.TestCase):
         u = url_rreo(2024, 6, 2927408)
         self.assertIn("RREO", u)
         self.assertIn("Anexo+02", u.replace("%20", "+"))
+
+
+
+class TestRreoSimplificado(unittest.TestCase):
+    """Quem optou pelo semestral (art. 63 da LRF) entrega o RREO Simplificado,
+    bimestral como o outro. Até 11/10/2026 o motor só perguntava o RREO e
+    gravava "não publicou" para uns 2.300 municípios. A fixture é a resposta
+    real de Alvinlândia/SP, 2025, 6º bimestre."""
+
+    def setUp(self):
+        a02 = json.loads((FIX / "rreo_simplificado_a02.json").read_text(encoding="utf-8"))
+        self.t = transporte_seq(VAZIO, a02["resposta"])
+        self.f = funcoes(3501509, 2025, 6, self.t, dormir=lambda _: None)
+
+    def test_le_o_simplificado_quando_falta_o_rreo(self):
+        self.assertTrue(self.f.simplificado)
+        self.assertEqual(self.f.valores["Saúde"], 8262823.8)
+        self.assertEqual(self.f.valores["Educação"], 9068346.86)
+        self.assertTrue(self.f.fecha)
+
+    def test_pede_o_mesmo_bimestre_no_simplificado(self):
+        self.assertEqual(len(self.t.pedidas), 2)
+        self.assertIn("co_tipo_demonstrativo=RREO&", self.t.pedidas[0])
+        self.assertIn("co_tipo_demonstrativo=RREO+Simplificado&", self.t.pedidas[1])
+        self.assertIn("nr_periodo=6", self.t.pedidas[1])
+        self.assertIn("no_anexo=RREO-Anexo+02", self.t.pedidas[1])
+
+    def test_rreo_presente_nao_pergunta_o_simplificado(self):
+        t = transporte_seq(CORPUS["resposta"])
+        f = funcoes(2927408, 2024, 6, t, dormir=lambda _: None)
+        self.assertFalse(f.simplificado)
+        self.assertEqual(len(t.pedidas), 1)
+
+    def test_os_dois_vazios_e_nao_publicou(self):
+        t = transporte_seq(VAZIO, VAZIO)
+        self.assertIsNone(funcoes(1, 2025, 6, t, dormir=lambda _: None))
+        self.assertEqual(len(t.pedidas), 2)
 
 
 if __name__ == "__main__":

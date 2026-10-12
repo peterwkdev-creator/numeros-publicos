@@ -22,6 +22,12 @@ export type LinhaMunicipio = [
   limitePrudencial: number | null,
   despesa: number | null,
   rclAjustada: number | null,
+  /**
+   * `true` = o número veio do RGF Simplificado do 2º semestre (art. 63 da
+   * LRF, município com menos de 50 mil habitantes), que cobre os mesmos 12
+   * meses até dezembro do 3º quadrimestre. `null` quando não entregou nenhum.
+   */
+  simplificado: boolean | null,
 ];
 
 export interface Snapshot {
@@ -264,6 +270,7 @@ export interface Municipio {
   limitePrudencial: number | null;
   despesa: number | null;
   rclAjustada: number | null;
+  simplificado: boolean | null;
 }
 
 /** Arrays compactos viram objetos. O snapshot é compacto porque o visitante o
@@ -271,9 +278,9 @@ export interface Municipio {
 export function expandir(s: Snapshot): Municipio[] {
   return s.municipios.map(
     ([codigo, nome, uf, populacao, publicou, percentual,
-      limitePrudencial, despesa, rclAjustada]) => ({
+      limitePrudencial, despesa, rclAjustada, simplificado]) => ({
       codigo, nome, uf, populacao, publicou, percentual,
-      limitePrudencial, despesa, rclAjustada,
+      limitePrudencial, despesa, rclAjustada, simplificado,
     }),
   );
 }

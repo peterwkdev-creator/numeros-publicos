@@ -116,6 +116,14 @@ class ContratoEntreLinguagens(unittest.TestCase):
         for linha in self.snapshot["municipios"]:
             self.assertEqual(len(linha), esperado)
 
+    def test_o_ponto_da_serie_bate_com_a_tupla_do_typescript(self):
+        self.assertEqual(self.snapshot["colunasSerie"],
+                         rotulos_da_tupla(self.ts, "PontoSerie"))
+        esperado = len(self.snapshot["colunasSerie"])
+        for pontos in self.snapshot["serie"].values():
+            for p in pontos:
+                self.assertEqual(len(p), esperado)
+
     def test_o_municipio_expandido_tem_os_campos_da_interface(self):
         # `expandir()` no TS produz `Municipio` a partir da tupla; os dois
         # conjuntos de nomes têm de ser o mesmo.
@@ -144,6 +152,11 @@ class OQueOSnapshotPromete(unittest.TestCase):
         self.assertIs(por_codigo[2927408], False)
         self.assertIs(por_codigo[2507507], True)
         self.assertIsNone(por_codigo[2111300], "não entregou nenhum dos dois")
+
+    def test_o_ponto_da_serie_diz_se_veio_do_simplificado(self):
+        i = self.snapshot["colunasSerie"].index("simplificado")
+        self.assertIs(self.snapshot["serie"]["2927408"][-1][i], False)
+        self.assertIs(self.snapshot["serie"]["2507507"][-1][i], True)
 
     def test_a_fonte_e_a_data_de_coleta_viajam_com_o_dado(self):
         self.assertIn("SICONFI", self.snapshot["fonte"])

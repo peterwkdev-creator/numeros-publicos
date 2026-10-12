@@ -942,13 +942,16 @@ def cmd_exportar(args, *_) -> int:
         # Só quem publicou entra na série: "não entregou" já é dito pelo campo
         # `publicou` do período em destaque, e repetir a ausência em cada ponto
         # da série inflaria o arquivo sem acrescentar informação.
+        # `simplificado` em cada ponto: quem entrega o semestral não tem o 1º e
+        # o 2º quadrimestres, e sem a marca o site os contaria como buraco.
         serie: dict[str, list] = {}
         for r in con.execute(
-            "SELECT codigo_ibge, exercicio, periodo, publicou, percentual"
+            "SELECT codigo_ibge, exercicio, periodo, publicou, percentual, fonte"
             "  FROM pessoal WHERE percentual IS NOT NULL AND exercicio <= ?"
             " ORDER BY codigo_ibge, exercicio, periodo", (args.exercicio,)):
             serie.setdefault(str(r["codigo_ibge"]), []).append(
-                [r["exercicio"], r["periodo"], bool(r["publicou"]), r["percentual"]])
+                [r["exercicio"], r["periodo"], bool(r["publicou"]), r["percentual"],
+                 r["fonte"] == armazem.FONTE_SIMPLIFICADO])
         bloco_funcoes = _bloco_funcoes(con)
         bloco_saude = _bloco_saude(con)
         bloco_receita = _bloco_receita(con)
@@ -1001,7 +1004,8 @@ def cmd_exportar(args, *_) -> int:
         # Fica em objeto separado, e não como coluna nova, porque a tupla
         # posicional de `municipios` é contrato com o TypeScript: acrescentar
         # um array lá dentro complicaria o tipo sem ganhar nada.
-        "colunasSerie": ["exercicio", "periodo", "publicou", "percentual"],
+        "colunasSerie": ["exercicio", "periodo", "publicou", "percentual",
+                         "simplificado"],
         "serie": serie,
         "periodos": periodos,
         # `null` enquanto nenhuma varredura de funções tiver rodado -- a chave

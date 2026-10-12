@@ -252,12 +252,14 @@ export type EntradaFuncoes = [
   valores: [indice: number, valor: number][],
 ];
 
-/** Um ponto da série: exercício, quadrimestre, publicou, percentual. */
+/** Um ponto da série: exercício, quadrimestre, publicou, percentual e se veio
+ *  do RGF Simplificado (semestral: o ano não tem 1º e 2º quadrimestres). */
 export type PontoSerie = [
   exercicio: number,
   periodo: number,
   publicou: boolean,
   percentual: number,
+  simplificado: boolean,
 ];
 
 export interface Municipio {

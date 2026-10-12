@@ -617,16 +617,24 @@ class TestExercicioPadrao(unittest.TestCase):
     def tearDown(self):
         self.dir.cleanup()
 
-    def exercicio(self):
+    def snapshot(self):
         r = subprocess.run(
             [sys.executable, "-m", "fiscal", "--banco", self.banco, "exportar",
              "--saida", str(self.saida)],
             cwd=RAIZ, capture_output=True, text=True, encoding="utf-8")
         self.assertEqual(r.returncode, 0, r.stderr)
-        return json.loads(self.saida.read_text(encoding="utf-8"))["exercicio"]
+        return json.loads(self.saida.read_text(encoding="utf-8"))
+
+    def exercicio(self):
+        return self.snapshot()["exercicio"]
 
     def test_ano_pela_metade_nao_e_exportado(self):
         self.assertEqual(self.exercicio(), 2024)
+
+    def test_ano_pela_metade_nao_entra_na_serie(self):
+        s = self.snapshot()
+        self.assertEqual(s["periodos"], [[2024, 3]])
+        self.assertEqual([p[0] for p in s["serie"]["2927408"]], [2024])
 
     def test_ano_completo_passa_a_ser_o_exportado(self):
         with abrir(self.banco) as con:

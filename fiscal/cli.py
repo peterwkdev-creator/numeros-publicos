@@ -933,17 +933,20 @@ def cmd_exportar(args, *_) -> int:
         coleta = con.execute(
             "SELECT MAX(coletado_em) FROM pessoal WHERE exercicio=? AND periodo=?",
             (args.exercicio, args.periodo)).fetchone()[0]
+        # A série para no exercício exportado: com a coleta de um ano novo pela
+        # metade, ele apareceria como último ponto de uns municípios e não de
+        # outros, depois do período em destaque.
         periodos = [[r[0], r[1]] for r in con.execute(
-            "SELECT DISTINCT exercicio, periodo FROM pessoal"
-            " ORDER BY exercicio, periodo")]
+            "SELECT DISTINCT exercicio, periodo FROM pessoal WHERE exercicio <= ?"
+            " ORDER BY exercicio, periodo", (args.exercicio,))]
         # Só quem publicou entra na série: "não entregou" já é dito pelo campo
         # `publicou` do período em destaque, e repetir a ausência em cada ponto
         # da série inflaria o arquivo sem acrescentar informação.
         serie: dict[str, list] = {}
         for r in con.execute(
             "SELECT codigo_ibge, exercicio, periodo, publicou, percentual"
-            "  FROM pessoal WHERE percentual IS NOT NULL"
-            " ORDER BY codigo_ibge, exercicio, periodo"):
+            "  FROM pessoal WHERE percentual IS NOT NULL AND exercicio <= ?"
+            " ORDER BY codigo_ibge, exercicio, periodo", (args.exercicio,)):
             serie.setdefault(str(r["codigo_ibge"]), []).append(
                 [r["exercicio"], r["periodo"], bool(r["publicou"]), r["percentual"]])
         bloco_funcoes = _bloco_funcoes(con)

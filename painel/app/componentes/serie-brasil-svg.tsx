@@ -8,15 +8,17 @@ import estilos from "./serie-brasil.module.css";
 
 /**
  * Uma série do país, com as faixas de quem ocupava a Presidência atrás.
- * **Componente de servidor.** Usado uma vez por série em `/brasil/`, sempre com o
- * MESMO `dominio`: o eixo de tempo é o mesmo em todos, e é isso que permite
- * olhar um embaixo do outro.
+ * **Componente de servidor.** Usado uma vez por série em `/brasil/`. O eixo de
+ * tempo vai do primeiro ao último dado DESTA série (`cobertura`): até 15/10/2026
+ * era o mesmo em todas, e a desocupação, que começa em 2012, ocupava só o
+ * terço da direita de um eixo que começava em 1988. A regra continua uma só
+ * para todas as séries; o que muda é que cada uma enche o próprio desenho.
  *
  * ## O que o desenho se recusa a fazer
  *
  * - **Cor por pessoa ou partido.** Dois cinzas alternados, na ordem do cargo.
- * - **Faixa onde não há dado.** A faixa vai só até onde a série vai; antes
- *   dela, o gráfico diz em texto onde a série começa.
+ * - **Faixa onde não há dado.** A faixa vai só até onde a série vai, e o
+ *   eixo também.
  * - **Resumo por mandato.** Nenhum valor de início e fim de cada um, nenhuma
  *   média: é o passo que transforma coincidência no tempo em placar (decisão
  *   do usuário, 05/10/2026).
@@ -45,13 +47,11 @@ const CARACTERE = 0.56;
 export default function SerieBrasilSvg({
   serie,
   mandatos,
-  dominio,
   csv,
   meta,
 }: {
   serie: SerieBrasil;
   mandatos: Mandato[];
-  dominio: [number, number];
   /** O endereço do CSV desta série. */
   csv: string;
   /** Desenhada só na série cuja leitura é a meta (a inflação). */
@@ -61,8 +61,8 @@ export default function SerieBrasilSvg({
   const ap = APRESENTACAO[serie.codigo];
   const titulo = ap?.titulo ?? serie.nome;
   const casas = casasDe(serie);
-  const [de, ate] = dominio;
   const [cobDe, cobAte] = cobertura(serie);
+  const [de, ate] = [cobDe, cobAte];
   const trechos = ap?.melhor === "meta" ? trechosMeta(meta.anos, cobDe, cobAte) : [];
 
   const x = (t: number) => M.esq + ((t - de) * (L - M.esq - M.dir)) / (ate - de);
@@ -82,8 +82,8 @@ export default function SerieBrasilSvg({
     "Z",
   ].join(" ");
 
-  // As palavras da leitura dentro do desenho, encostadas à esquerda (onde as
-  // séries que começam depois deixam espaço vazio): dos dois lados do zero,
+  // As palavras da leitura dentro do desenho, encostadas à esquerda, com halo
+  // por cima da linha: dos dois lados do zero,
   // quando ele divide a leitura e aparece na escala; senão, no alto e embaixo.
   const ESQ = M.esq + 4;
   const leituras: { texto: string; y: number }[] = [];
@@ -116,7 +116,6 @@ export default function SerieBrasilSvg({
     moeda
       ? `${moeda} ${br(v, casas)}${serie.unidade.slice(moeda.length)}`
       : `${br(v, casas)}${serie.unidade.startsWith("%") ? "" : " "}${serie.unidade}`;
-  const comeco = cobDe - de > 1;
 
   const rotulo =
     `${titulo}, de ${rotuloPeriodo(r.primeiro[0])} a ${rotuloPeriodo(r.ultimo[0])}, ` +
@@ -211,7 +210,7 @@ export default function SerieBrasilSvg({
           </g>
         ))}
 
-        {anosDoEixo(dominio).map((a) => (
+        {anosDoEixo([de, ate]).map((a) => (
           <g key={`a-${a}`}>
             <line className={estilos.marca}
               x1={x(a)} x2={x(a)} y1={A - M.base} y2={A - M.base + 3} />
@@ -221,14 +220,6 @@ export default function SerieBrasilSvg({
             </text>
           </g>
         ))}
-
-        {comeco && (
-          <text className={estilos.eixo} x={(x(de) + x(cobDe)) / 2}
-            y={(M.topo + A - M.base) / 2} textAnchor="middle" fontSize={FONTE}>
-            <tspan x={(x(de) + x(cobDe)) / 2}>série começa</tspan>
-            <tspan x={(x(de) + x(cobDe)) / 2} dy="1.2em">em {Math.floor(cobDe)}</tspan>
-          </text>
-        )}
 
         <path className={estilos.linha} d={linha} />
         <circle className={estilos.ponto} cx={x(meioPeriodo(r.ultimo[0]))}

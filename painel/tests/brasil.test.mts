@@ -179,9 +179,11 @@ test("brasil: o eixo é COMUM, do começo mais antigo ao fim mais recente", () =
   }
 });
 
-test("brasil: as marcas do eixo são os múltiplos de 5", () => {
+test("brasil: as marcas do eixo são os múltiplos de 5, de 2 ou de 1, pelo vão", () => {
   assert.deepEqual(anosDoEixo([1995.5, 2026.7]), [2000, 2005, 2010, 2015, 2020, 2025]);
-  assert.deepEqual(anosDoEixo([1995, 2000]), [1995, 2000]);
+  // série curta: de 2 em 2 até 20 anos, de 1 em 1 até 8
+  assert.deepEqual(anosDoEixo([2012, 2025.9]), [2012, 2014, 2016, 2018, 2020, 2022, 2024]);
+  assert.deepEqual(anosDoEixo([1995, 2000]), [1995, 1996, 1997, 1998, 1999, 2000]);
 });
 
 // ------------------------------------------------------------- mandatos
@@ -249,9 +251,12 @@ test("brasil: a escala cobre os valores com marcas redondas", () => {
     [51.27, 87.66], [-4.08, 9.24]]) {
     const e = escala(vs);
     assert.ok(e.baixo <= Math.min(...vs) && e.alto >= Math.max(...vs), String(vs));
-    assert.ok(e.marcas.length >= 3 && e.marcas.length <= 7, `${vs}: ${e.marcas}`);
-    perto(e.marcas[0]!, e.baixo);
-    perto(e.marcas.at(-1)!, e.alto);
+    assert.ok(e.marcas.length >= 3 && e.marcas.length <= 5, `${vs}: ${e.marcas}`);
+    assert.ok(e.marcas[0]! >= e.baixo && e.marcas.at(-1)! <= e.alto, `${vs}: ${e.marcas}`);
+    // justa: a sobra em cada ponta é a folga de 6% do vão, não um passo inteiro
+    const vao = Math.max(...vs) - Math.min(...vs);
+    assert.ok(Math.min(...vs) - e.baixo < 0.07 * vao * 1.2, `${vs}: ${e.baixo}`);
+    assert.ok(e.alto - Math.max(...vs) < 0.07 * vao * 1.2, `${vs}: ${e.alto}`);
   }
   // série que cruza o zero tem o zero entre as marcas
   assert.ok(escala([-4.5, 7.5]).marcas.includes(0));
@@ -307,20 +312,22 @@ test("neutralidade: a nota de que as faixas não medem efeito, na página e em c
   assert.match(PAGINA, /não medem\s+efeito/);
 });
 
-test("neutralidade: todos os gráficos recebem o MESMO eixo", () => {
+test("neutralidade: todos os gráficos seguem a MESMA regra de eixo", () => {
+  // Desde 15/10/2026 o eixo é a cobertura da própria série, sem exceção:
+  // nenhuma série recebe um eixo escolhido à mão.
   const usos = [...PAGINA.matchAll(/<SerieBrasilSvg[^>]*>/gs)].map((x) => x[0]);
   assert.equal(usos.length, 1, "um uso só, dentro do map das séries");
-  assert.match(usos[0]!, /dominio=\{eixo\}/);
-  assert.match(PAGINA, /const eixo = dominio\(b\.series\)/);
+  assert.doesNotMatch(usos[0]!, /dominio=/);
+  assert.match(COMPONENTE, /const \[cobDe, cobAte\] = cobertura\(serie\);\n  const \[de, ate\] = \[cobDe, cobAte\];/);
 });
 
 test("neutralidade: nenhum evento anotado além das trocas no cargo", () => {
-  // O SVG escreve os rótulos das faixas, os eixos, o começo da série, a
-  // leitura (melhor e pior, ou os dois lados do zero) e o nome da faixa da
+  // O SVG escreve os rótulos das faixas, os eixos, a leitura
+  // (melhor e pior, ou os dois lados do zero) e o nome da faixa da
   // meta. Um <text> novo com outra coisa reprova aqui até alguém decidir de
   // propósito.
   const textos = [...COMPONENTE.matchAll(/<text[^>]*>\s*([^<]*)/g)].map((x) => x[1]!.trim());
-  assert.deepEqual(textos, ["{f.rotulo}", "{br(v, Number.isInteger(v) ? 0 : 1)}", "{a}", "",
+  assert.deepEqual(textos, ["{f.rotulo}", "{br(v, Number.isInteger(v) ? 0 : 1)}", "{a}",
     "{l.texto}", "faixa da meta"]);
 });
 

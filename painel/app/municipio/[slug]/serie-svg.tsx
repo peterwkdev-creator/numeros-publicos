@@ -1,4 +1,5 @@
 import { br } from "../../../lib/dados";
+import { eixoJusto } from "../../../lib/eixo";
 import {
   contiguos,
   indiceQuadrimestre,
@@ -22,11 +23,12 @@ import {
  * nos dados faria o contrário — exageraria meio ponto percentual até parecer
  * despencada.
  *
- * A saída é **ancorar nos limites legais**, não nos dados: a escala vai do
- * menor entre (dados, limite prudencial) ao maior entre (dados, teto legal), e
- * as duas linhas de limite são **desenhadas**. O leitor não precisa confiar na
- * escala, porque vê a régua junto com a medida — e a pergunta real ("está acima
- * do limite?") passa a ser respondida pela posição, não por um número.
+ * A saída é `eixoJusto` (`lib/eixo.ts`): a escala vai dos dados, com pelo
+ * menos 5 pontos de vão, e as marcas escritas à esquerda. Os dois limites
+ * entram na escala e são **desenhados** quando estão perto dos dados (até meio
+ * vão de distância); longe, ficam fora, e o gráfico escreve embaixo que eles
+ * estão acima. Até 15/10/2026 a escala sempre esticava até o teto legal, e um
+ * município em 25% via a própria série espremida no pé do desenho.
  *
  * ## O que fica de fora
  *
@@ -65,9 +67,18 @@ import {
  * dado público exige as duas coisas, não uma ou outra.
  */
 
+/** O vão mínimo do eixo, em pontos percentuais: meio ponto não vira salto. */
+const VAO_MINIMO = 5;
+
+/** "teto de 54%", "limites de 51,3% e 54%": o que ficou fora, para o pé do gráfico. */
+function limites(vs: number[]): string {
+  const ps = [...vs].sort((a, b) => a - b).map((v) => `${br(v, 1)}%`);
+  return ps.length === 1 ? `limite de ${ps[0]}` : `limites de ${ps.join(" e ")}`;
+}
+
 const L = 300;   // largura do viewBox; o SVG escala para o container
 const A = 72;    // altura
-const M = { topo: 10, base: 18, esq: 4, dir: 4 };
+const M = { topo: 10, base: 18, esq: 24, dir: 4 };
 
 export default function SerieSvg({
   pontos,
@@ -83,12 +94,19 @@ export default function SerieSvg({
   const bons = pontos.filter(pontoPlausivel);
   if (bons.length < 2) return null;
 
-  const valores = bons.map((p) => p[3]);
-  const min = Math.min(...valores, prudencial);
-  const max = Math.max(...valores, legal);
-  const folga = Math.max((max - min) * 0.15, 1);
-  const baixo = min - folga;
-  const alto = max + folga;
+  const { baixo, alto, marcas, fora } = eixoJusto(bons.map((p) => p[3]), {
+    vaoMinimo: VAO_MINIMO, reguas: [prudencial, legal],
+  });
+  const reguas = [
+    { v: legal, cor: "var(--alerta)", texto: "teto legal", direita: true },
+    { v: prudencial, cor: "var(--atencao)", texto: "prudencial", direita: false },
+  ];
+  const acima = fora.filter((v) => v > alto);
+  const abaixo = fora.filter((v) => v < baixo);
+  const foraDaEscala = [
+    acima.length ? `↑ ${limites(acima)} acima` : "",
+    abaixo.length ? `↓ ${limites(abaixo)} abaixo` : "",
+  ].filter(Boolean).join(" · ");
 
   const primeiro = bons[0]!;
   const ultimo = bons[bons.length - 1]!;
@@ -133,7 +151,8 @@ export default function SerieSvg({
       ? `A série tem ${buracos === 1 ? "uma interrupção" : `${buracos} interrupções`}` +
         `, em períodos sem relatório entregue. `
       : "") +
-    `Limite prudencial ${br(prudencial, 2)}%, teto legal ${br(legal, 2)}%. ` +
+    `Limite prudencial ${br(prudencial, 2)}%, teto legal ${br(legal, 2)}%` +
+    (fora.length ? `; ${fora.length === 2 ? "os dois ficam" : "um fica"} fora da escala do gráfico. ` : ". ") +
     `Os mesmos valores estão na tabela abaixo.`;
 
   return (
@@ -153,10 +172,17 @@ export default function SerieSvg({
           que na escala costumam ser ~7 unidades, e os dois rótulos alinhados
           à direita se sobrepunham inteiros (no telefone, com a fonte de 11,
           em toda página medida). */}
-      {[
-        { v: legal, cor: "var(--alerta)", texto: "teto legal", direita: true },
-        { v: prudencial, cor: "var(--atencao)", texto: "prudencial", direita: false },
-      ].map(({ v, cor, texto, direita }) => (
+      {marcas.map((v) => (
+        <g key={`m-${v}`}>
+          <line x1={M.esq} x2={L - M.dir} y1={y(v)} y2={y(v)}
+            stroke="var(--borda)" strokeWidth="1" />
+          <text x={M.esq - 3} y={y(v) + 3} textAnchor="end" fontSize="8"
+            fill="var(--tinta-fraca)">
+            {br(v, Number.isInteger(v) ? 0 : 1)}%
+          </text>
+        </g>
+      ))}
+      {reguas.filter(({ v }) => !fora.includes(v)).map(({ v, cor, texto, direita }) => (
         <g key={texto}>
           <line
             x1={M.esq} x2={L - M.dir} y1={y(v)} y2={y(v)}
@@ -198,6 +224,12 @@ export default function SerieSvg({
       <text x={L - M.dir} y={A - 4} fontSize="8" textAnchor="end" fill="var(--tinta-fraca)">
         {rotuloPonto(ultimo)}
       </text>
+      {foraDaEscala && (
+        <text x={(L + M.esq) / 2} y={A - 4} fontSize="8" textAnchor="middle"
+          fill="var(--tinta-fraca)">
+          {foraDaEscala}
+        </text>
+      )}
     </svg>
   );
 }

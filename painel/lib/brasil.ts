@@ -1,3 +1,5 @@
+import { eixoJusto } from "./eixo";
+
 /**
  * O Brasil ao longo do tempo: as séries do país e quem ocupava a
  * Presidência. **Módulo puro**: sem I/O, testável sem build.
@@ -387,10 +389,13 @@ export function dominio(series: SerieBrasil[]): [number, number] {
   return [Math.min(...c.map((x) => x[0])), Math.max(...c.map((x) => x[1]))];
 }
 
-/** Os anos marcados no eixo: os múltiplos de 5 dentro do domínio. */
+/** Os anos marcados no eixo: os múltiplos de 5 dentro do domínio, ou de 2
+ *  numa série de até 20 anos e de 1 numa de até 8 (o eixo é o da própria
+ *  série desde 15/10/2026, e uma de 2012 a 2025 teria só duas marcas). */
 export function anosDoEixo([de, ate]: [number, number]): number[] {
+  const passo = ate - de > 20 ? 5 : ate - de > 8 ? 2 : 1;
   const anos: number[] = [];
-  for (let a = Math.ceil(de / 5) * 5; a <= ate; a += 5) anos.push(a);
+  for (let a = Math.ceil(de / passo) * passo; a <= ate; a += passo) anos.push(a);
   return anos;
 }
 
@@ -507,23 +512,15 @@ export function casasDe(s: SerieBrasil): number {
   return casas;
 }
 
-/** A escala vertical com marcas redondas: 1, 2, 2,5 ou 5 vezes uma potência
- *  de 10, umas quatro marcas. O zero entra quando a série o cruza. */
+/** A escala vertical: a de todo gráfico de série do site (`lib/eixo.ts`),
+ *  do menor ao maior valor, com marcas redondas dentro. O zero entra quando
+ *  a série o cruza. Até 15/10/2026 arredondava os extremos para fora, e um
+ *  passo inteiro de sobra podia ficar vazio em cada ponta. */
 export function escala(valores: number[]): {
   baixo: number; alto: number; marcas: number[];
 } {
-  const min = Math.min(...valores);
-  const max = Math.max(...valores);
-  const bruto = (max - min || Math.abs(max) || 1) / 4;
-  const pot = 10 ** Math.floor(Math.log10(bruto));
-  const passo = [1, 2, 2.5, 5, 10].map((k) => k * pot).find((p) => p >= bruto)!;
-  const baixo = Math.floor(min / passo) * passo;
-  const alto = Math.ceil(max / passo) * passo;
-  const marcas: number[] = [];
-  for (let v = baixo; v <= alto + passo / 1e6; v += passo) {
-    marcas.push(Math.round(v / passo) * passo);
-  }
-  return { baixo, alto: alto > baixo ? alto : baixo + passo, marcas };
+  const { baixo, alto, marcas } = eixoJusto(valores);
+  return { baixo, alto, marcas };
 }
 
 /** Os extremos e as pontas, para o texto do gráfico. Sem verbo de

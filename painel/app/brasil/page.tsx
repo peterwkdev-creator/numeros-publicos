@@ -47,7 +47,6 @@ const csvDe = (codigo: string) => `${CAMINHO}${codigo}/dados.csv`;
 
 export default async function Pagina() {
   const b = await lerBrasil();
-  const eixo = dominio(b.series);
   const ultimos = b.series.map((s) => s.pontos[s.pontos.length - 1]![0]);
   const coleta = b.series.map((s) => s.coletadoEm).sort()[0]!;
   const fontes = [...new Set(b.series.map((s) => s.fonte))];
@@ -122,9 +121,9 @@ export default async function Pagina() {
           página não soma, não tira média e não compara mandatos.
         </p>
         <p>
-          Os {b.series.length} gráficos usam o mesmo eixo de tempo, de{" "}
-          {Math.floor(eixo[0])} a {Math.floor(eixo[1])}: uma série que começa
-          depois mostra o espaço vazio antes dela, em vez de esticar.
+          Cada um dos {b.series.length} gráficos vai do primeiro ao último dado
+          da sua série, e elas não começam no mesmo ano: compare pelos anos do
+          eixo, não pela posição na tela.
         </p>
       </div>
 
@@ -133,7 +132,7 @@ export default async function Pagina() {
         <div className={estilos.grade}>
           {b.series.map((s) => (
             <SerieBrasilSvg key={s.codigo} serie={s} mandatos={b.mandatos}
-              dominio={eixo} csv={csvDe(s.codigo)} meta={b.metaInflacao} />
+              csv={csvDe(s.codigo)} meta={b.metaInflacao} />
           ))}
         </div>
       </section>

@@ -1,4 +1,5 @@
 import { br } from "../../lib/dados";
+import { eixoJusto } from "../../lib/eixo";
 import type { Trajetoria } from "../../lib/ideb";
 
 /**
@@ -6,16 +7,14 @@ import type { Trajetoria } from "../../lib/ideb";
  *
  * Sem biblioteca e sem JavaScript, como o gráfico da série fiscal.
  *
- * ## A escala é FIXA de 0 a 10, e isso é o oposto do outro gráfico
+ * ## A escala vai dos dados, com pelo menos 2 pontos de vão
  *
- * O sparkline da despesa com pessoal ancora nos limites legais porque não há
- * escala natural para um percentual de receita. **O IDEB tem:** ele é definido
- * entre 0 e 10, e essa escala é a mesma para todo município do país.
- *
- * Ancorar nos dados aqui seria mentir por exagero — uma variação de 4,9 para
- * 5,1 ocuparia o gráfico inteiro e pareceria um salto. Com o eixo fixo, duas
- * páginas de municípios diferentes são **diretamente comparáveis**, que é
- * justamente o que um índice padronizado permite e um percentual não permite.
+ * Até 15/10/2026 era FIXA de 0 a 10, para duas páginas serem comparáveis pela
+ * posição. O custo era o desenho: um Ideb entre 4 e 7 deixava 60% da altura
+ * vazia e espremia a trajetória (pedido do usuário: o gráfico enche a área).
+ * Agora o eixo é o de `eixoJusto`, preso entre 0 e 10, com as marcas
+ * escritas; o vão mínimo de 2 pontos impede o exagero (de 4,9 para 5,1 ocupa
+ * um décimo da altura, não ela inteira).
  *
  * ## A meta é linha tracejada, não segunda série
  *
@@ -28,7 +27,8 @@ import type { Trajetoria } from "../../lib/ideb";
 const L = 320;
 const A = 96;
 const M = { topo: 8, base: 20, esq: 22, dir: 6 };
-const TETO = 10;
+/** O vão mínimo do eixo, em pontos do índice. */
+const VAO_MINIMO = 2;
 
 export default function IdebSvg({
   trajetoria,
@@ -47,8 +47,12 @@ export default function IdebSvg({
 
   const x = (ano: number) =>
     M.esq + ((ano - minAno) / vao) * (L - M.esq - M.dir);
+  const { baixo, alto, marcas } = eixoJusto(
+    pontos.flatMap((p) => (p.projecao === null ? [p.observado] : [p.observado, p.projecao])),
+    { vaoMinimo: VAO_MINIMO, limites: [0, 10] },
+  );
   const y = (v: number) =>
-    M.topo + ((TETO - v) / TETO) * (A - M.topo - M.base);
+    M.topo + ((alto - v) / (alto - baixo)) * (A - M.topo - M.base);
 
   const linha = pontos
     .map((p, i) => `${i ? "L" : "M"}${x(p.edicao)},${y(p.observado)}`)
@@ -62,7 +66,7 @@ export default function IdebSvg({
   const rotulo =
     `IDEB de ${municipio}, ${trajetoria.rotuloEtapa}, rede municipal: ` +
     pontos.map((p) => `${p.edicao}, ${br(p.observado, 1)}`).join("; ") +
-    `. A escala vai de 0 a 10. ` +
+    `. O eixo vai de ${br(baixo, 1)} a ${br(alto, 1)}, numa escala que vai de 0 a 10. ` +
     (comMeta.length
       ? `A linha tracejada é a meta do INEP, publicada em ${
           comMeta.length
@@ -78,9 +82,9 @@ export default function IdebSvg({
       aria-label={rotulo}
       style={{ width: "100%", height: "auto", display: "block" }}
     >
-      {/* As réguas de 0, 5 e 10. Com escala fixa elas são as mesmas em todo
-          município, e é isso que torna duas páginas comparáveis. */}
-      {[0, 5, TETO].map((v) => (
+      {/* As marcas do eixo, escritas: com a escala presa aos dados, é o
+          número ao lado que diz onde a linha está. */}
+      {marcas.map((v) => (
         <g key={v}>
           <line
             x1={M.esq} x2={L - M.dir} y1={y(v)} y2={y(v)}
@@ -90,7 +94,7 @@ export default function IdebSvg({
             x={M.esq - 4} y={y(v) + 3} textAnchor="end"
             fontSize="8" fill="var(--tinta-fraca)"
           >
-            {v}
+            {br(v, Number.isInteger(v) ? 0 : 1)}
           </text>
         </g>
       ))}

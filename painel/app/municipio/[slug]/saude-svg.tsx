@@ -1,4 +1,5 @@
 import { br } from "../../../lib/dados";
+import { eixoJusto } from "../../../lib/eixo";
 
 /**
  * A aplicação de recursos próprios em saúde, 2000–2025, como um traço.
@@ -29,7 +30,7 @@ import { br } from "../../../lib/dados";
 
 const L = 300;
 const A = 78;
-const M = { topo: 10, base: 18, esq: 4, dir: 4 };
+const M = { topo: 10, base: 18, esq: 24, dir: 4 };
 
 /** O primeiro ano em que os 15% valem cheios — ver o comentário acima.
  *  Exportados para a tabela da página marcar os mesmos anos que o gráfico. */
@@ -45,15 +46,18 @@ export default function SaudeSvg({
 }) {
   if (pontos.length < 2) return null;
 
-  const valores = pontos.map((p) => p[1]);
-  const min = Math.min(...valores, PISO);
-  const max = Math.max(...valores, PISO);
-  const folga = Math.max((max - min) * 0.15, 1);
-  const baixo = min - folga;
-  const alto = max + folga;
-
   const primeiro = pontos[0]!;
   const ultimo = pontos[pontos.length - 1]!;
+  // A régua começa em 2004, ou no primeiro ano da série se ela for mais nova.
+  const inicioDaRegua = Math.max(ANO_DO_PISO_CHEIO, primeiro[0]);
+  const temRegua = inicioDaRegua <= ultimo[0];
+
+  // O eixo dos dados (`lib/eixo.ts`, 5 pontos de vão no mínimo): o piso entra
+  // quando está perto deles e é desenhado; longe, o pé do gráfico diz onde.
+  const { baixo, alto, marcas, fora } = eixoJusto(pontos.map((p) => p[1]), {
+    vaoMinimo: 5, reguas: temRegua ? [PISO] : [],
+  });
+  const desenhaRegua = temRegua && fora.length === 0;
   const vao = Math.max(ultimo[0] - primeiro[0], 1);
 
   const x = (ano: number) =>
@@ -74,10 +78,6 @@ export default function SaudeSvg({
     (p, i) => i > 0 && p[0] - pontos[i - 1]![0] !== 1,
   ).length;
 
-  // A régua começa em 2004, ou no primeiro ano da série se ela for mais nova.
-  const inicioDaRegua = Math.max(ANO_DO_PISO_CHEIO, primeiro[0]);
-  const temRegua = inicioDaRegua <= ultimo[0];
-
   const abaixoDoPiso = pontos.filter(
     ([ano, v]) => ano >= ANO_DO_PISO_CHEIO && v < PISO,
   ).length;
@@ -94,6 +94,7 @@ export default function SaudeSvg({
       ? `A série tem ${buracos === 1 ? "uma interrupção" : `${buracos} interrupções`}, ` +
         `em anos sem dado na fonte. `
       : "") +
+    (fora.length ? `O mínimo de 15% fica ${PISO > alto ? "acima" : "abaixo"} da escala do gráfico. ` : "") +
     `Os mesmos valores estão na tabela abaixo.`;
 
   return (
@@ -104,7 +105,17 @@ export default function SaudeSvg({
       aria-label={rotulo}
       style={{ width: "100%", height: "auto", display: "block" }}
     >
-      {temRegua && (
+      {marcas.map((v) => (
+        <g key={`m-${v}`}>
+          <line x1={M.esq} x2={L - M.dir} y1={y(v)} y2={y(v)}
+            stroke="var(--borda)" strokeWidth="1" />
+          <text x={M.esq - 3} y={y(v) + 3} textAnchor="end" fontSize="8"
+            fill="var(--tinta-fraca)">
+            {br(v, Number.isInteger(v) ? 0 : 1)}%
+          </text>
+        </g>
+      ))}
+      {desenhaRegua && (
         <g>
           {/* A régua PARA em 2004 do lado esquerdo, de propósito. */}
           <line
@@ -146,6 +157,12 @@ export default function SaudeSvg({
       <text x={L - M.dir} y={A - 4} fontSize="8" textAnchor="end" fill="var(--tinta-fraca)">
         {ultimo[0]}
       </text>
+      {fora.length > 0 && (
+        <text x={(L + M.esq) / 2} y={A - 4} fontSize="8" textAnchor="middle"
+          fill="var(--tinta-fraca)">
+          {PISO > alto ? "↑ mínimo de 15% acima" : "↓ mínimo de 15% abaixo"}
+        </text>
+      )}
     </svg>
   );
 }

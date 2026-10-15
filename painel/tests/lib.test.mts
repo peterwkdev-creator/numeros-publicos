@@ -3024,3 +3024,42 @@ test("período do RGF: nunca 2024/3, que se lê como março de 2024", () => {
   assert.equal(nomeQuadrimestre(2024, 3), "3º quadrimestre de 2024");
   assert.doesNotMatch(rotuloPeriodo(2024, 3), /\d{4}\/\d/);
 });
+
+test("todo download (CSV e XLSX) tem noindex no _headers da Cloudflare", () => {
+  // 15/10/2026: dados.csv aparecia entre as "rastreadas, mas não indexadas"
+  // do Search Console. A rota de download nova que nascer sem regra volta a
+  // ser uma URL rasa a mais para o Google; este teste a pega.
+  const regras: { padrao: RegExp; noindex: boolean }[] = [];
+  let atual: (typeof regras)[number] | null = null;
+  for (const linha of fs.readFileSync("../cloudflare/_headers", "utf-8").split(/\r?\n/)) {
+    if (!linha.trim() || linha.startsWith("#")) continue;
+    if (!/^\s/.test(linha)) {
+      // Regra de host (`https://...pages.dev/*`) fica de fora: não é o domínio.
+      // Como o Pages casa o caminho: `:nome` é um segmento, `*` é qualquer coisa.
+      const re = linha.trim().replace(/[.+?^${}()|[\]\\]/g, "\\$&")
+        .replace(/:[a-z]+/g, "[^/]+").replace(/\*/g, ".*");
+      atual = linha.startsWith("/") ? { padrao: new RegExp(`^${re}$`), noindex: false } : null;
+      if (atual) regras.push(atual);
+    } else if (atual && /^\s+X-Robots-Tag:\s*noindex/i.test(linha)) {
+      atual.noindex = true;
+    }
+  }
+  const downloads: string[] = [];
+  const varrer = (dir: string) => {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      const p = `${dir}/${e.name}`;
+      if (e.isDirectory()) varrer(p);
+      else if (/^route\.tsx?$/.test(e.name) && /\.(csv|xlsx)$/.test(dir)) downloads.push(dir);
+    }
+  };
+  varrer("app");
+  assert.ok(downloads.length >= 5, `só ${downloads.length} rotas de download achadas`);
+  for (const d of downloads) {
+    const url = d.slice("app".length).replace(/\[[^\]]+\]/g, "exemplo");
+    assert.ok(regras.some((r) => r.noindex && r.padrao.test(url)), `${url} sem X-Robots-Tag: noindex`);
+  }
+  // E nenhuma página: o noindex só pode pegar download.
+  for (const pagina of ["/", "/municipio/recife-pe/", "/estado/pe/", "/brasil/", "/ranking/gasto-com-pessoal/"]) {
+    assert.ok(!regras.some((r) => r.noindex && r.padrao.test(pagina)), `${pagina} pegou noindex`);
+  }
+});

@@ -24,6 +24,27 @@
 /_next/static/*
   Cache-Control: public, max-age=31536000, immutable
 
+# Os downloads ficam fora do índice dos buscadores (15/10/2026). O export do
+# Search Console mostrou dados.csv entre as páginas "rastreadas, mas não
+# indexadas": o CSV repete a página do município em outro formato, e cada um
+# é mais uma URL rasa do mesmo molde na conta do Google. Quem baixa não muda
+# nada. Um curinga por regra é o limite do Pages, daí uma regra por rota; o
+# teste "todo download tem noindex" reprova rota de download nova sem regra.
+/municipio/:slug/dados.csv
+  X-Robots-Tag: noindex
+
+/estado/:uf/dados.csv
+  X-Robots-Tag: noindex
+
+/brasil/:serie/dados.csv
+  X-Robots-Tag: noindex
+
+/dados/municipios.csv
+  X-Robots-Tag: noindex
+
+/dados/municipios.xlsx
+  X-Robots-Tag: noindex
+
 # O endereço *.pages.dev serve o site inteiro, e sem isto o Google o indexaria
 # como cópia do www. O canonical já aponta para o www, mas noindex no host da
 # plataforma é o que a própria Cloudflare recomenda. Não afeta o domínio próprio.

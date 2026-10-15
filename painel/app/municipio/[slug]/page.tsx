@@ -33,7 +33,7 @@ import {
   EMPRESAS, medianaDaColunaCache, PARES_TRABALHO, RENDA_CENSO,
 } from "../../../lib/trabalho";
 import {
-  cartaoSocial, lerCaged, lerEmendas, lerFiscal, lerIdeb, lerRegioes, lerSnapshot,
+  cartaoSocial, imagemDoEstado, lerCaged, lerEmendas, lerFiscal, lerIdeb, lerRegioes, lerSnapshot,
   SITE,
 } from "../../../lib/servidor";
 import ComposicaoBarras from "../../componentes/composicao-barras";
@@ -144,6 +144,7 @@ export async function generateMetadata(
       titulo,
       partes.join(" · ") || `Dados abertos de ${m.nome}/${m.uf}.`,
       `/municipio/${m.slug}/`,
+      imagemDoEstado(m.uf),
     ),
   };
 }

@@ -14,3 +14,11 @@ não é uma credencial, e por isso pode e deve estar aqui.
 quebra de linha no fim, sem BOM. O protocolo compara os dois.
 
 **Trocar a chave quebra a verificação** e obriga a reenviar tudo. Ela fica.
+
+## `og/`
+
+O cartão de compartilhamento (`og:image`) de cada estado, que também é o
+dos municípios dele, e os do `/brasil` e dos dois rankings: 30 PNGs de
+1280×640. Saem de `scripts/gerar-cartoes.mjs`, rodado à mão quando muda o
+desenho, a malha ou um estado; o porquê está em `imagemDoEstado`
+(`lib/servidor.ts`).

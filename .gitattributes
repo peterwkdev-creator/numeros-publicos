@@ -1,0 +1,3 @@
+# O teste lê o cabeçalho dos PNGs de `painel/public/og/` byte a byte: nenhuma
+# conversão de fim de linha pode tocá-los, mesmo com core.autocrlf ligado.
+*.png binary

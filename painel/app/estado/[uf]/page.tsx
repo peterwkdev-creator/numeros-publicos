@@ -25,7 +25,7 @@ import {
   FONTES, trilha, VARIAVEIS, catalogoDe, coberturaTemporal, palavrasChave, LICENCA_DADOS,
 } from "../../../lib/jsonld";
 import {
-  lerCaged, lerEmendas, lerFiscal, lerIdeb, lerInss, lerSnapshot, SITE, cartaoSocial,
+  lerCaged, lerEmendas, lerFiscal, lerIdeb, lerInss, lerSnapshot, SITE, cartaoSocial, imagemDoEstado,
 } from "../../../lib/servidor";
 import TabelaCaged from "../../componentes/tabela-caged";
 import { cagedDeVarios, comSinal, contagem, nomeCompetencia } from "../../../lib/caged";
@@ -119,6 +119,7 @@ export async function generateMetadata(
         ? `${r.uf.nome}, com procedência.`
         : `Os ${r.uf.municipios} municípios ${deEstado(r.uf.sigla)}, com procedência.`,
       `/estado/${slugUf(r.uf.sigla)}/`,
+      imagemDoEstado(r.uf.sigla),
     ),
   };
 }

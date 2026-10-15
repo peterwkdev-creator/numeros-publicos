@@ -35,7 +35,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: `${TITULO}: economia e contas públicas`,
     description: descricao,
     alternates: { canonical: `${SITE}${CAMINHO}` },
-    ...cartaoSocial(`${TITULO}: economia e contas públicas`, descricao, CAMINHO),
+    ...cartaoSocial(`${TITULO}: economia e contas públicas`, descricao, CAMINHO, "/og/brasil.png"),
   };
 }
 

@@ -1151,7 +1151,7 @@ test("o salto cancela a comparação, mas NÃO a série", () => {
 // `og:title` certo e **`twitter:title` genérico** — "Números Públicos", o da
 // capa. E nenhuma tinha imagem. Nada disso aparece no site, na auditoria ou no
 // HTML lido de passagem: só ao colar o link em algum lugar.
-const { cartaoSocial } = await import("../lib/servidor.ts");
+const { cartaoSocial, imagemDoEstado } = await import("../lib/servidor.ts");
 
 test("o cartão diz a MESMA coisa nos dois vocabulários", () => {
   // O X prefere `twitter:` quando existe, e existia — herdado do layout. O
@@ -1172,6 +1172,39 @@ test("o cartão leva imagem nos dois — era o que sumia ao sobrescrever openGra
   assert.match(og[0]!.url, /opengraph-image\.png$/);
   assert.equal((c.twitter.images as string[]).length, 1);
   assert.equal(c.twitter.card, "summary_large_image");
+});
+
+test("estado e município levam o cartão do estado, nos dois vocabulários", () => {
+  // Item 12 da revisão de 11/10: um PNG por estado em `public/og/`, e não um
+  // por página (5.571 arquivos num deploy com teto de 20.000).
+  const c = cartaoSocial("Recife (PE)", "d", "/municipio/recife-pe/", imagemDoEstado("PE"));
+  const og = c.openGraph.images as { url: string; width: number; height: number }[];
+  assert.equal(og[0]!.url, "/og/pe.png");
+  assert.equal(og[0]!.width, 1280);
+  assert.deepEqual(c.twitter.images, ["/og/pe.png"]);
+  const estado = fs.readFileSync("app/estado/[uf]/page.tsx", "utf-8");
+  const municipio = fs.readFileSync("app/municipio/[slug]/page.tsx", "utf-8");
+  assert.match(estado, /imagemDoEstado\(r\.uf\.sigla\)/);
+  assert.match(municipio, /imagemDoEstado\(m\.uf\)/);
+});
+
+test("existe um cartão 1280×640 para cada UF do snapshot, para o /brasil e os rankings", () => {
+  // O gerador roda à mão (`scripts/gerar-cartoes.mjs`): estado novo no
+  // snapshot sem PNG daria og:image quebrado, sem erro no build.
+  const ufs = (JSON.parse(fs.readFileSync("dados/snapshot.json", "utf-8")) as { ufs: { sigla: string }[] }).ufs;
+  assert.equal(ufs.length, 27);
+  const nomes = [...ufs.map((u) => imagemDoEstado(u.sigla)), "/og/brasil.png",
+    "/og/ranking-gasto-com-pessoal.png", "/og/ranking-emprego-com-carteira.png"];
+  for (const nome of nomes) {
+    const png = fs.readFileSync(`public${nome}`);
+    assert.equal(png.subarray(12, 16).toString("latin1"), "IHDR", nome);
+    assert.deepEqual([png.readUInt32BE(16), png.readUInt32BE(20)], [1280, 640], nome);
+  }
+  for (const rota of ["app/brasil/page.tsx", "app/ranking/gasto-com-pessoal/page.tsx",
+    "app/ranking/emprego-com-carteira/page.tsx"]) {
+    const usado = fs.readFileSync(rota, "utf-8").match(/"(\/og\/[a-z-]+\.png)"/)?.[1];
+    assert.ok(usado && nomes.includes(usado), rota);
+  }
 });
 
 test("a url do cartão é absoluta e termina em barra", () => {

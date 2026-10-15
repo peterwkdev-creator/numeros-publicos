@@ -41,7 +41,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: titulo,
     description: descricao,
     alternates: { canonical: `${SITE}${CAMINHO}` },
-    ...cartaoSocial(titulo, descricao, CAMINHO),
+    ...cartaoSocial(titulo, descricao, CAMINHO, "/og/ranking-emprego-com-carteira.png"),
   };
 }
 

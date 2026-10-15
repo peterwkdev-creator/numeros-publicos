@@ -148,14 +148,17 @@ export const SITE =
   "https://www.numerospublicos.com.br";
 
 /**
- * A imagem do cartão de compartilhamento.
+ * A imagem do cartão de compartilhamento: uma por estado, e não uma por página.
  *
- * É a mesma para todo o site, e isso é escolha, não preguiça: gerar uma por
- * município seriam **5.571 PNGs** no build, e o limite que morde nesta
- * hospedagem é armazenamento de deployment retido, não largura de banda (ver
- * `github.md`). O cartão já carrega o nome e os números daquele município no
- * **título e na descrição** — a imagem faz o trabalho de existir, que é o que
- * separa um link com cartão de um link cru na linha do tempo de alguém.
+ * Até 15/10/2026 o site inteiro mostrava a da capa (item 12 da revisão de
+ * 11/10). Uma por município seriam **5.571 PNGs** num deploy que já tem
+ * 11.296 arquivos, com teto de 20.000 na Cloudflare Pages. Com uma por
+ * estado, o município mostra o mapa do seu estado, e o nome e os números dele
+ * seguem no **título e na descrição** do cartão.
+ *
+ * Os PNGs saem de `scripts/gerar-cartoes.mjs`, rodado à mão, e ficam em
+ * `public/og/`; o teste confere que existe um 1280×640 para cada UF. Sem
+ * `imagem`, vale o da capa (`app/opengraph-image.png`).
  */
 const IMAGEM_SOCIAL = {
   url: "/opengraph-image.png",
@@ -163,6 +166,11 @@ const IMAGEM_SOCIAL = {
   height: 640,
   type: "image/png",
 } as const;
+
+/** O cartão do estado, que também é o dos municípios dele. */
+export function imagemDoEstado(sigla: string): string {
+  return `/og/${sigla.toLowerCase()}.png`;
+}
 
 /**
  * O cartão que aparece quando alguém cola o link — declarado nos DOIS
@@ -196,6 +204,7 @@ export function cartaoSocial(
   titulo: string,
   descricao: string,
   caminho: string,
+  imagem: string = IMAGEM_SOCIAL.url,
 ): { openGraph: Record<string, unknown>; twitter: Record<string, unknown> } {
   const url = `${SITE}${caminho}`;
   return {
@@ -205,7 +214,7 @@ export function cartaoSocial(
       url,
       locale: "pt_BR",
       type: "article",
-      images: [IMAGEM_SOCIAL],
+      images: [{ ...IMAGEM_SOCIAL, url: imagem }],
     },
     // `summary_large_image` repetido aqui, e não herdado: se um dia o layout
     // mudar de card, estas 5.598 páginas mudam junto sem ninguém pedir.
@@ -213,7 +222,7 @@ export function cartaoSocial(
       card: "summary_large_image",
       title: titulo,
       description: descricao,
-      images: [IMAGEM_SOCIAL.url],
+      images: [imagem],
     },
   };
 }

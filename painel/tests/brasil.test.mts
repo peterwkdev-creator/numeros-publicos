@@ -318,7 +318,7 @@ test("neutralidade: todos os gráficos seguem a MESMA regra de eixo", () => {
   const usos = [...PAGINA.matchAll(/<SerieBrasilSvg[^>]*>/gs)].map((x) => x[0]);
   assert.equal(usos.length, 1, "um uso só, dentro do map das séries");
   assert.doesNotMatch(usos[0]!, /dominio=/);
-  assert.match(COMPONENTE, /const \[cobDe, cobAte\] = cobertura\(serie\);\n  const \[de, ate\] = \[cobDe, cobAte\];/);
+  assert.match(COMPONENTE, /const \[cobDe, cobAte\] = cobertura\(serie\);\r?\n  const \[de, ate\] = \[cobDe, cobAte\];/);
 });
 
 test("neutralidade: nenhum evento anotado além das trocas no cargo", () => {

@@ -60,6 +60,20 @@ import { xlsx } from "../lib/xlsx.ts";
 import { ancoraDe, glossarioAZ, idDoVerbete } from "../lib/glossario.ts";
 import { COMO_LER } from "../lib/como-ler.ts";
 
+// A página do município foi dividida em módulos (item 19 da revisão de
+// 11/10/2026). Os testes que leem o TEXTO dela leem o conjunto: o `page.tsx`
+// primeiro, depois `apoio.ts`, `contexto.ts`, `json-ld.ts` e os `secao-*.tsx`
+// em ordem alfabética. Quem recorta por um marcador precisa saber que o
+// `page.tsx` vem na frente (ver o teste do Censo, que lista as seções).
+const PASTA_MUNICIPIO = "../app/municipio/[slug]/";
+function fonteDoMunicipio(): string {
+  const dir = new URL(PASTA_MUNICIPIO, import.meta.url);
+  const secoes = fs.readdirSync(dir)
+    .filter((n) => /^secao-.*\.tsx$/.test(n)).sort();
+  return ["page.tsx", "apoio.ts", "contexto.ts", "json-ld.ts", ...secoes]
+    .map((n) => fs.readFileSync(new URL(n, dir), "utf-8")).join("\n");
+}
+
 // ------------------------------------------------------------------ posicao
 
 test("posicaoEntre situa o valor entre os comparáveis", () => {
@@ -736,9 +750,18 @@ test("a página não crava percentual do Censo em texto", () => {
   // "26,9%" à mão -- número medido numa categoria de esgoto que nem era a
   // exibida -- enquanto a tabela ao lado mostrava 32,6%. Nenhum teste pegava,
   // porque continua sendo uma frase bem formada.
-  const pagina = fs.readFileSync(
-    new URL("../app/municipio/[slug]/page.tsx", import.meta.url), "utf-8");
-  const secao = pagina.slice(pagina.indexOf("Como se vive em"));
+  // Antes da divisão o recorte ia de "Como se vive em" até o fim do arquivo:
+  // a seção do Censo, a de trabalho, a de vizinhos, a de baixar e o rodapé.
+  // A do Censo e o rodapé seguem no `page.tsx`; as outras três são módulos.
+  const dir = new URL(PASTA_MUNICIPIO, import.meta.url);
+  const pagina = fs.readFileSync(new URL("page.tsx", dir), "utf-8");
+  const secao = [
+    pagina.slice(pagina.indexOf("Como se vive em")),
+    ...["secao-trabalho.tsx", "secao-vizinhos.tsx", "secao-baixar.tsx"]
+      .map((n) => fs.readFileSync(new URL(n, dir), "utf-8")),
+  ].join("\n");
+  assert.ok(secao.includes("Trabalho e renda") || secao.includes("trabalho-e-renda"),
+    "o recorte deixou de cobrir a seção de trabalho");
   const cravados = [...secao.matchAll(/<strong>\s*\d+[.,]\d+%/g)].map((m) => m[0]);
   assert.deepEqual(cravados, [],
     `percentual escrito à mão na seção do Censo: ${cravados.join(", ")}`);
@@ -926,7 +949,7 @@ test("as três páginas comparam contra coisas DIFERENTES, e dizem qual", () => 
   // continuaria bem formada com qualquer uma no lugar da outra.
   const ler = (rel: string) =>
     fs.readFileSync(new URL(rel, import.meta.url), "utf-8");
-  const muni = ler("../app/municipio/[slug]/page.tsx");
+  const muni = fonteDoMunicipio();
   const est = ler("../app/estado/[uf]/page.tsx");
 
   const rotuloDe = (src: string) => {
@@ -967,8 +990,7 @@ test("a página do município mantém a ressalva que separa mediana de taxa", ()
   // Enquanto a coluna vizinha for a MEDIANA dos municípios, a página precisa
   // dizer que ela não é a taxa do país -- senão o leitor conclui que 32,6% dos
   // domicílios brasileiros têm esgoto, e são 64,7%.
-  const muni = fs.readFileSync(
-    new URL("../app/municipio/[slug]/page.tsx", import.meta.url), "utf-8");
+  const muni = fonteDoMunicipio();
   assert.ok(muni.includes("As medianas ao lado são dos municípios, não a taxa do estado nem a do país"),
     "a ressalva sumiu da página do município");
 });
@@ -1183,7 +1205,7 @@ test("estado e município levam o cartão do estado, nos dois vocabulários", ()
   assert.equal(og[0]!.width, 1280);
   assert.deepEqual(c.twitter.images, ["/og/pe.png"]);
   const estado = fs.readFileSync("app/estado/[uf]/page.tsx", "utf-8");
-  const municipio = fs.readFileSync("app/municipio/[slug]/page.tsx", "utf-8");
+  const municipio = fonteDoMunicipio();
   assert.match(estado, /imagemDoEstado\(r\.uf\.sigla\)/);
   assert.match(municipio, /imagemDoEstado\(m\.uf\)/);
 });
@@ -2571,7 +2593,7 @@ test("periodoDe lê o ano do snapshot e recusa indicador que não existe", () =>
 });
 
 test("o cartão de população não volta a afirmar 'mais recente' por escrito", () => {
-  const pagina = fs.readFileSync("app/municipio/[slug]/page.tsx", "utf-8");
+  const pagina = fonteDoMunicipio();
   assert.doesNotMatch(pagina, /Estimativa mais recente/);
   assert.match(pagina, /periodoDe\(snapshot, "populacao-estimada"\)/);
   assert.match(pagina, /periodoDe\(snapshot, "pib-municipal"\)/);

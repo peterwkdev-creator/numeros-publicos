@@ -52,16 +52,28 @@ export const HIDRATAM = new Set();
 const PAYLOAD = /<script>\(?self\.__next_f\b.*?<\/script>/gs;
 const RUNTIME = /<script\b[^>]*\bsrc="\/_next\/[^"]*\.js"[^>]*><\/script>/g;
 const PRELOAD_JS = /<link\b[^>]*\bas="script"[^>]*\bhref="\/_next\/[^"]*\.js"[^>]*\/?>/g;
+// Desde o Next 16.4: `<script id="_R_">(globalThis["TURBOPACK"] || ...).push(
+// {"otherChunks":[...]})</script>`, a lista de chunks que o runtime carrega.
+// Sem `src`, escapava do RUNTIME; o conteúdo não tem `<`.
+const TURBOPACK = /<script\b[^>]*>[^<]*\bTURBOPACK\b[^<]*<\/script>/g;
 const BUSCA = '<script type="module" src="/busca.js"></script>';
+// O que pode sobrar: JSON-LD e os módulos próprios de `public/` (`/busca.js`,
+// `/capa.js`...). Lista do que FICA, para que o próximo formato de runtime
+// do Next reprove aqui em vez de passar calado, como o `_R_` passou.
+const SCRIPT_PERMITIDO = /^<script (type="application\/ld\+json"|type="module" src="\/[a-z-]+\.js")>$/;
 
 /** Devolve o HTML sem React, ou lança dizendo por quê. */
 export function desidratar(html, onde) {
-  const saida = html.replace(PAYLOAD, "").replace(RUNTIME, "").replace(PRELOAD_JS, "");
-  // As três condições que tornam o resultado confiável. Cada uma já seria um
+  const saida = html.replace(PAYLOAD, "").replace(RUNTIME, "").replace(PRELOAD_JS, "")
+    .replace(TURBOPACK, "");
+  // As condições que tornam o resultado confiável. Cada uma já seria um
   // defeito silencioso: payload sobrando é peso inútil; runtime sobrando sem
   // payload é React quebrando no console; a busca sumindo é o campo mudo.
   if (saida.includes("__next_f")) throw new Error(`${onde}: sobrou payload RSC`);
   if (/src="\/_next\/[^"]*\.js"/.test(saida)) throw new Error(`${onde}: sobrou script do runtime`);
+  for (const tag of saida.match(/<script\b[^>]*>/g) ?? []) {
+    if (!SCRIPT_PERMITIDO.test(tag)) throw new Error(`${onde}: script fora da lista: ${tag}`);
+  }
   if (!saida.includes(BUSCA)) throw new Error(`${onde}: sem ${BUSCA} — a busca ficaria muda`);
   return saida;
 }

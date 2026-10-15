@@ -2451,10 +2451,16 @@ test("desidratar tira payload e runtime, e mantém CSS, JSON-LD e a busca", asyn
     '<script>(self.__next_f=self.__next_f||[]).push([0])</script>' +
     // `\\u003c`: o Next escapa o `<` dentro do payload, então `</script>` não
     // aparece cru ali — e o regex não corta o bloco no meio.
-    '<script>self.__next_f.push([1,"a:\\u003c/script>"])</script></body>';
+    '<script>self.__next_f.push([1,"a:\\u003c/script>"])</script>' +
+    // Next 16.4: a lista de chunks do Turbopack, inline e sem `src`.
+    '<script id="_R_">(globalThis["TURBOPACK"] || (globalThis["TURBOPACK"] = []))' +
+    '.push({"otherChunks":["static/chunks/y.js"],"runtimeModuleIds":[1]});</script></body>';
   const s = desidratar(html, "teste");
   assert.ok(!s.includes("__next_f"));
-  assert.ok(!s.includes("x.js"));
+  assert.ok(!s.includes("x.js") && !s.includes("TURBOPACK") && !s.includes("y.js"));
+  // Um formato de runtime que nenhum regex conhece reprova pela lista do que fica.
+  assert.throws(() => desidratar(html.replace("</body>", '<script id="_S_">novo()</script></body>'), "t"),
+    /script fora da lista/);
   assert.ok(s.includes("a.css") && s.includes("ld+json") && s.includes("/busca.js"));
   assert.throws(() => desidratar(html.replace('<script type="module" src="/busca.js"></script>', ""), "t"),
     /busca ficaria muda/);

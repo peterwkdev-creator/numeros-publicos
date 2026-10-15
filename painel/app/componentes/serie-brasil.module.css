@@ -170,3 +170,40 @@
   top: 0;
   background: var(--fundo);
 }
+
+/* Os botões de período (Tudo · 10 anos · 5 anos). O ativo se lê pelo fundo
+   E pelo peso da letra, não só pela cor; em alto contraste forçado a borda
+   continua. Alvo de 2.25rem de altura: dá para tocar no celular. */
+.periodos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0.4rem 0 0.2rem;
+}
+.periodos[hidden] {
+  display: none;
+}
+.periodos button {
+  min-height: 2.25rem;
+  padding: 0.2rem 0.8rem;
+  border: 1px solid var(--borda-forte);
+  border-radius: var(--raio);
+  background: var(--superficie);
+  color: var(--tinta);
+  font: inherit;
+  font-size: var(--texto-sm);
+  cursor: pointer;
+}
+.periodos button[aria-pressed="true"] {
+  background: var(--acento);
+  border-color: var(--acento);
+  color: var(--fundo);
+  font-weight: 600;
+}
+
+/* No papel sai o desenho que estava na tela, e o botão não faz nada. */
+@media print {
+  .periodos {
+    display: none;
+  }
+}

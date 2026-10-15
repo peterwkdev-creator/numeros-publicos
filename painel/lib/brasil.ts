@@ -382,6 +382,27 @@ export function cobertura(s: SerieBrasil): [number, number] {
   return [inicioPeriodo(ps[0]![0]), fimPeriodo(ps[ps.length - 1]![0])];
 }
 
+/** Os recortes do zoom do `/brasil/`, em anos (decisão do usuário, 15/10/2026:
+ *  botões "Tudo · 10 anos · 5 anos" acima de cada série longa). */
+export const RECORTES = [10, 5] as const;
+
+/**
+ * Os últimos `anos` da série: os períodos que começam a até `anos` do fim do
+ * último. Cada recorte se desenha com o próprio eixo, pela mesma regra do
+ * gráfico inteiro, e por isso é uma série, e não um enquadramento: a escala
+ * de valores também se refaz, senão os 5 anos ficariam espremidos na faixa
+ * dos 30.
+ *
+ * Só há recorte quando a série passa dele com folga de 1 ano; senão o botão
+ * mostraria o mesmo desenho com outro nome.
+ */
+export function recortar(s: SerieBrasil, anos: number): SerieBrasil | null {
+  const [de, ate] = cobertura(s);
+  if (ate - de <= anos + 1) return null;
+  const pontos = s.pontos.filter(([p]) => inicioPeriodo(p) >= ate - anos - 1e-9);
+  return pontos.length >= 2 ? { ...s, pontos } : null;
+}
+
 /** O eixo de tempo COMUM aos gráficos: do começo mais antigo ao fim mais
  *  recente entre todas as séries. */
 export function dominio(series: SerieBrasil[]): [number, number] {

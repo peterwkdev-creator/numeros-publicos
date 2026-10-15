@@ -213,6 +213,9 @@ export default async function Pagina() {
           </p>
         </div>
       </section>
+      {/* Os botões de período dos gráficos (Tudo · 10 anos · 5 anos): nascem
+          escondidos, e sem o script o gráfico inteiro continua. */}
+      <script type="module" src="/periodo.js" />
     </main>
   );
 }

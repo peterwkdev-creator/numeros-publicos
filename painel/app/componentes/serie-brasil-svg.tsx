@@ -1,7 +1,7 @@
 import { br, dataCurta } from "@/lib/dados";
 import {
   anosDoEixo, anosHerdados, APRESENTACAO, casasDe, cobertura, contiguos,
-  escala, faixas, meioPeriodo, resumo, rotuloPeriodo, SELO, trechosMeta,
+  escala, faixas, meioPeriodo, RECORTES, recortar, resumo, rotuloPeriodo, SELO, trechosMeta,
   type Mandato, type MetaInflacao, type SerieBrasil,
 } from "@/lib/brasil";
 import estilos from "./serie-brasil.module.css";
@@ -35,6 +35,16 @@ import estilos from "./serie-brasil.module.css";
  * zero). Na inflação, a faixa da meta de cada ano. No câmbio e nos juros o
  * selo diz que nenhum lado é melhor por si, e o desenho não leva palavra. Sem verde e vermelho: a
  * leitura vai escrita, e a cor continua sem dizer nada sobre as pessoas.
+ *
+ * ## O zoom: um desenho por recorte (15/10/2026)
+ *
+ * Acima do gráfico, "Tudo · 10 anos · 5 anos" (`RECORTES`). Cada recorte é
+ * uma série desenhada inteira, com os dois eixos refeitos (`recortar`), e não
+ * um enquadramento do desenho grande: só assim os 5 anos enchem a altura. Os
+ * recortes saem com `hidden` e os botões também; `public/periodo.js` mostra
+ * os botões e troca o desenho. Sem o script fica o gráfico inteiro, e nada
+ * promete um zoom que não faria. Botão nativo com `aria-pressed`: teclado,
+ * leitor de tela e toque sem código a mais.
  */
 
 const L = 360;
@@ -62,51 +72,10 @@ export default function SerieBrasilSvg({
   const titulo = ap?.titulo ?? serie.nome;
   const casas = casasDe(serie);
   const [cobDe, cobAte] = cobertura(serie);
-  const [de, ate] = [cobDe, cobAte];
+  // Para o texto da legenda, que fala da série inteira; cada desenho refaz os
+  // seus no próprio recorte.
   const trechos = ap?.melhor === "meta" ? trechosMeta(meta.anos, cobDe, cobAte) : [];
-
-  const x = (t: number) => M.esq + ((t - de) * (L - M.esq - M.dir)) / (ate - de);
-  // A faixa da meta entra na escala: nenhum ano dela fica cortado.
-  const { baixo, alto, marcas } = escala([
-    ...serie.pontos.map((p) => p[1]),
-    ...trechos.flatMap((t) => [t.inferior, t.superior]),
-  ]);
-  const y = (v: number) => M.topo + ((alto - v) / (alto - baixo)) * (A - M.topo - M.base);
-  const xy = (t: number, v: number) => `${x(t).toFixed(2)},${y(v).toFixed(2)}`;
-
-  // A faixa da meta em degraus, um por ano: o alto da esquerda para a
-  // direita, e o baixo de volta.
-  const contornoMeta = trechos.length === 0 ? "" : [
-    ...trechos.map((t, i) => `${i ? "L" : "M"}${xy(t.de, t.superior)} L${xy(t.ate, t.superior)}`),
-    ...[...trechos].reverse().map((t) => `L${xy(t.ate, t.inferior)} L${xy(t.de, t.inferior)}`),
-    "Z",
-  ].join(" ");
-
-  // As palavras da leitura dentro do desenho, encostadas à esquerda, com halo
-  // por cima da linha: dos dois lados do zero,
-  // quando ele divide a leitura e aparece na escala; senão, no alto e embaixo.
-  const ESQ = M.esq + 4;
-  const leituras: { texto: string; y: number }[] = [];
-  if (ap?.zero && baixo < 0 && alto > 0) {
-    leituras.push({ texto: `↑ ${ap.zero.acima}`, y: y(0) - 4 },
-      { texto: `↓ ${ap.zero.abaixo}`, y: y(0) + 11 });
-  } else if (ap?.melhor === "alto" || ap?.melhor === "baixo") {
-    const [cima, baixa] = ap.melhor === "alto" ? ["melhor", "pior"] : ["pior", "melhor"];
-    leituras.push({ texto: `↑ ${cima}`, y: M.topo + 11 },
-      { texto: `↓ ${baixa}`, y: A - M.base - 5 });
-  }
-
-  const linha = serie.pontos
-    .map(([p, v], i) => {
-      const anterior = serie.pontos[i - 1];
-      const segue = anterior !== undefined && contiguos(anterior[0], p);
-      return `${segue ? "L" : "M"}${x(meioPeriodo(p)).toFixed(2)},${y(v).toFixed(2)}`;
-    })
-    .join(" ");
-
-  const fs = faixas(mandatos, cobDe, cobAte);
   const herdados = ap?.fiscal ? anosHerdados(mandatos, cobDe, cobAte) : [];
-  const padrao = `herdado-${serie.codigo}`;
   const r = resumo(serie);
   // "R$ 3.061", "R$ 5,15 por dólar", "US$ 362,82 bilhões", "7,5%",
   // "51,27% do PIB", "38.894 óbitos": a moeda vai antes do número, o resto
@@ -116,17 +85,11 @@ export default function SerieBrasilSvg({
     moeda
       ? `${moeda} ${br(v, casas)}${serie.unidade.slice(moeda.length)}`
       : `${br(v, casas)}${serie.unidade.startsWith("%") ? "" : " "}${serie.unidade}`;
-
-  const rotulo =
-    `${titulo}, de ${rotuloPeriodo(r.primeiro[0])} a ${rotuloPeriodo(r.ultimo[0])}, ` +
-    `${br(serie.pontos.length)} pontos. Primeiro valor ${valor(r.primeiro[1])}, ` +
-    `último ${valor(r.ultimo[1])}. Menor ${valor(r.menor[1])}, em ` +
-    `${rotuloPeriodo(r.menor[0])}; maior ${valor(r.maior[1])}, em ` +
-    `${rotuloPeriodo(r.maior[0])}. ${ap ? `${SELO[ap.melhor]}. ` : ""}` +
-    (trechos.length > 0 ? "A faixa em degraus mostra a meta de inflação de cada ano. " : "") +
-    "As faixas ao fundo mostram quem ocupava a " +
-    `Presidência: ${fs.map((f) => f.nome).join(", ")}. ` +
-    "Os valores estão na tabela abaixo do gráfico.";
+  const recortes = RECORTES.flatMap((n) => {
+    const s = recortar(serie, n);
+    return s ? [[n, s] as const] : [];
+  });
+  const comum = { mandatos, meta, casas, valor };
 
   return (
     <figure className={estilos.figura} id={serie.codigo} data-serie={serie.codigo}>
@@ -147,99 +110,28 @@ export default function SerieBrasilSvg({
           {ap.como}
         </p>
       )}
-      <svg
-        className={estilos.grafico}
-        viewBox={`0 0 ${L} ${A}`}
-        role="img"
-        aria-label={rotulo}
-        data-dominio={`${de.toFixed(4)} ${ate.toFixed(4)}`}
-      >
-        {herdados.length > 0 && (
-          <defs>
-            <pattern id={padrao} width="5" height="5" patternUnits="userSpaceOnUse"
-              patternTransform="rotate(45)">
-              <line className={estilos.hachura} x1="0" y1="0" x2="0" y2="5" />
-            </pattern>
-          </defs>
-        )}
-
-        {fs.map((f) => (
-          <rect key={`f-${f.de}`} className={estilos.faixa} data-faixa={f.tom}
-            x={x(f.de)} y={M.topo} width={x(f.ate) - x(f.de)} height={A - M.topo - M.base} />
-        ))}
-        {herdados.map(([a, b]) => (
-          <rect key={`h-${a}`} data-herdado=""
-            x={x(a)} y={M.topo} width={x(b) - x(a)} height={A - M.topo - M.base}
-            fill={`url(#${padrao})`} />
-        ))}
-        {fs.flatMap((f) => f.divisas).map((d) => (
-          <line key={`d-${d}`} className={estilos.divisa} data-divisa=""
-            x1={x(d)} x2={x(d)} y1={M.topo} y2={A - M.base} />
-        ))}
-
-        {/* Os rótulos em duas linhas, pela mesma alternância do tom: dois
-            vizinhos nunca dividem a linha, e um nome mais largo que a faixa
-            (o de um período curto) não cobre o do lado. */}
-        {fs.map((f) => {
-          const largura = f.rotulo.length * FONTE * CARACTERE;
-          const meio = Math.min(
-            Math.max((x(f.de) + x(f.ate)) / 2, M.esq + largura / 2),
-            L - M.dir - largura / 2,
-          );
-          return (
-            <text key={`r-${f.de}`} className={estilos.rotulo} x={meio}
-              y={f.tom === 0 ? 11 : 24} textAnchor="middle" fontSize={FONTE}>
-              {f.rotulo}
-            </text>
-          );
-        })}
-
-        {trechos.length > 0 && (
-          <path className={estilos.meta} d={contornoMeta}
-            data-meta={trechos.map((t) => `${t.ano}:${t.inferior}:${t.superior}`).join(" ")} />
-        )}
-
-        {marcas.map((v) => (
-          <g key={`m-${v}`}>
-            <line className={v === 0 ? estilos.zero : estilos.grade}
-              x1={M.esq} x2={L - M.dir} y1={y(v)} y2={y(v)} />
-            <text className={estilos.eixo} x={M.esq - 4} y={y(v) + 3.5}
-              textAnchor="end" fontSize={FONTE}>
-              {br(v, Number.isInteger(v) ? 0 : 1)}
-            </text>
-          </g>
-        ))}
-
-        {anosDoEixo([de, ate]).map((a) => (
-          <g key={`a-${a}`}>
-            <line className={estilos.marca}
-              x1={x(a)} x2={x(a)} y1={A - M.base} y2={A - M.base + 3} />
-            <text className={estilos.eixo} x={x(a)} y={A - 4}
-              textAnchor="middle" fontSize={FONTE}>
-              {a}
-            </text>
-          </g>
-        ))}
-
-        <path className={estilos.linha} d={linha} />
-        <circle className={estilos.ponto} cx={x(meioPeriodo(r.ultimo[0]))}
-          cy={y(r.ultimo[1])} r="2.6" />
-
-        {/* Por cima da linha, com halo: a palavra tem de ler mesmo quando a
-            série passa por ela. */}
-        {leituras.map((l) => (
-          <text key={`l-${l.texto}`} className={estilos.leituraSvg} x={ESQ}
-            y={l.y} fontSize={FONTE}>
-            {l.texto}
-          </text>
-        ))}
-        {trechos.length > 0 && (
-          <text className={estilos.leituraSvg} x={x(trechos[0]!.de) + 3}
-            y={y(trechos[0]!.superior) - 4} fontSize={FONTE}>
-            faixa da meta
-          </text>
-        )}
-      </svg>
+      {recortes.length > 0 && (
+        <div className={estilos.periodos} role="group" data-periodos="" hidden
+          aria-label={`Período do gráfico: ${titulo}`}>
+          <button type="button" aria-pressed="true" data-periodo="tudo">Tudo</button>
+          {recortes.map(([n]) => (
+            <button key={n} type="button" aria-pressed="false" data-periodo={n}>
+              {n} anos
+            </button>
+          ))}
+        </div>
+      )}
+      {/* Um bloco por recorte, e o `hidden` no bloco: no `<svg>` o atributo
+          não vale em todo navegador, e o `display: block` da classe o anularia.
+          O inteiro vem primeiro, que é o `data-dominio` que o conferidor lê. */}
+      <div data-recorte="tudo">
+        <Desenho serie={serie} recorte="tudo" {...comum} />
+      </div>
+      {recortes.map(([n, s]) => (
+        <div key={n} data-recorte={n} hidden>
+          <Desenho serie={s} recorte={String(n)} {...comum} />
+        </div>
+      ))}
 
       <figcaption className={estilos.legenda}>
         <p>
@@ -316,5 +208,187 @@ export default function SerieBrasilSvg({
         </div>
       </details>
     </figure>
+  );
+}
+
+/**
+ * O `<svg>` de uma série, ou de um recorte dela: os dois eixos, as faixas e a
+ * meta saem da cobertura do que se desenha. O inteiro leva o `data-meta` que o
+ * `conferir-numeros` lê; os recortes repetiriam um pedaço dele.
+ */
+function Desenho({
+  serie,
+  recorte,
+  mandatos,
+  meta,
+  casas,
+  valor,
+}: {
+  serie: SerieBrasil;
+  /** "tudo", ou os anos do recorte. */
+  recorte: string;
+  mandatos: Mandato[];
+  meta: MetaInflacao;
+  /** As da série inteira: o recorte não muda o jeito de escrever o número. */
+  casas: number;
+  valor: (v: number) => string;
+}) {
+  const ap = APRESENTACAO[serie.codigo];
+  const titulo = ap?.titulo ?? serie.nome;
+  const [de, ate] = cobertura(serie);
+  const trechos = ap?.melhor === "meta" ? trechosMeta(meta.anos, de, ate) : [];
+
+  const x = (t: number) => M.esq + ((t - de) * (L - M.esq - M.dir)) / (ate - de);
+  // A faixa da meta entra na escala: nenhum ano dela fica cortado.
+  const { baixo, alto, marcas } = escala([
+    ...serie.pontos.map((p) => p[1]),
+    ...trechos.flatMap((t) => [t.inferior, t.superior]),
+  ]);
+  const y = (v: number) => M.topo + ((alto - v) / (alto - baixo)) * (A - M.topo - M.base);
+  const xy = (t: number, v: number) => `${x(t).toFixed(2)},${y(v).toFixed(2)}`;
+
+  // A faixa da meta em degraus, um por ano: o alto da esquerda para a
+  // direita, e o baixo de volta.
+  const contornoMeta = trechos.length === 0 ? "" : [
+    ...trechos.map((t, i) => `${i ? "L" : "M"}${xy(t.de, t.superior)} L${xy(t.ate, t.superior)}`),
+    ...[...trechos].reverse().map((t) => `L${xy(t.ate, t.inferior)} L${xy(t.de, t.inferior)}`),
+    "Z",
+  ].join(" ");
+
+  // As palavras da leitura dentro do desenho, encostadas à esquerda, com halo
+  // por cima da linha: dos dois lados do zero,
+  // quando ele divide a leitura e aparece na escala; senão, no alto e embaixo.
+  const ESQ = M.esq + 4;
+  const leituras: { texto: string; y: number }[] = [];
+  if (ap?.zero && baixo < 0 && alto > 0) {
+    leituras.push({ texto: `↑ ${ap.zero.acima}`, y: y(0) - 4 },
+      { texto: `↓ ${ap.zero.abaixo}`, y: y(0) + 11 });
+  } else if (ap?.melhor === "alto" || ap?.melhor === "baixo") {
+    const [cima, baixa] = ap.melhor === "alto" ? ["melhor", "pior"] : ["pior", "melhor"];
+    leituras.push({ texto: `↑ ${cima}`, y: M.topo + 11 },
+      { texto: `↓ ${baixa}`, y: A - M.base - 5 });
+  }
+
+  const linha = serie.pontos
+    .map(([p, v], i) => {
+      const anterior = serie.pontos[i - 1];
+      const segue = anterior !== undefined && contiguos(anterior[0], p);
+      return `${segue ? "L" : "M"}${x(meioPeriodo(p)).toFixed(2)},${y(v).toFixed(2)}`;
+    })
+    .join(" ");
+
+  const fs = faixas(mandatos, de, ate);
+  const herdados = ap?.fiscal ? anosHerdados(mandatos, de, ate) : [];
+  const padrao = `herdado-${serie.codigo}-${recorte}`;
+  const r = resumo(serie);
+
+  const rotulo =
+    `${titulo}${recorte === "tudo" ? "" : `, últimos ${recorte} anos`}, de ` +
+    `${rotuloPeriodo(r.primeiro[0])} a ${rotuloPeriodo(r.ultimo[0])}, ` +
+    `${br(serie.pontos.length)} pontos. Primeiro valor ${valor(r.primeiro[1])}, ` +
+    `último ${valor(r.ultimo[1])}. Menor ${valor(r.menor[1])}, em ` +
+    `${rotuloPeriodo(r.menor[0])}; maior ${valor(r.maior[1])}, em ` +
+    `${rotuloPeriodo(r.maior[0])}. ${ap ? `${SELO[ap.melhor]}. ` : ""}` +
+    (trechos.length > 0 ? "A faixa em degraus mostra a meta de inflação de cada ano. " : "") +
+    "As faixas ao fundo mostram quem ocupava a " +
+    `Presidência: ${fs.map((f) => f.nome).join(", ")}. ` +
+    "Os valores estão na tabela abaixo do gráfico.";
+
+  return (
+    <svg
+      className={estilos.grafico}
+      viewBox={`0 0 ${L} ${A}`}
+      role="img"
+      aria-label={rotulo}
+      data-dominio={`${de.toFixed(4)} ${ate.toFixed(4)}`}
+    >
+      {herdados.length > 0 && (
+        <defs>
+          <pattern id={padrao} width="5" height="5" patternUnits="userSpaceOnUse"
+            patternTransform="rotate(45)">
+            <line className={estilos.hachura} x1="0" y1="0" x2="0" y2="5" />
+          </pattern>
+        </defs>
+      )}
+
+      {fs.map((f) => (
+        <rect key={`f-${f.de}`} className={estilos.faixa} data-faixa={f.tom}
+          x={x(f.de)} y={M.topo} width={x(f.ate) - x(f.de)} height={A - M.topo - M.base} />
+      ))}
+      {herdados.map(([a, b]) => (
+        <rect key={`h-${a}`} data-herdado=""
+          x={x(a)} y={M.topo} width={x(b) - x(a)} height={A - M.topo - M.base}
+          fill={`url(#${padrao})`} />
+      ))}
+      {fs.flatMap((f) => f.divisas).map((d) => (
+        <line key={`d-${d}`} className={estilos.divisa} data-divisa=""
+          x1={x(d)} x2={x(d)} y1={M.topo} y2={A - M.base} />
+      ))}
+
+      {/* Os rótulos em duas linhas, pela mesma alternância do tom: dois
+          vizinhos nunca dividem a linha, e um nome mais largo que a faixa
+          (o de um período curto) não cobre o do lado. */}
+      {fs.map((f) => {
+        const largura = f.rotulo.length * FONTE * CARACTERE;
+        const meio = Math.min(
+          Math.max((x(f.de) + x(f.ate)) / 2, M.esq + largura / 2),
+          L - M.dir - largura / 2,
+        );
+        return (
+          <text key={`r-${f.de}`} className={estilos.rotulo} x={meio}
+            y={f.tom === 0 ? 11 : 24} textAnchor="middle" fontSize={FONTE}>
+            {f.rotulo}
+          </text>
+        );
+      })}
+
+      {trechos.length > 0 && (
+        <path className={estilos.meta} d={contornoMeta}
+          data-meta={recorte === "tudo"
+            ? trechos.map((t) => `${t.ano}:${t.inferior}:${t.superior}`).join(" ")
+            : undefined} />
+      )}
+
+      {marcas.map((v) => (
+        <g key={`m-${v}`}>
+          <line className={v === 0 ? estilos.zero : estilos.grade}
+            x1={M.esq} x2={L - M.dir} y1={y(v)} y2={y(v)} />
+          <text className={estilos.eixo} x={M.esq - 4} y={y(v) + 3.5}
+            textAnchor="end" fontSize={FONTE}>
+            {br(v, Number.isInteger(v) ? 0 : 1)}
+          </text>
+        </g>
+      ))}
+
+      {anosDoEixo([de, ate]).map((a) => (
+        <g key={`a-${a}`}>
+          <line className={estilos.marca}
+            x1={x(a)} x2={x(a)} y1={A - M.base} y2={A - M.base + 3} />
+          <text className={estilos.eixo} x={x(a)} y={A - 4}
+            textAnchor="middle" fontSize={FONTE}>
+            {a}
+          </text>
+        </g>
+      ))}
+
+      <path className={estilos.linha} d={linha} />
+      <circle className={estilos.ponto} cx={x(meioPeriodo(r.ultimo[0]))}
+        cy={y(r.ultimo[1])} r="2.6" />
+
+      {/* Por cima da linha, com halo: a palavra tem de ler mesmo quando a
+          série passa por ela. */}
+      {leituras.map((l) => (
+        <text key={`l-${l.texto}`} className={estilos.leituraSvg} x={ESQ}
+          y={l.y} fontSize={FONTE}>
+          {l.texto}
+        </text>
+      ))}
+      {trechos.length > 0 && (
+        <text className={estilos.leituraSvg} x={x(trechos[0]!.de) + 3}
+          y={y(trechos[0]!.superior) - 4} fontSize={FONTE}>
+          faixa da meta
+        </text>
+      )}
+    </svg>
   );
 }

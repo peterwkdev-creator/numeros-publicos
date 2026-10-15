@@ -12,8 +12,8 @@ import fs from "node:fs";
 import {
   anoDecimal, anosDoEixo, anosHerdados, APRESENTACAO, casasDe, cobertura,
   contiguos, dominio, escala, faixas, FONTE_COM_ARTIGO, fimPeriodo,
-  fontesPorExtenso, inicioPeriodo, meioPeriodo, resumo, rotuloPeriodo, SELO,
-  trechosMeta,
+  fontesPorExtenso, inicioPeriodo, meioPeriodo, recortar, RECORTES, resumo,
+  rotuloPeriodo, SELO, trechosMeta,
   type Mandato, type SerieBrasil, type SnapshotBrasil,
 } from "../lib/brasil.ts";
 
@@ -318,7 +318,53 @@ test("neutralidade: todos os gráficos seguem a MESMA regra de eixo", () => {
   const usos = [...PAGINA.matchAll(/<SerieBrasilSvg[^>]*>/gs)].map((x) => x[0]);
   assert.equal(usos.length, 1, "um uso só, dentro do map das séries");
   assert.doesNotMatch(usos[0]!, /dominio=/);
-  assert.match(COMPONENTE, /const \[cobDe, cobAte\] = cobertura\(serie\);\r?\n  const \[de, ate\] = \[cobDe, cobAte\];/);
+  // O desenho tira os dois eixos da série que recebe, inteira ou recortada.
+  assert.deepEqual([...COMPONENTE.matchAll(/const \[de, ate\] = [^;]*;/g)].map((x) => x[0]),
+    ["const [de, ate] = cobertura(serie);"]);
+});
+
+test("zoom: o recorte começa N anos antes do fim, e a série curta não tem recorte", () => {
+  const pontos: [string, number][] = [];
+  for (let a = 2001; a <= 2026; a++) {
+    for (let mes = 1; mes <= 12; mes++) {
+      if (a === 2026 && mes > 8) break;
+      pontos.push([`${a}-${String(mes).padStart(2, "0")}`, mes]);
+    }
+  }
+  const s = serie("x", pontos);
+  const dez = recortar(s, 10)!;
+  assert.equal(dez.pontos[0]![0], "2016-09");
+  assert.equal(dez.pontos.at(-1)![0], "2026-08");
+  const [d0, d1] = cobertura(dez);
+  perto(d1, cobertura(s)[1]);
+  assert.ok(d1 - d0 <= 10 + 1e-9, "no máximo os N anos");
+  assert.equal(recortar(s, 5)!.pontos[0]![0], "2021-09");
+  // Com 11 anos ou menos, 10 anos seria quase o desenho inteiro.
+  assert.equal(recortar(serie("y", pontos.slice(-12 * 11)), 10), null);
+  assert.deepEqual([...RECORTES], [10, 5]);
+});
+
+test("zoom: no JSON real, toda série tem os dois recortes, terminando no último ponto", () => {
+  for (const s of real.series) {
+    for (const n of RECORTES) {
+      const r = recortar(s, n);
+      assert.ok(r, `${s.codigo} sem recorte de ${n}`);
+      assert.equal(r.pontos.at(-1)![0], s.pontos.at(-1)![0]);
+      assert.ok(cobertura(r)[0] >= cobertura(s)[1] - n - 1e-9, `${s.codigo} ${n}`);
+    }
+  }
+});
+
+test("zoom: botões e recortes nascem escondidos; o script os mostra", () => {
+  // Sem script, o gráfico inteiro e nenhum botão: nada promete o que não faz.
+  assert.match(COMPONENTE, /data-periodos="" hidden/);
+  assert.match(COMPONENTE, /<div key=\{n\} data-recorte=\{n\} hidden>/);
+  assert.match(COMPONENTE, /aria-pressed="true" data-periodo="tudo"/);
+  assert.match(PAGINA, /<script type="module" src="\/periodo\.js" \/>/);
+  assert.match(CSS_COMPONENTE, /\.periodos\[hidden\] \{\s*display: none;/);
+  const js = ler("../public/periodo.js");
+  assert.match(js, /aria-pressed/);
+  assert.match(js, /grupo\.hidden = false/);
 });
 
 test("neutralidade: nenhum evento anotado além das trocas no cargo", () => {

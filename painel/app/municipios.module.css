@@ -60,6 +60,12 @@
   font-size: var(--texto-sm);
 }
 
+/* `display: flex` acima venceria o `hidden` do atributo, e a faixa de
+   filtros apareceria vazia antes do primeiro filtro. */
+.aplicados[hidden] {
+  display: none;
+}
+
 .aplicadosRotulo {
   color: var(--tinta-suave);
   font-size: var(--texto-xs);

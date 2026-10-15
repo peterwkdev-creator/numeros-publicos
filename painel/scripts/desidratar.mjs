@@ -20,8 +20,10 @@
  *
  * ## Quem PODE hidratar é uma lista, e um teste a amarra ao código
  *
- * `HIDRATAM` lista as páginas que têm componente de cliente de verdade. Hoje é
- * só a capa (a tabela filtrável, `app/municipios.tsx`). Tirar o React de uma
+ * `HIDRATAM` lista as páginas que têm componente de cliente de verdade. Desde
+ * 15/10/2026 é nenhuma: a capa era a única, pela tabela filtrável
+ * (`app/municipios.tsx`), que agora sai do servidor e filtra por
+ * `public/capa.js`. A lista e o teste ficam para o próximo que aparecer. Tirar o React de uma
  * página que precisa dele a quebraria EM SILÊNCIO — o HTML continua bem
  * formado, só o controle deixa de responder. Por isso `tests/lib.test.mts`
  * compara o conjunto de arquivos `"use client"` com o que esta lista cobre, e
@@ -32,8 +34,8 @@
  *
  * Sai: `<script>` com `self.__next_f`, `<script src="/_next/...js">` e o
  * `<link rel="preload" as="script">` deles. Fica: CSS, fontes, JSON-LD e
- * `/busca.js`. Os arquivos `.js` do runtime continuam em `out/`, porque a capa
- * os usa.
+ * `/busca.js`. Os arquivos `.js` do runtime continuam em `out/`: o Next os
+ * gera de qualquer jeito, e uma página em `HIDRATAM` os usaria.
  */
 
 import { readdirSync, readFileSync, statSync, writeFileSync, existsSync } from "node:fs";
@@ -45,7 +47,7 @@ const OUT = path.resolve(AQUI, "..", "out");
 const seco = process.argv.includes("--seco");
 
 /** Páginas (relativas a out/) que têm componente de cliente e hidratam. */
-export const HIDRATAM = new Set(["index.html"]);
+export const HIDRATAM = new Set();
 
 const PAYLOAD = /<script>\(?self\.__next_f\b.*?<\/script>/gs;
 const RUNTIME = /<script\b[^>]*\bsrc="\/_next\/[^"]*\.js"[^>]*><\/script>/g;

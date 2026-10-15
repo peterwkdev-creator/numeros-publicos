@@ -101,13 +101,14 @@ export function expandirLinhas(
  *
  * - **13 cartões** no topo da capa, onde cabiam três.
  * - **13 colunas numéricas** na tabela, ilegíveis num telefone.
- * - E o custo medido: as linhas vão nas **props** do componente de cliente,
+ * - E o custo medido: as linhas iam nas **props** do componente de cliente,
  *   serializadas no HTML da capa. Passar de 3 para 13 valores em 5.571 linhas
- *   são **+149 KB comprimidos em toda visita** — na página que já foi otimizada
- *   exatamente aí, quando passar objetos expandidos custava 269 KB.
+ *   seriam **+149 KB comprimidos em toda visita**. Desde 15/10/2026 elas vão
+ *   em `/dados/capa.json`, buscado só por quem mexe na tabela, mas o arquivo
+ *   cresce do mesmo jeito.
  *
  * O arquivo `dados/snapshot.json` **não** é o problema: ele é lido do disco no
- * build e nunca servido (não está em `public/`). Quem paga é a props.
+ * build e nunca servido (não está em `public/`).
  *
  * ## A ordem é a ordem das colunas
  *
@@ -119,6 +120,32 @@ export const INDICADORES_DA_CAPA = [
   "populacao-censo-2022",
   "populacao-estimada",
 ] as const;
+
+/** Quantas linhas a tabela da capa mostra de cada vez. */
+export const PAGINA_DA_CAPA = 50;
+
+/**
+ * A primeira tela da tabela da capa, que o build escreve no HTML: pelo
+ * primeiro indicador, do maior ao menor, ausente no fim, empate na ordem do
+ * snapshot. `ordenar` em `public/capa-lista.js` desenha as telas seguintes, e
+ * um teste compara as duas: divergindo, a lista "pularia" no primeiro clique.
+ */
+export function primeiraPaginaDaCapa(
+  linhas: LinhaMunicipio[],
+  indicadores: readonly Indicador[],
+): Municipio[] {
+  const codigo = indicadores[0]?.codigo ?? "";
+  return expandirLinhas(linhas, indicadores.map((i) => i.codigo))
+    .sort((a, b) => {
+      const va = a.valores[codigo];
+      const vb = b.valores[codigo];
+      if (va == null && vb == null) return 0;
+      if (va == null) return 1;
+      if (vb == null) return -1;
+      return vb - va;
+    })
+    .slice(0, PAGINA_DA_CAPA);
+}
 
 /**
  * Como cada indicador da capa se apresenta num cabeçalho de coluna.

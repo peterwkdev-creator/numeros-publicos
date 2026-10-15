@@ -1,39 +1,34 @@
-"use client";
-
-import { useDeferredValue, useMemo, useState } from "react";
-import Link from "next/link";
 import {
-  br, expandirLinhas, rotuloCurto, unidadeDaColuna, type Indicador,
-  type LinhaMunicipio,
+  br, PAGINA_DA_CAPA as PAGINA, primeiraPaginaDaCapa, rotuloCurto, unidadeDaColuna,
+  type Indicador, type LinhaMunicipio,
 } from "@/lib/dados";
-import { FAIXA_DA_LETRA, ROTULO_FAIXA, slugDe, type Faixa } from "@/lib/fiscal";
+import { LETRA_FAIXA, ROTULO_FAIXA, slugDe, type Faixa } from "@/lib/fiscal";
 import s from "./page.module.css";
 import m from "./municipios.module.css";
 
 /**
- * A tabela de municípios — o único componente de cliente do painel.
+ * A tabela de municípios da capa: as primeiras 50 linhas em HTML, e o resto
+ * sob demanda.
  *
- * Interatividade é a **única** razão de existir JavaScript aqui: buscar e
- * ordenar 5.571 linhas. Todo o resto da página é HTML gerado no build.
+ * ## Sem React desde 15/10/2026 (item 10 da revisão de 11/10)
  *
- * Os registros já vêm no payload da página, então filtrar é síncrono e local —
- * nenhuma requisição, nenhum estado de carregamento, nenhum spinner.
+ * Até ali este era o único componente de cliente do site, e por causa dele a
+ * capa levava o runtime do React e as 5.571 linhas dentro do HTML: 626 KB de
+ * HTML e mais 185 KB comprimidos de JS, para toda visita, inclusive a de quem
+ * só lia o resumo do país lá em cima. Agora o build escreve a primeira tela
+ * da tabela, e `public/capa.js` só busca `/dados/capa.json` quando alguém
+ * mexe nos controles. Filtrar continua local e síncrono depois disso.
  *
- * ## Recebe as linhas CRUAS, não os objetos expandidos
+ * ## O que ele promete, e o que não
  *
- * Medido em 03/09/2026: com objetos expandidos, o payload da capa era 269 KB,
- * porque cada município repetia `codigo`, `nome`, `uf` e as três chaves de
- * indicador, 1.794 vezes (o recorte de então). E como toda página linkava para a capa, o Next
- * pré-buscava esses 269 KB em todas elas.
- *
- * A expansão acontece uma vez aqui, no navegador, e custa milissegundos. O que
- * ela economiza é banda de quem visita — e é o que torna a expansão nacional
- * (5.571 municípios) viável em vez de proibitiva.
+ * - Os controles, os filtros aplicados e o "Mostrar mais" nascem `hidden`:
+ *   sem script, a página mostra as 50 primeiras pela ordem padrão e diz onde
+ *   está a lista inteira. Nada promete filtrar.
+ * - A ordem padrão (`primeiraPaginaDaCapa`, em `lib/dados.ts`) é a mesma do
+ *   `public/capa-lista.js`, e um teste compara as duas no snapshot real.
+ * - As linhas que o script desenha saem dos `<template>` daqui, com as mesmas
+ *   classes: a marcação de uma linha tem um dono só.
  */
-
-const PAGINA = 50;
-
-type Ordem = { coluna: string; desc: boolean };
 
 /**
  * Os filtros de situação fiscal oferecidos, e por que só estes.
@@ -43,280 +38,124 @@ type Ordem = { coluna: string; desc: boolean };
  * e a última, "não entregou", é a que o site mais quer que se possa fazer:
  * são os municípios sobre os quais não se sabe nada, e sem um filtro eles
  * ficam diluídos entre os outros. (Eram 2.326 até 11/10/2026, quando o site
- * não lia o RGF Simplificado; 26 depois.)
+ * não lia o RGF Simplificado; 26 depois.) O valor de cada opção é a letra de
+ * `LETRA_FAIXA`, a mesma que viaja no JSON.
  */
-const FILTROS_FAIXA: { valor: Faixa | ""; rotulo: string }[] = [
-  { valor: "", rotulo: "Todas as situações" },
-  { valor: "acima-legal", rotulo: ROTULO_FAIXA["acima-legal"] },
-  { valor: "acima-prudencial", rotulo: ROTULO_FAIXA["acima-prudencial"] },
-  { valor: "abaixo", rotulo: ROTULO_FAIXA.abaixo },
-  { valor: "sem-dado", rotulo: ROTULO_FAIXA["sem-dado"] },
-];
+const FILTROS_FAIXA: Faixa[] = ["acima-legal", "acima-prudencial", "abaixo", "sem-dado"];
 
 /**
  * Faixas de população. Os cortes são os do próprio IBGE para porte municipal,
  * e não números redondos escolhidos aqui — a régua tem de ser de alguém.
  */
-const PORTES: { valor: string; rotulo: string; min: number; max: number }[] = [
+const PORTES: { valor: string; rotulo: string; min: number; max?: number }[] = [
   { valor: "p", rotulo: "Até 20 mil habitantes", min: 0, max: 20000 },
   { valor: "m", rotulo: "20 mil a 100 mil", min: 20000, max: 100000 },
   { valor: "g", rotulo: "100 mil a 500 mil", min: 100000, max: 500000 },
-  { valor: "gg", rotulo: "Mais de 500 mil", min: 500000, max: Infinity },
+  { valor: "gg", rotulo: "Mais de 500 mil", min: 500000 },
 ];
 
 export function Municipios({
   linhas,
   indicadores,
-  faixas,
 }: {
   linhas: LinhaMunicipio[];
   indicadores: Indicador[];
-  /**
-   * Uma letra por município, na MESMA ordem de `linhas` — ver `faixasEmLinha`.
-   * A ordem é o contrato: casada errado, cada município mostraria a situação
-   * fiscal do vizinho, e a página continuaria bem formada.
-   */
-  faixas: string;
 }) {
-  const municipios = useMemo(
-    () => expandirLinhas(linhas, indicadores.map((i) => i.codigo)),
-    [linhas, indicadores],
-  );
-  const [busca, setBusca] = useState("");
-  const [uf, setUf] = useState("");
-  const [faixa, setFaixa] = useState<Faixa | "">("");
-  const [porte, setPorte] = useState("");
-  const [ordem, setOrdem] = useState<Ordem>({
-    coluna: indicadores[0]?.codigo ?? "nome",
-    desc: true,
-  });
-  const [mostrando, setMostrando] = useState(PAGINA);
-
-  // `useDeferredValue` mantém o campo de busca responsivo enquanto a lista de
-  // 5.571 linhas é refiltrada: o que o usuário digita nunca engasga.
-  const buscaAdiada = useDeferredValue(busca);
-
-  const ufs = useMemo(
-    () => [...new Set(municipios.map((x) => x.uf))].sort(),
-    [municipios],
-  );
-
-  const codigoPop = indicadores.find(
-    (i) => i.codigo === "populacao-censo-2022",
-  )?.codigo ?? indicadores[0]?.codigo ?? "";
-
-  const filtrados = useMemo(() => {
-    const termo = buscaAdiada
-      .normalize("NFD")
-      .replace(/\p{Diacritic}/gu, "")
-      .toLowerCase()
-      .trim();
-    const alvoPorte = PORTES.find((p) => p.valor === porte);
-    const lista = municipios.filter((x, i) => {
-      if (uf && x.uf !== uf) return false;
-      // `faixas[i]` casa com `linhas[i]`, e `municipios` sai de `linhas` na
-      // mesma ordem — a expansão preserva a ordem, e é o que sustenta isto.
-      if (faixa && FAIXA_DA_LETRA[faixas[i] ?? ""] !== faixa) return false;
-      if (alvoPorte) {
-        const pop = x.valores[codigoPop];
-        // Sem população conhecida fica FORA de qualquer faixa de porte:
-        // colocá-la na menor seria afirmar um tamanho que não se sabe.
-        if (pop == null || pop < alvoPorte.min || pop >= alvoPorte.max) {
-          return false;
-        }
-      }
-      if (!termo) return true;
-      return x.nome
-        .normalize("NFD")
-        .replace(/\p{Diacritic}/gu, "")
-        .toLowerCase()
-        .includes(termo);
-    });
-    return [...lista].sort((a, b) => {
-      if (ordem.coluna === "nome") {
-        return ordem.desc
-          ? b.nome.localeCompare(a.nome, "pt-BR")
-          : a.nome.localeCompare(b.nome, "pt-BR");
-      }
-      const va = a.valores[ordem.coluna];
-      const vb = b.valores[ordem.coluna];
-      // Ausente sempre no fim, independente da direção: "não sabemos" não é
-      // um valor pequeno nem grande.
-      if (va == null && vb == null) return 0;
-      if (va == null) return 1;
-      if (vb == null) return -1;
-      return ordem.desc ? vb - va : va - vb;
-    });
-  }, [municipios, buscaAdiada, uf, faixa, porte, faixas, codigoPop, ordem]);
-
-  function ordenarPor(coluna: string) {
-    setOrdem((atual) =>
-      atual.coluna === coluna
-        ? { coluna, desc: !atual.desc }
-        : { coluna, desc: true },
-    );
-    setMostrando(PAGINA);
-  }
-
-  /** Os filtros em vigor, com o rótulo que a pessoa reconhece e como desfazer. */
-  const ativos = [
-    busca && { chave: "busca", rotulo: `“${busca}”`, limpar: () => setBusca("") },
-    uf && { chave: "uf", rotulo: `Estado: ${uf}`, limpar: () => setUf("") },
-    faixa && {
-      chave: "faixa",
-      rotulo: ROTULO_FAIXA[faixa],
-      limpar: () => setFaixa(""),
-    },
-    porte && {
-      chave: "porte",
-      rotulo: PORTES.find((x) => x.valor === porte)?.rotulo ?? porte,
-      limpar: () => setPorte(""),
-    },
-  ].filter(Boolean) as { chave: string; rotulo: string; limpar: () => void }[];
-
-  const visiveis = filtrados.slice(0, mostrando);
+  const ufs = [...new Set(linhas.map((l) => l[2]))].sort();
+  const iPop = Math.max(0, indicadores.findIndex((i) => i.codigo === "populacao-censo-2022"));
+  const visiveis = primeiraPaginaDaCapa(linhas, indicadores);
+  const primeira = indicadores[0];
 
   return (
-    <section className={s.secao} aria-labelledby="municipios">
+    <section className={s.secao} aria-labelledby="municipios" data-municipios=""
+      data-total={linhas.length} data-ipop={iPop} data-ausente={s.ausente}>
       <h2 className={s.secaoTitulo} id="municipios">
         Municípios
       </h2>
-      <p className={s.secaoNota}>
-        Busque por nome, ou filtre por estado, situação fiscal e porte. Os
-        filtros se somam, e a lista atualiza sozinha. Clique no cabeçalho de uma
-        coluna para ordenar — municípios sem valor na fonte ficam sempre no fim.
-      </p>
 
-      <div className={m.controles}>
-        <div className={m.campo}>
-          <label htmlFor="busca">Buscar município</label>
-          <input
-            id="busca"
-            type="search"
-            value={busca}
-            placeholder="ex.: Acari"
-            autoComplete="off"
-            onChange={(e) => {
-              setBusca(e.target.value);
-              setMostrando(PAGINA);
-            }}
-          />
-        </div>
-        <div className={m.campo}>
-          <label htmlFor="uf">Estado</label>
-          <select
-            id="uf"
-            value={uf}
-            onChange={(e) => {
-              setUf(e.target.value);
-              setMostrando(PAGINA);
-            }}
-          >
-            <option value="">Todos</option>
-            {ufs.map((x) => (
-              <option key={x} value={x}>
-                {x}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className={m.campo}>
-          <label htmlFor="faixa">Situação fiscal</label>
-          <select
-            id="faixa"
-            value={faixa}
-            onChange={(ev) => {
-              setFaixa(ev.target.value as Faixa | "");
-              setMostrando(PAGINA);
-            }}
-          >
-            {FILTROS_FAIXA.map((f) => (
-              <option key={f.valor} value={f.valor}>
-                {f.rotulo}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className={m.campo}>
-          <label htmlFor="porte">Porte</label>
-          <select
-            id="porte"
-            value={porte}
-            onChange={(ev) => {
-              setPorte(ev.target.value);
-              setMostrando(PAGINA);
-            }}
-          >
-            <option value="">Qualquer porte</option>
-            {PORTES.map((x) => (
-              <option key={x.valor} value={x.valor}>
-                {x.rotulo}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* A contagem traz o TOTAL junto: "38 municípios" sozinho não diz se o
-            filtro cortou muito ou pouco, e é essa proporção que informa.
-            `aria-atomic` explícito — `role="status"` não é atômico por padrão
-            em todo ambiente (técnica ARIA22 do WCAG). */}
-        <p
-          className={m.contagem}
-          role="status"
-          aria-live="polite"
-          aria-atomic="true"
-        >
-          <strong>{br(filtrados.length)}</strong>{" "}
-          {filtrados.length === 1 ? "município" : "municípios"}
-          {filtrados.length !== municipios.length && (
-            <> de {br(municipios.length)}</>
-          )}
+      <noscript>
+        <p className={s.secaoNota}>
+          Sem JavaScript, a lista mostra os {PAGINA} primeiros
+          {primeira ? ` pelo ${rotuloCurto(primeira.codigo, primeira.nome)}` : ""}.
+          A lista inteira está em{" "}
+          <a href="/dados/municipios.csv">municipios.csv</a>, e cada município
+          tem a sua página.
         </p>
-      </div>
+      </noscript>
 
-      {/* Os filtros aplicados, visíveis e removíveis um a um — o padrão de
-          filtro de busca do GOV.UK. Sem isto, quem rolou a página não vê mais
-          os controles e não entende por que a lista está curta; e desfazer
-          exige achar o `select` certo de novo. */}
-      {ativos.length > 0 && (
-        <div className={m.aplicados}>
-          <span className={m.aplicadosRotulo}>Filtros aplicados:</span>
-          <ul>
-            {ativos.map((f) => (
-              <li key={f.chave}>
-                <button
-                  type="button"
-                  className={m.remover}
-                  onClick={() => {
-                    f.limpar();
-                    setMostrando(PAGINA);
-                  }}
-                >
-                  {f.rotulo}
-                  <span aria-hidden="true"> ×</span>
-                  <span className="so-leitor"> — remover este filtro</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-          {ativos.length > 1 && (
-            <button
-              type="button"
-              className={m.limparTudo}
-              onClick={() => {
-                setBusca("");
-                setUf("");
-                setFaixa("");
-                setPorte("");
-                setMostrando(PAGINA);
-              }}
-            >
-              Limpar tudo
-            </button>
-          )}
+      <div data-controles="" hidden>
+        <p className={s.secaoNota}>
+          Busque por nome, ou filtre por estado, situação fiscal e porte. Os
+          filtros se somam, e a lista atualiza sozinha. Clique no cabeçalho de uma
+          coluna para ordenar — municípios sem valor na fonte ficam sempre no fim.
+        </p>
+
+        <div className={m.controles}>
+          <div className={m.campo}>
+            <label htmlFor="busca">Buscar município</label>
+            <input id="busca" type="search" placeholder="ex.: Acari" autoComplete="off" />
+          </div>
+          <div className={m.campo}>
+            <label htmlFor="uf">Estado</label>
+            <select id="uf">
+              <option value="">Todos</option>
+              {ufs.map((x) => (
+                <option key={x} value={x}>{x}</option>
+              ))}
+            </select>
+          </div>
+          <div className={m.campo}>
+            <label htmlFor="faixa">Situação fiscal</label>
+            <select id="faixa">
+              <option value="">Todas as situações</option>
+              {FILTROS_FAIXA.map((f) => (
+                <option key={f} value={LETRA_FAIXA[f]}>{ROTULO_FAIXA[f]}</option>
+              ))}
+            </select>
+          </div>
+          <div className={m.campo}>
+            <label htmlFor="porte">Porte</label>
+            <select id="porte">
+              <option value="">Qualquer porte</option>
+              {PORTES.map((x) => (
+                <option key={x.valor} value={x.valor} data-min={x.min} data-max={x.max}>
+                  {x.rotulo}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* A contagem traz o TOTAL junto: "38 municípios" sozinho não diz se o
+              filtro cortou muito ou pouco, e é essa proporção que informa.
+              `aria-atomic` explícito — `role="status"` não é atômico por padrão
+              em todo ambiente (técnica ARIA22 do WCAG). */}
+          <p className={m.contagem} role="status" aria-live="polite" aria-atomic="true"
+            data-contagem="">
+            <strong>{br(linhas.length)}</strong> municípios
+          </p>
         </div>
-      )}
+
+        {/* Os filtros aplicados, visíveis e removíveis um a um — o padrão de
+            filtro de busca do GOV.UK. Sem isto, quem rolou a página não vê mais
+            os controles e não entende por que a lista está curta; e desfazer
+            exige achar o `select` certo de novo. */}
+        <div className={m.aplicados} data-aplicados="" hidden>
+          <span className={m.aplicadosRotulo}>Filtros aplicados:</span>
+          <ul data-lista-aplicados="" />
+          <button type="button" className={m.limparTudo} data-limpar-tudo="" hidden>
+            Limpar tudo
+          </button>
+        </div>
+        <template data-modelo="filtro">
+          <li>
+            <button type="button" className={m.remover}>
+              <span data-rotulo="" />
+              <span aria-hidden="true"> ×</span>
+              <span className="so-leitor"> — remover este filtro</span>
+            </button>
+          </li>
+        </template>
+      </div>
 
       <div className={s.rolagem}>
         <table className={s.tabela}>
@@ -332,28 +171,17 @@ export function Municipios({
           </caption>
           <thead>
             <tr>
-              <th scope="col" aria-sort={aria(ordem, "nome")}>
-                <button
-                  type="button"
-                  className={m.ordenar}
-                  onClick={() => ordenarPor("nome")}
-                >
-                  Município {seta(ordem, "nome")}
+              <th scope="col" aria-sort="none">
+                <button type="button" className={m.ordenar} data-ordenar="nome">
+                  Município <span aria-hidden="true" data-seta="" />
                 </button>
               </th>
               <th scope="col">UF</th>
-              {indicadores.map((i) => (
-                <th
-                  key={i.codigo}
-                  scope="col"
-                  className={s.numero}
-                  aria-sort={aria(ordem, i.codigo)}
-                >
-                  <button
-                    type="button"
-                    className={`${m.ordenar} ${m.ordenarNumero}`}
-                    onClick={() => ordenarPor(i.codigo)}
-                  >
+              {indicadores.map((i, n) => (
+                <th key={i.codigo} scope="col" className={s.numero}
+                  aria-sort={n === 0 ? "descending" : "none"}>
+                  <button type="button" className={`${m.ordenar} ${m.ordenarNumero}`}
+                    data-ordenar={n} data-codigo={i.codigo}>
                     {/* O mesmo rótulo e a mesma unidade da tabela por
                         estado: até 11/10/2026 esta coluna mostrava o nome
                         cru do IBGE, e o PIB de São Paulo, em R$ mil, lia
@@ -362,73 +190,50 @@ export function Municipios({
                     {unidadeDaColuna(i.codigo) && (
                       <span className={s.ausente}> ({unidadeDaColuna(i.codigo)})</span>
                     )}{" "}
-                    {seta(ordem, i.codigo)}
+                    <span aria-hidden="true" data-seta="">{n === 0 ? "↓" : ""}</span>
                   </button>
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody>
+          <tbody data-corpo="">
             {visiveis.map((x) => (
               <tr key={x.codigo}>
                 <th scope="row">
-                  {/* Link, e sem pré-busca: as 50 linhas visíveis são os
-                      únicos `href` de município na capa, e pré-buscar 50
-                      páginas a cada filtro pesaria mais que a capa. */}
-                  <Link href={`/municipio/${slugDe(x.nome, x.uf)}/`} prefetch={false}>
-                    {x.nome}
-                  </Link>
+                  <a href={`/municipio/${slugDe(x.nome, x.uf)}/`}>{x.nome}</a>
                 </th>
                 <td>{x.uf}</td>
                 {indicadores.map((i) => (
-                  <td
-                    key={i.codigo}
-                    className={`${s.numero} tabular ${
-                      x.valores[i.codigo] == null ? s.ausente : ""
-                    }`}
-                  >
+                  <td key={i.codigo}
+                    className={[s.numero, "tabular", x.valores[i.codigo] == null && s.ausente]
+                      .filter(Boolean).join(" ")}>
                     {br(x.valores[i.codigo])}
                   </td>
                 ))}
               </tr>
             ))}
-            {visiveis.length === 0 && (
-              <tr>
-                <td colSpan={2 + indicadores.length} className={m.vazio}>
-                  {/* Os rótulos vão como estão, sem `toLowerCase()`: ele
-                      transformava "Estado: CE" em "estado: ce", e sigla em
-                      minúscula deixa de ser sigla. */}
-                  Nenhum município combina{" "}
-                  {ativos.map((f) => f.rotulo).join(" + ")}. Remova um filtro
-                  acima para alargar a busca.
-                </td>
-              </tr>
-            )}
           </tbody>
         </table>
+        <template data-modelo="linha">
+          <tr>
+            <th scope="row"><a href="/" /></th>
+            <td />
+            {indicadores.map((i) => (
+              <td key={i.codigo} className={`${s.numero} tabular`} />
+            ))}
+          </tr>
+        </template>
+        <template data-modelo="vazio">
+          <tr>
+            {/* Os rótulos vão como estão, sem `toLowerCase()`: ele
+                transformava "Estado: CE" em "estado: ce", e sigla em
+                minúscula deixa de ser sigla. */}
+            <td colSpan={2 + indicadores.length} className={m.vazio} />
+          </tr>
+        </template>
       </div>
 
-      {mostrando < filtrados.length && (
-        <button
-          type="button"
-          className={m.maisBotao}
-          onClick={() => setMostrando((n) => n + PAGINA)}
-        >
-          Mostrar mais {Math.min(PAGINA, filtrados.length - mostrando)} de{" "}
-          {br(filtrados.length - mostrando)} restantes
-        </button>
-      )}
+      <button type="button" className={m.maisBotao} data-mais="" hidden />
     </section>
   );
-}
-
-/** `aria-sort` só no cabeçalho ativo — é o que leitor de tela anuncia. */
-function aria(ordem: Ordem, coluna: string): "ascending" | "descending" | "none" {
-  if (ordem.coluna !== coluna) return "none";
-  return ordem.desc ? "descending" : "ascending";
-}
-
-function seta(ordem: Ordem, coluna: string) {
-  if (ordem.coluna !== coluna) return null;
-  return <span aria-hidden="true">{ordem.desc ? "↓" : "↑"}</span>;
 }

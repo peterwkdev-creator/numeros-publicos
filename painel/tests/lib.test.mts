@@ -16,7 +16,7 @@ import { inflateRawSync } from "node:zlib";
 import {
   concorda, descricaoDe, escala, escalaComSinal, fracaoDe, INDICADORES_DA_CAPA,
   periodoDe,
-  dataCurta, dataPorExtenso, inteiroImpresso, projetar,
+  br, dataCurta, dataPorExtenso, inteiroImpresso, projetar,
   COLUNA_DA_CAPA, rotuloCurto, unidadeDaColuna, type Snapshot,
 } from "../lib/dados.ts";
 import {
@@ -2280,9 +2280,9 @@ test("busca.js: sigla do estado como nome exato, iniciais entre prefixo e 'cont�
 
 test("só hidrata quem tem componente de cliente — e a lista é a do código", async () => {
   // Tirar o React de uma página que precisa dele a quebra EM SILÊNCIO. Os
-  // arquivos "use client" têm de ser exatamente os que `HIDRATAM` cobre: hoje,
-  // a tabela filtrável da capa. Criou outro? Decida em `desidratar.mjs` onde
-  // ele hidrata, e atualize esta lista junto.
+  // arquivos "use client" têm de ser exatamente os que `HIDRATAM` cobre: desde
+  // 15/10/2026, nenhum (a tabela da capa filtra por `public/capa.js`). Criou
+  // um? Decida em `desidratar.mjs` onde ele hidrata, e atualize esta lista junto.
   const { HIDRATAM } = await import("../scripts/desidratar.mjs");
   const clientes: string[] = [];
   const varrer = (dir: string) => {
@@ -2295,10 +2295,94 @@ test("só hidrata quem tem componente de cliente — e a lista é a do código",
   };
   varrer("app");
   varrer("lib");
-  assert.deepEqual(clientes.sort(), ["app/municipios.tsx"]);
-  assert.deepEqual([...HIDRATAM], ["index.html"]);
-  const quem = fs.readFileSync("app/page.tsx", "utf-8");
-  assert.match(quem, /from "\.\/municipios"/, "a tabela é usada pela capa");
+  assert.deepEqual(clientes.sort(), []);
+  assert.deepEqual([...HIDRATAM], []);
+});
+
+// ------------------- a tabela da capa sem React (15/10/2026, item 10)
+
+const linhasDaCapa = async () => {
+  const { PAGINA_DA_CAPA, primeiraPaginaDaCapa } = await import("../lib/dados.ts");
+  const snapshot = JSON.parse(
+    fs.readFileSync(new URL("../dados/snapshot.json", import.meta.url), "utf-8"),
+  );
+  const fiscal = JSON.parse(
+    fs.readFileSync(new URL("../dados/fiscal.json", import.meta.url), "utf-8"),
+  );
+  const capa = projetar(snapshot, INDICADORES_DA_CAPA);
+  return { capa, faixas: faixasEmLinha(capa.linhas, fiscal), PAGINA_DA_CAPA, primeiraPaginaDaCapa };
+};
+
+test("capa: a primeira tela do build é a que o capa.js desenharia", async () => {
+  // Duas implementações da mesma ordem: a do servidor escreve as 50 linhas do
+  // HTML, a do navegador redesenha ao chegar o JSON. Divergindo, a lista
+  // "pula" no primeiro clique, sem ninguém ter pedido nada.
+  const { capa, faixas, PAGINA_DA_CAPA, primeiraPaginaDaCapa } = await linhasDaCapa();
+  const lista = await import("../public/capa-lista.js");
+  assert.equal(lista.PAGINA, PAGINA_DA_CAPA);
+  const servidor = primeiraPaginaDaCapa(capa.linhas, capa.indicadores);
+  const cliente = lista.ordenar(lista.expandir({ linhas: capa.linhas, faixas }), 0, true)
+    .slice(0, lista.PAGINA);
+  assert.equal(servidor.length, PAGINA_DA_CAPA);
+  assert.deepEqual(cliente.map((x) => x.codigo), servidor.map((x) => x.codigo));
+  // E o número impresso é o mesmo, casa por casa.
+  for (const [n, x] of servidor.entries()) {
+    capa.indicadores.forEach((ind, i) => {
+      assert.equal(lista.br(cliente[n]!.valores[i]), br(x.valores[ind.codigo]),
+        `${x.nome}: ${ind.codigo}`);
+    });
+  }
+});
+
+test("capa: ordenar deixa o ausente no fim nas duas direções, e filtrar soma", async () => {
+  const { capa, faixas } = await linhasDaCapa();
+  const lista = await import("../public/capa-lista.js");
+  const todos = lista.expandir({ linhas: capa.linhas, faixas });
+  assert.equal(todos.length, capa.linhas.length);
+  for (const i of capa.indicadores.keys()) {
+    for (const desc of [true, false]) {
+      const v = lista.ordenar(todos, i, desc).map((x: { valores: (number | null)[] }) => x.valores[i]);
+      const primeiroNulo = v.indexOf(null);
+      if (primeiroNulo >= 0) assert.ok(v.slice(primeiroNulo).every((x: unknown) => x == null));
+      const cheios = v.filter((x: number | null) => x != null) as number[];
+      assert.ok(cheios.every((x, k) => k === 0 || (desc ? cheios[k - 1]! >= x : cheios[k - 1]! <= x)));
+    }
+  }
+  const iPop = capa.indicadores.findIndex((i) => i.codigo === "populacao-censo-2022");
+  assert.ok(iPop >= 0);
+  const achados = lista.selecionar(todos, {
+    uf: "SP", faixa: LETRA_FAIXA.abaixo, porte: [100000, 500000], iPop, termo: "sao",
+  });
+  assert.ok(achados.length > 0, "há município de SP, médio, abaixo do limite, com São");
+  for (const x of achados) {
+    assert.equal(x.uf, "SP");
+    assert.equal(x.faixa, LETRA_FAIXA.abaixo);
+    assert.ok(x.valores[iPop] >= 100000 && x.valores[iPop] < 500000);
+    assert.ok(x.chave.includes("sao"));
+  }
+  // "sant ana" acha Sant'Ana: a chave é a da busca do cabeçalho.
+  assert.ok(lista.selecionar(todos, { termo: "sant ana", iPop }).some((x: { nome: string }) => x.nome.includes("Sant'Ana")));
+});
+
+test("capa: a tabela nasce estática, e só o script promete filtrar", () => {
+  const tabela = fs.readFileSync("app/municipios.tsx", "utf-8");
+  for (const peca of ['<div data-controles="" hidden>', 'data-aplicados="" hidden',
+    'data-mais="" hidden', 'data-modelo="linha"', 'data-modelo="vazio"',
+    'data-modelo="filtro"', "<noscript>", "data-codigo={i.codigo}"]) {
+    assert.ok(tabela.includes(peca), `falta ${peca} em app/municipios.tsx`);
+  }
+  const capa = fs.readFileSync("app/page.tsx", "utf-8");
+  assert.ok(capa.includes('<script type="module" src="/capa.js" />'));
+  assert.ok(capa.includes('from "./municipios"'), "a tabela é usada pela capa");
+  const script = fs.readFileSync("public/capa.js", "utf-8");
+  assert.ok(!script.includes(".innerHTML"), "o texto entra por textContent");
+  assert.ok(script.includes('fetch("/dados/capa.json")'));
+  const rota = fs.readFileSync("app/dados/capa.json/route.ts", "utf-8");
+  for (const peca of ['dynamic = "force-static"', "codigos:", "linhas:", "faixas:"]) {
+    assert.ok(rota.includes(peca), `falta ${peca} na rota`);
+  }
+  // O par do `display: flex` que venceria o `hidden` (lição de 15/10).
+  assert.ok(fs.readFileSync("app/municipios.module.css", "utf-8").includes(".aplicados[hidden]"));
 });
 
 test("desidratar tira payload e runtime, e mantém CSS, JSON-LD e a busca", async () => {

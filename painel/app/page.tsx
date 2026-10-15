@@ -6,7 +6,7 @@ import {
   unidadeDaColuna, valorDoIndicador,
 } from "@/lib/dados";
 import { slugUf } from "@/lib/estado";
-import { faixasEmLinha, rotuloPeriodo } from "@/lib/fiscal";
+import { rotuloPeriodo } from "@/lib/fiscal";
 import { funcoesDoPais, panoramaEstados } from "@/lib/nacional";
 import MapaUf from "./componentes/mapa-uf";
 import { camadasPadrao } from "@/lib/mapa";
@@ -463,7 +463,6 @@ export default async function Pagina() {
       <Municipios
         linhas={capa.linhas}
         indicadores={capa.indicadores}
-        faixas={faixasEmLinha(capa.linhas, fiscal)}
       />
 
       <footer className={s.rodape}>
@@ -497,6 +496,9 @@ export default async function Pagina() {
           motivo de a licença ser esta e não a MIT.
         </p>
       </footer>
+      {/* A tabela de municípios: busca `/dados/capa.json` na primeira
+          interação e filtra sem React (15/10/2026). */}
+      <script type="module" src="/capa.js" />
     </main>
   );
 }

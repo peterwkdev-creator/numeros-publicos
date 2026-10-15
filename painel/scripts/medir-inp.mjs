@@ -68,9 +68,12 @@ const CAMPOS = [
   },
   {
     nome: "filtro da tabela (5.571 linhas)",
-    seletor: 'input[type="search"]',
+    seletor: "#busca",
     termo: "imperatriz",
-    esperar: null,
+    // Desde 15/10/2026 as 5.571 linhas chegam por `fetch` no primeiro foco
+    // (`public/capa.js`), como o índice da busca: sem esperar, as teclas
+    // cairiam numa tabela de 50 linhas.
+    esperar: 'document.querySelector("[data-municipios]")?.hasAttribute("data-pronto")',
     efeito: () => document.querySelectorAll("tbody tr").length,
     descreve: (a, d) => `linhas na tabela: ${a} → ${d}`,
     mudou: (a, d) => d !== a,

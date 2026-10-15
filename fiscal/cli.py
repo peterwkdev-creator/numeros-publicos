@@ -472,13 +472,16 @@ def _funcoes_de(con, ex: int, pe: int, indice: dict[str, int]) -> dict[str, list
         "SELECT codigo_ibge, funcao, valor, total_declarado FROM despesa_funcao"
         " WHERE exercicio=? AND periodo=? AND valor IS NOT NULL"
         " ORDER BY codigo_ibge, valor DESC", (ex, pe)):
-        # Centavos num orçamento municipal são ruído, e cada casa decimal
-        # custa bytes em 19.500 valores. O total vem da mesma linha, arredondado
-        # do mesmo jeito, para que a soma continue conferindo contra ele.
+        # Em centavos, como a fonte. Até 15/10/2026 ia em reais inteiros, para
+        # poupar bytes, e o arredondamento empurrava o percentual que a página
+        # publica através da casa decimal: Wanderlândia/TO, receita de 2025,
+        # 90,94999% virava 90,95000% e saía "91,0%". O total vem da mesma linha,
+        # com a mesma precisão, para que a soma continue conferindo contra ele.
         entrada = saida.setdefault(
             str(r["codigo_ibge"]),
-            [None if r["total_declarado"] is None else round(r["total_declarado"]), []])
-        entrada[1].append([indice[r["funcao"]], round(r["valor"])])
+            [None if r["total_declarado"] is None
+             else round(r["total_declarado"], 2), []])
+        entrada[1].append([indice[r["funcao"]], round(r["valor"], 2)])
     return saida
 
 
@@ -762,17 +765,17 @@ def _receitas_de(con, ex: int, pe: int, indice: dict[str, int],
         "SELECT codigo_ibge, conta, valor, total_declarado FROM receita"
         " WHERE exercicio=? AND periodo=? AND valor IS NOT NULL"
         " ORDER BY codigo_ibge, valor DESC", (ex, pe)):
-        # Centavos num orçamento municipal são ruído, e o total é arredondado
-        # do mesmo jeito para que a soma continue fechando contra ele.
+        # Em centavos, pela mesma razão de `_funcoes_de`: em reais inteiros o
+        # percentual publicado cruzava a casa decimal.
         entrada = saida.setdefault(
             str(r["codigo_ibge"]),
             [None if r["total_declarado"] is None
-             else round(r["total_declarado"]), [], []])
+             else round(r["total_declarado"], 2), [], []])
         conta = r["conta"]
         if conta in indice:
-            entrada[1].append([indice[conta], round(r["valor"])])
+            entrada[1].append([indice[conta], round(r["valor"], 2)])
         elif conta in indice_detalhe:
-            entrada[2].append([indice_detalhe[conta], round(r["valor"])])
+            entrada[2].append([indice_detalhe[conta], round(r["valor"], 2)])
     return saida
 
 

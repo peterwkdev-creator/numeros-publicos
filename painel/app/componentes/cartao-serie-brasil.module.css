@@ -32,6 +32,13 @@
   letter-spacing: -0.02em;
   line-height: 1.1;
 }
+/* O resto da unidade ("do PIB", "de setembro de 2026") menor que o número. */
+.unidade {
+  font-size: var(--texto-sm);
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--tinta-suave);
+}
 .periodo { margin: 0; font-size: var(--texto-xs); color: var(--tinta-fraca); }
 
 .miniatura { display: block; width: 100%; height: 2.75rem; margin: var(--e-2) 0; }

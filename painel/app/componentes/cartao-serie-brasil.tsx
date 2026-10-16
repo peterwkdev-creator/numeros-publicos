@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import {
-  APRESENTACAO, caminhoDaSerie, miniatura, resumo, rotuloPeriodo, SELO, valorDe,
+  APRESENTACAO, caminhoDaSerie, miniatura, partesDoValor, resumo, rotuloPeriodo, SELO,
   type SerieBrasil,
 } from "@/lib/brasil";
 import estilos from "./cartao-serie-brasil.module.css";
@@ -28,7 +28,7 @@ export default function CartaoSerieBrasil({ serie }: { serie: SerieBrasil }) {
   const ap = APRESENTACAO[serie.codigo];
   const titulo = ap?.titulo ?? serie.nome;
   const r = resumo(serie);
-  const valor = valorDe(serie);
+  const [numero, unidade] = partesDoValor(serie)(r.ultimo[1]);
   return (
     <article className={estilos.cartao} id={serie.codigo} data-cartao={serie.codigo}>
       <h3 className={estilos.titulo}>
@@ -43,7 +43,8 @@ export default function CartaoSerieBrasil({ serie }: { serie: SerieBrasil }) {
         </p>
       )}
       <p className={`${estilos.valor} tabular`} data-ultimo={r.ultimo[0]}>
-        {valor(r.ultimo[1])}
+        {numero}
+        {unidade && <span className={estilos.unidade}>{unidade}</span>}
       </p>
       <p className={estilos.periodo}>
         Último dado: {rotuloPeriodo(r.ultimo[0])}. Série desde{" "}

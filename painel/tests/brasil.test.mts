@@ -14,7 +14,7 @@ import {
   contiguos, dominio, escala, faixas, FONTE_COM_ARTIGO, fimPeriodo,
   fontesPorExtenso, inicioPeriodo, meioPeriodo, recortar, RECORTES, resumo,
   rotuloPeriodo, SELO, trechosMeta,
-  caminhoDaSerie, descricaoDaSerie, miniatura, tituloDaSerie, valorDe,
+  caminhoDaSerie, descricaoDaSerie, miniatura, partesDoValor, tituloDaSerie, valorDe,
   type Mandato, type SerieBrasil, type SnapshotBrasil,
 } from "../lib/brasil.ts";
 
@@ -356,6 +356,13 @@ test("valor: a moeda antes, o por cento colado, o resto depois", () => {
   assert.equal(com("US$ bilhões", 362.82), "US$ 362,82 bilhões");
   assert.equal(com("óbitos", 38894, 0), "38.894 óbitos");
   assert.equal(com("R$", 3061, 0), "R$ 3.061");
+  // O cartão escreve o resto menor: as partes somam o valor do gráfico.
+  const partes = (unidade: string, v: number) =>
+    partesDoValor({ ...serie("x", [["2020-01", 0.25], ["2020-02", 1]]), unidade })(v);
+  assert.deepEqual(partes("R$ de setembro de 2026", 1621), ["R$ 1.621,00", " de setembro de 2026"]);
+  assert.deepEqual(partes("% do PIB", 62.87), ["62,87%", " do PIB"]);
+  assert.deepEqual(partes("%", 7.5), ["7,50%", ""]);
+  assert.deepEqual(partes("km²", 5731), ["5.731,00", " km²"]);
 });
 
 test("miniatura: x pelo tempo, a linha quebra no buraco e cabe na caixa", () => {

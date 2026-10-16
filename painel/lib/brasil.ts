@@ -579,12 +579,24 @@ export const caminhoDaSerie = (codigo: string) => `/brasil/${codigo}/`;
  * `/brasil/`: o mesmo número não pode sair escrito de dois jeitos.
  */
 export function valorDe(s: SerieBrasil): (v: number) => string {
+  const partes = partesDoValor(s);
+  return (v: number) => partes(v).join("");
+}
+
+/**
+ * O valor em duas partes: o número com a moeda ou o "%" colados, e o resto
+ * da unidade ("R$ 1.621,00" e " de setembro de 2026"). O cartão do índice
+ * escreve o resto menor, para o salário mínimo real não tomar três linhas
+ * (16/10/2026). `valorDe` é a soma das duas, e o gráfico usa ela.
+ */
+export function partesDoValor(s: SerieBrasil): (v: number) => [string, string] {
   const casas = casasDe(s);
   const moeda = /^(R|US)\$/.exec(s.unidade)?.[0];
-  return (v: number) =>
-    moeda
-      ? `${moeda} ${br(v, casas)}${s.unidade.slice(moeda.length)}`
-      : `${br(v, casas)}${s.unidade.startsWith("%") ? "" : " "}${s.unidade}`;
+  return (v: number) => {
+    if (moeda) return [`${moeda} ${br(v, casas)}`, s.unidade.slice(moeda.length)];
+    if (s.unidade.startsWith("%")) return [`${br(v, casas)}%`, s.unidade.slice(1)];
+    return [br(v, casas), ` ${s.unidade}`];
+  };
 }
 
 /**

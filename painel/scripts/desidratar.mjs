@@ -62,10 +62,18 @@ const BUSCA = '<script type="module" src="/busca.js"></script>';
 // do Next reprove aqui em vez de passar calado, como o `_R_` passou.
 const SCRIPT_PERMITIDO = /^<script (type="application\/ld\+json"|type="module" src="\/[a-z-]+\.js")>$/;
 
+// Marcas que só o React usa para conferir a árvore ao hidratar: `<!-- -->`
+// entre nós de texto (557 numa página de município), as fronteiras de
+// Suspense e o `<div hidden>` que as guarda; mais o `data-precedence` das
+// folhas de estilo e o `<meta next-size-adjust>`, que o runtime lê. Sem
+// React, são só bytes; o texto que o leitor vê não muda.
+const MARCAS_REACT = /<!--(?: |\$|\/\$)-->/g;
+const RESTOS_NEXT = /<div hidden=""><\/div>| data-precedence="next"|<meta name="next-size-adjust" content=""\/>/g;
+
 /** Devolve o HTML sem React, ou lança dizendo por quê. */
 export function desidratar(html, onde) {
   const saida = html.replace(PAYLOAD, "").replace(RUNTIME, "").replace(PRELOAD_JS, "")
-    .replace(TURBOPACK, "");
+    .replace(TURBOPACK, "").replace(MARCAS_REACT, "").replace(RESTOS_NEXT, "");
   // As condições que tornam o resultado confiável. Cada uma já seria um
   // defeito silencioso: payload sobrando é peso inútil; runtime sobrando sem
   // payload é React quebrando no console; a busca sumindo é o campo mudo.

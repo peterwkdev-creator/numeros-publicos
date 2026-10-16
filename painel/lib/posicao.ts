@@ -79,19 +79,6 @@ export function posicaoEntre(
 }
 
 /**
- * A série de um município reduzida ao último ponto plausível.
- *
- * Usada para montar o conjunto de comparação a partir da série histórica
- * quando o período em destaque não tem valor — mas **não** é o caso hoje:
- * o conjunto vem do próprio snapshot fiscal. Fica aqui porque a alternativa
- * seria repetir o filtro de plausibilidade em quem chamar.
- */
-export function ultimoPlausivel(pontos: PontoSerie[] | undefined): number | null {
-  const bons = (pontos ?? []).filter(pontoPlausivel);
-  return bons.length ? bons[bons.length - 1]![3] : null;
-}
-
-/**
  * Onde um município cai entre os do seu estado, num indicador qualquer.
  *
  * ## A pergunta que faltava nas páginas magras

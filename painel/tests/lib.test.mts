@@ -2443,11 +2443,13 @@ test("capa: a tabela nasce estática, e só o script promete filtrar", () => {
 test("desidratar tira payload e runtime, e mantém CSS, JSON-LD e a busca", async () => {
   const { desidratar } = await import("../scripts/desidratar.mjs");
   const html =
-    '<head><link rel="stylesheet" href="/_next/static/chunks/a.css"/>' +
+    '<head><meta name="next-size-adjust" content=""/>' +
+    '<link rel="stylesheet" href="/_next/static/chunks/a.css" data-precedence="next"/>' +
     '<link rel="preload" as="script" fetchPriority="low" href="/_next/static/chunks/x.js"/>' +
     '<script src="/_next/static/chunks/x.js" async=""></script>' +
     '<script type="application/ld+json">{"@type":"Dataset"}</script></head>' +
-    '<body><p>conteúdo</p><script type="module" src="/busca.js"></script>' +
+    '<body><div hidden=""><!--$--><!--/$--></div><p>R$<!-- --> 12<!-- -->,5</p>' +
+    '<script type="module" src="/busca.js"></script>' +
     '<script>(self.__next_f=self.__next_f||[]).push([0])</script>' +
     // `\\u003c`: o Next escapa o `<` dentro do payload, então `</script>` não
     // aparece cru ali — e o regex não corta o bloco no meio.
@@ -2462,6 +2464,9 @@ test("desidratar tira payload e runtime, e mantém CSS, JSON-LD e a busca", asyn
   assert.throws(() => desidratar(html.replace("</body>", '<script id="_S_">novo()</script></body>'), "t"),
     /script fora da lista/);
   assert.ok(s.includes("a.css") && s.includes("ld+json") && s.includes("/busca.js"));
+  // As marcas do React e os restos do Next saem; o texto fica igual.
+  assert.ok(s.includes("<body><p>R$ 12,5</p>"));
+  assert.ok(!s.includes("<!--") && !s.includes("data-precedence") && !s.includes("next-size-adjust"));
   assert.throws(() => desidratar(html.replace('<script type="module" src="/busca.js"></script>', ""), "t"),
     /busca ficaria muda/);
 });

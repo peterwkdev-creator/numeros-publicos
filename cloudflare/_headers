@@ -24,6 +24,13 @@
 /_next/static/*
   Cache-Control: public, max-age=31536000, immutable
 
+# Os scripts de public/ saem do build minificados e com o hash do conteúdo
+# no nome, em /js/ (scripts/versionar-js.mjs, 16/10/2026): o mesmo argumento.
+# Até ali, max-age=14400 com must-revalidate: o script velho podia seguir 4 h
+# no cache depois de uma publicação.
+/js/*
+  Cache-Control: public, max-age=31536000, immutable
+
 # Os downloads ficam fora do índice dos buscadores (15/10/2026). O export do
 # Search Console mostrou dados.csv entre as páginas "rastreadas, mas não
 # indexadas": o CSV repete a página do município em outro formato, e cada um

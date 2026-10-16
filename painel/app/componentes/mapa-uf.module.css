@@ -238,6 +238,14 @@
 .tabela thead th { font-weight: 600; color: var(--tinta-suave); }
 .tabela tbody th { font-weight: 500; white-space: nowrap; }
 .tabela .numero { text-align: right; white-space: nowrap; }
+/* No corpo, toda célula é número (o estado é o `th`): pela coluna, e não
+   por classe em cada uma das 297 células. */
+.tabela tbody td {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
 .linhaDestaque { background: var(--acento-suave); }
 /* A sigla é a coluna fixa de `.rola-x`, que tem fundo próprio (opaco): sem
    isto, a linha em destaque perderia a cor justo na célula que a nomeia. */

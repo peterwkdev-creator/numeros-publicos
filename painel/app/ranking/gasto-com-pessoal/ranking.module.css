@@ -23,8 +23,20 @@
 .lista caption { text-align: left; font-size: var(--texto-xs); color: var(--tinta-fraca); padding-bottom: .5rem; }
 .lista th, .lista td { padding: .5rem .6rem; border-bottom: 1px solid var(--borda); text-align: left; }
 .lista th[scope="col"] { font-size: var(--texto-xs); text-transform: uppercase; letter-spacing: .03em; color: var(--tinta-fraca); }
-.num { text-align: right; }
+/* `.lista .num`, e não `.num`: sozinha ela perdia para `.lista th, .lista td`
+   (0-1-1 contra 0-1-0), e os números saíram à esquerda até 16/10/2026. */
+.lista .num { text-align: right; }
 .posicao { color: var(--tinta-fraca); width: 3rem; }
+/* No corpo, a posição e os números vão pela coluna, e não por classe em cada
+   célula: eram até 1.314 `class` iguais por página. A 3ª coluna é a UF, texto.
+   O `_acima` fica na célula, porque é o que o `conferir-numeros` lê. */
+.lista tbody td:first-child { color: var(--tinta-fraca); width: 3rem; }
+.lista tbody td:nth-child(n+4) { text-align: right; }
+.lista tbody td:first-child,
+.lista tbody td:nth-child(n+4) {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
 
 /* As MESMAS cores da pagina de estado, pelas variaveis de `globals.css`,
    que ja trazem o escuro e o papel (desde 16/10/2026; antes eram copias, e o

@@ -190,7 +190,7 @@ export default function MapaUf({
                     className={sigla === destaque ? estilos.linhaDestaque : undefined}>
                   <th scope="row">{nome}</th>
                   {camadas.map((c) => (
-                    <td key={c.chave} className={`${estilos.numero} tabular`}>
+                    <td key={c.chave}>
                       {formatarValor(c.valores[sigla] ?? null, c.formato)}
                     </td>
                   ))}

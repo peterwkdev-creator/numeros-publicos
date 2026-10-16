@@ -289,6 +289,16 @@
   white-space: nowrap;
 }
 
+/* No corpo das duas listas, toda célula de dado é número, menos a situação:
+   a regra vai pela coluna, e não por `num tabular` em cada célula (410 por
+   página no maior estado). `.num` fica para o cabeçalho. */
+.lista tbody td:not(.situacao) {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
 /* O selo de faixa dentro da lista: as classes de cor vem do bloco reaproveitado
    acima, onde elas pintam `.selo` dentro de um `.cartao`. Aqui o seletor e
    direto, entao a regra precisa ser repetida -- CSS module nao tem heranca. */

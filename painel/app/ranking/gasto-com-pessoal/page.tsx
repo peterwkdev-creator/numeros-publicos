@@ -311,7 +311,7 @@ export default async function Pagina() {
           <tbody>
             {r.acimaDoTeto.map((m, i) => (
               <tr key={m.codigo}>
-                <td className={estilos.posicao}>{i + 1}</td>
+                <td>{i + 1}</td>
                 <th scope="row">
                   {m.slug === null ? m.nome : (
                     <Link href={`/municipio/${m.slug}/`} prefetch={false}>
@@ -320,10 +320,10 @@ export default async function Pagina() {
                   )}
                 </th>
                 <td>{m.uf}</td>
-                <td className={`${estilos.num} ${estilos.acima} tabular`}>
+                <td className={estilos.acima}>
                   {br(m.percentual, 2)}%
                 </td>
-                <td className={`${estilos.num} tabular`}>
+                <td>
                   {m.populacao === null ? "—" : br(m.populacao)}
                 </td>
               </tr>

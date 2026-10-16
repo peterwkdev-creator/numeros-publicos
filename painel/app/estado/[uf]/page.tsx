@@ -651,13 +651,13 @@ export default async function PaginaEstado(
                           grupo.nomePopular.slice(1)}
                       </Link>
                     </th>
-                    <td className={`${estilos.num} tabular`}>{fila ? br(fila.n) : "—"}</td>
-                    <td className={`${estilos.num} tabular`}>
+                    <td>{fila ? br(fila.n) : "—"}</td>
+                    <td>
                       {fila ? dias(fila.mediana) : "—"}
                     </td>
-                    <td className={`${estilos.num} tabular`}>{dias(grupo.fila!.mediana)}</td>
-                    <td className={`${estilos.num} tabular`}>{fila ? pct(fila.acima90) : "—"}</td>
-                    <td className={`${estilos.num} tabular`}>
+                    <td>{dias(grupo.fila!.mediana)}</td>
+                    <td>{fila ? pct(fila.acima90) : "—"}</td>
+                    <td>
                       {negados ? dias(negados.mediana) : "—"}
                     </td>
                   </tr>
@@ -1010,10 +1010,10 @@ export default async function PaginaEstado(
                       {m.nome}
                     </Link>
                   </th>
-                  <td className={`${estilos.num} tabular`}>
+                  <td>
                     {br(m.valores["populacao-censo-2022"] ?? null)}
                   </td>
-                  <td className={`${estilos.num} tabular`}>
+                  <td>
                     {m.fiscal?.percentual === null ||
                     m.fiscal?.percentual === undefined
                       ? "—"

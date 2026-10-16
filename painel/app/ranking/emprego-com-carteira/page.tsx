@@ -84,12 +84,12 @@ function TabelaSaldo({
         <tbody>
           {linhas.map((m) => (
             <tr key={m.codigo}>
-              <td className={`${estilos.posicao} tabular`}>{br(posicao.get(m.codigo)!)}</td>
+              <td>{br(posicao.get(m.codigo)!)}</td>
               <th scope="row"><Nome m={m} /></th>
               <td>{m.uf}</td>
-              <td className={`${estilos.num} tabular`}>{comSinal(m.saldo)}</td>
-              <td className={`${estilos.num} tabular`}>{br(m.admissoes)}</td>
-              <td className={`${estilos.num} tabular`}>{br(m.desligamentos)}</td>
+              <td>{comSinal(m.saldo)}</td>
+              <td>{br(m.admissoes)}</td>
+              <td>{br(m.desligamentos)}</td>
             </tr>
           ))}
         </tbody>
@@ -317,12 +317,12 @@ export default async function Pagina() {
           <tbody>
             {r.porMil.map((m) => (
               <tr key={m.codigo}>
-                <td className={`${estilos.posicao} tabular`}>{br(porMilPos.get(m.codigo)!)}</td>
+                <td>{br(porMilPos.get(m.codigo)!)}</td>
                 <th scope="row"><Nome m={m} /></th>
                 <td>{m.uf}</td>
-                <td className={`${estilos.num} tabular`}>{porMilComSinal(m.porMil!)}</td>
-                <td className={`${estilos.num} tabular`}>{comSinal(m.saldo)}</td>
-                <td className={`${estilos.num} tabular`}>{br(m.populacao!)}</td>
+                <td>{porMilComSinal(m.porMil!)}</td>
+                <td>{comSinal(m.saldo)}</td>
+                <td>{br(m.populacao!)}</td>
               </tr>
             ))}
           </tbody>

@@ -6,7 +6,7 @@ import SerieBrasilSvg from "../../componentes/serie-brasil-svg";
 import ComoLer from "../../componentes/como-ler";
 import { br } from "../../../lib/dados";
 import {
-  APRESENTACAO, caminhoDaSerie, descricaoDaSerie, FONTE_COM_ARTIGO, inicioPeriodo,
+  APRESENTACAO, caminhoDaSerie, descricaoDaSerie, FONTE_COM_ARTIGO, inicioPeriodo, porTema,
   rotuloPeriodo, tituloDaSerie, type SerieBrasil,
 } from "../../../lib/brasil";
 import { catalogoDe, trilha, LICENCA_DADOS } from "../../../lib/jsonld";
@@ -137,15 +137,20 @@ export default async function Pagina({ params }: Props) {
 
       <section aria-labelledby="outras">
         <h2 id="outras" className={estilos.secao}>As outras séries do país</h2>
-        <ul className={estilos.outras}>
-          {outras.map((x) => (
-            <li key={x.codigo}>
-              <Link href={caminhoDaSerie(x.codigo)} prefetch={false}>
-                {APRESENTACAO[x.codigo]?.titulo ?? x.nome}
-              </Link>
-            </li>
-          ))}
-        </ul>
+        {porTema(outras).map((g) => (
+          <div key={g.id}>
+            <h3 className={estilos.tema}>{g.nome}</h3>
+            <ul className={estilos.outras}>
+              {g.series.map((x) => (
+                <li key={x.codigo}>
+                  <Link href={caminhoDaSerie(x.codigo)} prefetch={false}>
+                    {APRESENTACAO[x.codigo]?.titulo ?? x.nome}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
         <p className={estilos.texto}>
           <Link href={CAMINHO} prefetch={false}>Todas as {b.series.length} séries</Link>,
           com o último valor de cada uma e{" "}

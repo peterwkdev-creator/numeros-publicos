@@ -646,3 +646,35 @@ export function miniatura(s: SerieBrasil, largura: number, altura: number): stri
     })
     .join(" ");
 }
+
+/**
+ * Os temas em que a `/brasil/` agrupa as séries, na ordem em que aparecem.
+ * **Só organizam a leitura**: estar no mesmo tema não afirma relação entre
+ * as séries (16/10/2026, depois do item 12). Série sem tema cai em "Outras
+ * séries", e um teste cobra que nenhuma das reais caia lá. O `id` não pode
+ * repetir o código de uma série: o cartão usa o código como `id`.
+ */
+export const TEMAS: { id: string; nome: string; series: string[] }[] = [
+  { id: "tema-atividade", nome: "Atividade, trabalho e renda",
+    series: ["pib", "desocupacao", "rendimento", "salario-minimo"] },
+  { id: "tema-precos", nome: "Preços, juros e câmbio", series: ["ipca", "selic", "cambio"] },
+  { id: "tema-contas", nome: "Contas públicas",
+    series: ["divida-bruta", "divida-liquida", "nfsp-primario"] },
+  { id: "tema-externo", nome: "Setor externo", series: ["reservas", "balanca-comercial"] },
+  { id: "tema-sociedade", nome: "Sociedade e ambiente",
+    series: ["extrema-pobreza", "mortes-agressao", "desmatamento"] },
+];
+
+/** As séries dadas, nos temas de `TEMAS` e na ordem deles; tema vazio sai. */
+export function porTema<T extends { codigo: string }>(
+  series: T[],
+): { id: string; nome: string; series: T[] }[] {
+  const grupos = TEMAS.map((t) => ({
+    id: t.id,
+    nome: t.nome,
+    series: t.series.flatMap((c) => series.filter((s) => s.codigo === c)),
+  }));
+  const soltas = series.filter((s) => !TEMAS.some((t) => t.series.includes(s.codigo)));
+  if (soltas.length) grupos.push({ id: "tema-outras", nome: "Outras séries", series: soltas });
+  return grupos.filter((g) => g.series.length > 0);
+}

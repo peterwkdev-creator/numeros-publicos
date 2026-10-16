@@ -9,6 +9,8 @@
 .texto { max-width: 46rem; }
 .texto p, p.texto { margin: 0 0 1rem; }
 .secao { font-size: var(--texto-lg); margin: 2.5rem 0 1rem; }
+/* O tema de um grupo de séries, abaixo da seção (16/10/2026). */
+.tema { font-size: var(--texto-base); font-weight: 600; margin: 1.75rem 0 .75rem; }
 
 .nota {
   max-width: 46rem;

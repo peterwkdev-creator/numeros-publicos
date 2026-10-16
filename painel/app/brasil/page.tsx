@@ -5,7 +5,7 @@ import CartaoSerieBrasil from "../componentes/cartao-serie-brasil";
 import ComoLer from "../componentes/como-ler";
 import { br, dataCurta } from "../../lib/dados";
 import {
-  APRESENTACAO, dominio, fontesPorExtenso, inicioPeriodo, rotuloPeriodo,
+  APRESENTACAO, dominio, fontesPorExtenso, inicioPeriodo, porTema, rotuloPeriodo,
   type SnapshotBrasil,
 } from "../../lib/brasil";
 import { catalogoDe, trilha, LICENCA_DADOS } from "../../lib/jsonld";
@@ -123,9 +123,14 @@ export default async function Pagina() {
 
       <section aria-labelledby="series">
         <h2 id="series" className={estilos.secao}>As séries</h2>
-        <div className={estilos.cartoes}>
-          {b.series.map((s) => <CartaoSerieBrasil key={s.codigo} serie={s} />)}
-        </div>
+        {porTema(b.series).map((g) => (
+          <div key={g.id}>
+            <h3 id={g.id} className={estilos.tema}>{g.nome}</h3>
+            <div className={estilos.cartoes}>
+              {g.series.map((s) => <CartaoSerieBrasil key={s.codigo} serie={s} />)}
+            </div>
+          </div>
+        ))}
       </section>
 
       <Presidencia mandatos={b.mandatos} />

@@ -20,6 +20,8 @@ const A = 44;
  * não diz nada sobre quem ocupava o cargo; com elas, mas sem a nota e as
  * datas, diria pela metade. É só a forma, e o número está escrito ao lado.
  *
+ * O título é `<h4>`: no índice ele fica abaixo do `<h3>` do tema.
+ *
  * O cartão inteiro é clicável pelo link do título (o `::after` cobre o
  * cartão), e o leitor de tela ouve um link só, com o nome da série.
  */
@@ -31,9 +33,9 @@ export default function CartaoSerieBrasil({ serie }: { serie: SerieBrasil }) {
   const [numero, unidade] = partesDoValor(serie)(r.ultimo[1]);
   return (
     <article className={estilos.cartao} id={serie.codigo} data-cartao={serie.codigo}>
-      <h3 className={estilos.titulo}>
+      <h4 className={estilos.titulo}>
         <Link href={caminhoDaSerie(serie.codigo)} prefetch={false}>{titulo}</Link>
-      </h3>
+      </h4>
       {ap && (
         <p className={estilos.selo} data-melhor={ap.melhor}>
           <span aria-hidden="true">

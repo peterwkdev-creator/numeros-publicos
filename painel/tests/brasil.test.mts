@@ -14,7 +14,7 @@ import {
   contiguos, dominio, escala, faixas, FONTE_COM_ARTIGO, fimPeriodo,
   fontesPorExtenso, inicioPeriodo, meioPeriodo, recortar, RECORTES, resumo,
   rotuloPeriodo, SELO, trechosMeta,
-  caminhoDaSerie, descricaoDaSerie, miniatura, partesDoValor, tituloDaSerie, valorDe,
+  caminhoDaSerie, descricaoDaSerie, miniatura, partesDoValor, porTema, TEMAS, tituloDaSerie, valorDe,
   type Mandato, type SerieBrasil, type SnapshotBrasil,
 } from "../lib/brasil.ts";
 
@@ -325,12 +325,31 @@ test("neutralidade: a nota de que as faixas não medem efeito, na página e em c
 });
 
 test("índice: um cartão por série, sem gráfico com faixas e sem o script do zoom", () => {
-  assert.match(INDICE, /b\.series\.map\(\(s\) => <CartaoSerieBrasil key=\{s\.codigo\} serie=\{s\} \/>\)/);
+  assert.match(INDICE, /porTema\(b\.series\)\.map/);
+  assert.match(INDICE, /g\.series\.map\(\(s\) => <CartaoSerieBrasil key=\{s\.codigo\} serie=\{s\} \/>\)/);
+  assert.match(PAGINA, /porTema\(outras\)\.map/);
   assert.doesNotMatch(INDICE, /SerieBrasilSvg|periodo\.js/);
   // A miniatura é só a forma: sem faixa de quem ocupava o cargo, sem eixo e
   // sem texto dentro do desenho.
   assert.doesNotMatch(CARTAO, /faixas\(|mandatos|<text/);
   assert.match(CARTAO, /aria-hidden="true" focusable="false"/);
+});
+
+test("temas: cada série real em um tema só, nenhuma solta, e o id não repete código", () => {
+  const codigos = real.series.map((s) => s.codigo);
+  const nosTemas = TEMAS.flatMap((t) => t.series);
+  assert.deepEqual([...nosTemas].sort(), [...codigos].sort());
+  assert.equal(new Set(nosTemas).size, nosTemas.length);
+  const grupos = porTema(real.series);
+  assert.ok(grupos.every((g) => g.id !== "tema-outras"));
+  assert.equal(grupos.reduce((n, g) => n + g.series.length, 0), codigos.length);
+  for (const t of TEMAS) assert.ok(!codigos.includes(t.id), t.id);
+  // Série nova sem tema não some: cai em "Outras séries", no fim.
+  const com = porTema([...real.series, serie("nova", [["2020", 1], ["2021", 2]])]);
+  assert.deepEqual(com.at(-1)!.series.map((s) => s.codigo), ["nova"]);
+  // Tema que fica vazio (a página da série tira a própria) não aparece.
+  assert.ok(porTema(real.series.filter((s) => !["reservas", "balanca-comercial"].includes(s.codigo)))
+    .every((g) => g.id !== "tema-externo"));
 });
 
 test("páginas: título até 60 e descrição até 160 caracteres, sem repetir entre séries", () => {

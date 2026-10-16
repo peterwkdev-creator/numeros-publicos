@@ -114,10 +114,15 @@ for (const caminho of caminhos) {
     // presos ao elemento original não responde ao clone, a lista não abre, e o
     // sentinela abaixo reprova. Toda página passa por isso, e não só a capa:
     // o comportamento é o mesmo, e a condição que o dispara é de tempo.
-    const s = document.querySelector("search[data-busca]");
-    if (s) s.replaceWith(s.cloneNode(true));
-    const c = document.querySelector("[role=combobox]");
+    for (const s of document.querySelectorAll("search[data-busca]")) {
+      s.replaceWith(s.cloneNode(true));
+    }
+    // A busca VISÍVEL: na capa a da barra fica escondida (a do herói é a
+    // mesma ação), e a primeira em ordem de documento seria a escondida.
+    const c = [...document.querySelectorAll("[role=combobox]")]
+      .find((e) => e.checkVisibility());
     if (!c) return;
+    c.dataset.auditada = "";
     const d = Object.getOwnPropertyDescriptor(
       Object.getPrototypeOf(c), "value",
     );
@@ -127,7 +132,7 @@ for (const caminho of caminhos) {
     // O índice chega por `fetch`: sem esperar, a lista ainda está vazia e a
     // auditoria voltaria a não ver nada — passando, de novo, por não olhar.
     for (let i = 0; i < 40; i += 1) {
-      const lb = document.querySelector("[role=listbox]");
+      const lb = document.getElementById(c.getAttribute("aria-controls"));
       if (lb && !lb.hidden && lb.querySelector("[role=option]")) break;
       await new Promise((r) => setTimeout(r, 100));
     }
@@ -140,7 +145,9 @@ for (const caminho of caminhos) {
   const r = await p.evaluate(() => {
     const ids = {};
     for (const e of document.querySelectorAll("[id]")) ids[e.id] = (ids[e.id] || 0) + 1;
-    const lbBusca = document.querySelector("[role=listbox]");
+    const cBusca = document.querySelector("[data-auditada]");
+    const lbBusca = cBusca &&
+      document.getElementById(cBusca.getAttribute("aria-controls"));
     const buscaNaoAbriu = !!document.querySelector("[role=combobox]") &&
       (!lbBusca || lbBusca.hidden || !lbBusca.querySelector("[role=option]"));
 

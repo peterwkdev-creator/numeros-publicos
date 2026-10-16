@@ -56,7 +56,7 @@ const RODADAS = 3; // ímpar, para a mediana ser uma das medidas
 /** Os dois campos, cada um com o efeito que prova que a digitação chegou. */
 const CAMPOS = [
   {
-    nome: "busca do cabeçalho (combobox)",
+    nome: "busca (combobox visível; na capa, a do herói)",
     seletor: '[role="combobox"]',
     termo: "imperatriz",
     // O índice chega por `fetch` no primeiro foco: sem esperar, a lista ainda
@@ -105,7 +105,11 @@ async function rodada(campo) {
   await p.goto(ALVO, { waitUntil: "networkidle0", timeout: 60000 });
   await p.evaluateHandle("document.fonts.ready");
 
-  const alvo = await p.$(campo.seletor);
+  // O primeiro VISÍVEL que casa: na capa a busca da barra fica escondida
+  // (15/10/2026), e a primeira em ordem de documento seria ela.
+  const alvo = (await p.evaluateHandle((s) =>
+    [...document.querySelectorAll(s)].find((e) => e.checkVisibility()) ?? null,
+  campo.seletor)).asElement();
   if (!alvo) {
     await p.close();
     return null;

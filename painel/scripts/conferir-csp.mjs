@@ -87,7 +87,8 @@ const base = `http://127.0.0.1:${servidor.address().port}`;
 const ROTEIRO = [
   ["/", async (p) => {
     await p.click('label[for="mapa-pib-habitante"]').catch(() => {});
-    await p.type("#busca-cab", "sao paulo").catch(() => {});
+    // na capa a busca da barra fica escondida; a que se usa é a do herói
+    await p.type("#busca-capa", "sao paulo");
   }],
   ["/municipio/sao-paulo-sp/", async (p) => { await p.type("#busca-cab", "recife"); }],
   ["/estado/sp/", async (p) => { await p.click('label[for="mapa-agua"]').catch(() => {}); }],

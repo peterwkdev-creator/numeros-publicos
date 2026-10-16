@@ -403,10 +403,16 @@ body:has(#busca-capa) .barra-site [data-busca] {
 
 /* A barra fixa (tela larga) cobre o topo da janela: âncora (`#id`) e foco
    por teclado não podem parar embaixo dela. A altura medida é ~3.5rem.
-   Soma-se ao `scroll-margin-top` do alvo. */
+   Margem no ALVO, e não `scroll-padding-top` no `html`; e fora do campo de
+   formulário. O campo focado em que se digita (o filtro da tabela da capa é
+   `main [id]`) com qualquer das duas fazia cada tecla esperar a pintura por
+   mais ~110 ms: INP 64 → 176 ms, medido em 15/10/2026 com CPU 4x. */
 @media (min-width: 48rem) {
-  html {
-    scroll-padding-top: 4.5rem;
+  main [id]:not(input, textarea, select) {
+    scroll-margin-top: calc(var(--e-6) + 4.5rem);
+  }
+  :focus-visible:not(input, textarea, select) {
+    scroll-margin-top: 4.5rem;
   }
 }
 

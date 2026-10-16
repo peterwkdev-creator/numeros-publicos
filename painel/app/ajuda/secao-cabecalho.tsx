@@ -39,8 +39,8 @@ export default function Cabecalho({ ctx }: { ctx: Contexto }) {
       <header>
         <h1 className={estilos.titulo}>Ajuda</h1>
         <p className={estilos.chamada}>
-          Este site publica números que os próprios municípios e o IBGE
-          declararam. Alguns deles têm nomes técnicos que não se explicam
+          Este site publica números que os próprios municípios e os órgãos
+          oficiais declararam. Alguns deles têm nomes técnicos que não se explicam
           sozinhos. Abaixo está o que cada um significa — e, quando a resposta
           não estiver aqui, para onde ir.
         </p>

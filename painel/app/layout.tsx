@@ -150,8 +150,10 @@ export default function RootLayout({
             </a>
           </nav>
           <p>
-            Dados abertos do IBGE, do SICONFI/Tesouro Nacional, do SIOPS e do
-            INEP, com a fonte e a data de coleta ao lado de cada número. Os
+            Dados abertos de órgãos oficiais (IBGE, Tesouro Nacional, INEP,
+            Ministério da Saúde, Ministério do Trabalho, INSS, Banco Central,
+            Ipea, INPE e Portal da Transparência), com a fonte e a data de
+            coleta ao lado de cada número. Os
             dados seguem a{" "}
             <a href="/ajuda/#licenca">licença de cada fonte</a>; o código é
             software livre sob AGPL-3.0. Este site não coleta nada sobre quem o

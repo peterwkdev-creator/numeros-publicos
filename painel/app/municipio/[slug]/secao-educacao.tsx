@@ -185,9 +185,9 @@ export default function SecaoEducacao({ c }: { c: Contexto }) {
               -- "os anos finais são piores" --, que é a mesma classe do
               erro do Tesouro Selic: grandezas diferentes na mesma régua.
 
-              O eixo fixo de 0 a 10 é o que permite comparar os dois
-              gráficos com honestidade: cada um contra a sua própria meta,
-              na mesma escala do índice. */}
+              Desde 15/10/2026 cada gráfico ajusta o eixo aos próprios
+              valores (`eixoJusto`, preso entre 0 e 10, vão mínimo de 2):
+              cada um se lê contra a sua meta, pelas marcas escritas. */}
           <div className={estilos.grafico}>
             <IdebSvg trajetoria={finais} municipio={m.nome} />
           </div>

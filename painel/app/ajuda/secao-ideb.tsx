@@ -14,9 +14,10 @@ export default function SecaoIdeb({ ctx }: { ctx: Contexto }) {
         O <strong>IDEB</strong> é o índice do INEP que combina duas coisas:
         quanto os alunos aprenderam (a prova do SAEB) e quantos avançaram de
         ano sem reprovar ou abandonar. Vai de <strong>0 a 10</strong>, e essa
-        escala é a mesma em todo município do país — por isso os gráficos
-        deste site usam eixo fixo, e duas páginas podem ser comparadas
-        diretamente.
+        escala é a mesma em todo município do país. O gráfico de cada página
+        ajusta o eixo aos valores daquele município, com as marcas escritas:
+        para comparar duas páginas, compare os números, não a altura da
+        linha.
       </p>
       <p>
         Este site publica a <strong>rede municipal</strong>, e não a rede

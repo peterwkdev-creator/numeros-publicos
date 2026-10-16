@@ -19,7 +19,8 @@ import RoscaFuncoes from "./componentes/rosca-funcoes";
 import {
   coberturaTemporal, FONTES_DA_BASE, idCatalogo, palavrasChave, VARIAVEIS_DA_BASE, LICENCA_DADOS,
 } from "@/lib/jsonld";
-import { lerFiscal, lerIdeb, lerSnapshot, SITE } from "@/lib/servidor";
+import { lerBrasil, lerFiscal, lerIdeb, lerSnapshot, SITE } from "@/lib/servidor";
+import { porTema } from "@/lib/brasil";
 import { Municipios } from "./municipios";
 import Termo from "./componentes/termo";
 import BuscaCabecalho from "./componentes/busca-cabecalho";
@@ -75,9 +76,15 @@ export default async function Pagina() {
   // colunas numéricas, e mandaria +149 KB comprimidos nas props de toda visita.
   // Ver `INDICADORES_DA_CAPA`.
   const capa = projetar(snapshot, INDICADORES_DA_CAPA);
-  const [fiscal, ideb] = await Promise.all([
-    lerFiscal(), lerIdeb("anos_iniciais"),
+  const [fiscal, ideb, brasil] = await Promise.all([
+    lerFiscal(), lerIdeb("anos_iniciais"), lerBrasil(),
   ]);
+  // Os temas e a contagem saem do dado: a lista escrita à mão citava 6 das
+  // 15 séries (achado em 16/10/2026, depois do item 12).
+  const temasDoBrasil = porTema(brasil.series);
+  const listaDeTemas = temasDoBrasil
+    .map((g) => g.nome.charAt(0).toLowerCase() + g.nome.slice(1))
+    .join("; ");
   // Sobre TODOS os indicadores, e não sobre os da capa — de propósito. A frase
   // diz quando o CONJUNTO foi coletado, e é ele que alimenta os downloads;
   // datá-la pelos três cartões faria o site declarar dado mais velho do que
@@ -291,8 +298,9 @@ export default async function Pagina() {
           <li className={s.porta}>
             <h3>Brasil</h3>
             <p>
-              PIB, desocupação, rendimento, inflação, dívida e resultado
-              primário do país, com quem ocupava a Presidência em cada período.
+              {brasil.series.length} séries do país, em {temasDoBrasil.length}{" "}
+              temas: {listaDeTemas}. Cada uma tem a sua página, com quem
+              ocupava a Presidência em cada período.
             </p>
             <p className={s.portaLinks}>
               <Link href="/brasil/" prefetch={false}>O Brasil ao longo do tempo</Link>

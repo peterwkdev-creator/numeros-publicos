@@ -119,7 +119,7 @@ export async function lerEmendas(): Promise<SnapshotEmendas> {
 
 /**
  * O Brasil ao longo do tempo, escrito por `python -m numeros_publicos
- * brasil-exportar`: seis séries do país, cada uma conferida ponto a ponto por
+ * brasil-exportar`: as séries do país, cada uma conferida ponto a ponto por
  * uma segunda leitura da fonte, e quem ocupava a Presidência.
  */
 let cacheBrasil: SnapshotBrasil | null = null;

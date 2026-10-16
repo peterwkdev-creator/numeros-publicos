@@ -27,7 +27,8 @@ export default function SecaoBrasil({ ctx }: { ctx: Contexto }) {
           mandatos.
         </li>
         <li>
-          <strong>O selo acima de cada gráfico</strong> diz para que lado a
+          <strong>O selo de cada série</strong>, no cartão e acima do
+          gráfico, diz para que lado a
           série melhora: “Mais alto é melhor”, “Mais baixo é melhor”, na
           inflação “Melhor dentro da faixa da meta”, e “Nenhum lado é melhor
           por si” quando o número não tem direção boa.

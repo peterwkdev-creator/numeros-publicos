@@ -82,11 +82,11 @@ export const COMO_LER: Record<TipoDePagina, ItemComoLer[]> = {
   ],
   brasil: [
     {
-      titulo: "Cada gráfico é uma série do país",
-      texto: "Inteira, do primeiro dado que a fonte publica naquela forma ao último. Cada uma tem o próprio eixo de tempo e começa num ano diferente: compare pelos anos escritos no eixo, não pela posição na tela.",
+      titulo: "Cada série do país tem a sua página",
+      texto: "No índice, o cartão mostra o último valor e a forma da série. A página dela traz o gráfico inteiro, do primeiro dado que a fonte publica naquela forma ao último, a tabela e o CSV. Cada gráfico tem o próprio eixo de tempo: compare pelos anos escritos no eixo, não pela posição na tela.",
     },
     {
-      titulo: "As faixas ao fundo não medem efeito",
+      titulo: "As faixas ao fundo do gráfico não medem efeito",
       texto: "Mostram quem ocupava a Presidência em cada período. Estas séries se movem por muitos fatores, e nenhum gráfico separa um do outro.",
       ajuda: { ancora: "brasil", rotulo: "Como ler o Brasil ao longo do tempo" },
     },

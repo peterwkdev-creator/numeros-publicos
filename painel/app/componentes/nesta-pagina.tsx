@@ -23,7 +23,16 @@ export type ItemSumario = { id: string; titulo: string } | false | null | undefi
  *
  * Sem JavaScript: as páginas são desidratadas, e uma lista de links não
  * precisa de nenhum. Com menos de três seções não há o que resumir.
+ *
+ * ## Em tela larga, a mesma lista acompanha a rolagem
+ *
+ * Desde 16/10/2026 (modernização, item 3), o `<main>` com `comSumario` vira
+ * grade a partir de 64rem e o sumário passa a ser uma coluna fixa à direita
+ * das seções, com "↑ Topo" no fim. É o mesmo elemento, não uma cópia: ver o
+ * CSS.
  */
+export const comSumario = e.comSumario;
+
 export default function NestaPagina({ itens }: { itens: ItemSumario[] }) {
   const lista = itens.filter((i): i is Exclude<ItemSumario, false | null | undefined> => !!i);
   if (lista.length < 3) return null;
@@ -36,6 +45,9 @@ export default function NestaPagina({ itens }: { itens: ItemSumario[] }) {
             <a href={`#${i.id}`}>{i.titulo}</a>
           </li>
         ))}
+        <li className={e.topo}>
+          <a href="#conteudo">↑ Topo</a>
+        </li>
       </ul>
     </nav>
   );

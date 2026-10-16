@@ -36,6 +36,75 @@
   min-height: 24px;
 }
 
+/* "Topo" so faz sentido quando o sumario acompanha a rolagem (abaixo). */
+.topo {
+  display: none;
+}
+
+/* Filete entre as secoes que o sumario lista: a pagina tem uma dezena delas,
+   e o espaco sozinho nao marcava onde uma acaba e a outra comeca. */
+.comSumario > .sumario ~ section ~ section {
+  border-top: 1px solid var(--borda);
+  padding-top: var(--e-8);
+}
+
+/* Tela larga: o MESMO sumario vira coluna a direita, fixa na rolagem. As
+   secoes de texto tem 68ch (705 px) numa coluna de 976, e os 271 px que
+   sobravam ao lado delas cabem a coluna sem estreitar nada (medido em
+   16/10/2026: nenhum conteudo de secao passa da largura dela). Uma lista so,
+   e nao uma segunda: o HTML nao cresce, e o `conferir-links` segue lendo um
+   "Nesta pagina" por pagina.
+
+   A coluna ocupa as linhas da grade a partir de onde o sumario esta. O que
+   e largo depois dele (a tabela de municipios do estado, o rodape) ocupa as
+   duas colunas e por isso vai para depois dessas linhas, na mesma ordem: o
+   sumario acompanha as secoes e para antes da tabela larga. */
+@media screen and (min-width: 64rem) {
+  .comSumario {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 14rem;
+    column-gap: var(--e-8);
+  }
+
+  .comSumario > * {
+    grid-column: 1 / -1;
+  }
+
+  .comSumario > .sumario ~ section {
+    grid-column: 1;
+  }
+
+  .comSumario > .sumario {
+    grid-column: 2;
+    grid-row: span 30;
+    align-self: start;
+    position: sticky;
+    /* abaixo da barra do site (65 px de 1024 a 1280, medido) */
+    top: 5rem;
+    max-height: calc(100vh - 6rem);
+    overflow-y: auto;
+    margin-bottom: 0;
+    padding: var(--e-4);
+  }
+
+  .sumario ul {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: var(--e-1);
+  }
+
+  .topo {
+    display: list-item;
+    margin-top: var(--e-2);
+    padding-top: var(--e-2);
+    border-top: 1px solid var(--borda);
+  }
+
+  /* Sem destaque da secao em que se esta: o `:target-current` (Chrome 140+)
+     faria isso sem script, mas o leitor de CSS do build (Next 16.4.1) ainda
+     nao o conhece e avisa a cada build (tentado em 16/10/2026). */
+}
+
 /* No papel o link nao leva a lugar nenhum: o sumario so ocuparia a folha. */
 @media print {
   .sumario {

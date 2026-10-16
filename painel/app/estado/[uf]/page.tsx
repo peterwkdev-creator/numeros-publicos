@@ -34,7 +34,7 @@ import {
 } from "../../../lib/emendas";
 import { dataBr, dias, inssDaUf, mesPorExtenso, pct } from "../../../lib/inss";
 import estilos from "./estado.module.css";
-import NestaPagina from "../../componentes/nesta-pagina";
+import NestaPagina, { comSumario } from "../../componentes/nesta-pagina";
 import { atualDeFuncoes } from "../../../lib/fiscal";
 
 /**
@@ -260,7 +260,7 @@ export default async function PaginaEstado(
   };
 
   return (
-    <main className={estilos.pagina} id="conteudo">
+    <main className={`${estilos.pagina} ${comSumario}`} id="conteudo">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

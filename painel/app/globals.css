@@ -408,6 +408,7 @@ body:has(#busca-capa) .barra-site [data-busca] {
    `main [id]`) com qualquer das duas fazia cada tecla esperar a pintura por
    mais ~110 ms: INP 64 → 176 ms, medido em 15/10/2026 com CPU 4x. */
 @media (min-width: 48rem) {
+  main[id],
   main [id]:not(input, textarea, select) {
     scroll-margin-top: calc(var(--e-6) + 4.5rem);
   }

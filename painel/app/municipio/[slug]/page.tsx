@@ -20,7 +20,7 @@ import "../../componentes/distribuicao-svg";
 import "../../componentes/ideb-svg";
 import Termo from "../../componentes/termo";
 import "../../componentes/como-ler";
-import NestaPagina from "../../componentes/nesta-pagina";
+import NestaPagina, { comSumario } from "../../componentes/nesta-pagina";
 import "./serie-svg";
 import "./saude-svg";
 import estilos from "./municipio.module.css";
@@ -150,7 +150,7 @@ export default async function PaginaMunicipio(
   const { fiscal, uf, pelaRegiao, vizinhos, medidas, medianas, serieFuncoes, taxasPais, comUf, medianasUf, legendaMedianas, temCensoTrabalho, temEmpresas, cagedM, emendasM, posPop, posPerCapita, f, posicao, serie, saude, funcoes, receita, comparacao } = c;
 
   return (
-    <main className={estilos.pagina} id="conteudo">
+    <main className={`${estilos.pagina} ${comSumario}`} id="conteudo">
       <Cabecalho c={c} />
       <SecaoCartoes c={c} />
       {/* Cada item repete a condição que mostra a sua seção: um item sem seção

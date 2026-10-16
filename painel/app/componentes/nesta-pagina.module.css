@@ -41,6 +41,27 @@
   display: none;
 }
 
+/* "Voltar ao sumario" no fim de cada secao (ver `VoltaSumario`). A margem
+   negativa o encosta na secao de que ele e o fim. O que vem logo depois do
+   sumario ou de outra volta e de uma secao que nao saiu. */
+.volta {
+  text-align: right;
+  font-size: var(--texto-sm);
+  margin: calc(-1 * var(--e-8)) 0 var(--e-8);
+}
+
+/* 24 px de alvo, como os links do sumario: 18 sem isto (medido) */
+.volta a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+}
+
+.sumario + .volta,
+.volta + .volta {
+  display: none;
+}
+
 /* Filete entre as secoes que o sumario lista: a pagina tem uma dezena delas,
    e o espaco sozinho nao marcava onde uma acaba e a outra comeca. */
 .comSumario > .sumario ~ section ~ section {
@@ -93,6 +114,11 @@
     gap: var(--e-1);
   }
 
+  /* o sumario esta ao lado: voltar a ele nao e preciso */
+  .volta {
+    display: none;
+  }
+
   .topo {
     display: list-item;
     margin-top: var(--e-2);
@@ -107,7 +133,8 @@
 
 /* No papel o link nao leva a lugar nenhum: o sumario so ocuparia a folha. */
 @media print {
-  .sumario {
+  .sumario,
+  .volta {
     display: none;
   }
 }

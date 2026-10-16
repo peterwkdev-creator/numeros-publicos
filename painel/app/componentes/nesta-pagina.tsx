@@ -30,14 +30,29 @@ export type ItemSumario = { id: string; titulo: string } | false | null | undefi
  * grade a partir de 64rem e o sumário passa a ser uma coluna fixa à direita
  * das seções, com "↑ Topo" no fim. É o mesmo elemento, não uma cópia: ver o
  * CSS.
+ *
+ * ## Em tela estreita, cada seção termina com a volta ao sumário
+ *
+ * No celular a página tem 18 telas e o sumário fica só no começo:
+ * `VoltaSumario` vai depois de cada seção. A página o põe depois de TODA
+ * seção, inclusive das condicionais, sem repetir a condição; o que não vem
+ * logo depois de uma seção é de uma que não saiu, e o CSS o esconde.
  */
 export const comSumario = e.comSumario;
+
+export function VoltaSumario() {
+  return (
+    <p className={e.volta}>
+      <a href="#nesta-pagina">↑ Voltar ao sumário</a>
+    </p>
+  );
+}
 
 export default function NestaPagina({ itens }: { itens: ItemSumario[] }) {
   const lista = itens.filter((i): i is Exclude<ItemSumario, false | null | undefined> => !!i);
   if (lista.length < 3) return null;
   return (
-    <nav className={e.sumario} aria-label="Nesta página">
+    <nav className={e.sumario} aria-label="Nesta página" id="nesta-pagina">
       <h2>Nesta página</h2>
       <ul>
         {lista.map((i) => (

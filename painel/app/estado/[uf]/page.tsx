@@ -34,7 +34,7 @@ import {
 } from "../../../lib/emendas";
 import { dataBr, dias, inssDaUf, mesPorExtenso, pct } from "../../../lib/inss";
 import estilos from "./estado.module.css";
-import NestaPagina, { comSumario } from "../../componentes/nesta-pagina";
+import NestaPagina, { comSumario, VoltaSumario } from "../../componentes/nesta-pagina";
 import { atualDeFuncoes } from "../../../lib/fiscal";
 
 /**
@@ -455,7 +455,15 @@ export default async function PaginaEstado(
           destaque={r.uf.sigla}
           nomes={Object.fromEntries(snapshot.ufs.map((u) => [u.sigla, u.nome]))}
         />
+        <p>
+          O país inteiro, ano a ano:{" "}
+          <Link href="/brasil/" prefetch={false}>
+            o Brasil ao longo do tempo
+          </Link>
+          .
+        </p>
       </section>
+      <VoltaSumario />
 
       {medidasCenso.some((x) => x.percentual !== null) && (
         <section className={estilos.texto} id="como-se-vive">
@@ -484,6 +492,7 @@ export default async function PaginaEstado(
           </p>
         </section>
       )}
+      <VoltaSumario />
 
       {cagedUf && (
         <section className={estilos.texto} id="emprego">
@@ -541,6 +550,7 @@ export default async function PaginaEstado(
           </p>
         </section>
       )}
+      <VoltaSumario />
 
       {emendasUf.comPagamento > 0 && emendasUf.cheio.reais !== null && (
         <section className={estilos.texto} id="emendas">
@@ -602,6 +612,7 @@ export default async function PaginaEstado(
           </p>
         </section>
       )}
+      <VoltaSumario />
 
       {inssUf.length > 0 && inss.fila && (
         <section className={estilos.texto} id="inss">
@@ -676,6 +687,7 @@ export default async function PaginaEstado(
           </p>
         </section>
       )}
+      <VoltaSumario />
 
       <section className={estilos.texto} id="limite-de-pessoal">
         <h2>
@@ -740,6 +752,7 @@ export default async function PaginaEstado(
           </p>
         ) : null}
       </section>
+      <VoltaSumario />
 
       {r.funcoes && (
         <section className={estilos.texto} id="para-onde-vai">
@@ -762,6 +775,7 @@ export default async function PaginaEstado(
           </div>
         </section>
       )}
+      <VoltaSumario />
 
       {/* O cartão do IDEB dizia "mediana de N municípios" e parava ali. Quem
           lê supõe lacuna de coleta; não é. O INEP publica por REDE, e onde a
@@ -805,6 +819,7 @@ export default async function PaginaEstado(
           </p>
         </section>
       )}
+      <VoltaSumario />
 
       {/* A pergunta que a página do município faz e a do estado não fazia.
           Só ficou possível com os 5.570 municípios consultados — antes disso
@@ -950,6 +965,7 @@ export default async function PaginaEstado(
           )}
         </section>
       )}
+      <VoltaSumario />
 
       <section className={estilos.texto} id="municipios">
         <h2>
@@ -1014,6 +1030,7 @@ export default async function PaginaEstado(
           </tbody>
         </table>
       </div>
+      <VoltaSumario />
 
       <section className={estilos.texto} id="baixar">
         <h2>Baixar estes dados</h2>
@@ -1039,6 +1056,7 @@ export default async function PaginaEstado(
           </li>
         </ul>
       </section>
+      <VoltaSumario />
 
       <section className={estilos.texto} id="outros-estados">
         <h2>Outros estados</h2>
@@ -1054,6 +1072,7 @@ export default async function PaginaEstado(
             ))}
         </ul>
       </section>
+      <VoltaSumario />
 
       <footer className={estilos.rodape}>
         <p>

@@ -20,7 +20,7 @@ import "../../componentes/distribuicao-svg";
 import "../../componentes/ideb-svg";
 import Termo from "../../componentes/termo";
 import "../../componentes/como-ler";
-import NestaPagina, { comSumario } from "../../componentes/nesta-pagina";
+import NestaPagina, { comSumario, VoltaSumario } from "../../componentes/nesta-pagina";
 import "./serie-svg";
 import "./saude-svg";
 import estilos from "./municipio.module.css";
@@ -185,15 +185,25 @@ export default async function PaginaMunicipio(
       ]} />
 
       <SecaoNoEstado c={c} />
+      <VoltaSumario />
       <SecaoPessoal c={c} />
+      <VoltaSumario />
       <SecaoIssoEMuito c={c} />
+      <VoltaSumario />
       <SecaoAoLongoDoTempo c={c} />
+      <VoltaSumario />
       <SecaoSaude c={c} />
+      <VoltaSumario />
       <SecaoParaOndeVai c={c} />
+      <VoltaSumario />
       <SecaoDeOndeVem c={c} />
+      <VoltaSumario />
       <SecaoOQueMudou c={c} />
+      <VoltaSumario />
       <SecaoEmendas c={c} />
+      <VoltaSumario />
       <SecaoEducacao c={c} />
+      <VoltaSumario />
       {medidas.some((x) => x.percentual !== null) && (
         <section className={estilos.texto} id="como-se-vive">
           <h2>Como se vive em {m.nome}</h2>
@@ -233,10 +243,14 @@ export default async function PaginaMunicipio(
           </p>
         </section>
       )}
+      <VoltaSumario />
 
       <SecaoTrabalho c={c} />
+      <VoltaSumario />
       <SecaoVizinhos c={c} />
+      <VoltaSumario />
       <SecaoBaixar c={c} />
+      <VoltaSumario />
       <footer className={estilos.rodape}>
         <p>
           Fontes: {snapshot.fonte} e {fiscal.fonte}

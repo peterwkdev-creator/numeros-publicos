@@ -1,5 +1,6 @@
+import Link from "next/link";
 import { br } from "../../../lib/dados";
-import { deEstado } from "../../../lib/estado";
+import { deEstado, slugUf } from "../../../lib/estado";
 import Termo from "../../componentes/termo";
 import type { Contexto } from "./contexto";
 
@@ -45,6 +46,17 @@ export default function SecaoNoEstado({ c }: { c: Contexto }) {
           </strong>{" "}
           da mediana {deEstado(m.uf)}, que é{" "}
           <strong>R$ {br(posPerCapita.mediana, 0)}</strong>.
+        </p>
+      )}
+      {/* Contexto (modernização, item 3, 16/10/2026): a régua do estado
+          aponta para os municípios que a formam, e não para um ranking. O DF,
+          com um município só, não tem lista a que apontar. */}
+      {uf.municipios > 1 && (
+        <p>
+          <Link href={`/estado/${slugUf(m.uf)}/#municipios`} prefetch={false}>
+            Os {br(uf.municipios)} municípios {deEstado(m.uf)}, lado a lado
+          </Link>
+          , na página do estado.
         </p>
       )}
       <p className={estilos.ressalva}>

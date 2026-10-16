@@ -44,7 +44,7 @@ export default function SecaoDeOndeVem({ c }: { c: Contexto }) {
           . É a outra metade da seção acima: ali está para onde o dinheiro
           vai, aqui de onde ele veio.
         </p>
-        <div className={estilos.rolagem}>
+        <div className={`${estilos.rolagem} rola-x`}>
           <ComposicaoBarras
             fatias={receita.fatias}
             total={receita.total}

@@ -16,7 +16,7 @@
      vale para link no meio de uma frase; trilha é navegação isolada. */
   display: inline-flex;
   align-items: center;
-  min-height: 24px;
+  min-height: var(--alvo);
 }
 
 .titulo {
@@ -185,6 +185,9 @@
 .vizinhos a {
   font-size: var(--texto-sm);
   color: var(--acento);
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--alvo);
 }
 
 .rodape {

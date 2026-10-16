@@ -102,7 +102,7 @@ export default function SecaoEducacao({ c }: { c: Contexto }) {
         )}
       </p>
 
-      <div className={estilos.rolagem}>
+      <div className={`${estilos.rolagem} rola-x`}>
         <table className={estilos.serie}>
           <caption className={estilos.legenda}>
             IDEB da rede municipal de {m.nome}, {iniciais.rotuloEtapa}

@@ -286,7 +286,7 @@ export default async function Pagina() {
         <script type="module" src="/filtro-uf.js" />
       </>)}
 
-      <div className={estilos.rolagem}>
+      <div className={`${estilos.rolagem} rola-x`}>
         <table className={estilos.lista} data-filtro-alvo>
           <caption>
             Municípios com gasto com pessoal acima de {br(legal, 0)}% da receita

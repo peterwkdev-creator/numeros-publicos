@@ -105,7 +105,7 @@ export default function SecaoEmendas({ c }: { c: Contexto }) {
           <h3 className={estilos.subtitulo}>
             Por tipo de emenda, em {emendasM.cheio.ano}
           </h3>
-          <div className={estilos.rolagem}>
+          <div className={`${estilos.rolagem} rola-x`}>
             <ComposicaoBarras
               fatias={emendasM.tipos}
               total={emendasM.cheio.reais}

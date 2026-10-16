@@ -94,7 +94,7 @@ export default function SecaoOQueMudou({ c }: { c: Contexto }) {
             inflação onde se procura prioridade.
           </p>
           <SerieFuncoes pontos={serieFuncoes} />
-          <div className={estilos.rolagem}>
+          <div className={`${estilos.rolagem} rola-x`}>
             {/* Os valores do gráfico, que até 11/10/2026 dizia "estão na
                 tabela abaixo" sobre uma tabela que só tinha o total: o
                 percentual de cada função, por ano, não estava escrito em

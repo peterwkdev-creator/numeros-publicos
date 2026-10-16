@@ -169,7 +169,7 @@ export default function MapaUf({
 
       <details className={estilos.valores}>
         <summary>Os valores do mapa, estado por estado</summary>
-        <div className={estilos.rolagem}>
+        <div className={`${estilos.rolagem} rola-x`}>
           <table className={estilos.tabela}>
             <caption className="so-leitor">
               Valor de cada estado em cada indicador do mapa.

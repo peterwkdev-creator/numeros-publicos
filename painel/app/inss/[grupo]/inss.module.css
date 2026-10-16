@@ -3,7 +3,7 @@
    Module e por rota, e ~50 linhas duplicadas custam menos que uma abstracao. */
 .pagina { max-width: 60rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
 .trilha { font-size: var(--texto-sm); color: var(--tinta-fraca); margin-bottom: 1rem; }
-.trilha a { color: var(--tinta-fraca); }
+.trilha a { color: var(--tinta-fraca); display: inline-flex; align-items: center; min-height: var(--alvo); }
 .titulo { font-size: var(--texto-2xl); line-height: 1.15; margin: 0 0 .4rem; }
 .oficial { font-size: var(--texto-base); color: var(--tinta-fraca); margin: 0 0 1.25rem; }
 

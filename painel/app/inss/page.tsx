@@ -77,7 +77,7 @@ export default async function IndiceInss() {
       </section>
 
       <section className={estilos.texto}>
-        <div className={estilos.rolagem}>
+        <div className={`${estilos.rolagem} rola-x`}>
           <table className={estilos.lista}>
             <caption>
               Pedidos em espera no INSS em {ref}, do benefício com a maior

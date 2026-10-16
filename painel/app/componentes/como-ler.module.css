@@ -9,12 +9,12 @@
 
 .comoLer summary {
   cursor: pointer;
-  padding: var(--e-2) var(--e-4);
+  padding: max(var(--e-2), (var(--alvo) - 1lh) / 2) var(--e-4);
   font-size: var(--texto-sm);
   font-weight: 600;
   color: var(--acento);
-  /* WCAG 2.5.8: o resumo é o alvo de toque inteiro. */
-  min-height: 24px;
+  /* WCAG 2.5.8: o resumo é o alvo de toque inteiro; o `padding` vertical o
+     leva a `--alvo` sem tirar o texto do meio. */
 }
 
 .comoLer[open] summary {

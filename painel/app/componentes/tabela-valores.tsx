@@ -26,7 +26,7 @@ export default function TabelaValores({
   rotuloValor?: string;
 }) {
   return (
-    <div className={estilos.rolagem}>
+    <div className={`${estilos.rolagem} rola-x`}>
       <table className={estilos.tabela}>
         <caption className={estilos.legenda}>{legenda}</caption>
         <thead>

@@ -53,7 +53,7 @@
   cursor: pointer;
   /* Alvo de toque: o critério 2.5.8 do WCAG pede 24px, e o padding acima
      entrega 32px de altura sem depender do tamanho da fonte do usuário. */
-  min-height: 2rem;
+  min-height: max(2rem, var(--alvo));
 }
 
 .rotuloOpcao:hover { border-color: var(--acento); color: var(--tinta); }
@@ -220,7 +220,7 @@
   cursor: pointer;
   color: var(--acento);
   font-weight: 600;
-  padding: 0.3rem 0;
+  padding: max(0.3rem, (var(--alvo) - 1lh) / 2) 0;
 }
 
 .rolagem { overflow-x: auto; margin-top: 0.5rem; }
@@ -239,6 +239,9 @@
 .tabela tbody th { font-weight: 500; white-space: nowrap; }
 .tabela .numero { text-align: right; white-space: nowrap; }
 .linhaDestaque { background: var(--acento-suave); }
+/* A sigla é a coluna fixa de `.rola-x`, que tem fundo próprio (opaco): sem
+   isto, a linha em destaque perderia a cor justo na célula que a nomeia. */
+.linhaDestaque th { background: var(--acento-suave); }
 
 @media print {
   .valores { display: none; }

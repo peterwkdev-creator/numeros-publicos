@@ -146,7 +146,7 @@ export default async function Pagina() {
           termina no dia em que a seguinte assumiu. A data de cada linha vem da
           página oficial indicada nela.
         </p>
-        <div className={estilos.rolagem}>
+        <div className={`${estilos.rolagem} rola-x`}>
           <table className={estilos.tabela}>
             <caption className="so-leitor">
               Quem ocupou a Presidência da República, com as datas e a fonte

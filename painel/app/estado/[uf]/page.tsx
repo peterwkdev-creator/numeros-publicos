@@ -625,7 +625,7 @@ export default async function PaginaEstado(
             fila: metade dos pedidos esperava havia mais do que isso. Ao lado,
             a mesma conta no país, e quanto tempo levaram as negativas.
           </p>
-          <div className={estilos.rolagem}>
+          <div className={`${estilos.rolagem} rola-x`}>
             <table className={estilos.lista}>
               <caption>
                 Pedidos ao INSS {emContracao(de)}, por benefício: a fila em{" "}
@@ -765,7 +765,7 @@ export default async function PaginaEstado(
             uma capital e a um município de três mil habitantes descreveria uma
             média, não o estado.
           </p>
-          <div className={estilos.rolagem}>
+          <div className={`${estilos.rolagem} rola-x`}>
             <ComposicaoBarras
               fatias={r.funcoes.fatias}
               total={r.funcoes.total}
@@ -980,7 +980,7 @@ export default async function PaginaEstado(
         </p>
       </section>
 
-      <div className={estilos.rolagem}>
+      <div className={`${estilos.rolagem} rola-x`}>
         <table className={estilos.lista}>
           <caption className="so-leitor">
             Municípios {de}, com a população do Censo 2022 e o gasto com

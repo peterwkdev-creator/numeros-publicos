@@ -270,10 +270,11 @@
 /* ------------------------------------------------------------------ tabelas */
 
 .rolagem {
-  overflow-x: auto;
   border: 1px solid var(--borda);
   border-radius: var(--raio);
-  background: var(--superficie);
+  /* O fundo é o de `.rola-x` (globals.css), que pinta a sombra da rolagem:
+     `background` aqui a apagaria. */
+  --rola-fundo: var(--superficie);
 }
 
 .tabela {

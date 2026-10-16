@@ -34,7 +34,7 @@
   /* 2.25rem = 36px de altura de alvo. O critério 2.5.8 do WCAG pede 24px, e
      campo de texto nem entra na conta; a folga é para o dedo, não para a
      norma. */
-  min-height: 2.25rem;
+  min-height: max(2.25rem, var(--alvo));
   font: inherit;
   /* 16px, não 14: abaixo disso o Safari do iPhone amplia a página ao focar
      o campo, e ela não volta sozinha. */
@@ -90,7 +90,7 @@
    no meio de frase: aqui ele está sozinho. */
 .saida a {
   display: inline-block;
-  min-height: 1.5rem;
+  min-height: max(1.5rem, var(--alvo));
   line-height: 1.5rem;
 }
 
@@ -101,7 +101,7 @@
   gap: 0.75rem;
   /* 2.25rem de altura por opção: alvo confortável de toque, e a lista de 8
      ainda cabe na tela de um telefone. */
-  min-height: 2.25rem;
+  min-height: max(2.25rem, var(--alvo));
   padding: 0.4rem 0.5rem;
   border-radius: var(--raio-sm);
   cursor: pointer;

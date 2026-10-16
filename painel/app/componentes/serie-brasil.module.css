@@ -142,6 +142,7 @@
 .valores summary {
   cursor: pointer;
   font-size: var(--texto-sm);
+  padding-block: max(0px, (var(--alvo) - 1lh) / 2);
 }
 
 /* A tabela inteira tem até 374 linhas (o IPCA): rola dentro da caixa, em vez
@@ -184,7 +185,7 @@
   display: none;
 }
 .periodos button {
-  min-height: 2.25rem;
+  min-height: max(2.25rem, var(--alvo));
   padding: 0.2rem 0.8rem;
   border: 1px solid var(--borda-forte);
   border-radius: var(--raio);

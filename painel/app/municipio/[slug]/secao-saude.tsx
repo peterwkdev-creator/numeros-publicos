@@ -85,7 +85,7 @@ export default function SecaoSaude({ c }: { c: Contexto }) {
           "os mesmos valores estão na tabela abaixo" e não havia tabela: o
           eixo não tem número, e quem quisesse o valor de um ano não tinha
           onde ler. A marca segue a régua do gráfico, 15% desde 2004. */}
-      <div className={estilos.rolagem}>
+      <div className={`${estilos.rolagem} rola-x`}>
         <table className={estilos.serie}>
           <caption className={estilos.legenda}>
             Recursos próprios aplicados em saúde por {m.nome}, em % da

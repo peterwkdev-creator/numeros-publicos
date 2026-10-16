@@ -96,6 +96,12 @@
      quase nulo (0,05) e cada painel tinha a sua sombra. */
   --sombra: 0 1px 2px rgb(18 33 46 / 0.06), 0 2px 6px rgb(18 33 46 / 0.06);
   --sombra-alta: 0 6px 20px rgb(18 33 46 / 0.14);
+  /* A sombra na borda da tabela que ainda rola de lado (`.rola-x`). */
+  --rola-sombra: rgb(18 33 46 / 0.22);
+
+  /* Alvo de toque da navegação isolada: 24px, o mínimo do WCAG 2.2 AA
+     (2.5.8); onde o ponteiro é o dedo, 44px (ver `pointer: coarse` abaixo). */
+  --alvo: 24px;
 
   /* --- rampa de composição -------------------------------------------------
      Um matiz só, escuro para claro na ordem das fatias. Usada pela rosca do
@@ -145,6 +151,9 @@
     --positivo-tinta: #7fd9b4;
     --sombra: none;
     --sombra-alta: 0 6px 20px rgb(0 0 0 / 0.5);
+    /* No escuro, sombra preta não se vê sobre o fundo quase preto (medido na
+       captura de 16/10): a borda clareia em vez de escurecer. */
+    --rola-sombra: rgb(150 180 205 / 0.28);
     --rosca-0: #8fc6e8;
     --rosca-1: #6fb0d8;
     --rosca-2: #559ac6;
@@ -463,15 +472,93 @@ body:has(#busca-capa) .barra-site [data-busca] {
   }
 }
 
-/* Alvo de toque de 24px, o mínimo do WCAG 2.2 AA (2.5.8 Target Size).
-   A exceção do critério vale para link EM MEIO A UMA FRASE, onde aumentar a
-   área quebraria o texto — não para navegação isolada como esta, que a
-   auditoria de 03/09/2026 media com 17px de altura. */
+/* Alvo de toque de `--alvo`: 24px, o mínimo do WCAG 2.2 AA (2.5.8 Target
+   Size), e 44px no toque. A exceção do critério vale para link EM MEIO A UMA
+   FRASE, onde aumentar a área quebraria o texto — não para navegação isolada
+   como esta, que a auditoria de 03/09/2026 media com 17px de altura. */
 .barra-site a,
 .rodape-site a {
   display: inline-flex;
   align-items: center;
-  min-height: 24px;
+  min-height: var(--alvo);
+}
+
+/* 44px onde o ponteiro é o dedo: o 2.5.5 (AAA) e o que Apple e Google pedem.
+   Vale para a navegação isolada (barra, rodapé, trilha, sumário, "↑ Topo",
+   vizinhos, botões de período, campo de busca). **Não** para o link de cada
+   linha de tabela: são centenas por página, a linha já dá 24px de
+   espaçamento ao vizinho (a exceção de espaçamento do 2.5.8) e 44px em cada
+   uma esticaria as listas longas sem ganho. Pelo ponteiro, e
+   não pela largura: janela estreita com mouse não precisa do alvo maior. */
+@media (pointer: coarse) {
+  :root {
+    --alvo: 44px;
+  }
+}
+
+/* --- tabela larga: rola de lado, e avisa ------------------------------------
+   A 375px, nas 10 páginas medidas, 19 tabelas transbordavam (a maior, a dos
+   indicadores por estado, com 1.740px) e nada dizia que havia mais à direita
+   (item 5 da modernização,
+   16/10/2026). Em CSS puro, num lugar só (o contêiner leva `rola-x`):
+
+   - **Sombra na borda onde ainda há tabela.** Duas camadas: a sombra fica
+     PARADA na borda (`scroll`), e um degradê da cor do fundo ANDA com o
+     conteúdo (`local`) e a cobre quando se chega ao fim. Por isso as células
+     não têm fundo próprio: cobririam a sombra.
+   - **A coluna que nomeia a linha fica fixa** (`th[scope=row]`): rolando até
+     a 9ª coluna, ainda se sabe de que estado é o número. Fundo opaco, senão
+     os números passariam por baixo dela à vista. Nos rankings o nome é a 2ª
+     coluna (a 1ª é a posição): fixa ela, e o cabeçalho da 2ª junto, para não
+     descolar; rolando, o nome cobre a posição, que é o que menos falta faz.
+   - `--rola-fundo` é o fundo de onde a tabela mora: `--fundo`, ou
+     `--superficie` dentro de cartão (a tabela da capa).
+
+   Seletores da coluna em `:where()`: o módulo que pinta uma linha de destaque
+   (`.linhaDestaque th`, no mapa) tem de vencer. */
+.rola-x {
+  overflow-x: auto;
+  background-color: var(--rola-fundo, var(--fundo));
+  background-image:
+    linear-gradient(to right, var(--rola-fundo, var(--fundo)) 40%, transparent),
+    linear-gradient(to left, var(--rola-fundo, var(--fundo)) 40%, transparent),
+    radial-gradient(farthest-side at 0 50%, var(--rola-sombra), transparent),
+    radial-gradient(farthest-side at 100% 50%, var(--rola-sombra), transparent);
+  background-position: left center, right center, left center, right center;
+  background-size: 2.5rem 100%, 2.5rem 100%, 0.9rem 100%, 0.9rem 100%;
+  background-repeat: no-repeat;
+  background-attachment: local, local, scroll, scroll;
+}
+
+.rola-x :where(tbody th[scope="row"]:first-child),
+.rola-x :where(table:has(> tbody > tr > th[scope="row"]:first-child) > thead th:first-child),
+.rola-x :where(tbody td:first-child + th[scope="row"]),
+.rola-x :where(table:has(> tbody > tr > td:first-child + th[scope="row"]) > thead th:nth-child(2)) {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background-color: var(--rola-fundo, var(--fundo));
+}
+
+.rola-x :where(thead th:first-child) {
+  z-index: 2;
+}
+
+/* A coluna fixa cobre a sombra da esquerda; ela passa à borda da coluna, e só
+   quando já se rolou (`scroll-state`: Chrome 133+; sem ele, a coluna fica sem
+   a sombra e o resto vale igual). */
+@supports (container-type: scroll-state) {
+  .rola-x {
+    container-type: scroll-state;
+  }
+  @container scroll-state(scrollable: left) {
+    .rola-x :where(tbody th[scope="row"]:first-child),
+    .rola-x :where(table:has(> tbody > tr > th[scope="row"]:first-child) > thead th:first-child),
+    .rola-x :where(tbody td:first-child + th[scope="row"]),
+    .rola-x :where(table:has(> tbody > tr > td:first-child + th[scope="row"]) > thead th:nth-child(2)) {
+      box-shadow: 8px 0 8px -8px var(--rola-sombra);
+    }
+  }
 }
 
 .rodape-site {
@@ -588,6 +675,12 @@ body:has(#busca-capa) .barra-site [data-busca] {
      números órfãos. `thead` repetido é o que o HTML oferece para isso. */
   thead {
     display: table-header-group;
+  }
+
+  /* No papel não há rolagem: a tabela inteira, sem a sombra que a indicava. */
+  .rola-x {
+    overflow: visible;
+    background: none;
   }
 
   tr,

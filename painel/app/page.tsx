@@ -467,7 +467,7 @@ export default async function Pagina() {
           nomes={Object.fromEntries(snapshot.ufs.map((u) => [u.sigla, u.nome]))}
         />
 
-        <div className={s.rolagem}>
+        <div className={`${s.rolagem} rola-x`}>
           <table className={s.tabela}>
             <caption>
               Totais por unidade da federação, calculados a partir dos

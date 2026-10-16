@@ -22,7 +22,7 @@ export default function TabelaCaged({
   legenda: string;
 }) {
   return (
-    <div className={estilos.rolagem}>
+    <div className={`${estilos.rolagem} rola-x`}>
       <table className={`${estilos.tabela} ${estilos.compacta}`}>
         <caption className={estilos.legenda}>{legenda}</caption>
         <thead>

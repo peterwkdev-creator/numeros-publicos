@@ -186,7 +186,7 @@ export default function SerieBrasilSvg({
       <details className={estilos.valores}>
         <summary>Ver os {br(serie.pontos.length)} valores</summary>
         {/* Focável: a caixa rola, e quem usa teclado precisa alcançá-la. */}
-        <div className={estilos.rolagem} tabIndex={0} role="region"
+        <div className={`${estilos.rolagem} rola-x`} tabIndex={0} role="region"
           aria-label={`Valores: ${titulo}`}>
           <table>
             <caption className="so-leitor">{titulo}, {serie.unidade}</caption>

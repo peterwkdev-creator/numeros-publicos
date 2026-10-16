@@ -260,7 +260,7 @@ export default async function Pagina({ params }: Params) {
       {servicosVisiveis.length > 1 && (
         <section className={estilos.texto}>
           <h2>Por tipo de pedido</h2>
-          <div className={estilos.rolagem}>
+          <div className={`${estilos.rolagem} rola-x`}>
             <table className={estilos.lista}>
               <caption>
                 Pedidos de {nome} em espera em {ref}, por serviço do INSS.
@@ -294,7 +294,7 @@ export default async function Pagina({ params }: Params) {
       {mostraClientela && s.negados && (
         <section className={estilos.texto}>
           <h2>Negados: cidade e campo</h2>
-          <div className={estilos.rolagem}>
+          <div className={`${estilos.rolagem} rola-x`}>
             <table className={estilos.lista}>
               <caption>
                 Pedidos de {nome} negados em {mesPorExtenso(s.negados.mes)}, pelo
@@ -331,7 +331,7 @@ export default async function Pagina({ params }: Params) {
             {neg && <>, e metade das negativas saiu em até <strong>{dias(neg.mediana)}</strong></>}
             .
           </p>
-          <div className={estilos.rolagem}>
+          <div className={`${estilos.rolagem} rola-x`}>
             <table className={estilos.lista}>
               <caption>
                 Pedidos de {nome} por estado da agência: a fila em {ref}

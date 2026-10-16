@@ -54,7 +54,7 @@ export default function SecaoParaOndeVai({ c }: { c: Contexto }) {
           daquele ano.
         </p>
       )}
-      <div className={estilos.rolagem}>
+      <div className={`${estilos.rolagem} rola-x`}>
         <ComposicaoBarras
           fatias={funcoes.fatias}
           total={funcoes.total}

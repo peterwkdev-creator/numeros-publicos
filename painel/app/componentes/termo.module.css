@@ -81,8 +81,8 @@
   background: none;
   border: 1px solid var(--borda);
   border-radius: var(--raio);
-  /* WCAG 2.5.8: alvo isolado, então 24px de altura. */
-  min-height: 24px;
+  /* WCAG 2.5.8: alvo isolado, então `--alvo` de altura. */
+  min-height: var(--alvo);
   padding: 0 var(--e-2);
   cursor: pointer;
 }

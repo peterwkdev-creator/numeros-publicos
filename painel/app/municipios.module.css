@@ -90,7 +90,7 @@
   /* 1.75rem = 28px de altura: acima dos 24px que o critério 2.5.8 do WCAG 2.2
      exige para alvo isolado. Estes botões não são link dentro de frase, então
      a isenção do critério não vale para eles. */
-  min-height: 1.75rem;
+  min-height: max(1.75rem, var(--alvo));
   padding: var(--e-1) var(--e-3);
   border-radius: var(--raio-pilula);
   cursor: pointer;

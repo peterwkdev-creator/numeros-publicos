@@ -71,7 +71,7 @@ export default function SecaoAoLongoDoTempo({ c }: { c: Contexto }) {
         />
       </div>
 
-      <div className={estilos.rolagem}>
+      <div className={`${estilos.rolagem} rola-x`}>
         <table className={estilos.serie}>
           <caption className={estilos.legenda}>
             Gasto com pessoal de {m.nome} em cada {umPeriodo} entregue, em %

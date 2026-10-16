@@ -162,7 +162,7 @@ export function Municipios({
         </template>
       </div>
 
-      <div className={s.rolagem}>
+      <div className={`${s.rolagem} rola-x`}>
         <table className={s.tabela}>
           {/* O cabeçalho diz o quê, não de quando: o ano de cada coluna e a
               fonte ficam aqui, como na tabela de estados logo acima. */}

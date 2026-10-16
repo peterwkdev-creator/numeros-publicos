@@ -6,7 +6,7 @@ import {
   unidadeDaColuna, valorDoIndicador,
 } from "@/lib/dados";
 import { slugUf } from "@/lib/estado";
-import { rotuloPeriodo } from "@/lib/fiscal";
+import { rotuloPeriodo, slugDe } from "@/lib/fiscal";
 import { funcoesDoPais, panoramaEstados } from "@/lib/nacional";
 import MapaUf from "./componentes/mapa-uf";
 import { camadasPadrao } from "@/lib/mapa";
@@ -22,6 +22,7 @@ import {
 import { lerFiscal, lerIdeb, lerSnapshot, SITE } from "@/lib/servidor";
 import { Municipios } from "./municipios";
 import Termo from "./componentes/termo";
+import BuscaCabecalho from "./componentes/busca-cabecalho";
 import s from "./page.module.css";
 
 /**
@@ -48,6 +49,24 @@ export const metadata: Metadata = {
 //: Alfabética poria Centro-Oeste antes de Norte e Nordeste, o que não é como
 //: ninguém pensa no mapa.
 const REGIOES = ["Norte", "Nordeste", "Sudeste", "Sul", "Centro-Oeste"];
+
+/**
+ * Os exemplos clicáveis sob a busca do herói: uma capital, uma cidade média e
+ * uma pequena, de três regiões. A escolha é de tamanho e de lugar, não de
+ * mérito, e não muda o que o site afirma de nenhum deles. O nome e a UF saem
+ * do snapshot (e o build para se o município sumir), não de texto digitado.
+ */
+const EXEMPLOS = [
+  "recife-pe", // capital, Nordeste
+  "santa-maria-rs", // cidade média, Sul
+  "alto-paraiso-de-goias-go", // cidade pequena, Centro-Oeste
+];
+
+/**
+ * As fontes oficiais de que o site lê, na ordem em que aparecem nas páginas.
+ * Só os nomes: cada página diz a tabela e o endereço de cada número.
+ */
+const FONTES_DO_SITE = "IBGE, Tesouro Nacional (SICONFI), INEP, INSS e Novo Caged";
 
 export default async function Pagina() {
   const snapshot = await lerSnapshot();
@@ -169,24 +188,45 @@ export default async function Pagina() {
           ~500px de altura vazios à direita. Empilha em tela estreita. */}
       <div className={s.topo}>
       <header className={s.cabecalho}>
-        <span className={s.selo}>Dados abertos · IBGE e Tesouro Nacional</span>
-        <h1 className={s.titulo}>Números Públicos</h1>
+        {/* O `h1` diz o que o site responde. O nome já está na barra, e
+            repeti-lo aqui gastava o maior texto da capa em informação que a
+            pessoa já tinha. */}
+        <h1 className={s.titulo}>
+          Os números oficiais do seu município, com a fonte ao lado de cada um
+        </h1>
         <p className={s.subtitulo}>
-          População, PIB, gasto com pessoal, despesa por função e IDEB dos{" "}
-          <strong>{br(capa.linhas.length)} municípios</strong> dos 27 estados
-          do Brasil — com a fonte e a data de coleta ao lado de cada número.
+          População, PIB, gasto com pessoal, despesa por função, IDEB e emprego
+          com carteira dos <strong>{br(capa.linhas.length)} municípios</strong>{" "}
+          e dos {br(snapshot.ufs.length)} estados do Brasil.
         </p>
-        {/* O que fazer vem antes da procedência: quem chega quer a cidade
-            dela, e a busca do cabeçalho não se anuncia sozinha. */}
-        <p className={s.subtitulo}>
-          Para ver uma cidade, digite o nome na busca do alto da página. Para
-          um estado, escolha na <a href="#por-estado">tabela por estado</a>.
-          Dúvida sobre um termo ou um número: <Link href="/ajuda/" prefetch={false}>Ajuda</Link>.
-        </p>
-        <p className={s.coletadoEm}>
-          Última coleta em{" "}
-          <time dateTime={coletadoEm}>{dataLegivel(coletadoEm)}</time>.
-        </p>
+        {/* A ação nº 1 do site. Até 15/10/2026 o campo só existia na barra
+            (36px de altura) e o texto mandava procurá-lo "no alto da página".
+            É a mesma busca da barra, com ids e nome de landmark próprios;
+            o `busca.js` serve às duas. */}
+        <div className={s.busca}>
+          <BuscaCabecalho
+            prefixo="capa"
+            nome="Busca de município ou estado"
+            grande
+            placeholder="Digite o nome de um município ou estado"
+          />
+        </div>
+        <div className={s.exemplos}>
+          <span id="exemplos-rotulo">Por exemplo:</span>
+          <ul aria-labelledby="exemplos-rotulo">
+            {EXEMPLOS.map((slug) => {
+              const l = capa.linhas.find((x) => slugDe(x[1], x[2]) === slug);
+              if (!l) throw new Error(`exemplo da capa fora do snapshot: ${slug}`);
+              return (
+                <li key={slug}>
+                  <Link href={`/municipio/${slug}/`} prefetch={false}>
+                    {l[1]} ({l[2]})
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
       </header>
 
       <p className={s.aviso}>
@@ -195,6 +235,88 @@ export default async function Pagina() {
         sobre um termo de referência público, e hoje cobre o país inteiro.
       </p>
       </div>
+
+      {/* Os números do próprio site, num só lugar: o que cobre e de onde vem. */}
+      <dl className={s.faixa} aria-label="O que o site cobre">
+        <div>
+          <dt>Municípios</dt>
+          <dd className="tabular">{br(capa.linhas.length)}</dd>
+        </div>
+        <div>
+          <dt>Estados</dt>
+          <dd className="tabular">{br(snapshot.ufs.length)}</dd>
+        </div>
+        <div className={s.faixaFontes}>
+          <dt>Fontes oficiais</dt>
+          <dd>{FONTES_DO_SITE}</dd>
+        </div>
+        <div>
+          <dt>Última coleta</dt>
+          <dd>
+            <time dateTime={coletadoEm}>{dataLegivel(coletadoEm)}</time>
+          </dd>
+        </div>
+      </dl>
+
+      {/* As portas de entrada. Brasil, estados e rankings só se achavam no
+          rodapé ou no meio da página; quem não sabe o nome de uma cidade não
+          tinha por onde começar. Cada cartão leva a um lugar que já existia. */}
+      <section className={s.portas} aria-labelledby="por-onde">
+        <h2 className={s.secaoTitulo} id="por-onde">Por onde começar</h2>
+        <ul className={s.portasLista}>
+          <li className={s.porta}>
+            <h3>Município</h3>
+            <p>
+              Uma página para cada um dos {br(capa.linhas.length)}: população,
+              contas públicas, educação e emprego.
+            </p>
+            <p className={s.portaLinks}>
+              <a href="#busca-capa">Ir para a busca</a>
+              <a href="#municipios">Ver a lista</a>
+            </p>
+          </li>
+          <li className={s.porta}>
+            <h3>Estados</h3>
+            <p>
+              Os {br(snapshot.ufs.length)} estados no mapa e na tabela de totais,
+              agrupados por região.
+            </p>
+            <p className={s.portaLinks}>
+              <a href="#por-estado">Ver o mapa e a tabela</a>
+            </p>
+          </li>
+          {/* O único caminho da capa até `/brasil/`: sem link de lugar nenhum, a
+              página fica invisível para o rastreador (o defeito do concorrente
+              medido em 07/09, o mesmo que motivou o link do ranking). */}
+          <li className={s.porta}>
+            <h3>Brasil</h3>
+            <p>
+              PIB, desocupação, rendimento, inflação, dívida e resultado
+              primário do país, com quem ocupava a Presidência em cada período.
+            </p>
+            <p className={s.portaLinks}>
+              <Link href="/brasil/" prefetch={false}>O Brasil ao longo do tempo</Link>
+            </p>
+          </li>
+          {/* `id="rankings"`: o item "Rankings" da barra do topo aponta para cá,
+              porque não há página-índice dos rankings. */}
+          <li className={s.porta} id="rankings">
+            <h3>Rankings</h3>
+            <p>
+              Listas nacionais, com a fonte e a data de coleta, para comparar
+              os municípios entre si.
+            </p>
+            <p className={s.portaLinks}>
+              <Link href="/ranking/gasto-com-pessoal/" prefetch={false}>
+                Gasto com pessoal acima do limite
+              </Link>
+              <Link href="/ranking/emprego-com-carteira/" prefetch={false}>
+                Emprego com carteira
+              </Link>
+            </p>
+          </li>
+        </ul>
+      </section>
 
       <section className={s.cartoes} aria-label="Totais do Brasil">
         {capa.indicadores.map((ind) => (
@@ -237,15 +359,6 @@ export default async function Pagina() {
           </article>
         ))}
       </section>
-
-      {/* O único caminho da capa até `/brasil/`: sem link de lugar nenhum, a
-          página fica invisível para o rastreador (o defeito do concorrente
-          medido em 07/09, o mesmo que motivou o link do ranking). */}
-      <p className={s.secaoNota}>
-        <Link href="/brasil/" prefetch={false}>O Brasil ao longo do tempo</Link>{" "}
-        — PIB, desocupação, rendimento, inflação, dívida e resultado primário
-        do país, com quem ocupava a Presidência em cada período.
-      </p>
 
       {/* A capa listava indicadores e estados, e não respondia "para onde vai
           o dinheiro" — a pergunta que a página do município e a do estado já

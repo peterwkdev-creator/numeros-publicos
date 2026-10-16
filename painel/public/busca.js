@@ -246,15 +246,30 @@ export function dicaDeCorte(total) {
  * ouvintes presos ao elemento, a busca da capa morria até recarregar.
  *
  * Delegados ao `document`, eles sobrevivem à troca: cada evento pergunta quem é
- * o campo agora. Há uma busca por página (os ids são fixos), então o estado é
- * um só. O teste de regressão troca a marcação por um clone, que é o que o
+ * o campo agora. Pode haver mais de uma busca por página (ver `atual`, abaixo), e o estado
+ * é um só, o da busca em uso. O teste de regressão troca a marcação por um clone, que é o que o
  * React faz, e cobra que a busca continue respondendo.
  */
 const RAIZ = "search[data-busca]";
 const CAMPO = `${RAIZ} [role="combobox"]`;
 
+/*
+ * ## Mais de uma busca por página (15/10/2026)
+ *
+ * A capa tem a do cabeçalho e a do herói, cada uma com ids próprios. O estado
+ * (índice, resultados, opção ativa) continua um só, e pertence à busca EM USO:
+ * a última em que o foco, a digitação ou o teclado caiu. Ao trocar de uma para
+ * a outra, a anterior fecha e o estado recomeça. Sem busca em uso (ou se o
+ * nó dela saiu do documento), vale a primeira da página.
+ */
+let atual = null;
+
+function raizAtiva() {
+  return atual?.isConnected ? atual : document.querySelector(RAIZ);
+}
+
 function partes() {
-  const raiz = document.querySelector(RAIZ);
+  const raiz = raizAtiva();
   const campo = raiz?.querySelector('[role="combobox"]');
   const lista = raiz?.querySelector('[role="listbox"]');
   const status = raiz?.querySelector('[role="status"]');
@@ -394,8 +409,7 @@ function iniciar() {
       carregando = false;
       // Uma tentativa anterior pode ter falhado e mostrado o aviso; sem isto
       // ele ficava na tela, com `role="alert"`, ao lado da busca funcionando.
-      const erro = partes()?.erro;
-      if (erro) erro.hidden = true;
+      for (const erro of document.querySelectorAll(`${RAIZ} [data-erro]`)) erro.hidden = true;
       atualizar();
     } catch (causa) {
       // Falha de rede não pode virar campo mudo.
@@ -420,17 +434,40 @@ function iniciar() {
 
   const doCampo = (ev) => ev.target instanceof Element && ev.target.matches(CAMPO);
 
+  /**
+   * Passa a valer a busca do evento. A anterior fecha, e o estado recomeça:
+   * resultados e opção ativa de uma não servem à outra.
+   */
+  function usar(ev) {
+    const raiz = ev.target.closest(RAIZ);
+    if (!raiz || raiz === atual) return;
+    if (atual?.isConnected) {
+      aberto = false;
+      desenhar();
+    }
+    atual = raiz;
+    achados = [];
+    total = 0;
+    sugestao = false;
+    ativo = -1;
+    aberto = false;
+  }
+
   document.addEventListener("focusin", (ev) => {
-    if (doCampo(ev)) void carregar();
+    if (!doCampo(ev)) return;
+    usar(ev);
+    void carregar();
   });
   document.addEventListener("input", (ev) => {
     if (!doCampo(ev)) return;
+    usar(ev);
     aberto = true;
     void carregar();
     atualizar();
   });
   document.addEventListener("keydown", (ev) => {
     if (!doCampo(ev)) return;
+    usar(ev);
     const p = partes();
     if (!p) return;
     const campo = p.campo;

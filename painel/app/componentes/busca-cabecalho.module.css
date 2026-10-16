@@ -3,7 +3,10 @@
 .raiz {
   display: block;
   position: relative;
-  flex: 1 1 auto;
+  /* 10rem de base: com a base `auto` o campo pedia ~20 caracteres e a barra,
+     agora com quatro links, quebrava a busca para a segunda linha antes de
+     48rem. Cresce até 22rem onde há lugar. */
+  flex: 1 1 10rem;
   min-width: 0;
   max-width: 22rem;
 }
@@ -193,4 +196,40 @@
   .raiz {
     display: none;
   }
+}
+
+/* A variante do herói da capa: o mesmo componente, maior. É a ação nº 1 do
+   site, e na barra o campo tem 36px de altura e até 22rem. Alvo de 48px, texto
+   do corpo e a lista com opções de 44px, para o dedo. */
+.grande {
+  max-width: 40rem;
+}
+
+.grande .lupa {
+  left: 0.9rem;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.grande .campo {
+  min-height: 3rem;
+  padding: 0.6rem 0.9rem 0.6rem 2.8rem;
+  font-size: var(--texto-lg);
+  border-width: 2px;
+  border-color: var(--acento);
+  border-radius: var(--raio);
+  box-shadow: var(--sombra);
+}
+
+.grande .lista li {
+  min-height: 2.75rem;
+  font-size: var(--texto-base);
+}
+
+.grande .janela {
+  border-radius: var(--raio);
+}
+
+.grande .saida {
+  font-size: var(--texto-base);
 }

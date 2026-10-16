@@ -83,7 +83,7 @@ export default function RootLayout({
             e quem chega por uma busca cai direto na página de um município,
             nunca na capa. A barra também dá a cada uma das 1.804 páginas um
             link para a raiz, o que reforça o grafo interno consertado hoje. */}
-        <div className="barra-site">
+        <header className="barra-site">
           <a className="barra-marca" href="/">
             {/* A marca conta a tese em vez de decorar: barras contra uma
                 régua tracejada, que é o que toda página deste site faz --
@@ -110,11 +110,23 @@ export default function RootLayout({
               (ver `busca-cabecalho.module.css`), porque espremida ao lado
               dos atalhos mostraria menos de oito caracteres. */}
           <BuscaCabecalho />
-          <nav aria-label="Atalhos do site">
-            <a href="/ajuda/">Ajuda</a>
-            <a href="/ajuda/#baixar">Baixar dados</a>
+          {/* Fixa no topo (`position: sticky`, ver `globals.css`) desde
+              15/10/2026. O menu é um `<details>`, sem JavaScript: abaixo de
+              48rem recolhe sob o botão "Menu"; de 48rem para cima o CSS o
+              mantém aberto e esconde o botão. "Rankings" leva ao bloco da
+              capa que lista os dois (não há página-índice de rankings). */}
+          <nav aria-label="Atalhos do site" className="barra-menu">
+            <details className="menu-recolhivel">
+              <summary>Menu</summary>
+              <div className="menu-links">
+                <a href="/brasil/">Brasil</a>
+                <a href="/#rankings">Rankings</a>
+                <a href="/ajuda/">Ajuda</a>
+                <a href="/ajuda/#baixar">Baixar dados</a>
+              </div>
+            </details>
           </nav>
-        </div>
+        </header>
 
         {children}
 

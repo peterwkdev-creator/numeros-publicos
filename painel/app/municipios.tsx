@@ -85,15 +85,20 @@ export function Municipios({
 
       <div data-controles="" hidden>
         <p className={s.secaoNota}>
-          Busque por nome, ou filtre por estado, situação fiscal e porte. Os
+          Filtre a lista por nome, estado, situação fiscal e porte (para abrir a
+          página de um município pelo nome, use a busca do alto da capa). Os
           filtros se somam, e a lista atualiza sozinha. Clique no cabeçalho de uma
           coluna para ordenar — municípios sem valor na fonte ficam sempre no fim.
         </p>
 
         <div className={m.controles}>
           <div className={m.campo}>
-            <label htmlFor="busca">Buscar município</label>
-            <input id="busca" type="search" placeholder="ex.: Acari" autoComplete="off" />
+            {/* "Filtrar a lista abaixo", e não "Buscar município": a busca de
+                verdade é a do herói e a da barra, que abrem a página do
+                município. Este campo só reduz a tabela, e com o mesmo
+                rótulo parecia uma terceira busca. */}
+            <label htmlFor="busca">Filtrar a lista abaixo</label>
+            <input id="busca" type="search" placeholder="nome, ex.: Acari" autoComplete="off" />
           </div>
           <div className={m.campo}>
             <label htmlFor="uf">Estado</label>

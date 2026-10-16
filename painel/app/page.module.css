@@ -25,25 +25,20 @@
   max-width: 60ch;
 }
 
-.selo {
-  display: inline-block;
-  font-size: var(--texto-xs);
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--acento);
-  background: var(--acento-suave);
-  padding: var(--e-1) var(--e-3);
-  border-radius: 999px;
-  margin-bottom: var(--e-4);
-}
-
+/* O `h1` é uma frase (~70 caracteres), e não o nome do site: um degrau abaixo
+   do que o nome tinha, para fechar em duas ou três linhas. */
 .titulo {
-  font-size: var(--texto-2xl);
+  font-size: var(--texto-xl);
   margin-bottom: var(--e-3);
 }
 
 @media (min-width: 48rem) {
+  .titulo {
+    font-size: var(--texto-2xl);
+  }
+}
+
+@media (min-width: 64rem) {
   .titulo {
     font-size: var(--texto-3xl);
   }
@@ -54,10 +49,145 @@
   font-size: var(--texto-lg);
 }
 
-.coletadoEm {
-  margin-top: var(--e-4);
+/* A busca do herói. A variante grande vive em `busca-cabecalho.module.css`. */
+.busca {
+  margin-top: var(--e-6);
+}
+
+/* Exemplos clicáveis: pílulas de 44px de altura no celular, onde o dedo manda. */
+.exemplos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e-2) var(--e-3);
+  margin-top: var(--e-3);
   font-size: var(--texto-sm);
+  color: var(--tinta-suave);
+}
+
+.exemplos ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.exemplos a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0 var(--e-3);
+  background: var(--superficie);
+  border: 1px solid var(--borda-forte);
+  border-radius: 999px;
+  text-decoration: none;
+}
+
+.exemplos a:hover {
+  background: var(--acento-suave);
+  text-decoration: underline;
+}
+
+/* ------------------------------------------------- números do próprio site */
+
+.faixa {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--e-4) var(--e-6);
+  margin: 0 0 var(--e-8);
+  padding: var(--e-4) var(--e-6);
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  box-shadow: var(--sombra);
+}
+
+.faixa dt {
+  font-size: var(--texto-xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--tinta-fraca);
+}
+
+.faixa dd {
+  margin: 0;
+  font-size: var(--texto-base);
+  font-weight: 600;
+}
+
+/* Município e estado são números: um degrau acima. */
+.faixa .tabular {
+  font-size: var(--texto-xl);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.faixaFontes {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 48rem) {
+  .faixa {
+    grid-template-columns: auto auto minmax(0, 1fr) auto;
+    align-items: end;
+    gap: var(--e-4) var(--e-8);
+  }
+  .faixaFontes {
+    grid-column: auto;
+  }
+}
+
+/* ------------------------------------------------------ portas de entrada */
+
+.portas {
+  margin-bottom: var(--e-12);
+}
+
+.portasLista {
+  display: grid;
+  gap: var(--e-4);
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  margin: var(--e-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.porta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e-2);
+  padding: var(--e-6);
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  box-shadow: var(--sombra);
+}
+
+.porta h3 {
+  font-size: var(--texto-lg);
+}
+
+.porta p {
+  font-size: var(--texto-sm);
+  color: var(--tinta-suave);
+}
+
+/* Os links ficam no pé do cartão, empilhados, cada um com 44px de alvo. */
+.portaLinks {
+  display: flex;
+  flex-direction: column;
+  margin-top: auto;
+  padding-top: var(--e-2);
+}
+
+.portaLinks a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  font-weight: 600;
 }
 
 /* ------------------------------------------------------------------ cartões */

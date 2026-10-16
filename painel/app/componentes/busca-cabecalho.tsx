@@ -23,7 +23,13 @@ import e from "./busca-cabecalho.module.css";
  * `data-classe-*` da lista, porque o script cria as opções e não conhece os
  * nomes com hash. Ver o cabeçalho daquele arquivo para o padrão e as regras.
  *
- * Os ids são fixos: há exatamente uma busca por página.
+ * ## Uma ou duas por página
+ *
+ * A capa tem a do cabeçalho e a do herói, a mesma marcação com `prefixo` e
+ * `nome` próprios: cada `id` sai do prefixo (sem duplicata) e cada landmark
+ * `search` leva um `aria-label` distinto. O `busca.js` serve às duas, e a que
+ * está em uso é a do último foco. O cabeçalho mantém `cab`, de que o
+ * `conferir-csp.mjs` depende.
  *
  * ## Sem JavaScript
  *
@@ -32,12 +38,26 @@ import e from "./busca-cabecalho.module.css";
  * A navegação do site inteiro funciona sem JavaScript; a busca é aceleração,
  * não muleta.
  */
-export default function BuscaCabecalho() {
-  const idCampo = "busca-cab";
-  const idLista = "lista-cab";
+export default function BuscaCabecalho({
+  prefixo = "cab",
+  nome = "Busca no topo do site",
+  grande = false,
+  placeholder = "Município ou estado",
+}: {
+  prefixo?: string;
+  nome?: string;
+  grande?: boolean;
+  placeholder?: string;
+}) {
+  const idCampo = `busca-${prefixo}`;
+  const idLista = `lista-${prefixo}`;
 
   return (
-    <search className={e.raiz} data-busca="">
+    <search
+      className={grande ? `${e.raiz} ${e.grande}` : e.raiz}
+      data-busca=""
+      aria-label={nome}
+    >
       <div className={e.caixa}>
         <label htmlFor={idCampo} className="so-leitor">
           Buscar município ou estado
@@ -77,7 +97,7 @@ export default function BuscaCabecalho() {
           aria-describedby={`${idCampo}-ajuda`}
           autoComplete="off"
           spellCheck={false}
-          placeholder="Município ou estado"
+          placeholder={placeholder}
         />
 
         {/* A janela leva a lista e, quando nada casa, a saída para a lista

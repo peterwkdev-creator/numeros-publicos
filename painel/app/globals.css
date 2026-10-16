@@ -268,7 +268,16 @@ p, li {
    aqui e nao num CSS module porque vivem no `layout.tsx`, que nao pertence a
    rota nenhuma. */
 
+/* Fixa no topo desde 15/10/2026. O fundo é opaco (o conteúdo passa por baixo) e
+   ocupa a largura toda; o conteúdo continua na coluna de `--largura-max`, pelo
+   `padding-inline`, sem um div a mais em cada uma das 5.614 páginas.
+   `z-index` acima de tudo que a página posiciona; a janela da busca e o menu
+   moram dentro do contexto de empilhamento que o `sticky` cria. */
 .barra-site {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: var(--fundo);
   display: flex;
   flex-wrap: wrap;
   /* `center` e não `baseline`: com o campo de busca na barra, alinhar pela
@@ -277,9 +286,7 @@ p, li {
   align-items: center;
   justify-content: space-between;
   gap: var(--e-2) var(--e-4);
-  max-width: var(--largura-max);
-  margin: 0 auto;
-  padding: var(--e-3) var(--e-4);
+  padding: var(--e-3) max(var(--e-4), calc((100% - var(--largura-max)) / 2 + var(--e-4)));
   border-bottom: 1px solid var(--borda);
   font-size: var(--texto-sm);
 }
@@ -298,9 +305,109 @@ p, li {
   text-decoration: underline;
 }
 
-.barra-site nav {
+/* O menu: Brasil, Rankings, Ajuda, Baixar dados. É um `<details>` sem JS. De
+   48rem para cima fica sempre aberto (o botão some e o conteúdo é forçado a
+   aparecer por `::details-content`); abaixo disso recolhe sob "Menu" e abre
+   num painel, que não empurra a barra para baixo. 48rem e não 40: a marca, a
+   busca (12rem no mínimo) e os quatro links somam ~46rem. */
+.menu-links {
   display: flex;
   gap: var(--e-4);
+}
+
+.menu-recolhivel > summary {
+  display: flex;
+  align-items: center;
+  gap: var(--e-2);
+  min-height: 44px;
+  padding: 0 var(--e-3);
+  border: 1px solid var(--borda-forte);
+  border-radius: var(--raio);
+  font-weight: 600;
+  color: var(--tinta);
+  cursor: pointer;
+  list-style: none;
+}
+
+.menu-recolhivel > summary::-webkit-details-marker {
+  display: none;
+}
+
+/* A seta é desenhada, e não um caractere: some do leitor de tela e gira ao abrir. */
+.menu-recolhivel > summary::after {
+  content: "";
+  width: 0.45em;
+  height: 0.45em;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: translateY(-0.12em) rotate(45deg);
+}
+
+.menu-recolhivel[open] > summary {
+  background: var(--acento-suave);
+}
+
+.menu-recolhivel[open] > summary::after {
+  transform: translateY(0.1em) rotate(-135deg);
+}
+
+@media (max-width: 47.99rem) {
+  .menu-recolhivel {
+    position: relative;
+  }
+  .menu-links {
+    position: absolute;
+    z-index: 50;
+    top: calc(100% + var(--e-2));
+    right: 0;
+    min-width: 12rem;
+    flex-direction: column;
+    gap: 0;
+    padding: var(--e-1);
+    background: var(--superficie);
+    border: 1px solid var(--borda-forte);
+    border-radius: var(--raio);
+    box-shadow: 0 6px 20px rgb(0 0 0 / 0.14);
+  }
+  .barra-site .menu-links a {
+    min-height: 44px;
+    padding: 0 var(--e-3);
+  }
+}
+
+@media (min-width: 48rem) {
+  .menu-recolhivel > summary {
+    display: none;
+  }
+  .menu-recolhivel::details-content {
+    content-visibility: visible;
+    display: block;
+  }
+}
+
+/* No celular a barra rola junto (decisão do usuário, 15/10/2026): com a
+   busca na segunda linha ela media 117px, ~15% de uma tela de 800, em toda
+   página. `relative` e não `static`: o `z-index` continua valendo, e o
+   painel do menu aberto fica por cima do conteúdo. */
+@media (max-width: 47.99rem) {
+  .barra-site {
+    position: relative;
+  }
+}
+
+/* Na capa a busca é a do herói; a da barra seria a mesma ação duas vezes na
+   primeira tela. Some só onde a do herói existe. */
+body:has(#busca-capa) .barra-site [data-busca] {
+  display: none;
+}
+
+/* A barra fixa (tela larga) cobre o topo da janela: âncora (`#id`) e foco
+   por teclado não podem parar embaixo dela. A altura medida é ~3.5rem.
+   Soma-se ao `scroll-margin-top` do alvo. */
+@media (min-width: 48rem) {
+  html {
+    scroll-padding-top: 4.5rem;
+  }
 }
 
 /* Alvo de toque de 24px, o mínimo do WCAG 2.2 AA (2.5.8 Target Size).

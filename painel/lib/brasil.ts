@@ -1,4 +1,6 @@
+import { br } from "./dados";
 import { eixoJusto } from "./eixo";
+import { LIMITE_TITULO } from "./titulo";
 
 /**
  * O Brasil ao longo do tempo: as séries do país e quem ocupava a
@@ -11,9 +13,10 @@ import { eixoJusto } from "./eixo";
  *
  * ## As regras de neutralidade que moram aqui
  *
- * - **O mesmo eixo de tempo em todos os gráficos**: `dominio` sai de todas as
- *   séries juntas, e não de cada uma. Recortar por série deixaria cada gráfico
- *   começar onde convém.
+ * - **Uma regra de eixo para todos os gráficos**: cada um vai do primeiro ao
+ *   último dado da própria série (`cobertura`), sem exceção e sem eixo
+ *   escolhido à mão. Até 15/10/2026 era um eixo só para todas (`dominio`), e
+ *   a série que começa em 2012 ficava num terço do desenho.
  * - **A faixa só existe onde a série tem dado**: `faixas` recorta pela
  *   cobertura da série, em vez de estender as faixas para trás.
  * - **Faixas iguais para todos**: dois tons alternados pela ordem das pessoas
@@ -403,8 +406,9 @@ export function recortar(s: SerieBrasil, anos: number): SerieBrasil | null {
   return pontos.length >= 2 ? { ...s, pontos } : null;
 }
 
-/** O eixo de tempo COMUM aos gráficos: do começo mais antigo ao fim mais
- *  recente entre todas as séries. */
+/** Do começo mais antigo ao fim mais recente entre todas as séries: o
+ *  período que a `/brasil/` cobre (até 15/10/2026, o eixo comum dos
+ *  gráficos). */
 export function dominio(series: SerieBrasil[]): [number, number] {
   const c = series.map(cobertura);
   return [Math.min(...c.map((x) => x[0])), Math.max(...c.map((x) => x[1]))];
@@ -559,4 +563,74 @@ export function resumo(s: SerieBrasil): {
     if (p[1] > maior[1]) maior = p;
   }
   return { primeiro: ps[0]!, ultimo: ps[ps.length - 1]!, menor, maior };
+}
+
+// ------------------------------------------------------------ as páginas
+
+/** Onde mora a página de cada série (desde 16/10/2026; antes, as 15 numa
+ *  página só, e o endereço era uma âncora de `/brasil/`). */
+export const caminhoDaSerie = (codigo: string) => `/brasil/${codigo}/`;
+
+/**
+ * Um valor com a unidade da série, do jeito que se fala: "R$ 3.061",
+ * "R$ 5,15 por dólar", "US$ 362,82 bilhões", "7,5%", "51,27% do PIB",
+ * "38.894 óbitos". A moeda vai antes do número, o resto depois, com espaço se
+ * não for o sinal de por cento. Um só para o gráfico e para o cartão da
+ * `/brasil/`: o mesmo número não pode sair escrito de dois jeitos.
+ */
+export function valorDe(s: SerieBrasil): (v: number) => string {
+  const casas = casasDe(s);
+  const moeda = /^(R|US)\$/.exec(s.unidade)?.[0];
+  return (v: number) =>
+    moeda
+      ? `${moeda} ${br(v, casas)}${s.unidade.slice(moeda.length)}`
+      : `${br(v, casas)}${s.unidade.startsWith("%") ? "" : " "}${s.unidade}`;
+}
+
+/**
+ * O título da página de uma série: o da apresentação, com o país e os anos
+ * quando cabem nos 60 caracteres que o Google mostra (`LIMITE_TITULO`); sem
+ * o país, quando não cabem. "Taxa de desocupação no Brasil, 2012 a 2026".
+ */
+export function tituloDaSerie(s: SerieBrasil): string {
+  const t = APRESENTACAO[s.codigo]?.titulo ?? s.nome;
+  const anos = `${s.pontos[0]![0].slice(0, 4)} a ${s.pontos.at(-1)![0].slice(0, 4)}`;
+  const comPais = `${t}, Brasil, ${anos}`;
+  return comPais.length <= LIMITE_TITULO ? comPais : `${t}, ${anos}`;
+}
+
+/**
+ * A descrição da página de uma série, até os 160 caracteres em que o Google
+ * corta (a auditoria e o teste cobram): o que é, de quando a quando, de onde,
+ * e o que a página tem.
+ */
+export function descricaoDaSerie(s: SerieBrasil): string {
+  const t = APRESENTACAO[s.codigo]?.titulo ?? s.nome;
+  return `${t}, de ${rotuloPeriodo(s.pontos[0]![0])} a ` +
+    `${rotuloPeriodo(s.pontos.at(-1)![0])}, dado oficial ` +
+    `${FONTE_COM_ARTIGO[s.fonte] ?? s.fonte}, com quem ocupava a Presidência. ` +
+    `Gráfico, os ${br(s.pontos.length)} valores e CSV.`;
+}
+
+/**
+ * A linha da miniatura do cartão: o caminho SVG da série inteira numa caixa
+ * de `largura` × `altura`, com a mesma regra do gráfico grande (x pelo tempo,
+ * a linha se interrompe onde a série tem buraco). Sem eixo, sem faixa e sem
+ * rótulo: diz a forma, e o número está escrito ao lado.
+ */
+export function miniatura(s: SerieBrasil, largura: number, altura: number): string {
+  const [de, ate] = cobertura(s);
+  const vs = s.pontos.map((p) => p[1]);
+  const [baixo, alto] = [Math.min(...vs), Math.max(...vs)];
+  const borda = 2;
+  const x = (t: number) => ((t - de) * largura) / (ate - de);
+  const y = (v: number) =>
+    borda + ((alto - v) / (alto - baixo || 1)) * (altura - 2 * borda);
+  return s.pontos
+    .map(([p, v], i) => {
+      const anterior = s.pontos[i - 1];
+      const segue = anterior !== undefined && contiguos(anterior[0], p);
+      return `${segue ? "L" : "M"}${x(meioPeriodo(p)).toFixed(1)},${y(v).toFixed(1)}`;
+    })
+    .join(" ");
 }

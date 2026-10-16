@@ -1,6 +1,7 @@
 /**
  * Gera `public/og/*.png`: o cartão de compartilhamento de cada estado, do
- * `/brasil` e dos dois rankings (item 12 da revisão de 11/10, 15/10/2026).
+ * `/brasil`, de cada série do país (desde 16/10/2026, quando cada uma ganhou
+ * página própria) e dos dois rankings (item 12 da revisão de 11/10, 15/10/2026).
  *
  *     node scripts/gerar-cartoes.mjs
  *
@@ -16,7 +17,8 @@
  * Como `dados/malha-uf.json`: o desenho só muda quando muda o nome de um
  * estado, a malha ou este script. Gerar no build pediria o Chrome no CI.
  * O cartão não traz número que envelhece (nem população, nem PIB): só o nome,
- * a região, quantos municípios e o mapa. O teste confere que existe um PNG
+ * a região, quantos municípios e o mapa; o de uma série, o nome, a fonte, o
+ * ano em que ela começa e para que lado é melhor, e nunca o último valor. O teste confere que existe um PNG
  * 1280×640 para cada UF do snapshot.
  *
  * O desenho é o do cartão da capa (`.claude/social-preview/`, no repositório
@@ -62,6 +64,11 @@ function acharChrome() {
 
 const ler = (f) => JSON.parse(readFileSync(path.join(RAIZ, "dados", f), "utf-8"));
 const snapshot = ler("snapshot.json");
+const brasil = ler("brasil.json");
+// O nome de cada série e o lado melhor vêm de `lib/brasil.ts`, os mesmos da
+// página: o registrador dos testes ensina o Node a importar o TypeScript.
+await import("../tests/registrar.mjs");
+const { APRESENTACAO, FONTE_COM_ARTIGO, SELO } = await import("../lib/brasil.ts");
 const malha = ler("malha-uf.json");
 
 const escapar = (s) =>
@@ -120,6 +127,16 @@ const cartoes = [
     chips: ["IBGE", "Banco Central", "Ipea"],
     mapa: mapa(() => ACENTO),
   },
+  ...brasil.series.map((s) => ({
+    arquivo: `brasil-${s.codigo}`,
+    tipo: "O Brasil ao longo do tempo",
+    titulo: APRESENTACAO[s.codigo].titulo,
+    linha:
+      `Série ${FONTE_COM_ARTIGO[s.fonte]} desde ${s.pontos[0][0].slice(0, 4)}, com quem ` +
+      "ocupava a Presidência ao fundo. Gráfico, tabela e CSV.",
+    chips: [s.fonte, SELO[APRESENTACAO[s.codigo].melhor]],
+    mapa: mapa(() => ACENTO),
+  })),
   {
     arquivo: "ranking-gasto-com-pessoal",
     tipo: "Ranking nacional",
@@ -155,7 +172,7 @@ function html(c) {
   .marca{font-size:23px;color:#e6edf3;font-weight:600;letter-spacing:.2px}
   .tipo{font-size:17px;font-weight:600;letter-spacing:1.4px;text-transform:uppercase;color:${ACENTO};
     border:1.5px solid ${ACENTO}59;border-radius:999px;padding:7px 17px;white-space:nowrap}
-  h1{font-size:${c.titulo.length > 16 ? 64 : 74}px;line-height:1.04;font-weight:700;letter-spacing:-1.6px}
+  h1{font-size:${c.titulo.length > 28 ? 54 : c.titulo.length > 16 ? 64 : 74}px;line-height:1.04;font-weight:700;letter-spacing:-1.6px}
   p{margin-top:24px;font-size:27px;line-height:1.45;color:#a5b0bb}
   .chips{display:flex;flex-wrap:wrap;gap:11px}
   .chip{font-size:19px;color:#c3ccd6;background:#161b22;border:1px solid #2b3138;border-radius:9px;padding:9px 16px;white-space:nowrap}

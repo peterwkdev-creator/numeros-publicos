@@ -1,19 +1,21 @@
 import type { MetadataRoute } from "next";
 
+import { caminhoDaSerie } from "../../lib/brasil";
 import { slugUf } from "../../lib/estado";
 import { atualizadoEm } from "../../lib/sitemap";
 import { lerBrasil, lerCaged, lerFiscal, lerSnapshot, SITE } from "../../lib/servidor";
 
 /**
- * Tudo que não é página de município: a capa, a ajuda, o ranking, o país e os 27
- * estados. Publicado em `/geral/sitemap.xml`.
+ * Tudo que não é página de município: a capa, a ajuda, o ranking, o país, as
+ * séries do país e os 27 estados. Publicado em `/geral/sitemap.xml`.
  *
  * **O segmento `geral/` não tem página, e isso é de propósito.** Ele existe só
  * para dar endereço a este arquivo — a convenção do App Router publica um
- * `sitemap.ts` no caminho do segmento que o contém, e as 31 URLs aqui dentro
+ * `sitemap.ts` no caminho do segmento que o contém, e as URLs aqui dentro
  * não pertencem a nenhuma das rotas reais do site.
  *
- * Elas ficam juntas porque são **31**, e um arquivo por página seria ruído
+ * Elas ficam juntas porque são poucas (**47** desde 16/10/2026, com as 15
+ * séries do país), e um arquivo por página seria ruído
  * no relatório de cobertura sem responder nada. A divisão por estado, do outro
  * lado, existe para responder uma pergunta concreta — ver
  * `app/municipio/sitemap.ts`.
@@ -85,5 +87,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.9,
   }));
 
-  return [...inicio, ...estados];
+  // Uma página por série do país desde 16/10/2026, cada uma com a data da
+  // própria coleta: um mês novo do IPCA não muda a página do desmatamento.
+  const series: MetadataRoute.Sitemap = brasil.series.map((s) => ({
+    url: `${SITE}${caminhoDaSerie(s.codigo)}`,
+    lastModified: new Date(s.coletadoEm),
+    changeFrequency: "monthly" as const,
+    priority: 0.7,
+  }));
+
+  return [...inicio, ...series, ...estados];
 }

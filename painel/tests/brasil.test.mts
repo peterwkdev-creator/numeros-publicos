@@ -14,6 +14,7 @@ import {
   contiguos, dominio, escala, faixas, FONTE_COM_ARTIGO, fimPeriodo,
   fontesPorExtenso, inicioPeriodo, meioPeriodo, recortar, RECORTES, resumo,
   rotuloPeriodo, SELO, trechosMeta,
+  caminhoDaSerie, descricaoDaSerie, miniatura, tituloDaSerie, valorDe,
   type Mandato, type SerieBrasil, type SnapshotBrasil,
 } from "../lib/brasil.ts";
 
@@ -275,13 +276,19 @@ test("brasil: casas decimais e resumo sem verbo de tendência", () => {
 // --------------------------------------------------------- neutralidade
 
 const COMPONENTE = ler("../app/componentes/serie-brasil-svg.tsx");
-const PAGINA = ler("../app/brasil/page.tsx");
+// Desde 16/10/2026 (item 12 da modernização) o gráfico mora na página de
+// cada série, e a `/brasil/` é o índice de cartões.
+const PAGINA = ler("../app/brasil/[serie]/page.tsx");
+const INDICE = ler("../app/brasil/page.tsx");
+const COMUM = ler("../app/brasil/comum.tsx");
+const CARTAO = ler("../app/componentes/cartao-serie-brasil.tsx");
 const CSS_COMPONENTE = ler("../app/componentes/serie-brasil.module.css");
 const LIB = ler("../lib/brasil.ts");
 
 test("neutralidade: nenhum partido nem sigla partidária na página", () => {
   const siglas = /\b(PT|PSDB|PL|MDB|PMDB|PSL|PSB|PDT|PP|PSD|União Brasil)\b/;
   for (const [nome, texto] of [["componente", COMPONENTE], ["página", PAGINA],
+    ["índice", INDICE], ["comum", COMUM], ["cartão", CARTAO],
     ["apresentação", LIB]]) {
     assert.ok(!siglas.test(texto!), `${nome}: ${siglas.exec(texto!)?.[0]}`);
   }
@@ -309,7 +316,59 @@ test("neutralidade: as faixas são cinzas nos três modos, sem cor de partido", 
 
 test("neutralidade: a nota de que as faixas não medem efeito, na página e em cada gráfico", () => {
   assert.match(COMPONENTE, /não medem\s+efeito/);
-  assert.match(PAGINA, /não medem\s+efeito/);
+  assert.match(COMUM, /não medem\s+efeito/);
+  // As duas páginas usam a mesma nota: quem chega direto a uma série a lê.
+  assert.match(PAGINA, /<NotaFaixas \/>/);
+  assert.match(INDICE, /<NotaFaixas>/);
+  assert.match(PAGINA, /<Presidencia mandatos=\{b\.mandatos\} \/>/);
+  assert.match(INDICE, /<Presidencia mandatos=\{b\.mandatos\} \/>/);
+});
+
+test("índice: um cartão por série, sem gráfico com faixas e sem o script do zoom", () => {
+  assert.match(INDICE, /b\.series\.map\(\(s\) => <CartaoSerieBrasil key=\{s\.codigo\} serie=\{s\} \/>\)/);
+  assert.doesNotMatch(INDICE, /SerieBrasilSvg|periodo\.js/);
+  // A miniatura é só a forma: sem faixa de quem ocupava o cargo, sem eixo e
+  // sem texto dentro do desenho.
+  assert.doesNotMatch(CARTAO, /faixas\(|mandatos|<text/);
+  assert.match(CARTAO, /aria-hidden="true" focusable="false"/);
+});
+
+test("páginas: título até 60 e descrição até 160 caracteres, sem repetir entre séries", () => {
+  const titulos = real.series.map(tituloDaSerie);
+  for (const [i, s] of real.series.entries()) {
+    assert.ok(titulos[i]!.length <= 60, `${s.codigo}: ${titulos[i]} (${titulos[i]!.length})`);
+    const d = descricaoDaSerie(s);
+    assert.ok(d.length <= 160, `${s.codigo}: ${d.length} caracteres`);
+    assert.ok(d.includes(`os ${s.pontos.length.toLocaleString("pt-BR")} valores`), `${s.codigo}: ${d}`);
+    assert.equal(caminhoDaSerie(s.codigo), `/brasil/${s.codigo}/`);
+  }
+  assert.equal(new Set(titulos).size, titulos.length);
+  assert.equal(tituloDaSerie(real.series.find((s) => s.codigo === "desocupacao")!),
+    `Taxa de desocupação, Brasil, 2012 a ${real.series.find((s) => s.codigo === "desocupacao")!.pontos.at(-1)![0].slice(0, 4)}`);
+});
+
+test("valor: a moeda antes, o por cento colado, o resto depois", () => {
+  const com = (unidade: string, v: number, casas = 2) =>
+    valorDe({ ...serie("x", [["2020-01", casas ? 0.25 : 1], ["2020-02", 1]]), unidade })(v);
+  assert.equal(com("%", 7.5), "7,50%");
+  assert.equal(com("% do PIB", 51.27), "51,27% do PIB");
+  assert.equal(com("R$ por dólar", 5.15), "R$ 5,15 por dólar");
+  assert.equal(com("US$ bilhões", 362.82), "US$ 362,82 bilhões");
+  assert.equal(com("óbitos", 38894, 0), "38.894 óbitos");
+  assert.equal(com("R$", 3061, 0), "R$ 3.061");
+});
+
+test("miniatura: x pelo tempo, a linha quebra no buraco e cabe na caixa", () => {
+  const d = miniatura(serie("x", [["2020", 1], ["2021", 3], ["2023", 2], ["2024", 1]]), 100, 20);
+  const passos = d.split(" ");
+  assert.deepEqual(passos.map((p) => p[0]), ["M", "L", "M", "L"], "2022 falta: a linha recomeça");
+  const pts = passos.map((p) => p.slice(1).split(",").map(Number));
+  // 2020 a 2025 na largura: o meio de 2020 em 10, o de 2023 em 70.
+  assert.deepEqual(pts.map((p) => p[0]), [10, 30, 70, 90]);
+  for (const [, y] of pts) assert.ok(y! >= 0 && y! <= 20);
+  // O maior no alto, o menor embaixo.
+  assert.equal(pts[1]![1], 2);
+  assert.equal(pts[0]![1], 18);
 });
 
 test("neutralidade: todos os gráficos seguem a MESMA regra de eixo", () => {

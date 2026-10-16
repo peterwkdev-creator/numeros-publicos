@@ -93,6 +93,7 @@ const ROTEIRO = [
   ["/municipio/sao-paulo-sp/", async (p) => { await p.type("#busca-cab", "recife"); }],
   ["/estado/sp/", async (p) => { await p.click('label[for="mapa-agua"]').catch(() => {}); }],
   ["/brasil/", null],
+  ["/brasil/ipca/", null],
   ["/ranking/gasto-com-pessoal/", null],
   ["/ranking/emprego-com-carteira/", null],
   ["/inss/", null],

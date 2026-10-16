@@ -2,13 +2,15 @@ import { br, dataCurta } from "@/lib/dados";
 import {
   anosDoEixo, anosHerdados, APRESENTACAO, casasDe, cobertura, contiguos,
   escala, faixas, meioPeriodo, RECORTES, recortar, resumo, rotuloPeriodo, SELO, trechosMeta,
+  valorDe,
   type Mandato, type MetaInflacao, type SerieBrasil,
 } from "@/lib/brasil";
 import estilos from "./serie-brasil.module.css";
 
 /**
  * Uma série do país, com as faixas de quem ocupava a Presidência atrás.
- * **Componente de servidor.** Usado uma vez por série em `/brasil/`. O eixo de
+ * **Componente de servidor.** Usado na página de cada série,
+ * `/brasil/<série>/` (até 16/10/2026, as 15 juntas em `/brasil/`). O eixo de
  * tempo vai do primeiro ao último dado DESTA série (`cobertura`): até 15/10/2026
  * era o mesmo em todas, e a desocupação, que começa em 2012, ocupava só o
  * terço da direita de um eixo que começava em 1988. A regra continua uma só
@@ -59,6 +61,7 @@ export default function SerieBrasilSvg({
   mandatos,
   csv,
   meta,
+  comTitulo = true,
 }: {
   serie: SerieBrasil;
   mandatos: Mandato[];
@@ -66,6 +69,8 @@ export default function SerieBrasilSvg({
   csv: string;
   /** Desenhada só na série cuja leitura é a meta (a inflação). */
   meta: MetaInflacao;
+  /** Sem o `<h3>` quando a página já tem o nome da série no `<h1>`. */
+  comTitulo?: boolean;
 }) {
   if (serie.pontos.length < 2) return null;
   const ap = APRESENTACAO[serie.codigo];
@@ -77,14 +82,7 @@ export default function SerieBrasilSvg({
   const trechos = ap?.melhor === "meta" ? trechosMeta(meta.anos, cobDe, cobAte) : [];
   const herdados = ap?.fiscal ? anosHerdados(mandatos, cobDe, cobAte) : [];
   const r = resumo(serie);
-  // "R$ 3.061", "R$ 5,15 por dólar", "US$ 362,82 bilhões", "7,5%",
-  // "51,27% do PIB", "38.894 óbitos": a moeda vai antes do número, o resto
-  // depois, com espaço se não for o sinal de por cento.
-  const moeda = /^(R|US)\$/.exec(serie.unidade)?.[0];
-  const valor = (v: number) =>
-    moeda
-      ? `${moeda} ${br(v, casas)}${serie.unidade.slice(moeda.length)}`
-      : `${br(v, casas)}${serie.unidade.startsWith("%") ? "" : " "}${serie.unidade}`;
+  const valor = valorDe(serie);
   const recortes = RECORTES.flatMap((n) => {
     const s = recortar(serie, n);
     return s ? [[n, s] as const] : [];
@@ -93,7 +91,7 @@ export default function SerieBrasilSvg({
 
   return (
     <figure className={estilos.figura} id={serie.codigo} data-serie={serie.codigo}>
-      <h3 className={estilos.titulo}>{titulo}</h3>
+      {comTitulo && <h3 className={estilos.titulo}>{titulo}</h3>}
       <p className={estilos.unidade}>
         {serie.unidade}
         {" · "}

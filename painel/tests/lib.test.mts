@@ -1221,12 +1221,16 @@ test("estado e município levam o cartão do estado, nos dois vocabulários", ()
   assert.match(municipio, /imagemDoEstado\(m\.uf\)/);
 });
 
-test("existe um cartão 1280×640 para cada UF do snapshot, para o /brasil e os rankings", () => {
+test("existe um cartão 1280×640 para cada UF do snapshot, para o /brasil, cada série e os rankings", () => {
   // O gerador roda à mão (`scripts/gerar-cartoes.mjs`): estado novo no
   // snapshot sem PNG daria og:image quebrado, sem erro no build.
   const ufs = (JSON.parse(fs.readFileSync("dados/snapshot.json", "utf-8")) as { ufs: { sigla: string }[] }).ufs;
   assert.equal(ufs.length, 27);
+  // E um por série do país, desde 16/10/2026, quando cada uma ganhou página.
+  const series = (JSON.parse(fs.readFileSync("dados/brasil.json", "utf-8")) as { series: { codigo: string }[] }).series;
+  assert.equal(series.length, 15);
   const nomes = [...ufs.map((u) => imagemDoEstado(u.sigla)), "/og/brasil.png",
+    ...series.map((s) => `/og/brasil-${s.codigo}.png`),
     "/og/ranking-gasto-com-pessoal.png", "/og/ranking-emprego-com-carteira.png"];
   for (const nome of nomes) {
     const png = fs.readFileSync(`public${nome}`);
@@ -1240,6 +1244,8 @@ test("existe um cartão 1280×640 para cada UF do snapshot, para o /brasil e os 
     const usado = fs.readFileSync(rota, "utf-8").match(/"(\/og\/[a-z-]+\.png)"/)?.[1];
     assert.ok(usado && nomes.includes(usado), rota);
   }
+  assert.match(fs.readFileSync("app/brasil/[serie]/page.tsx", "utf-8"),
+    /cartaoSocial\(titulo, descricao, caminho, `\/og\/brasil-\$\{s\.codigo\}\.png`\)/);
 });
 
 test("a url do cartão é absoluta e termina em barra", () => {

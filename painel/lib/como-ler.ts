@@ -83,7 +83,7 @@ export const COMO_LER: Record<TipoDePagina, ItemComoLer[]> = {
   brasil: [
     {
       titulo: "Cada gráfico é uma série do país",
-      texto: "Inteira desde o primeiro dado que a fonte publica naquela forma, e todos no mesmo eixo de tempo: o espaço vazio antes de uma série é o período em que ela ainda não existia.",
+      texto: "Inteira, do primeiro dado que a fonte publica naquela forma ao último. Cada uma tem o próprio eixo de tempo e começa num ano diferente: compare pelos anos escritos no eixo, não pela posição na tela.",
     },
     {
       titulo: "As faixas ao fundo não medem efeito",

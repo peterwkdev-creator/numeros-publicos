@@ -17,13 +17,26 @@
 }
 .nota p { margin: 0 0 .6rem; }
 
-/* Dois por linha onde cabem, um embaixo do outro no telefone. O eixo de tempo
-   é o mesmo em todos, então a coluna também serve para comparar na vertical. */
-.grade {
+/* Os cartões das séries: três ou quatro por linha onde cabem, um embaixo do
+   outro no telefone. */
+.cartoes {
   display: grid;
-  gap: 2.25rem 2rem;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr));
+  gap: var(--e-4);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr));
 }
+
+/* O gráfico de uma série na largura de leitura: na página inteira, o desenho
+   de 360 de largura passaria de meio metro de altura num monitor largo. */
+.serie { max-width: 46rem; margin-top: 1.5rem; }
+
+.outras {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
+  gap: 0 1.5rem;
+  margin: 0 0 1rem;
+  padding-left: 1.1rem;
+}
+.outras a { display: inline-flex; align-items: center; min-height: var(--alvo); }
 
 .rolagem { overflow-x: auto; }
 .tabela { width: 100%; border-collapse: collapse; font-size: var(--texto-sm); }

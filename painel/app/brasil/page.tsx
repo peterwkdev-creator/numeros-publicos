@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import SerieBrasilSvg from "../componentes/serie-brasil-svg";
+import CartaoSerieBrasil from "../componentes/cartao-serie-brasil";
 import ComoLer from "../componentes/como-ler";
 import { br, dataCurta } from "../../lib/dados";
 import {
@@ -10,19 +10,19 @@ import {
 } from "../../lib/brasil";
 import { catalogoDe, trilha, LICENCA_DADOS } from "../../lib/jsonld";
 import { cartaoSocial, lerBrasil, SITE } from "../../lib/servidor";
+import { CAMINHO, NotaFaixas, Presidencia, TITULO } from "./comum";
 import estilos from "./brasil.module.css";
 
-const CAMINHO = "/brasil/";
-const TITULO = "O Brasil ao longo do tempo";
-
 /**
- * As séries do país, com quem ocupava a Presidência ao fundo.
+ * O índice das séries do país: um cartão por série, com o último valor, e a
+ * página de cada uma em `/brasil/<série>/` (desde 16/10/2026, item 12 da
+ * modernização; antes, os 15 gráficos aqui, 102 KB comprimidos).
  *
  * A espec é `especs/numeros-publicos-brasil-no-tempo.md`, no repositório de
  * trabalho; as regras de neutralidade (seção 4) moram em `lib/brasil.ts` e no
- * componente do gráfico, e viram teste em `tests/brasil.test.mts`. A página
- * só as junta: o mesmo eixo para todas, a nota que diz o que as faixas NÃO
- * medem, e a tabela de quem ocupou o cargo com a fonte de cada data.
+ * componente do gráfico, e viram teste em `tests/brasil.test.mts`. Aqui ficam
+ * a nota que diz o que as faixas NÃO medem, a tabela de quem ocupou o cargo
+ * com a fonte de cada data, e como cada série é conferida.
  */
 export async function generateMetadata(): Promise<Metadata> {
   const b = await lerBrasil();
@@ -111,73 +111,24 @@ export default async function Pagina() {
       </p>
       <ComoLer tipo="brasil" />
 
-      {/* A nota fixa da espec (seção 4, item 2), no topo e em cada gráfico:
-          quem chega por um link direto a um gráfico também a lê. */}
-      <div className={estilos.nota} role="note">
+      {/* A nota fixa da espec (seção 4, item 2), aqui, na página de cada
+          série e em cada gráfico: quem chega direto a uma série também a lê. */}
+      <NotaFaixas>
         <p>
-          <strong>As faixas mostram quem ocupava o cargo, e não medem
-          efeito.</strong> Estas séries se movem por muitos fatores, de dentro e
-          de fora do país, e nenhum gráfico aqui separa um do outro. Por isso a
-          página não soma, não tira média e não compara mandatos.
+          Cada série tem a sua página, com o gráfico do primeiro ao último dado,
+          as faixas, a tabela de valores e o CSV. Elas não começam no mesmo
+          ano: o período de cada uma está no cartão.
         </p>
-        <p>
-          Cada um dos {b.series.length} gráficos vai do primeiro ao último dado
-          da sua série, e elas não começam no mesmo ano: compare pelos anos do
-          eixo, não pela posição na tela.
-        </p>
-      </div>
+      </NotaFaixas>
 
       <section aria-labelledby="series">
         <h2 id="series" className={estilos.secao}>As séries</h2>
-        <div className={estilos.grade}>
-          {b.series.map((s) => (
-            <SerieBrasilSvg key={s.codigo} serie={s} mandatos={b.mandatos}
-              csv={csvDe(s.codigo)} meta={b.metaInflacao} />
-          ))}
+        <div className={estilos.cartoes}>
+          {b.series.map((s) => <CartaoSerieBrasil key={s.codigo} serie={s} />)}
         </div>
       </section>
 
-      <section aria-labelledby="presidencia">
-        <h2 id="presidencia" className={estilos.secao}>
-          Quem ocupou a Presidência
-        </h2>
-        <p className={estilos.texto}>
-          Cada período começa no dia em que a pessoa passou a exercer o cargo e
-          termina no dia em que a seguinte assumiu. A data de cada linha vem da
-          página oficial indicada nela.
-        </p>
-        <div className={`${estilos.rolagem} rola-x`}>
-          <table className={estilos.tabela}>
-            <caption className="so-leitor">
-              Quem ocupou a Presidência da República, com as datas e a fonte
-            </caption>
-            <thead>
-              <tr>
-                <th scope="col">Quem</th>
-                <th scope="col">De</th>
-                <th scope="col">Até</th>
-                <th scope="col">Como</th>
-                <th scope="col">Fonte</th>
-              </tr>
-            </thead>
-            <tbody>
-              {b.mandatos.map((m) => (
-                <tr key={m.inicio} data-mandato={m.inicio}>
-                  <th scope="row">{m.nome}</th>
-                  <td>{dataCurta(m.inicio)}</td>
-                  <td>{m.fim ? dataCurta(m.fim) : "no cargo"}</td>
-                  <td>{m.como}</td>
-                  <td>
-                    <a href={m.fonte} rel="noopener">
-                      {new URL(m.fonte).hostname.replace(/^www\d*\./, "")}
-                    </a>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <Presidencia mandatos={b.mandatos} />
 
       <section aria-labelledby="metodo">
         <h2 id="metodo" className={estilos.secao}>De onde vêm os números</h2>
@@ -213,9 +164,6 @@ export default async function Pagina() {
           </p>
         </div>
       </section>
-      {/* Os botões de período dos gráficos (Tudo · 10 anos · 5 anos): nascem
-          escondidos, e sem o script o gráfico inteiro continua. */}
-      <script type="module" src="/periodo.js" />
     </main>
   );
 }

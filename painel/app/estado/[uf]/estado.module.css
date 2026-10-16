@@ -94,7 +94,7 @@
   display: inline-block;
   font-size: var(--texto-xs);
   font-weight: 600;
-  border-radius: 999px;
+  border-radius: var(--raio-pilula);
   padding: var(--e-1) var(--e-3);
   margin: 0 0 var(--e-2);
   background: var(--acento-suave);
@@ -108,41 +108,29 @@
    é OUTRA COISA — um dado que não se deve ler como gasto real. Usar o mesmo
    vermelho do alerta faria o leitor ordenar os dois na mesma escala. */
 .implausivel {
-  border-left: 3px dashed #6d5a8a;
+  border-left: 3px dashed var(--implausivel);
 }
 .implausivel .valor {
-  color: #6d5a8a;
+  color: var(--implausivel);
 }
 .implausivel .selo {
-  background: #f1eef7;
-  color: #4c3d66;
-}
-@media (prefers-color-scheme: dark) {
-  .implausivel {
-    border-left-color: #b9a5d6;
-  }
-  .implausivel .valor {
-    color: #b9a5d6;
-  }
-  .implausivel .selo {
-    background: #241c31;
-    color: #cbbce2;
-  }
+  background: var(--implausivel-fundo);
+  color: var(--implausivel-tinta);
 }
 .acima-legal {
-  border-left: 3px solid #9a3412;
+  border-left: 3px solid var(--alerta);
 }
 .acima-legal .valor,
 .acima-legal .selo {
-  color: #9a3412;
+  color: var(--alerta);
 }
 
 .acima-prudencial {
-  border-left: 3px solid #8a5a00;
+  border-left: 3px solid var(--atencao);
 }
 .acima-prudencial .valor,
 .acima-prudencial .selo {
-  color: #8a5a00;
+  color: var(--atencao);
 }
 
 .abaixo {
@@ -154,23 +142,6 @@
 }
 .sem-dado .valor {
   color: var(--tinta-fraca);
-}
-
-@media (prefers-color-scheme: dark) {
-  .acima-legal {
-    border-left-color: #fca582;
-  }
-  .acima-legal .valor,
-  .acima-legal .selo {
-    color: #fca582;
-  }
-  .acima-prudencial {
-    border-left-color: #e8bd6a;
-  }
-  .acima-prudencial .valor,
-  .acima-prudencial .selo {
-    color: #e8bd6a;
-  }
 }
 
 .texto {
@@ -236,13 +207,13 @@
   border-left: 6px solid #b4442f;
 }
 .faixas li.acima-prudencial {
-  border-left: 6px double #946200;
+  border-left: 6px double var(--atencao);
 }
 .faixas li.abaixo {
   border-left: 3px solid var(--positivo);
 }
 .faixas li.implausivel {
-  border-left: 3px dashed #6d5a8a;
+  border-left: 3px dashed var(--implausivel);
 }
 .faixas li.sem-dado {
   border-left: 3px solid var(--borda);
@@ -325,26 +296,19 @@
   display: inline-block;
   font-size: var(--texto-xs);
   padding: 2px var(--e-2);
-  border-radius: 999px;
+  border-radius: var(--raio-pilula);
   background: var(--acento-suave);
   color: var(--tinta-suave);
   white-space: nowrap;
 }
-.lista .acima-legal { background: #fbeae6; color: #8c3320; }
-.lista .acima-prudencial { background: #fbf1dc; color: #7a5610; }
-.lista .abaixo { background: #e6f4ee; color: #17553f; }
-.lista .implausivel { background: #f1eef7; color: #4c3d66; }
+.lista .acima-legal { background: var(--alerta-fundo); color: var(--alerta-tinta); }
+.lista .acima-prudencial { background: var(--atencao-fundo); color: var(--atencao-tinta); }
+.lista .abaixo { background: var(--positivo-fundo); color: var(--positivo-tinta); }
+.lista .implausivel { background: var(--implausivel-fundo); color: var(--implausivel-tinta); }
 .lista .sem-dado { background: transparent; color: var(--tinta-fraca); }
 .lista .nao-consultado { background: transparent; color: var(--tinta-fraca); font-style: italic; }
 .lista .como-estado,
 .lista .nao-instalado { background: transparent; color: var(--tinta-fraca); font-style: italic; }
-
-@media (prefers-color-scheme: dark) {
-  .lista .acima-legal { background: #35201b; color: #f0a693; }
-  .lista .acima-prudencial { background: #33290f; color: #e8c777; }
-  .lista .abaixo { background: #12291f; color: #7fd9b4; }
-  .lista .implausivel { background: #241d33; color: #c5b3e0; }
-}
 
 .downloads,
 .estados {
@@ -463,8 +427,9 @@
 
 /* ---- impressão -------------------------------------------------------
 
-   As cores de faixa acima são fixas no módulo, com uma variante dentro de
-   `@media (prefers-color-scheme: dark)`. Na impressão o `prefers-color-scheme`
+   As cores de faixa acima vêm de `globals.css` (desde 16/10/2026; antes eram
+   fixas no módulo, com uma variante dentro de
+   `@media (prefers-color-scheme: dark)`). Na impressão o `prefers-color-scheme`
    continua reportando a preferência do SISTEMA — quem usa tema escuro imprimia
    "60,64%" e a tarja em salmão claro sobre papel branco, praticamente
    invisível. As variáveis de `globals.css` não alcançam estas regras porque

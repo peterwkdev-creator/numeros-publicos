@@ -98,7 +98,7 @@
   font-size: 0.9em;
   background: var(--acento-suave);
   padding: 1px 5px;
-  border-radius: 4px;
+  border-radius: var(--raio-sm);
 }
 
 .lista {

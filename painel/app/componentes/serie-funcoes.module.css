@@ -31,7 +31,7 @@
 
 .legenda {
   margin-top: 0.6rem;
-  font-size: 0.82rem;
+  font-size: var(--texto-sm);
   color: var(--tinta-suave);
 }
 
@@ -55,7 +55,7 @@
   display: inline-block;
   width: 0.8rem;
   height: 0.8rem;
-  border-radius: 2px;
+  border-radius: var(--raio-xs);
   flex: 0 0 auto;
   forced-color-adjust: none;
 }

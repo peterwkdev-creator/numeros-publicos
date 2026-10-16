@@ -92,7 +92,7 @@
      a isenção do critério não vale para eles. */
   min-height: 1.75rem;
   padding: var(--e-1) var(--e-3);
-  border-radius: 999px;
+  border-radius: var(--raio-pilula);
   cursor: pointer;
 }
 

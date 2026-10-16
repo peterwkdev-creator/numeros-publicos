@@ -32,6 +32,12 @@
   --e-16: 4rem;
 
   --raio: 10px;
+  /* Os outros três raios do site: a amostra de legenda e a barra fina (xs),
+     o campo, o botão e o `kbd` (sm), o selo e a etiqueta em pílula. Até
+     16/10/2026 eram seis valores soltos nos módulos. */
+  --raio-xs: 2px;
+  --raio-sm: 4px;
+  --raio-pilula: 999px;
   --largura-max: 76rem;
 
   --fundo: #fbfcfd;
@@ -64,10 +70,32 @@
      e `.acima-prudencial`), para a régua do gráfico e o selo da tabela dizerem
      a mesma coisa com a mesma cor. Contraste medido em 09/09/2026 contra o
      `--fundo` de cada modo: 7,11:1 e 5,77:1 no claro, 9,59:1 e 10,54:1 no
-     escuro, 7,31:1 e 5,93:1 no papel. */
+     escuro, 7,31:1 e 5,93:1 no papel. Em 16/10/2026 o âmbar passou de
+     #8a5a00 para #946200, o que o município já usava: é o compromisso de
+     daltonismo medido lá (ver `municipio.module.css`), e o estado tinha os
+     dois. 5,10:1 sobre o `--fundo` claro, 5,24:1 no papel. */
   --alerta: #9a3412;
-  --atencao: #8a5a00;
-  --sombra: 0 1px 2px rgb(18 33 46 / 0.05), 0 1px 3px rgb(18 33 46 / 0.06);
+  --atencao: #946200;
+  /* "Implausível" é OUTRA COISA, não um grau acima do alerta: um dado que não
+     se lê como gasto real. Por isso roxo, e tracejado onde é borda. As
+     variantes `-fundo` e `-tinta` são o selo: fundo claro e texto escuro do
+     mesmo matiz. Uma definição só para município, estado e ranking (até
+     16/10/2026 cada módulo repetia os valores, com o escuro à parte). */
+  --implausivel: #6d5a8a;
+  --implausivel-fundo: #f1eef7;
+  --implausivel-tinta: #4c3d66;
+  --alerta-fundo: #fbeae6;
+  --alerta-tinta: #8c3320;
+  --atencao-fundo: #fbf1dc;
+  --atencao-tinta: #7a5610;
+  --positivo-fundo: #e6f4ee;
+  --positivo-tinta: #17553f;
+  /* Dois níveis de sombra. `--sombra` é o cartão em repouso; `--sombra-alta`
+     é o que flutua sobre a página (menu, sugestões da busca, dica de termo) e
+     o cartão cujo link está sob o ponteiro. Até 16/10/2026 o repouso era
+     quase nulo (0,05) e cada painel tinha a sua sombra. */
+  --sombra: 0 1px 2px rgb(18 33 46 / 0.06), 0 2px 6px rgb(18 33 46 / 0.06);
+  --sombra-alta: 0 6px 20px rgb(18 33 46 / 0.14);
 
   /* --- rampa de composição -------------------------------------------------
      Um matiz só, escuro para claro na ordem das fatias. Usada pela rosca do
@@ -106,7 +134,17 @@
     --positivo: #5fc79e;
     --alerta: #fca582;
     --atencao: #e8bd6a;
+    --implausivel: #b9a5d6;
+    --implausivel-fundo: #241c31;
+    --implausivel-tinta: #cbbce2;
+    --alerta-fundo: #35201b;
+    --alerta-tinta: #f0a693;
+    --atencao-fundo: #33290f;
+    --atencao-tinta: #e8c777;
+    --positivo-fundo: #12291f;
+    --positivo-tinta: #7fd9b4;
     --sombra: none;
+    --sombra-alta: 0 6px 20px rgb(0 0 0 / 0.5);
     --rosca-0: #8fc6e8;
     --rosca-1: #6fb0d8;
     --rosca-2: #559ac6;
@@ -177,7 +215,7 @@ a {
 :focus-visible {
   outline: 2px solid var(--acento);
   outline-offset: 2px;
-  border-radius: 3px;
+  border-radius: var(--raio-sm);
 }
 
 /* Número em tabela alinha por dígito, não por glifo — sem isso as colunas
@@ -291,11 +329,15 @@ p, li {
   font-size: var(--texto-sm);
 }
 
+/* A marca: ícone de 28 px (era 20) e o nome em `--texto-lg`, com
+   "Públicos" na cor de acento. Cabe na barra sem a crescer: a busca, de
+   36 px, segue sendo o item mais alto dela. */
 .barra-marca {
   display: inline-flex;
   align-items: center;
   gap: var(--e-2);
-  font-weight: 600;
+  font-size: var(--texto-lg);
+  font-weight: 700;
   color: var(--tinta);
   text-decoration: none;
   letter-spacing: -0.01em;
@@ -303,6 +345,10 @@ p, li {
 
 .barra-marca:hover {
   text-decoration: underline;
+}
+
+.barra-marca-acento {
+  color: var(--acento);
 }
 
 /* O menu: Brasil, Rankings, Ajuda, Baixar dados. É um `<details>` sem JS. De
@@ -367,7 +413,7 @@ p, li {
     background: var(--superficie);
     border: 1px solid var(--borda-forte);
     border-radius: var(--raio);
-    box-shadow: 0 6px 20px rgb(0 0 0 / 0.14);
+    box-shadow: var(--sombra-alta);
   }
   .barra-site .menu-links a {
     min-height: 44px;
@@ -485,8 +531,18 @@ body:has(#busca-capa) .barra-site [data-busca] {
        quem usa tema escuro imprimiria a régua em #fca582 sobre branco --
        **1,94:1**, medido. Voltam aos valores do tema claro, 7,31:1 e 5,93:1. */
     --alerta: #9a3412;
-    --atencao: #8a5a00;
+    --atencao: #946200;
+    --implausivel: #6d5a8a;
+    --implausivel-fundo: #f1eef7;
+    --implausivel-tinta: #4c3d66;
+    --alerta-fundo: #fbeae6;
+    --alerta-tinta: #8c3320;
+    --atencao-fundo: #fbf1dc;
+    --atencao-tinta: #7a5610;
+    --positivo-fundo: #e6f4ee;
+    --positivo-tinta: #17553f;
     --sombra: none;
+    --sombra-alta: none;
     --rosca-0: #1f3b52;
     --rosca-1: #35566f;
     --rosca-2: #4d6f8a;

@@ -91,7 +91,7 @@ export default function RootLayout({
                 arquivo que serve de favicon. */}
             <svg
               className="barra-icone" viewBox="0 0 32 32" aria-hidden="true"
-              width="20" height="20"
+              width="28" height="28"
             >
               <rect width="32" height="32" rx="7" fill="#0f5c8c" />
               <rect x="6.5" y="19" width="4.5" height="6" rx="1.2" fill="#fff" />
@@ -102,7 +102,7 @@ export default function RootLayout({
                 strokeWidth="1.8" strokeLinecap="round" strokeDasharray="3.2 2.6"
               />
             </svg>
-            Números Públicos
+            <span>Números <span className="barra-marca-acento">Públicos</span></span>
           </a>
           {/* A busca fica ENTRE a marca e os atalhos, e não no fim: é o
               controle mais usado da barra, e o olho a procura ao lado do

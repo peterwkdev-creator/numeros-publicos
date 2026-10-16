@@ -50,7 +50,7 @@
   color: var(--tinta-suave);
   border: 1px solid var(--borda-forte);
   border-radius: var(--raio);
-  box-shadow: 0 4px 14px rgb(18 33 46 / 0.13);
+  box-shadow: var(--sombra-alta);
   font-size: var(--texto-sm);
   font-weight: 400;
   font-style: normal;
@@ -136,11 +136,5 @@
 
   .fechar {
     display: none;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  .dica {
-    box-shadow: 0 4px 16px rgb(0 0 0 / 0.5);
   }
 }

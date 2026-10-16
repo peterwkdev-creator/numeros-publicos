@@ -18,7 +18,7 @@
 
 .legendaOpcoes {
   padding: 0 0.6rem 0 0;
-  font-size: 0.82rem;
+  font-size: var(--texto-sm);
   font-weight: 600;
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -45,10 +45,10 @@
   display: inline-block;
   padding: 0.4rem 0.85rem;
   border: 1px solid var(--borda-forte);
-  border-radius: 999px;
+  border-radius: var(--raio-pilula);
   background: var(--superficie);
   color: var(--tinta-suave);
-  font-size: 0.88rem;
+  font-size: var(--texto-sm);
   line-height: 1.2;
   cursor: pointer;
   /* Alvo de toque: o critério 2.5.8 do WCAG pede 24px, e o padding acima
@@ -167,7 +167,7 @@
 .escala {
   max-width: 34rem;
   margin: 0.75rem auto 0;
-  font-size: 0.85rem;
+  font-size: var(--texto-sm);
   line-height: 1.45;
   color: var(--tinta-suave);
 }
@@ -182,7 +182,7 @@
 .passo {
   width: 2.2rem;
   height: 0.7rem;
-  border-radius: 2px;
+  border-radius: var(--raio-xs);
   forced-color-adjust: none;
 }
 
@@ -206,14 +206,14 @@
     );
 }
 
-.extremo { font-size: 0.76rem; color: var(--tinta-fraca); white-space: nowrap; }
+.extremo { font-size: var(--texto-xs); color: var(--tinta-fraca); white-space: nowrap; }
 
 /* --- os valores, em tabela ----------------------------------------------
    Recolhida: o mapa é a leitura de relance, a tabela é a de conferência. */
 .valores {
   max-width: 48rem;
   margin: 1rem auto 0;
-  font-size: 0.85rem;
+  font-size: var(--texto-sm);
 }
 
 .valores summary {

@@ -81,7 +81,7 @@
   padding: 0 var(--e-3);
   background: var(--superficie);
   border: 1px solid var(--borda-forte);
-  border-radius: 999px;
+  border-radius: var(--raio-pilula);
   text-decoration: none;
 }
 
@@ -166,6 +166,15 @@
   box-shadow: var(--sombra);
 }
 
+/* A porta não é um link inteiro, mas leva a outras páginas pelos links do
+   pé: quando um deles está sob o ponteiro ou o foco, o cartão inteiro sobe
+   um nivel, e fica claro a qual porta o link pertence. */
+.porta:has(a:hover),
+.porta:has(a:focus-visible) {
+  border-color: var(--borda-forte);
+  box-shadow: var(--sombra-alta);
+}
+
 .porta h3 {
   font-size: var(--texto-lg);
 }
@@ -207,18 +216,21 @@
   box-shadow: var(--sombra);
 }
 
+/* Os mesmos pesos do cartão do município e do estado (rótulo 600, valor
+   700): até 16/10/2026 a capa tinha 500 e 600, e o mesmo cartão parecia
+   outro de uma página para a seguinte. */
 .cartaoRotulo {
   font-size: var(--texto-sm);
   color: var(--tinta-suave);
-  font-weight: 500;
+  font-weight: 600;
   margin-bottom: var(--e-2);
 }
 
 .cartaoValor {
   font-size: var(--texto-2xl);
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: -0.02em;
-  line-height: 1.1;
+  line-height: 1.05;
 }
 
 .cartaoUnidade {
@@ -375,7 +387,7 @@
   margin-left: 0.25rem;
   padding: 0.05rem 0.3rem;
   border: 1px solid currentColor;
-  border-radius: 3px;
+  border-radius: var(--raio-sm);
   font-size: 0.72em;
   font-weight: 600;
   letter-spacing: 0.03em;

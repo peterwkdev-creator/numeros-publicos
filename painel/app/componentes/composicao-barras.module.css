@@ -60,7 +60,7 @@
 
 .barra {
   height: 0.55rem;
-  border-radius: 999px;
+  border-radius: var(--raio-pilula);
   background: var(--acento);
   /* A barra não é decoração: em modo de alto contraste forçado, `background`
      é descartado e ela desapareceria. `forced-color-adjust` a mantém. */

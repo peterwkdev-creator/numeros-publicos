@@ -74,6 +74,17 @@ function fonteDoMunicipio(): string {
     .map((n) => fs.readFileSync(new URL(n, dir), "utf-8")).join("\n");
 }
 
+// A página do estado foi dividida do mesmo jeito (item 10 da modernização,
+// 16/10/2026): `page.tsx`, `contexto.ts` e os `secao-*.tsx` em ordem alfabética.
+const PASTA_ESTADO = "../app/estado/[uf]/";
+function fonteDoEstado(): string {
+  const dir = new URL(PASTA_ESTADO, import.meta.url);
+  const secoes = fs.readdirSync(dir)
+    .filter((n) => /^secao-.*\.tsx$/.test(n)).sort();
+  return ["page.tsx", "contexto.ts", ...secoes]
+    .map((n) => fs.readFileSync(new URL(n, dir), "utf-8")).join("\n");
+}
+
 // ------------------------------------------------------------------ posicao
 
 test("posicaoEntre situa o valor entre os comparáveis", () => {
@@ -950,7 +961,7 @@ test("as três páginas comparam contra coisas DIFERENTES, e dizem qual", () => 
   const ler = (rel: string) =>
     fs.readFileSync(new URL(rel, import.meta.url), "utf-8");
   const muni = fonteDoMunicipio();
-  const est = ler("../app/estado/[uf]/page.tsx");
+  const est = fonteDoEstado();
 
   const rotuloDe = (src: string) => {
     const i = src.indexOf("<TabelaCenso");
@@ -3005,9 +3016,18 @@ test("emendas.json: 5.571 municípios, centavos inteiros, e os tipos somam o ano
 // "Como ler" levam a `/ajuda/#secao`. Seção renomeada ou apagada deixa o link
 // bem formado e caindo no topo da página, sem erro em lugar nenhum. A chave do
 // `<Termo>` o próprio TypeScript cobra (`ChaveGlossario`); o destino, só isto.
+// A /ajuda foi dividida em módulos (item 10 da modernização, 16/10/2026): o
+// texto está em `page.tsx`, `contexto.ts` e nos `secao-*.tsx` da pasta.
+function fonteDaAjuda(): string {
+  const dir = new URL("../app/ajuda/", import.meta.url);
+  const secoes = fs.readdirSync(dir)
+    .filter((n) => /^secao-.*\.tsx$/.test(n)).sort();
+  return ["page.tsx", "contexto.ts", ...secoes]
+    .map((n) => fs.readFileSync(new URL(n, dir), "utf-8")).join("\n");
+}
+
 function idsDaAjuda(): Set<string> {
-  const texto = fs.readFileSync(
-    new URL("../app/ajuda/page.tsx", import.meta.url), "utf-8");
+  const texto = fonteDaAjuda();
   return new Set([...texto.matchAll(/\bid="([^"]+)"/g)].map((m) => m[1]));
 }
 
@@ -3020,8 +3040,7 @@ test("toda seção citada pelo glossário existe na /ajuda", () => {
 });
 
 test("verbete sem seção leva ao próprio verbete, e a /ajuda o desenha com esse id", () => {
-  const texto = fs.readFileSync(
-    new URL("../app/ajuda/page.tsx", import.meta.url), "utf-8");
+  const texto = fonteDaAjuda();
   assert.match(texto, /id=\{idDoVerbete\(chave\)\}/);
   assert.equal(ancoraDe("nao-instalado"), idDoVerbete("nao-instalado"));
   assert.equal(ancoraDe("mediana"), "mediana");

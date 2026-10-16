@@ -1221,6 +1221,8 @@ test("existe um cartão 1280×640 para cada UF do snapshot, para o /brasil e os 
     const png = fs.readFileSync(`public${nome}`);
     assert.equal(png.subarray(12, 16).toString("latin1"), "IHDR", nome);
     assert.deepEqual([png.readUInt32BE(16), png.readUInt32BE(20)], [1280, 640], nome);
+    // Tipo de cor 3, a paleta: em cor cheia o cartão pesa o triplo (16/10/2026).
+    assert.equal(png[25], 3, `${nome} não está em paleta`);
   }
   for (const rota of ["app/brasil/page.tsx", "app/ranking/gasto-com-pessoal/page.tsx",
     "app/ranking/emprego-com-carteira/page.tsx"]) {

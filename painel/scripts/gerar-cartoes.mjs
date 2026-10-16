@@ -21,11 +21,22 @@
  *
  * O desenho é o do cartão da capa (`.claude/social-preview/`, no repositório
  * de trabalho), com o mapa à direita e o estado na cor de destaque.
+ *
+ * ## Por que em paleta
+ *
+ * O cartão é cor chapada, texto e um mapa: cabe em 256 cores. A captura sai
+ * em cor cheia (RGBA), e a paleta a leva a 30% do tamanho (medido em
+ * 16/10/2026: os 30 cartões de 4,6 para 1,4 MB, o pior PSNR em 53 dB, uma
+ * diferença que o olho não vê). Quem baixa o cartão é o leitor de quem
+ * compartilha o link, a cada compartilhamento. A paleta vem do sharp que o
+ * Next já traz, sem dependência nova. Se uma versão do Next deixar de
+ * trazê-lo, este script para no import.
  */
-import { existsSync, mkdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import puppeteer from "puppeteer-core";
+import sharp from "sharp";
 
 const AQUI = path.dirname(fileURLToPath(import.meta.url));
 const RAIZ = path.resolve(AQUI, "..");
@@ -183,7 +194,8 @@ try {
         return t.scrollHeight > t.clientHeight + 1 || t.scrollWidth > t.clientWidth + 1;
       });
       if (transborda) throw new Error(`o texto de ${c.arquivo} não cabe no cartão`);
-      await pagina.screenshot({ path: destino, type: "png" });
+      const captura = await pagina.screenshot({ type: "png" });
+      writeFileSync(destino, await sharp(captura).png({ palette: true, effort: 10, compressionLevel: 9 }).toBuffer());
     } finally {
       await pagina.close();
     }

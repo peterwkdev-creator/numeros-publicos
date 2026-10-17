@@ -792,6 +792,9 @@ def construir_parser() -> argparse.ArgumentParser:
     cg.add_argument("--ate", help="último mês da janela, AAAAMM")
     cg.add_argument("--refazer", action="store_true",
                     help="relê arquivos já gravados (o MTE republica meses)")
+    cg.add_argument("--historico", action="store_true",
+                    help="todos os meses desde jan/2020, e não só a janela: "
+                         "os anos fechados do caged-anos (~3,6 GB, uma vez)")
     cg.add_argument("--banco-caged", default=banco_caged)
     cg.set_defaults(func=caged_ingerir)
 
@@ -807,6 +810,23 @@ def construir_parser() -> argparse.ArgumentParser:
     ce.add_argument("--banco-caged", default=banco_caged)
     ce.add_argument("--permitir-encolher", action="store_true")
     ce.set_defaults(func=caged_exportar)
+
+    ca = sub.add_parser("caged-anos-exportar",
+                        help="confere cada ano fechado contra a apresentação "
+                             "de dezembro do MTE (por UF e mês) e gera o "
+                             "caged-anos.json")
+    ca.add_argument("--saida", default="painel/dados/caged-anos.json")
+    ca.add_argument("--snapshot", default="painel/dados/snapshot.json",
+                    help="de onde vêm os 5.571 códigos do IBGE")
+    ca.add_argument("--desde", type=int, default=2020,
+                    help="primeiro ano da série (todo ano dela tem de conferir)")
+    ca.add_argument("--apresentacao", action="append", default=[],
+                    metavar="ANO=URL",
+                    help="endereço da apresentação de dezembro de ANO, quando "
+                         "a pasta do gov.br não a tem (repetível)")
+    ca.add_argument("--banco-caged", default=banco_caged)
+    ca.add_argument("--permitir-encolher", action="store_true")
+    ca.set_defaults(func=caged_anos_exportar)
 
     cn = sub.add_parser("caged-novo",
                         help="diz se há mês novo publicado (arquivos E sumário)")
@@ -887,8 +907,10 @@ def _pagina(url: str) -> str:
         return r.read().decode("utf-8", "replace")
 
 
-def _texto_do_pdf(caminho: str) -> str:
-    """`pdftotext` (poppler). O runner o instala; o Git for Windows o traz."""
+def _texto_do_pdf(caminho: str, modo: str = "-layout") -> str:
+    """`pdftotext` (poppler). O runner o instala; o Git for Windows o traz.
+    O sumário se lê com `-layout`; a tabela por UF da apresentação, com
+    `-raw` (o `-layout` desloca as linhas dela)."""
     import shutil
     import subprocess
     from . import caged
@@ -896,7 +918,7 @@ def _texto_do_pdf(caminho: str) -> str:
     if not binario:
         raise caged.ErroCaged("sem `pdftotext` no PATH para ler o sumário do MTE "
                               "(apt-get install poppler-utils)")
-    r = subprocess.run([binario, "-enc", "UTF-8", "-layout", caminho, "-"],
+    r = subprocess.run([binario, "-enc", "UTF-8", modo, caminho, "-"],
                        capture_output=True,
                        creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
     if r.returncode != 0:
@@ -928,10 +950,13 @@ def caged_ingerir(args, listar=_listar_ftp, baixar=None) -> int:
     baixar = baixar or _baixar
     try:
         ultima = args.ate or caged.ultima_no_ftp(listar)
-        print(f"janela: {caged.janela_ate(ultima)[0]} a {ultima}")
+        meses = (caged.meses_desde(caged.PRIMEIRO_MES, ultima)
+                 if getattr(args, "historico", False) else caged.janela_ate(ultima))
+        print(f"{'histórico' if len(meses) > caged.JANELA else 'janela'}: "
+              f"{meses[0]} a {ultima}")
         with caged.ArmazemCaged(args.banco_caged) as db:
-            for mes in caged.janela_ate(ultima):
-                for tipo in caged.TIPOS:
+            for mes in meses:
+                for tipo in caged.tipos_do_mes(mes):
                     nome = caged.nome_arquivo(tipo, mes)
                     if not args.refazer and db.gravado(tipo, mes) is not None:
                         print(f"  {nome}: já gravado")
@@ -1205,6 +1230,110 @@ def caged_exportar(args, sumario_oficial=_sumario_oficial) -> int:
         return 1
     print(f"{args.saida}: {estado} · competência {r['competencia']} · "
           f"{len(r['municipios'])} municípios · confere com o sumário do MTE")
+    return 0
+
+
+def _apresentacao(ano: int, dada: str | None, pagina, baixar,
+                  texto_do_pdf) -> tuple[str, str, dict]:
+    """`(link, texto, tabela por UF)` da apresentação de dezembro de `ano`:
+    a `dada`, ou a primeira das pastas candidatas cujo PDF tenha a tabela do
+    ano. Quem decide é o conteúdo, e não o nome do arquivo."""
+    import tempfile
+    from . import caged
+    tentativas = []
+
+    def ler(link: str):
+        with tempfile.TemporaryDirectory() as tmp:
+            destino = os.path.join(tmp, "apresentacao.pdf")
+            baixar(link, destino)
+            texto = texto_do_pdf(destino)
+        return link, texto, caged.tabela_por_uf(texto, ano)
+
+    if dada:
+        return ler(dada)
+    for pasta in caged.pastas_de_dezembro(ano):
+        try:
+            links = caged.links_da_apresentacao(pagina(pasta), pasta)
+        except OSError as e:
+            tentativas.append(f"{pasta}: {e}")
+            continue
+        for link in links:
+            try:
+                return ler(link)
+            except (caged.ErroCaged, OSError) as e:
+                tentativas.append(f"{link}: {e}")
+        if not links:
+            tentativas.append(f"{pasta}: sem link de apresentação")
+    raise caged.ErroCaged(
+        f"dez/{ano}: nenhuma apresentação com a tabela por UF ("
+        + "; ".join(tentativas[-4:]) + f"). Passe --apresentacao {ano}=URL "
+        "(a de dezembro sai no fim de janeiro, com o sumário).")
+
+
+def caged_anos_exportar(args, pagina=_pagina, baixar=None,
+                        texto_do_pdf=None) -> int:
+    """Os anos fechados do Novo Caged, todos com os ajustes declarados até o
+    dezembro do último deles (decisão de 16/10/2026: o `MOV` de 2020 foi
+    reprocessado depois da divulgação, e o número de cada ano no fechamento
+    não se reconstrói mais). Duas conferências contra a apresentação de
+    dezembro do último ano, e as duas têm de passar: o total de cada ano
+    contra a série do país, e cada UF e cada mês do último ano contra a
+    tabela por UF."""
+    import json as _json
+    from . import caged
+    baixar = baixar or _baixar
+    texto_do_pdf = texto_do_pdf or (lambda p: _texto_do_pdf(p, "-raw"))
+    try:
+        dadas = {}
+        for item in args.apresentacao:
+            ano, _, url = item.partition("=")
+            if not ano.isdigit() or "://" not in url:
+                raise caged.ErroCaged(f"--apresentacao {item!r}: o formato é ANO=URL")
+            dadas[int(ano)] = url
+        with caged.ArmazemCaged(args.banco_caged) as db:
+            anos = [a for a in caged.anos_fechados(db) if a >= args.desde]
+            if not anos:
+                raise caged.ErroCaged("nenhum ano fechado no banco: rode "
+                                      "caged-ingerir --historico")
+            faltam = caged.faltando_ate(db, f"{anos[-1]}12")
+            if faltam:
+                raise caged.ErroCaged(
+                    f"faltam {len(faltam)} arquivos até dez/{anos[-1]} "
+                    f"({', '.join(faltam[:4])}…): rode caged-ingerir --historico")
+            ultimo = anos[-1]
+            link, texto, oficial = _apresentacao(ultimo, dadas.get(ultimo), pagina,
+                                                 baixar, texto_do_pdf)
+            erros = caged.conferir_uf(
+                caged.saldo_por_uf(db, sorted(oficial["BR"]), f"{ultimo}12"), oficial)
+            n = sum(len(v) for v in oficial.values())
+            if erros:
+                raise caged.ErroCaged(
+                    f"{ultimo} DIVERGE da apresentação de dezembro ({link}): "
+                    f"{len(erros)} de {n} — " + "; ".join(erros[:6]))
+            print(f"  {ultimo}: {n} números (UF × mês) conferem")
+            serie = caged.serie_anual_do_pais(texto, ultimo)
+            conferencia = {}
+            for ano in anos:
+                nosso = sum(caged.saldo_por_uf(db, caged.meses_do_ano(ano),
+                                               f"{ultimo}12")["BR"].values())
+                if nosso != serie.get(ano):
+                    raise caged.ErroCaged(
+                        f"{ano} com ajustes até dez/{ultimo}: nosso {nosso}, a "
+                        f"série do país na apresentação de dez/{ultimo} diz "
+                        f"{serie.get(ano)}")
+                conferencia[str(ano)] = {"apresentacao": link, "saldo": nosso}
+                print(f"  {ano}: saldo {nosso:+,}".replace(",", ".")
+                      + " · confere com a série do país")
+            conferencia[str(ultimo)]["numerosConferidos"] = n
+            snap = _json.loads(Path_(args.snapshot).read_text(encoding="utf-8"))
+            r = caged.retrato_anos(db, anos, (l[0] for l in snap["municipios"]),
+                                   conferencia)
+        estado = caged.gravar_anos(r, args.saida, args.permitir_encolher)
+    except caged.ErroCaged as e:
+        print(f"[!] {e}", file=sys.stderr)
+        return 1
+    print(f"{args.saida}: {estado} · {anos[0]} a {anos[-1]} · "
+          f"{len(r['municipios'])} municípios · confere com o MTE")
     return 0
 
 

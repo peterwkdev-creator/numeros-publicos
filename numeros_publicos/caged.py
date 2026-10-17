@@ -95,6 +95,29 @@ def url_arquivo(tipo: str, mes: str) -> str:
     return f"{FTP}/{mes[:4]}/{mes}/{nome_arquivo(tipo, mes)}.7z"
 
 
+#: O primeiro mês do Novo Caged. Antes dele é o Caged antigo, de outra
+#: metodologia, e nada dele se soma ao daqui.
+PRIMEIRO_MES = "202001"
+#: O começo da série não tem os três arquivos (FTP, medido em 16/10/2026):
+#: jan/2020 só tem o MOV; fev e mar/2020, o MOV e o FOR; o EXC começa em
+#: abr/2020. Fora daqui, mês sem um dos três é mês pela metade.
+TIPOS_DO_COMECO = {"202001": ("MOV",), "202002": ("MOV", "FOR"),
+                   "202003": ("MOV", "FOR")}
+
+
+def tipos_do_mes(mes: str) -> tuple[str, ...]:
+    return TIPOS_DO_COMECO.get(mes, TIPOS)
+
+
+def meses_desde(primeiro: str, ultima: str) -> list[str]:
+    """De `primeiro` a `ultima`, os dois inclusive, do mais velho ao mais novo."""
+    meses, m = [], ultima
+    while m >= primeiro:
+        meses.append(m)
+        m = mes_anterior(m)
+    return meses[::-1]
+
+
 # ------------------------------------------------------------------ FTP
 
 def _itens_da_listagem(texto: str) -> list[tuple[str, bool]]:
@@ -129,18 +152,44 @@ def ultima_no_ftp(listar: Callable[[str], str]) -> str:
 
 # ------------------------------------------------------------------ leitura
 
+def _bsdtar() -> str | None:
+    """O `tar` do Windows 10/11 é o bsdtar (libarchive), que lê `.7z` em
+    fluxo (medido em 16/10/2026). O tar do GNU (o do Git Bash, o do Linux)
+    não lê: quem decide é o `--version`, e não o nome."""
+    import os
+    raiz = os.environ.get("SystemRoot")
+    candidatos = [shutil.which("bsdtar")]
+    if raiz:
+        candidatos.append(os.path.join(raiz, "System32", "tar.exe"))
+    for c in candidatos:
+        if not c or not Path(c).exists():
+            continue
+        try:
+            versao = subprocess.run(
+                [c, "--version"], capture_output=True, timeout=10,
+                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0)).stdout
+        except (OSError, subprocess.SubprocessError):
+            continue
+        if b"bsdtar" in versao:
+            return c
+    return None
+
+
 def linhas_do_7z(caminho: str | Path) -> Iterator[str]:
     """As linhas do único `.txt` dentro do `.7z`, sem gravá-lo inteiro.
 
-    Com o `7z` de linha de comando (o do GitHub Actions), a leitura é em
-    fluxo. Sem ele, o `py7zr`, se estiver instalado, extrai para uma pasta
-    temporária. Os dois faltando é erro dito, e não silêncio.
+    Com o `7z` de linha de comando (o do GitHub Actions) ou o bsdtar (o
+    `tar` do Windows), a leitura é em fluxo. Sem os dois, o `py7zr`, se
+    estiver instalado, extrai para uma pasta temporária. Os três faltando é
+    erro dito, e não silêncio.
     """
     binario = shutil.which("7z") or shutil.which("7za")
-    if binario:
+    comando = [binario, "e", "-so", str(caminho)] if binario else None
+    if comando is None and (tar := _bsdtar()):
+        comando = [tar, "-xOf", str(caminho)]
+    if comando:
         proc = subprocess.Popen(
-            [binario, "e", "-so", str(caminho)], stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            comando, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
         assert proc.stdout is not None
         try:
@@ -150,14 +199,16 @@ def linhas_do_7z(caminho: str | Path) -> Iterator[str]:
             proc.stdout.close()
             erro = proc.stderr.read().decode("utf-8", "replace") if proc.stderr else ""
             if proc.wait() != 0:
-                raise ErroCaged(f"7z falhou em {caminho}: {erro[:300]}")
+                raise ErroCaged(f"{Path(comando[0]).name} falhou em {caminho}: "
+                                f"{erro[:300]}")
         return
     try:
         import py7zr  # type: ignore[import-not-found]
     except ImportError as e:
         raise ErroCaged(
-            "sem `7z` no PATH e sem `py7zr`: não há como abrir o .7z do Caged. "
-            "No GitHub Actions o `p7zip-full` resolve; aqui, um venv com py7zr."
+            "sem `7z` no PATH, sem bsdtar e sem `py7zr`: não há como abrir o "
+            ".7z do Caged. No GitHub Actions o `p7zip-full` resolve; no "
+            "Windows, o `tar` do sistema; senão, um venv com py7zr."
         ) from e
     with tempfile.TemporaryDirectory() as tmp:
         with py7zr.SevenZipFile(str(caminho)) as z:
@@ -491,6 +542,296 @@ def gravar_retrato(r: dict, saida: str | Path,
                 raise ErroCaged("RECUSADO: o retrato do Caged encolheu — "
                                 + "; ".join(erros) + ". Se é a intenção, repita "
                                 "com --permitir-encolher. Nada gravado.")
+        sem_carimbo = lambda x: {k: v for k, v in x.items() if k != "coletadoEm"}
+        if sem_carimbo(velho) == sem_carimbo(r):
+            return "inalterado"
+    saida.parent.mkdir(parents=True, exist_ok=True)
+    saida.write_text(json.dumps(r, ensure_ascii=False, separators=(",", ":")) + "\n",
+                     encoding="utf-8")
+    return "gravado"
+
+
+# ------------------------------------------------------------------ anos fechados
+#
+# Espec `especs/numeros-publicos-caged-serie.md` (16/10/2026). Um ano fechado
+# é o saldo de janeiro a dezembro com os ajustes declarados ATÉ DEZEMBRO DO
+# PRÓPRIO ANO: o número que o MTE publicou no fechamento. Ele se confere por
+# UF e por mês contra a tabela da apresentação de dezembro, e não muda depois.
+
+#: As UFs como a apresentação as escreve. A região é o 1º dígito do código.
+UFS = {11: "Rondônia", 12: "Acre", 13: "Amazonas", 14: "Roraima", 15: "Pará",
+       16: "Amapá", 17: "Tocantins", 21: "Maranhão", 22: "Piauí", 23: "Ceará",
+       24: "Rio Grande do Norte", 25: "Paraíba", 26: "Pernambuco",
+       27: "Alagoas", 28: "Sergipe", 29: "Bahia", 31: "Minas Gerais",
+       32: "Espírito Santo", 33: "Rio de Janeiro", 35: "São Paulo",
+       41: "Paraná", 42: "Santa Catarina", 43: "Rio Grande do Sul",
+       50: "Mato Grosso do Sul", 51: "Mato Grosso", 52: "Goiás",
+       53: "Distrito Federal"}
+REGIOES = {1: "Norte", 2: "Nordeste", 3: "Sudeste", 4: "Sul", 5: "Centro-Oeste"}
+_MES_ABREV = ("jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set",
+              "out", "nov", "dez")
+_NUM = re.compile(r"-?\d{1,3}(?:\.\d{3})*")
+
+
+def meses_do_ano(ano: int) -> list[str]:
+    return [f"{ano}{m:02d}" for m in range(1, 13)]
+
+
+def ultimo_ano_fechado(db: ArmazemCaged) -> int | None:
+    """O ano antes do da competência mais recente do `MOV`: vem do dado, e
+    não do código (um "2025" escrito à mão envelhece em janeiro)."""
+    ultima = db.ultima()
+    if ultima is None or int(ultima[:4]) - 1 < int(PRIMEIRO_MES[:4]):
+        return None
+    return int(ultima[:4]) - 1
+
+
+def anos_fechados(db: ArmazemCaged) -> list[int]:
+    ultimo = ultimo_ano_fechado(db)
+    return [] if ultimo is None else list(range(int(PRIMEIRO_MES[:4]), ultimo + 1))
+
+
+def faltando_ate(db: ArmazemCaged, ate: str) -> list[str]:
+    """Os arquivos de jan/2020 a `ate` que NÃO estão no banco. Um ano fechado
+    pede o `MOV` dos 12 meses e todo `FOR` e `EXC` declarado até dezembro,
+    desde o primeiro (um `EXC` de 2023 ainda mexe em 2020)."""
+    return [nome_arquivo(t, m) for m in meses_desde(PRIMEIRO_MES, ate)
+            for t in tipos_do_mes(m) if db.gravado(t, m) is None]
+
+
+def saldo_por_uf(db: ArmazemCaged, competencias: list[str],
+                 ate: str) -> dict[str, dict[str, int]]:
+    """`{chave: {competência: saldo}}` com os ajustes declarados até `ate`. A
+    chave é o código da UF (`"28"`), `"NI"` (o não identificado) ou `"BR"`,
+    as mesmas de `tabela_por_uf`. UF sem linha tem saldo zero."""
+    chaves = [str(u) for u in UFS] + ["NI", "BR"]
+    saida = {k: dict.fromkeys(competencias, 0) for k in chaves}
+    for (comp, mun), (a, d) in db.com_ajuste(competencias, ate).items():
+        chave = "NI" if mun == NAO_IDENTIFICADO else str(mun // 10000)
+        saida.setdefault(chave, dict.fromkeys(competencias, 0))[comp] += a - d
+        saida["BR"][comp] += a - d
+    return saida
+
+
+def _chave_nome(s: str) -> str:
+    import unicodedata
+    s = "".join(c for c in unicodedata.normalize("NFD", s)
+                if unicodedata.category(c) != "Mn")
+    return " ".join(s.lower().split())
+
+
+def _competencia_do_rotulo(rotulo: str) -> str | None:
+    """`2023/01` (de 2023 em diante) ou `jan/20` (a apresentação de 2020)."""
+    m = re.fullmatch(r"(\d{4})/(\d{2})", rotulo)
+    if m:
+        return m[1] + m[2]
+    m = re.fullmatch(r"([a-z]{3})/(\d{2})", rotulo.lower())
+    if m and m[1] in _MES_ABREV:
+        return f"20{m[2]}{_MES_ABREV.index(m[1]) + 1:02d}"
+    return None
+
+
+def tabela_por_uf(texto: str, ano: int) -> dict[str, dict[str, int]]:
+    """A tabela "Saldo por grandes regiões e unidades da federação" da
+    apresentação de dezembro de `ano`, no texto de `pdftotext -raw` (o
+    `-layout` desloca as linhas dela: medido em 16/10/2026, 0 de 135 contra
+    135 de 135). Devolve as chaves de `saldo_por_uf`.
+
+    Antes de devolver, confere o que a tabela promete: o cabeçalho cobre o
+    ano (o gov.br já serviu, no endereço de dez/2021, a apresentação de
+    jan–mar/2020), as 27 UFs, as 5 regiões e o Brasil estão lá, e cada região
+    é a soma das suas UFs, e o Brasil a das regiões mais o não identificado.
+    Assim um erro de leitura não chega à conferência como "divergência".
+    """
+    linhas = [l.strip() for l in texto.replace("−", "-").splitlines()]
+    nomes = {_chave_nome(n): str(u) for u, n in UFS.items()}
+    nomes.update({_chave_nome(n): f"R{r}" for r, n in REGIOES.items()})
+    nomes.update({"brasil": "BR", "nao identificado": "NI"})
+    for i, l in enumerate(linhas):
+        if not l.startswith("Região e UF"):
+            continue
+        titulo = _chave_nome(" ".join(linhas[max(0, i - 10):i]))
+        comps = [_competencia_do_rotulo(r) for r in l[len("Região e UF"):].split()]
+        if ("saldo por grandes" in titulo and "sem ajustes" not in titulo
+                and comps and None not in comps):
+            break
+    else:
+        raise ErroCaged(f"apresentação de dez/{ano}: sem a tabela de saldo por UF")
+    if comps[-12:] != meses_do_ano(ano) or len(comps) > 13:
+        raise ErroCaged(f"apresentação de dez/{ano}: a tabela vai de {comps[0]} "
+                        f"a {comps[-1]}, e não cobre {ano}: é outro documento")
+    saida: dict[str, dict[str, int]] = {}
+    pendente = ""
+    for l in linhas[i + 1:]:
+        partes = l.split()
+        k = len(partes)
+        while k and _NUM.fullmatch(partes[k - 1]):
+            k -= 1
+        nome, nums = " ".join(partes[:k]), partes[k:]
+        if not nums:            # "Rio Grande do" / "Norte": o nome quebra
+            pendente = f"{pendente} {nome}".strip()
+            if len(pendente) > 40:
+                break
+            continue
+        chave = nomes.get(_chave_nome(f"{pendente} {nome}"))
+        pendente = ""
+        if chave is None or len(nums) != len(comps):
+            break
+        saida[chave] = dict(zip(comps, (_numero(n) for n in nums)))
+        if chave == "NI":
+            break
+    faltam = sorted(set(nomes.values()) - saida.keys())
+    if faltam:
+        raise ErroCaged(f"apresentação de dez/{ano}: a tabela por UF não tem "
+                        f"as linhas {faltam}: leitura suspeita")
+    for c in comps:
+        for r in REGIOES:
+            soma = sum(saida[str(u)][c] for u in UFS if u // 10 == r)
+            if soma != saida[f"R{r}"][c]:
+                raise ErroCaged(f"apresentação de dez/{ano}, {c}: as UFs do "
+                                f"{REGIOES[r]} somam {soma}, a linha diz "
+                                f"{saida[f'R{r}'][c]}: leitura suspeita")
+        soma = sum(saida[f"R{r}"][c] for r in REGIOES) + saida["NI"][c]
+        if soma != saida["BR"][c]:
+            raise ErroCaged(f"apresentação de dez/{ano}, {c}: as regiões e o "
+                            f"não identificado somam {soma}, o Brasil "
+                            f"{saida['BR'][c]}: leitura suspeita")
+    return {k: v for k, v in saida.items() if not k.startswith("R")}
+
+
+def serie_anual_do_pais(texto: str, ano: int) -> dict[int, int]:
+    """O gráfico "Saldo de empregos formais - Brasil, acumulado de janeiro a
+    dezembro, 2002 a `ano`" da apresentação de dezembro, com os ajustes
+    declarados até dezembro de `ano` para TODOS os anos. No texto raw, os
+    rótulos das barras do Novo Caged vêm logo antes da linha dos anos.
+    É a segunda conferência, só no país: ela alcança os anos cuja tabela
+    por UF não se acha."""
+    linhas = [l.strip() for l in texto.replace("−", "-").splitlines()]
+    anos = list(range(int(PRIMEIRO_MES[:4]), ano + 1))
+    for i, l in enumerate(linhas):
+        partes = l.split()
+        if (len(partes) <= len(anos) or not partes[0].isdigit()
+                or partes != [str(a) for a in range(int(partes[0]), ano + 1)]):
+            continue
+        titulo = _chave_nome(" ".join(linhas[i + 1:i + 3]))
+        if "acumulado de janeiro a dezembro" not in titulo or "com ajustes" not in titulo:
+            continue
+        valores = []
+        j = i - 1
+        while j >= 0 and _NUM.fullmatch(linhas[j]):
+            valores.insert(0, _numero(linhas[j]))
+            j -= 1
+        if len(valores) < len(anos):
+            raise ErroCaged(f"apresentação de dez/{ano}: o gráfico anual tem "
+                            f"{len(valores)} rótulos, e o Novo Caged {len(anos)} anos")
+        return dict(zip(anos, valores[-len(anos):]))
+    raise ErroCaged(f"apresentação de dez/{ano}: sem o gráfico do saldo anual do país")
+
+
+def conferir_uf(nossos: dict, oficiais: dict) -> list[str]:
+    """As divergências, por chave e competência, nos DOIS sentidos: o que só
+    um dos lados tem também é divergência. Vazio é o único "confere"."""
+    erros = []
+    for chave in sorted(set(nossos) | set(oficiais)):
+        n_, o_ = nossos.get(chave, {}), oficiais.get(chave, {})
+        for comp in sorted(set(n_) | set(o_)):
+            if n_.get(comp) != o_.get(comp):
+                erros.append(f"{chave} {comp}: nosso {n_.get(comp)}, "
+                             f"oficial {o_.get(comp)}")
+    return erros
+
+
+def pastas_de_dezembro(ano: int) -> list[str]:
+    """Onde a apresentação de dezembro pode estar. O caminho mudou de ano
+    para ano (medido em 16/10/2026): `novo-caged-AAAA/novo-caged-dezembro-AAAA`
+    em 2020 a 2022, `novo-caged-AAAA/dezembro` em 2023 e 2024, `AAAA/dezembro`
+    em 2025. Tenta-se do mais novo ao mais velho."""
+    return [f"{GOV}/{ano}/dezembro", f"{GOV}/novo-caged-{ano}/dezembro",
+            f"{GOV}/novo-caged-{ano}/novo-caged-dezembro-{ano}"]
+
+
+def links_da_apresentacao(html: str, pasta: str) -> list[str]:
+    """Os PDFs de apresentação LIDOS da pasta, em endereço absoluto. O
+    conteúdo decide qual é o certo (`tabela_por_uf` confere os meses): em
+    2021 e 2022 o link da pasta está morto, e montar o endereço faz o gov.br
+    servir outro PDF com o nome pedido. Em 2020 o link da pasta também está
+    morto (`/images/...`, 404), mas o nome dentro da pasta é o PDF certo:
+    vai como segunda tentativa, e o conteúdo decide."""
+    from urllib.parse import urljoin
+    achados = re.findall(r'href="([^"]*apresenta[^"]*?\.pdf)(?:/view)?"', html, re.I)
+    links = []
+    for a in sorted(set(achados)):
+        for link in (urljoin(pasta + "/", a), f"{pasta}/{a.rsplit('/', 1)[-1]}"):
+            if link not in links:
+                links.append(link)
+    return links
+
+
+def retrato_anos(db: ArmazemCaged, anos: list[int], codigos_ibge: Iterable[int],
+                 conferencia: dict) -> dict:
+    """O `caged-anos.json`: `[código, [saldo × anos]]`, todos os municípios do
+    IBGE, zero onde o Caged não tem linha, todos os anos com os ajustes
+    declarados até o dezembro do último. A soma dos municípios com o não
+    identificado tem de dar o Brasil que a conferência aprovou
+    (`conferencia[ano]["saldo"]`)."""
+    ate = f"{anos[-1]}12"
+    faltam = faltando_ate(db, f"{anos[-1]}12")
+    if faltam:
+        raise ErroCaged(f"faltam arquivos até dez/{anos[-1]}: "
+                        f"{', '.join(faltam[:6])}{'…' if len(faltam) > 6 else ''}")
+    por7 = {int(str(c)[:6]): int(c) for c in codigos_ibge}
+    if len(por7) < 5000:
+        raise ErroCaged(f"só {len(por7)} municípios do IBGE: lista suspeita")
+    saldos = {c7: [0] * len(anos) for c7 in por7.values()}
+    nao_id = [0] * len(anos)
+    sem_par: set[int] = set()
+    for i, ano in enumerate(anos):
+        for (_, m6), (a, d) in db.com_ajuste(meses_do_ano(ano), ate).items():
+            if m6 == NAO_IDENTIFICADO:
+                nao_id[i] += a - d
+            elif m6 in por7:
+                saldos[por7[m6]][i] += a - d
+            else:
+                sem_par.add(m6)
+        total = sum(s[i] for s in saldos.values()) + nao_id[i]
+        if total != conferencia[str(ano)]["saldo"]:
+            raise ErroCaged(f"{ano}: os municípios somam {total}, a conferência "
+                            f"aprovou {conferencia[str(ano)]['saldo']}")
+    if sem_par:
+        raise ErroCaged(f"códigos do Caged sem município do IBGE: {sorted(sem_par)[:10]}")
+    coletado = db.con.execute("SELECT MAX(gravado_em) FROM arquivo WHERE declarado <= ?",
+                              (f"{anos[-1]}12",)).fetchone()[0]
+    return {
+        "fonte": "Ministério do Trabalho e Emprego — Novo Caged, microdados",
+        "origem": FTP_PUBLICO,
+        "anos": anos,
+        "ajustesAte": ate,
+        "coletadoEm": coletado,
+        "conferencia": conferencia,
+        "naoIdentificado": nao_id,
+        "municipios": [[c7, s] for c7, s in sorted(saldos.items())],
+    }
+
+
+def gravar_anos(r: dict, saida: str | Path, permitir_encolher: bool = False) -> str:
+    """Escreve o `caged-anos.json`. Recusa **menos anos**, **último ano mais
+    velho** e **menos municípios** que o publicado, e não reescreve quando só
+    o carimbo mudou (as travas de `gravar_retrato`)."""
+    saida = Path(saida)
+    if saida.exists():
+        velho = json.loads(saida.read_text(encoding="utf-8"))
+        if not permitir_encolher:
+            erros = []
+            va, na = velho.get("anos", []), r["anos"]
+            if len(na) < len(va) or (va and na[-1] < va[-1]):
+                erros.append(f"anos {va[0]}–{va[-1]} → {na[0]}–{na[-1]}")
+            if len(r["municipios"]) < len(velho.get("municipios", [])):
+                erros.append(f"municípios {len(velho['municipios'])} → "
+                             f"{len(r['municipios'])}")
+            if erros:
+                raise ErroCaged("RECUSADO: o caged-anos encolheu — " + "; ".join(erros)
+                                + ". Se é a intenção, repita com --permitir-encolher. "
+                                "Nada gravado.")
         sem_carimbo = lambda x: {k: v for k, v in x.items() if k != "coletadoEm"}
         if sem_carimbo(velho) == sem_carimbo(r):
             return "inalterado"

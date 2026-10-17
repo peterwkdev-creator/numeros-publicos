@@ -21,7 +21,7 @@ from numeros_publicos.caged import (
     link_do_sumario, mes_anterior, nossos_numeros, numeros_do_sumario, retrato,
     ultima_no_ftp,
 )
-from numeros_publicos.cli import caged_novo, construir_parser
+from numeros_publicos.cli import caged_anos_exportar, caged_novo, construir_parser
 
 FIXTURES = Path(__file__).parent / "fixtures"
 SUMARIO = (FIXTURES / "caged_sumario_202607.txt").read_text(encoding="utf-8")
@@ -296,6 +296,188 @@ class TestFtp(unittest.TestCase):
                                 pagina=lambda url: "<html>sem sumário</html>")
         self.assertEqual(codigo, 0)
         self.assertIn("nada: 202606", saida.getvalue())
+
+
+#: Trechos reais do `pdftotext -raw` das apresentações de dezembro do MTE
+#: (16/10/2026): a tabela por UF de 2020 (12 colunas, "jan/20") e a de 2023
+#: (13 colunas, "2022/12", com "Rio Grande do" / "Norte" em duas linhas), e o
+#: gráfico do saldo anual do país da de 2025.
+UF_2020 = (FIXTURES / "caged_apresentacao_202012_uf.txt").read_text(encoding="utf-8")
+UF_2023 = (FIXTURES / "caged_apresentacao_202312_uf.txt").read_text(encoding="utf-8")
+SERIE_2025 = (FIXTURES / "caged_apresentacao_202512_serie.txt").read_text(encoding="utf-8")
+
+
+class TestApresentacao(unittest.TestCase):
+    def test_le_a_tabela_real_de_2023_com_o_nome_quebrado(self):
+        t = caged.tabela_por_uf(UF_2023, 2023)
+        self.assertEqual(set(t), {str(u) for u in caged.UFS} | {"NI", "BR"})
+        self.assertEqual(t["24"]["202212"], -3702)      # Rio Grande do Norte
+        self.assertEqual(t["50"]["202312"], -8401)      # Mato Grosso do Sul
+        self.assertEqual(t["BR"]["202312"], -430159)
+        # O ano publicado no fechamento: +1.483.598 (o sumário de dez/2023).
+        self.assertEqual(sum(t["BR"][m] for m in caged.meses_do_ano(2023)), 1483598)
+
+    def test_2020_tem_12_colunas_no_outro_formato(self):
+        t = caged.tabela_por_uf(UF_2020, 2020)
+        self.assertEqual(sorted(t["BR"]), caged.meses_do_ano(2020))
+        self.assertEqual(t["BR"]["202001"], 117245)
+        self.assertEqual(t["NI"]["202012"], -562)
+
+    def test_documento_de_outro_ano_e_recusado(self):
+        # O gov.br serviu, no endereço de dez/2021, um PDF de 2020.
+        with self.assertRaisesRegex(ErroCaged, "não cobre 2024"):
+            caged.tabela_por_uf(UF_2023, 2024)
+
+    def test_numero_mal_lido_e_recusado_pela_soma(self):
+        with self.assertRaisesRegex(ErroCaged, "Norte.*leitura suspeita"):
+            caged.tabela_por_uf(UF_2023.replace("Acre -845", "Acre -846"), 2023)
+
+    def test_linha_que_falta_e_recusada(self):
+        sem = "\n".join(l for l in UF_2023.splitlines() if not l.startswith("Sergipe"))
+        with self.assertRaisesRegex(ErroCaged, "'28'"):
+            caged.tabela_por_uf(sem, 2023)
+
+    def test_a_tabela_SEM_ajustes_e_pulada(self):
+        falsa = ("SALDO POR GRANDES REGIÕES (DADOS SEM AJUSTES)\n"
+                 "Região e UF " + " ".join(f"2023/{m:02d}" for m in range(1, 13))
+                 + "\nBrasil " + " ".join(["1"] * 12) + "\n" + "x\n" * 12)
+        t = caged.tabela_por_uf(falsa + UF_2023, 2023)
+        self.assertEqual(t["BR"]["202312"], -430159)
+
+    def test_serie_anual_real_do_pais(self):
+        self.assertEqual(caged.serie_anual_do_pais(SERIE_2025, 2025),
+                         {2020: -189393, 2021: 2782295, 2022: 2014894,
+                          2023: 1455279, 2024: 1677575, 2025: 1279498})
+
+    def test_conferir_uf_acusa_o_que_so_um_lado_tem(self):
+        erros = caged.conferir_uf({"28": {"202301": 1}},
+                                  {"28": {"202301": 1, "202302": 0}})
+        self.assertEqual(erros, ["28 202302: nosso None, oficial 0"])
+
+    def test_o_link_da_apresentacao_e_LIDO_da_pasta(self):
+        pasta = f"{caged.GOV}/2025/dezembro"
+        html = (f'<a href="{pasta}/apresentacao-dezembro-de-2025-1.pdf/view">'
+                f'<a href="{pasta}/sumario-executivo.pdf">')
+        self.assertEqual(caged.links_da_apresentacao(html, pasta),
+                         [f"{pasta}/apresentacao-dezembro-de-2025-1.pdf"])
+
+    def test_link_morto_da_raiz_tenta_o_nome_dentro_da_pasta(self):
+        # Dez/2020 (16/10/2026): o href "/images/..." dá 404 no gov.br, e o
+        # mesmo nome dentro da pasta é a apresentação certa.
+        pasta = caged.pastas_de_dezembro(2020)[2]
+        html = '<a href="/images/Novo_CAGED/Dez2020/2-apresentacao202012.pdf">'
+        self.assertEqual(caged.links_da_apresentacao(html, pasta),
+                         ["https://www.gov.br/images/Novo_CAGED/Dez2020/2-apresentacao202012.pdf",
+                          f"{pasta}/2-apresentacao202012.pdf"])
+
+
+class TestAnosFechados(_ComBanco):
+    def encher_2020(self) -> None:
+        """Todos os arquivos de 2020 (o começo sem FOR e EXC), e o MOV de
+        jan/2021, que fecha 2020."""
+        for m in caged.meses_do_ano(2020):
+            for t in caged.tipos_do_mes(m):
+                self.gravar(t, m)
+        self.gravar("MOV", "202101")
+
+    def test_o_ultimo_ano_fechado_vem_do_dado(self):
+        self.assertEqual(caged.anos_fechados(self.db), [])
+        self.gravar("MOV", "202603")
+        self.assertEqual(caged.anos_fechados(self.db), list(range(2020, 2026)))
+
+    def test_o_comeco_da_serie_nao_tem_FOR_nem_EXC(self):
+        self.assertEqual(caged.faltando_ate(self.db, "202004"),
+                         ["CAGEDMOV202001", "CAGEDMOV202002", "CAGEDFOR202002",
+                          "CAGEDMOV202003", "CAGEDFOR202003", "CAGEDMOV202004",
+                          "CAGEDFOR202004", "CAGEDEXC202004"])
+
+    def test_o_ano_fechado_so_leva_os_ajustes_ate_o_dezembro_dele(self):
+        self.gravar("MOV", "202312", linha("202312", ARACAJU6, 1))
+        self.gravar("FOR", "202401", linha("202312", ARACAJU6, -1))
+        self.assertEqual(caged.saldo_por_uf(self.db, ["202312"], "202312")
+                         ["28"]["202312"], 1)
+        self.assertEqual(caged.saldo_por_uf(self.db, ["202312"], "202401")
+                         ["BR"]["202312"], 0)
+
+    def test_o_retrato_soma_o_brasil_que_a_conferencia_aprovou(self):
+        self.encher_2020()
+        self.gravar("MOV", "202005", linha("202005", ARACAJU6, 1),
+                    linha("202005", ARACAJU6, 1),
+                    linha("202005", caged.NAO_IDENTIFICADO, -1))
+        codigos = [ARACAJU7, ESTANCIA7, *range(1100000, 1150000, 10)]
+        r = caged.retrato_anos(self.db, [2020], codigos, {"2020": {"saldo": 1}})
+        por = dict(map(tuple, r["municipios"]))
+        self.assertEqual((por[ARACAJU7], por[ESTANCIA7]), ([2], [0]))
+        self.assertEqual(r["naoIdentificado"], [-1])
+        with self.assertRaisesRegex(ErroCaged, "aprovou 2"):
+            caged.retrato_anos(self.db, [2020], codigos, {"2020": {"saldo": 2}})
+
+    def test_todo_ano_leva_os_ajustes_ate_o_dezembro_do_ultimo(self):
+        # Decisão de 16/10/2026: o FOR de 2021 que declara maio/2020 entra
+        # em 2020, como na série do país da apresentação mais recente.
+        self.encher_2020()
+        for m in caged.meses_do_ano(2021):
+            for t in caged.tipos_do_mes(m):
+                if (t, m) != ("MOV", "202101"):
+                    self.gravar(t, m, *([linha("202005", ARACAJU6, 1)]
+                                        if (t, m) == ("FOR", "202106") else []))
+        self.gravar("MOV", "202201")
+        codigos = [ARACAJU7, *range(1100000, 1150000, 10)]
+        r = caged.retrato_anos(self.db, [2020, 2021], codigos,
+                               {"2020": {"saldo": 1}, "2021": {"saldo": 0}})
+        self.assertEqual(dict(map(tuple, r["municipios"]))[ARACAJU7], [1, 0])
+        self.assertEqual(r["ajustesAte"], "202112")
+
+    def test_ano_sem_apresentacao_que_confira_nao_exporta(self):
+        self.encher_2020()
+        pasta = caged.pastas_de_dezembro(2020)[0]
+        args = construir_parser().parse_args(
+            ["caged-anos-exportar", "--banco-caged", str(Path(self.tmp.name) / "c.db"),
+             "--saida", str(Path(self.tmp.name) / "a.json")])
+        erro = io.StringIO()
+        with redirect_stdout(io.StringIO()), redirect_stderr(erro):
+            codigo = caged_anos_exportar(
+                args, pagina=lambda url: f'<a href="{pasta}/apresentacao.pdf">',
+                baixar=lambda url, destino: None,
+                texto_do_pdf=lambda p: UF_2023)     # o PDF é de outro ano
+        self.assertEqual(codigo, 1)
+        self.assertIn("--apresentacao 2020=URL", erro.getvalue())
+        self.assertFalse((Path(self.tmp.name) / "a.json").exists())
+
+    def test_ano_que_diverge_da_apresentacao_nao_exporta(self):
+        self.encher_2020()          # banco de zeros contra a tabela real de 2020
+        args = construir_parser().parse_args(
+            ["caged-anos-exportar", "--banco-caged", str(Path(self.tmp.name) / "c.db"),
+             "--saida", str(Path(self.tmp.name) / "a.json"),
+             "--apresentacao", "2020=https://exemplo/apresentacao.pdf"])
+        erro = io.StringIO()
+        with redirect_stdout(io.StringIO()), redirect_stderr(erro):
+            codigo = caged_anos_exportar(args, baixar=lambda url, destino: None,
+                                         texto_do_pdf=lambda p: UF_2020)
+        self.assertEqual(codigo, 1)
+        self.assertIn("2020 DIVERGE", erro.getvalue())
+
+
+class TestTravaAnos(unittest.TestCase):
+    def base(self, **troca) -> dict:
+        r = {"anos": [2020, 2021], "coletadoEm": "a",
+             "municipios": [[1, [0, 0]], [2, [0, 0]]]}
+        r.update(troca)
+        return r
+
+    def test_menos_anos_e_recusado(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            p = Path(tmp) / "a.json"
+            caged.gravar_anos(self.base(), p)
+            with self.assertRaises(ErroCaged):
+                caged.gravar_anos(self.base(anos=[2021]), p)
+
+    def test_so_o_carimbo_mudou_nao_reescreve(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            p = Path(tmp) / "a.json"
+            self.assertEqual(caged.gravar_anos(self.base(), p), "gravado")
+            self.assertEqual(caged.gravar_anos(self.base(coletadoEm="b"), p),
+                             "inalterado")
 
 
 if __name__ == "__main__":

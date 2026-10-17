@@ -9,7 +9,7 @@ import {
   APRESENTACAO, caminhoDaSerie, descricaoDaSerie, FONTE_COM_ARTIGO, inicioPeriodo, porTema,
   rotuloPeriodo, tituloDaSerie, type SerieBrasil,
 } from "../../../lib/brasil";
-import { catalogoDe, trilha, LICENCA_DADOS } from "../../../lib/jsonld";
+import { catalogoDe, licencaDaSerie, trilha } from "../../../lib/jsonld";
 import { cartaoSocial, lerBrasil, SITE } from "../../../lib/servidor";
 import { CAMINHO, NotaFaixas, Presidencia, TITULO } from "../comum";
 import estilos from "../brasil.module.css";
@@ -71,7 +71,7 @@ export default async function Pagina({ params }: Props) {
     name: `${nome}: Brasil`,
     description: descricaoDaSerie(s),
     url: `${SITE}${caminho}`,
-    license: LICENCA_DADOS,
+    license: licencaDaSerie(s),
     isAccessibleForFree: true,
     isBasedOn: [s.origem],
     inLanguage: "pt-BR",

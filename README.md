@@ -6,6 +6,11 @@ Dados abertos de **todos os 5.571 municípios brasileiros**: coletados das APIs
 públicas oficiais do IBGE, guardados com a procedência completa, cruzados com
 as declarações fiscais dos municípios ao Tesouro Nacional e com os resultados
 escolares do INEP, e publicados como **uma página estática por município**.
+Também as 27 páginas de estado, o emprego formal do Novo Caged, a fila e os
+benefícios do INSS, as emendas parlamentares e a página
+[`/brasil/`](https://www.numerospublicos.com.br/brasil/): as séries do país em
+cinco temas (atividade, preços, contas públicas, setor externo, sociedade),
+cada uma com a sua página e quem ocupava a Presidência em cada período.
 
 Começou como um observatório regional do Nordeste (1.794 municípios); o
 recorte nacional sempre foi um parâmetro, então a expansão foi um comando só,
@@ -109,7 +114,7 @@ distância entre os dois casos é de centenas de vezes.
 python -m unittest discover -s tests -t .
 ```
 
-100 testes, **sem rede e sem espera de verdade**: o transporte HTTP e o
+A suíte roda **sem rede e sem espera de verdade**: o transporte HTTP e o
 relógio são injetados. As fixtures em `tests/fixtures/` são respostas reais
 capturadas da API do IBGE: os 75 municípios de Sergipe, a população do Censo
 2022 do Rio Grande do Norte e o PIB de 2021 de Sergipe.
@@ -206,9 +211,9 @@ em tempo de execução. O build lê o retrato JSON do disco e emite HTML que já
 os números. As 5.571 páginas de município e as 27 de estado são geradas em
 **40 segundos**.
 
-O único componente de cliente é a tabela de municípios, porque buscar e
-ordenar 5.571 linhas é a única coisa aqui que precisa de verdade de
-JavaScript.
+Desde 15/10/2026 nenhuma página tem componente de cliente: a tabela de
+municípios da capa, a única que tinha, sai pronta do servidor e filtra com
+`public/capa.js`, um script pequeno sem React, como a busca do cabeçalho.
 
 ### Conferindo o build
 
@@ -404,6 +409,14 @@ Os números do emprego formal vêm dos microdados do Novo Caged do Ministério d
 Trabalho, por FTP público (`ftp.mtps.gov.br`), conferidos contra o sumário
 executivo mensal publicado no gov.br.
 
+O Ideb vem das planilhas do INEP, pelo motor
+[educacao-inep](https://github.com/peterwkdev-creator/educacao-inep); a fila e
+os benefícios do INSS, do portal de dados abertos dele
+(`dadosabertos.inss.gov.br`); as emendas parlamentares, do download de dados
+do Portal da Transparência. As séries de `/brasil/` vêm do Banco Central
+(`api.bcb.gov.br`), do IBGE (SIDRA), do Ipea (Ipeadata), do INPE (PRODES) e do
+Ministério da Saúde, cada ponto conferido por uma segunda leitura da fonte.
+
 Os números fiscais vêm do SICONFI (`https://apidatalake.tesouro.gov.br`),
 igualmente público e igualmente sem token. **O percentual da receita
 comprometido com pessoal nunca é recalculado aqui**: ele chega calculado e
@@ -424,15 +437,18 @@ description is in Portuguese above; this is the short version.
   (`https://servicodados.ibge.gov.br`), municipal fiscal filings from
   SICONFI (`https://apidatalake.tesouro.gov.br`, through
   [painel-fiscal](https://github.com/peterwkdev-creator/painel-fiscal)),
-  school results from INEP, INSS open data and the Ministry of Labour's Novo
-  Caged microdata (`ftp.mtps.gov.br`).
+  school results from INEP, INSS open data, the Ministry of Labour's Novo
+  Caged microdata (`ftp.mtps.gov.br`) and parliamentary amendments from the
+  Transparency Portal. The `/brasil/` page groups national series (Central
+  Bank, IBGE, Ipea, INPE, Ministry of Health) in five themes, each with its
+  own page.
 - **Checked against the source, not against itself:** the sum of all
   municipalities against IBGE's own national total (2022 Census population:
   exact); the Caged month against the Ministry's executive summary, with no
   flag to skip it. Missing is never zero, provenance is a column, and
   revisions never overwrite.
 - **Run and test:** Python 3.10+, standard library only
-  (`python -m numeros_publicos`, 100 tests with no network); the panel is
+  (`python -m numeros_publicos`, tests with no network); the panel is
   Next.js 16 + React 19 + TypeScript, fully static, served by Cloudflare
   Pages.
 - **Every number is downloadable**, as `.xlsx` and `.csv`, for the whole

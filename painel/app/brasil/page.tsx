@@ -8,7 +8,7 @@ import {
   APRESENTACAO, dominio, fontesPorExtenso, inicioPeriodo, porTema, rotuloPeriodo,
   type SnapshotBrasil,
 } from "../../lib/brasil";
-import { catalogoDe, trilha, LICENCA_DADOS } from "../../lib/jsonld";
+import { catalogoDe, licencaDaSerie, trilha } from "../../lib/jsonld";
 import { cartaoSocial, lerBrasil, SITE } from "../../lib/servidor";
 import { CAMINHO, NotaFaixas, Presidencia, TITULO } from "./comum";
 import estilos from "./brasil.module.css";
@@ -60,7 +60,10 @@ export default async function Pagina() {
       "cada uma conferida ponto a ponto por uma segunda leitura da fonte, " +
       "com as datas de quem ocupava a Presidência da República.",
     url: `${SITE}${CAMINHO}`,
-    license: LICENCA_DADOS,
+    // Uma licença só se todas as séries a têm: com o PRODES (CC BY-SA) ao
+    // lado do SGS (ODbL), o índice não declara uma, e cada série declara a sua.
+    ...(new Set(b.series.map(licencaDaSerie)).size === 1
+      ? { license: licencaDaSerie(b.series[0]!) } : {}),
     isAccessibleForFree: true,
     isBasedOn: b.series.map((s) => s.origem),
     inLanguage: "pt-BR",

@@ -466,3 +466,16 @@ test("neutralidade: a leitura é escrita, sem verde nem vermelho", () => {
   // As variáveis de cor de juízo do site não entram no gráfico do país.
   assert.ok(!/var\(--(positivo|alerta|atencao)\)/.test(CSS_COMPONENTE));
 });
+
+test("licença: cada série declara a da fonte quando ela é share-alike", async () => {
+  // O PRODES (INPE) vem sob CC BY-SA 4.0, que não se troca pela ODbL; até
+  // 16/10/2026 as 15 séries declaravam ODbL no JSON-LD.
+  const { licencaDaSerie, LICENCA_BY_SA, LICENCA_DADOS } = await import("../lib/jsonld.ts");
+  for (const s of real.series) {
+    assert.equal(licencaDaSerie(s), s.fonte === "INPE" ? LICENCA_BY_SA : LICENCA_DADOS, s.codigo);
+  }
+  assert.ok(real.series.some((s) => s.fonte === "INPE"), "a série do INPE sumiu do dado?");
+  assert.match(PAGINA, /license: licencaDaSerie\(s\)/);
+  // O índice mistura as duas: não declara uma só.
+  assert.doesNotMatch(INDICE, /license: LICENCA_DADOS/);
+});

@@ -50,6 +50,19 @@ export const NOME_CATALOGO = "Números Públicos";
  */
 export const LICENCA_DADOS = "https://opendatacommons.org/licenses/odbl/1-0/";
 
+/**
+ * A licença de uma série de `/brasil/`. O PRODES do INPE vem sob CC BY-SA 4.0
+ * (conferido em 16/10/2026 em terrabrasilis.dpi.inpe.br, "Citações e licença
+ * de uso"), que também é *share-alike* e não se troca pela ODbL: a série do
+ * desmatamento declara a dela. As outras entram na ODbL da base (o Banco
+ * Central publica o SGS sob ODbL; IBGE, Ipea e SIM pela regra geral). Até
+ * 16/10 as 15 declaravam ODbL.
+ */
+export const LICENCA_BY_SA = "https://creativecommons.org/licenses/by-sa/4.0/";
+export function licencaDaSerie(s: { fonte: string }): string {
+  return s.fonte === "INPE" ? LICENCA_BY_SA : LICENCA_DADOS;
+}
+
 /** A licença do CÓDIGO do site e do motor de ingestão. */
 export const LICENCA_CODIGO = "https://www.gnu.org/licenses/agpl-3.0.html";
 

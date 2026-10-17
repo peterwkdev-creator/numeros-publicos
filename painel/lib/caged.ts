@@ -246,3 +246,39 @@ export function rankingCaged(c: SnapshotCaged, identidade: Snapshot): RankingCag
     porMil,
   };
 }
+
+/**
+ * A série anual do Novo Caged por município (`dados/caged-anos.json`), gerada
+ * por `numeros-publicos caged-anos-exportar` a partir do `caged.db` inteiro.
+ * Todo ano leva os ajustes declarados até `ajustesAte` (o dezembro do último
+ * ano fechado): por isso o número de um ano muda quando chega um ano novo.
+ */
+export type SnapshotCagedAnos = {
+  fonte: string;
+  origem: string;
+  anos: number[];
+  ajustesAte: string;
+  coletadoEm: string;
+  /** Por ano: a apresentação do MTE e o saldo do país conferido nela. */
+  conferencia: Record<string, { apresentacao: string; saldo: number; numerosConferidos?: number }>;
+  /** O saldo sem município identificado, por ano, na ordem de `anos`. */
+  naoIdentificado: number[];
+  /** `[código IBGE (7), [saldo por ano, na ordem de `anos`]]`. */
+  municipios: [number, number[]][];
+};
+
+export type CagedAno = { ano: number; saldo: number };
+
+const cacheIndiceAnos = new WeakMap<object, Map<number, number[]>>();
+
+/** O saldo de cada ano fechado de um município, ou `null` se o código não está no arquivo. */
+export function cagedAnosDe(c: SnapshotCagedAnos, codigo: number): CagedAno[] | null {
+  let indice = cacheIndiceAnos.get(c.municipios);
+  if (!indice) {
+    indice = new Map(c.municipios.map((l) => [l[0], l[1]]));
+    cacheIndiceAnos.set(c.municipios, indice);
+  }
+  const saldos = indice.get(codigo);
+  if (!saldos) return null;
+  return c.anos.map((ano, i) => ({ ano, saldo: saldos[i]! }));
+}

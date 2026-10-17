@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { nomeCompetencia } from "../../lib/caged";
 import type { Contexto } from "./contexto";
 
 /**
@@ -6,7 +7,7 @@ import type { Contexto } from "./contexto";
  * Extraído de `page.tsx` em 16/10/2026 (item 10 da modernização): o HTML é o mesmo, byte a byte.
  */
 export default function SecaoCaged({ ctx }: { ctx: Contexto }) {
-  const { estilos } = ctx;
+  const { cagedAnos, estilos } = ctx;
   return (
     <section className={estilos.bloco} id="caged">
       <h2>Emprego com carteira: o Novo Caged</h2>
@@ -14,7 +15,7 @@ export default function SecaoCaged({ ctx }: { ctx: Contexto }) {
         O <strong>Novo Caged</strong>, do Ministério do Trabalho e Emprego,
         registra cada contratação e cada desligamento com carteira assinada,
         mês a mês, no município da empresa. A página mostra os últimos 12
-        meses.
+        meses e o saldo de cada ano fechado desde {cagedAnos.anos[0]}.
       </p>
       <ul className={estilos.lista}>
         <li>
@@ -31,6 +32,14 @@ export default function SecaoCaged({ ctx }: { ctx: Contexto }) {
           <strong>Um mês sozinho engana.</strong> Safra, comércio de fim de
           ano e obra pública mudam o saldo de um mês para o outro; os 12
           meses juntos dizem mais.
+        </li>
+        <li>
+          <strong>Ano fechado</strong> é de janeiro a dezembro de um ano que
+          já terminou. O Ministério aceita declaração fora do prazo e exclusão
+          meses depois, e cada ano da página leva as que chegaram até{" "}
+          {nomeCompetencia(cagedAnos.ajustesAte)}. Por isso o saldo de um ano
+          muda a cada dezembro fechado, e pode ser diferente do divulgado no
+          fechamento dele.
         </li>
       </ul>
       <p>

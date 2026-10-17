@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { cartaoSocial, lerFiscal, lerIdeb, lerInss, lerSnapshot, SITE } from "../../lib/servidor";
+import { cartaoSocial, lerCagedAnos, lerFiscal, lerIdeb, lerInss, lerSnapshot, SITE } from "../../lib/servidor";
 // A ORDEM destes imports de CSS é a que o `page.tsx` tinha antes da divisão em
 // seções (item 10 da modernização, 16/10/2026): o bundler decide em que chunk
 // cai cada CSS Module pela ordem em que são avaliados. O import sem nome só a
@@ -78,12 +78,12 @@ export const metadata: Metadata = {
 };
 
 export default async function PaginaAjuda() {
-  const [snapshot, fiscal, ideb, inss] = await Promise.all([
-    lerSnapshot(), lerFiscal(), lerIdeb("anos_iniciais"), lerInss(),
+  const [snapshot, fiscal, ideb, inss, cagedAnos] = await Promise.all([
+    lerSnapshot(), lerFiscal(), lerIdeb("anos_iniciais"), lerInss(), lerCagedAnos(),
   ]);
   const idebFinais = await lerIdeb("anos_finais");
   const ctx: Contexto = {
-    ...montarContexto({ snapshot, fiscal, ideb, idebFinais, inss }),
+    ...montarContexto({ snapshot, fiscal, ideb, idebFinais, inss, cagedAnos }),
     estilos,
   };
 

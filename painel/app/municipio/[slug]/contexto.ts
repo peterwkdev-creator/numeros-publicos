@@ -6,7 +6,7 @@ import { posicaoEntre, posicaoNoEstado } from "../../../lib/posicao";
 import { compararFuncoes, DESLOCAMENTO_MINIMO, funcoesRecentesDe, INSTALADO_EM, interrupcoes, rclDesmentida, receitaDe, receitaRecenteDe, saltoSobreAHistoria, nomeQuadrimestre, saudeDe, serieDePessoal, variacao, atualDeFuncoes, serieFuncoesDe } from "../../../lib/fiscal";
 import { medianaGeral, trajetoriaDe } from "../../../lib/ideb";
 import { linhasDaUf, medianasCache, medidasDe, taxasCache } from "../../../lib/censo";
-import { cagedDe } from "../../../lib/caged";
+import { cagedAnosDe, cagedDe } from "../../../lib/caged";
 import { EMPRESAS, medianaDaColunaCache, PARES_TRABALHO, RENDA_CENSO } from "../../../lib/trabalho";
 import { emendasDe, porHabitante, porHabitanteDaUf } from "../../../lib/emendas";
 import type { Dados, Municipio } from "./apoio";
@@ -17,7 +17,7 @@ import type Estilos from "./municipio.module.css";
  * Extraído de `page.tsx` em 15/10/2026 (item 19 da revisão de 11/10/2026): o HTML é o mesmo, byte a byte.
  */
 export function montarContexto(dados: Dados, m: Municipio) {
-  const { snapshot, fiscal, ideb, idebFinais, caged, emendas, regioes, municipios } = dados;
+  const { snapshot, fiscal, ideb, idebFinais, caged, cagedAnos, emendas, regioes, municipios } = dados;
   // Os mesmos argumentos de `app/municipio/sitemap.ts`.
   const atualizado = atualizadoEm(snapshot, fiscal, caged.coletadoEm);
 
@@ -83,6 +83,8 @@ export function montarContexto(dados: Dados, m: Municipio) {
   // O Novo Caged: 12 meses, com os ajustes. `null` só se o município não
   // estiver no arquivo; município sem movimento vem com ZEROS, e é mostrado.
   const cagedM = cagedDe(caged, m.codigo);
+  // A série por ano fechado (desde 2020), com os ajustes até o último dezembro.
+  const cagedAnosM = cagedAnosDe(cagedAnos, m.codigo);
   // As emendas: `null` só se o município não estiver no arquivo (estão os
   // 5.571); sem pagamento, a seção diz isso, e não mostra zero.
   const emendasM = emendasDe(emendas, m.codigo);
@@ -269,7 +271,7 @@ export function montarContexto(dados: Dados, m: Municipio) {
     .slice(0, 5);
 
   return {
-    snapshot, fiscal, ideb, caged, emendas, m, atualizado, uf, regiao, pelaRegiao, vizinhos, medidas, medianas, serieFuncoes, taxasPais, medidasTrabalho, medianasTrabalho, taxasTrabalho, renda, medianaRenda, salario, medianaSalario, comUf, medianasUf, medianasTrabalhoUf, medianaRendaUf, medianaSalarioUf, legendaMedianas, anoEmpresas, temCensoTrabalho, temEmpresas, cagedM, emendasM, pop, estimada, pibReais, perCapita, emendasPh, posEmendas, posPop, posPerCapita, naoEntregaramNoEstado, consultadosNoEstado, f, instaladoEm, receitaContraRcl, saltoRcl, posicao, quadrimestre, periodoRgf, serie, usaveis, condenado, delta, finalCondenado, vazios, semestral, umPeriodo, saude, funcoes, receita, bimestre, exercicioColetado, atrasado, maior, iniciais, finais, medianaIniciais, medianaFinais, educacao, nacional, comparacao, mudancas,
+    snapshot, fiscal, ideb, caged, cagedAnos, emendas, m, atualizado, uf, regiao, pelaRegiao, vizinhos, medidas, medianas, serieFuncoes, taxasPais, medidasTrabalho, medianasTrabalho, taxasTrabalho, renda, medianaRenda, salario, medianaSalario, comUf, medianasUf, medianasTrabalhoUf, medianaRendaUf, medianaSalarioUf, legendaMedianas, anoEmpresas, temCensoTrabalho, temEmpresas, cagedM, cagedAnosM, emendasM, pop, estimada, pibReais, perCapita, emendasPh, posEmendas, posPop, posPerCapita, naoEntregaramNoEstado, consultadosNoEstado, f, instaladoEm, receitaContraRcl, saltoRcl, posicao, quadrimestre, periodoRgf, serie, usaveis, condenado, delta, finalCondenado, vazios, semestral, umPeriodo, saude, funcoes, receita, bimestre, exercicioColetado, atrasado, maior, iniciais, finais, medianaIniciais, medianaFinais, educacao, nacional, comparacao, mudancas,
   };
 }
 

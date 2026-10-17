@@ -5,7 +5,7 @@ import type { Snapshot } from "./dados";
 import type { SnapshotFiscal } from "./fiscal";
 import type { SnapshotIdeb } from "./ideb";
 import type { SnapshotInss } from "./inss";
-import type { SnapshotCaged } from "./caged";
+import type { SnapshotCaged, SnapshotCagedAnos } from "./caged";
 import type { SnapshotEmendas } from "./emendas";
 import type { SnapshotRegioes } from "./estado";
 import type { SnapshotBrasil } from "./brasil";
@@ -100,6 +100,19 @@ export async function lerCaged(): Promise<SnapshotCaged> {
   const arquivo = path.join(process.cwd(), "dados", "caged.json");
   cacheCaged = JSON.parse(await readFile(arquivo, "utf-8")) as SnapshotCaged;
   return cacheCaged;
+}
+
+/**
+ * Lê `dados/caged-anos.json` (a série anual do Novo Caged por município) uma
+ * vez por build. Mesmo arranjo de `lerCaged`.
+ */
+let cacheCagedAnos: SnapshotCagedAnos | null = null;
+
+export async function lerCagedAnos(): Promise<SnapshotCagedAnos> {
+  if (cacheCagedAnos) return cacheCagedAnos;
+  const arquivo = path.join(process.cwd(), "dados", "caged-anos.json");
+  cacheCagedAnos = JSON.parse(await readFile(arquivo, "utf-8")) as SnapshotCagedAnos;
+  return cacheCagedAnos;
 }
 
 /**

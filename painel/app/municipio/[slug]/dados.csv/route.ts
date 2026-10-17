@@ -5,9 +5,9 @@ import {
 } from "../../../../lib/fiscal";
 import { trajetoriaDe } from "../../../../lib/ideb";
 import {
-  lerCaged, lerEmendas, lerFiscal, lerIdeb, lerSnapshot,
+  lerCaged, lerCagedAnos, lerEmendas, lerFiscal, lerIdeb, lerSnapshot,
 } from "../../../../lib/servidor";
-import { cagedDe } from "../../../../lib/caged";
+import { cagedAnosDe, cagedDe } from "../../../../lib/caged";
 import { emendasDe, ULTIMO_ANO_VIA_BB } from "../../../../lib/emendas";
 import { rotuloDownload } from "../../../../lib/censo";
 
@@ -34,9 +34,9 @@ export async function GET(
   { params }: { params: Promise<{ slug: string }> },
 ) {
   const { slug } = await params;
-  const [snapshot, fiscal, ideb, idebFinais, caged, emendas] = await Promise.all([
+  const [snapshot, fiscal, ideb, idebFinais, caged, cagedAnos, emendas] = await Promise.all([
     lerSnapshot(), lerFiscal(), lerIdeb("anos_iniciais"), lerIdeb("anos_finais"),
-    lerCaged(), lerEmendas(),
+    lerCaged(), lerCagedAnos(), lerEmendas(),
   ]);
   const m = expandir(snapshot).find((x) => slugDe(x.nome, x.uf) === slug);
   if (!m) return new Response("não encontrado", { status: 404 });
@@ -185,6 +185,17 @@ export async function GET(
       quando, mes.admissoes, "vínculos", "MTE", caged.coletadoEm ?? ""]);
     linhas.push([...comum, "Novo Caged — desligamentos (com ajustes)",
       quando, mes.desligamentos, "vínculos", "MTE", caged.coletadoEm ?? ""]);
+  }
+
+  // O Novo Caged por ano fechado, desde 2020: aqui só o saldo, que é o que o
+  // arquivo anual guarda. O nome do indicador leva a data dos ajustes, porque
+  // o número de um ano muda a cada dezembro fechado e o arquivo viaja sem a
+  // página.
+  const ate = `${cagedAnos.ajustesAte.slice(0, 4)}-${cagedAnos.ajustesAte.slice(4)}`;
+  for (const a of cagedAnosDe(cagedAnos, m.codigo) ?? []) {
+    linhas.push([...comum,
+      `Novo Caged — saldo do ano, admissões menos desligamentos (com ajustes até ${ate})`,
+      String(a.ano), a.saldo, "vínculos", "MTE", cagedAnos.coletadoEm ?? ""]);
   }
 
   // As emendas parlamentares, ano a ano desde 2015: a série que a página NÃO

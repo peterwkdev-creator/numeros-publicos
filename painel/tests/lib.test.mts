@@ -49,8 +49,9 @@ import {
   EMPRESAS, medianaDaColuna, PARES_TRABALHO, RENDA_CENSO,
 } from "../lib/trabalho.ts";
 import {
-  cagedDe, cagedDeVarios, comSinal, competenciaCurta, contagem, nomeCompetencia,
+  cagedAnosDe, cagedDe, cagedDeVarios, comSinal, competenciaCurta, contagem, nomeCompetencia,
   POPULACAO_MINIMA_POR_MIL, rankingCaged, totalDoPais, type SnapshotCaged,
+  type SnapshotCagedAnos,
 } from "../lib/caged.ts";
 import {
   emendasDe, emendasDeVarios, mesDeCorte, porHabitante, porHabitanteDaUf, rotuloDoTipo, SEM_PREFEITURA,
@@ -2755,6 +2756,49 @@ test("cagedDe soma a janela, e município sem movimento é ZERO", () => {
   const parado = cagedDe(c, 2802106)!;
   assert.equal(parado.saldo, 0);             // zero, e não null
   assert.equal(cagedDe(c, 1), null);
+});
+
+const CAGED_ANOS = (): SnapshotCagedAnos => JSON.parse(
+  fs.readFileSync(new URL("../dados/caged-anos.json", import.meta.url), "utf-8"));
+
+test("a soma dos municípios do caged-anos.json É o saldo oficial de cada ano", () => {
+  // O `caged-anos-exportar` só grava o arquivo depois de conferir cada ano do
+  // banco contra a apresentação do MTE. Este teste confere o ARQUIVO: se a
+  // exportação perdesse ou duplicasse um município, um ano deixaria de bater.
+  const c = CAGED_ANOS();
+  assert.ok(c.anos.length >= 2);
+  assert.equal(c.ajustesAte, `${c.anos.at(-1)}12`);
+  assert.equal(c.naoIdentificado.length, c.anos.length);
+  c.anos.forEach((ano, i) => {
+    let soma = c.naoIdentificado[i]!;
+    for (const l of c.municipios) {
+      assert.equal(l[1].length, c.anos.length, `${l[0]} com ${l[1].length} anos`);
+      soma += l[1][i]!;
+    }
+    assert.equal(soma, c.conferencia[String(ano)]!.saldo, `saldo de ${ano}`);
+  });
+});
+
+test("o caged-anos.json tem os mesmos municípios do snapshot do IBGE", () => {
+  const c = CAGED_ANOS();
+  const snapshot = JSON.parse(
+    fs.readFileSync(new URL("../dados/snapshot.json", import.meta.url), "utf-8"));
+  const ibge = new Set(snapshot.municipios.map((l: number[]) => l[0]));
+  const anos = new Set(c.municipios.map((l) => l[0]));
+  assert.equal(anos.size, ibge.size);
+  for (const x of anos) assert.ok(ibge.has(x), `${x} não está no IBGE`);
+});
+
+test("cagedAnosDe põe cada saldo no seu ano, e município sem movimento é ZERO", () => {
+  const c: SnapshotCagedAnos = {
+    ...CAGED_ANOS(),
+    anos: [2024, 2025],
+    municipios: [[2800308, [-5, 12]], [2802106, [0, 0]]],
+  };
+  assert.deepEqual(cagedAnosDe(c, 2800308),
+                   [{ ano: 2024, saldo: -5 }, { ano: 2025, saldo: 12 }]);
+  assert.deepEqual(cagedAnosDe(c, 2802106)!.map((a) => a.saldo), [0, 0]);
+  assert.equal(cagedAnosDe(c, 1), null);
 });
 
 test("cagedDeVarios: os 27 estados mais o não identificado dão o país", () => {

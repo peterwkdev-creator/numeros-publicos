@@ -6,6 +6,7 @@ import { EMPRESAS } from "../../../lib/trabalho";
 import TabelaCenso from "../../componentes/tabela-censo";
 import TabelaValores from "../../componentes/tabela-valores";
 import TabelaCaged from "../../componentes/tabela-caged";
+import CagedAnosSvg from "../../componentes/caged-anos-svg";
 import Termo from "../../componentes/termo";
 import type { Contexto } from "./contexto";
 
@@ -14,8 +15,8 @@ import type { Contexto } from "./contexto";
  * Extraído de `page.tsx` em 15/10/2026 (item 19 da revisão de 11/10/2026): o HTML é o mesmo, byte a byte.
  */
 export default function SecaoTrabalho({ c }: { c: Contexto }) {
-  const { caged, m, medidasTrabalho, medianasTrabalho, taxasTrabalho, renda, medianaRenda, salario, medianaSalario, medianasTrabalhoUf, medianaRendaUf, medianaSalarioUf, legendaMedianas, anoEmpresas, temCensoTrabalho, temEmpresas, cagedM , estilos } = c;
-  if (!(temCensoTrabalho || temEmpresas || cagedM !== null)) return null;
+  const { caged, m, medidasTrabalho, medianasTrabalho, taxasTrabalho, renda, medianaRenda, salario, medianaSalario, medianasTrabalhoUf, medianaRendaUf, medianaSalarioUf, legendaMedianas, anoEmpresas, temCensoTrabalho, temEmpresas, cagedM, cagedAnos, cagedAnosM, estilos } = c;
+  if (!(temCensoTrabalho || temEmpresas || cagedM !== null || cagedAnosM !== null)) return null;
   return (
     <section className={estilos.texto} id="trabalho-e-renda">
       <h2>Trabalho e renda em {m.nome}</h2>
@@ -141,6 +142,65 @@ export default function SecaoTrabalho({ c }: { c: Contexto }) {
                 com o sumário executivo, e um teste cobra que a soma dos
                 municípios dá este número. */}
             <a href={caged.conferencia.sumario}>Sumário executivo do MTE</a>.
+          </p>
+        </>
+      )}
+      {cagedAnosM && (
+        <>
+          <h3 className={estilos.subtitulo}>
+            Saldo do emprego com carteira por ano, de {cagedAnos.anos[0]} a{" "}
+            {cagedAnos.anos[cagedAnos.anos.length - 1]}
+          </h3>
+          <p>
+            Cada barra é um ano inteiro, de janeiro a dezembro: admissões
+            menos desligamentos, no mesmo <Termo chave="caged">Novo Caged</Termo>.
+            Todos os anos incluem as declarações entregues fora do prazo e as
+            exclusões feitas até {nomeCompetencia(cagedAnos.ajustesAte)}.
+          </p>
+          <div className={estilos.grafico}>
+            <CagedAnosSvg anos={cagedAnosM} municipio={`${m.nome} (${m.uf})`} />
+          </div>
+          <div className={`${estilos.rolagem} rola-x`}>
+            <table className={estilos.serie}>
+              <caption className={estilos.legenda}>
+                {m.nome} ({m.uf}) no Novo Caged, saldo por ano
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Ano</th>
+                  <th scope="col" className={estilos.num}>Saldo (vagas)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {cagedAnosM.map((a) => (
+                  <tr key={a.ano}>
+                    <th scope="row">{a.ano}</th>
+                    <td className={`${estilos.num} tabular`}>{comSinal(a.saldo)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className={estilos.ressalva}>
+            O número de um ano muda quando chegam ajustes novos, e
+            pode ser diferente do divulgado no fechamento daquele ano: a cada
+            dezembro fechado, a série inteira é refeita. No país, os mesmos
+            anos vão de{" "}
+            <strong>{comSinal(cagedAnos.conferencia[String(cagedAnos.anos[0])]!.saldo)}</strong>{" "}
+            vagas em {cagedAnos.anos[0]} a{" "}
+            <strong>
+              {comSinal(cagedAnos.conferencia[String(cagedAnos.anos[cagedAnos.anos.length - 1])]!.saldo)}
+            </strong>{" "}
+            em {cagedAnos.anos[cagedAnos.anos.length - 1]}, os números que o
+            Ministério do Trabalho publica com os mesmos ajustes e que esta
+            base reproduz ano a ano.{" "}
+            {/* Do dado conferido, e não do teclado: `caged-anos-exportar` só
+                grava o arquivo quando cada ano bate com a apresentação do
+                MTE, e um teste cobra que a soma dos municípios dá estes
+                números. */}
+            <a href={cagedAnos.conferencia[String(cagedAnos.anos[cagedAnos.anos.length - 1])]!.apresentacao}>
+              Apresentação do MTE de {nomeCompetencia(cagedAnos.ajustesAte)}
+            </a>.
           </p>
         </>
       )}

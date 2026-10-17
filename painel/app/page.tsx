@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import {
-  br, dataLegivel, INDICADORES_DA_CAPA, projetar, rotuloCurto,
+  br, dataLegivel, dataPorExtenso, INDICADORES_DA_CAPA, projetar, rotuloCurto,
   unidadeDaColuna, valorDoIndicador,
 } from "@/lib/dados";
 import { slugUf } from "@/lib/estado";
@@ -17,9 +17,11 @@ import TabelaCenso from "./componentes/tabela-censo";
 import ComposicaoBarras from "./componentes/composicao-barras";
 import RoscaFuncoes from "./componentes/rosca-funcoes";
 import {
-  coberturaTemporal, FONTES_DA_BASE, idCatalogo, palavrasChave, VARIAVEIS_DA_BASE, LICENCA_DADOS,
+  coberturaTemporal, FONTES_DA_BASE, FONTES_DO_SITE, idCatalogo, palavrasChave, VARIAVEIS_DA_BASE, LICENCA_DADOS,
+  jsonLdHtml,
 } from "@/lib/jsonld";
 import { lerBrasil, lerFiscal, lerIdeb, lerSnapshot, SITE } from "@/lib/servidor";
+import { atualizadoEm } from "@/lib/sitemap";
 import { porTema } from "@/lib/brasil";
 import { Municipios } from "./municipios";
 import Termo from "./componentes/termo";
@@ -63,12 +65,6 @@ const EXEMPLOS = [
   "alto-paraiso-de-goias-go", // cidade pequena, Centro-Oeste
 ];
 
-/**
- * As fontes oficiais de que o site lê, na ordem em que aparecem nas páginas.
- * Só os nomes: cada página diz a tabela e o endereço de cada número.
- */
-const FONTES_DO_SITE = "IBGE, Tesouro Nacional (SICONFI), INEP, INSS e Novo Caged";
-
 export default async function Pagina() {
   const snapshot = await lerSnapshot();
   // A capa mostra os SEUS indicadores, não todos os do snapshot: com os dez do
@@ -85,13 +81,11 @@ export default async function Pagina() {
   const listaDeTemas = temasDoBrasil
     .map((g) => g.nome.charAt(0).toLowerCase() + g.nome.slice(1))
     .join("; ");
-  // Sobre TODOS os indicadores, e não sobre os da capa — de propósito. A frase
-  // diz quando o CONJUNTO foi coletado, e é ele que alimenta os downloads;
-  // datá-la pelos três cartões faria o site declarar dado mais velho do que
-  // tem. Trocar para `capa` parece uma correção e não é.
-  const coletadoEm =
-    snapshot.indicadores.map((i) => i.coletadoEm).filter(Boolean).sort().at(-1) ??
-    snapshot.geradoEm;
+  // A mesma data que o sitemap anuncia para a capa e que as páginas de estado
+  // mostram: a mais recente entre o IBGE e o fiscal. Até 17/10/2026 a capa
+  // dizia "Última coleta" com a data do IBGE (29/09) enquanto o sitemap
+  // anunciava 15/10: duas datas para a mesma página.
+  const atualizado = atualizadoEm(snapshot, fiscal);
 
   // JSON-LD da capa. As páginas de município e de estado já declaravam
   // `Dataset`; a capa, que é a raiz do site e a que o Google encontra primeiro,
@@ -188,7 +182,7 @@ export default async function Pagina() {
     <main className={s.pagina} id="conteudo">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdHtml(jsonLd) }}
       />
       {/* Herói e aviso lado a lado em tela larga. Antes o aviso ficava abaixo,
           e o herói — limitado a 60ch, que é o certo para leitura — deixava
@@ -258,9 +252,9 @@ export default async function Pagina() {
           <dd>{FONTES_DO_SITE}</dd>
         </div>
         <div>
-          <dt>Última coleta</dt>
+          <dt>Dados atualizados em</dt>
           <dd>
-            <time dateTime={coletadoEm}>{dataLegivel(coletadoEm)}</time>
+            <time dateTime={atualizado.toISOString()}>{dataPorExtenso(atualizado)}</time>
           </dd>
         </div>
       </dl>
@@ -306,8 +300,9 @@ export default async function Pagina() {
               <Link href="/brasil/" prefetch={false}>O Brasil ao longo do tempo</Link>
             </p>
           </li>
-          {/* `id="rankings"`: o item "Rankings" da barra do topo aponta para cá,
-              porque não há página-índice dos rankings. */}
+          {/* `id="rankings"`: o item "Rankings" da barra do topo apontava para
+              cá até 17/10/2026, quando `/ranking/` ganhou página-índice; a
+              âncora fica para quem a guardou. */}
           <li className={s.porta} id="rankings">
             <h3>Rankings</h3>
             <p>

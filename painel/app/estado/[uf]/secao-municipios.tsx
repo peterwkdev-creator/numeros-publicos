@@ -28,7 +28,7 @@ export default function SecaoMunicipios({ c }: { c: Contexto }) {
       <div className={`${estilos.rolagem} rola-x`}>
         <table className={estilos.lista}>
           <caption className="so-leitor">
-            Municípios {de}, com a população do Censo 2022 e o gasto com
+            {r.uf.municipios === 1 ? "Município" : "Municípios"} {de}, com a população do Censo 2022 e o gasto com
             pessoal no {quadrimestre}, em % da receita corrente líquida.
           </caption>
           <thead>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { trilha } from "../../lib/jsonld";
+import { trilha, jsonLdHtml } from "../../lib/jsonld";
 import { SITE } from "../../lib/servidor";
 import type { Contexto } from "./contexto";
 
@@ -13,7 +13,7 @@ export default function Cabecalho({ ctx }: { ctx: Contexto }) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdHtml(jsonLd) }}
       />
       {/* A trilha, num bloco separado de proposito: o no acima ja funciona e a
           auditoria o confere; acrescentar um `@graph` mexeria na forma dele
@@ -21,7 +21,7 @@ export default function Cabecalho({ ctx }: { ctx: Contexto }) {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
+          __html: jsonLdHtml({
             "@context": "https://schema.org",
             ...trilha(SITE, [
               { nome: "Números Públicos", caminho: "/" },

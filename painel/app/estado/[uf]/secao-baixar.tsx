@@ -14,7 +14,7 @@ export default function SecaoBaixar({ c }: { c: Contexto }) {
       <ul className={estilos.downloads}>
         <li>
           <a href={`/estado/${slugUf(r.uf.sigla)}/dados.csv`} download>
-            Municípios {de} em CSV
+            {r.uf.municipios === 1 ? "Município" : "Municípios"} {de} em CSV
           </a>{" "}
           <span className={estilos.fonte}>— uma linha por município</span>
         </li>

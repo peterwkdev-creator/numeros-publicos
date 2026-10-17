@@ -6,6 +6,7 @@ import type { SnapshotIdeb } from "../../lib/ideb";
 import type { SnapshotInss } from "../../lib/inss";
 import type { SnapshotCagedAnos } from "../../lib/caged";
 import { conjuntoDoSite, siteDe } from "../../lib/jsonld";
+import { rankingCache } from "../../lib/nacional";
 import { SITE } from "../../lib/servidor";
 import type Estilos from "./ajuda.module.css";
 
@@ -33,9 +34,11 @@ export function montarContexto(dados: Dados) {
   const c = fiscal.cobertura;
   // Quem ainda não estava instalado foi consultado e não tinha relatório, mas
   // não "deixou de entregar": sai das duas pontas da frase do travessão.
+  // O Distrito Federal (presta contas como estado) também sai. A conta é a do
+  // ranking, e não uma própria: até 17/10/2026 esta página dizia "46 dos
+  // 5.570" e o ranking "45" de 5.569, porque aqui o DF contava como faltoso.
   const naoInstalados = naoInstaladosEm(fiscal.exercicio);
-  const obrigados = c.consultados - naoInstalados;
-  const naoPublicaram = obrigados - c.publicaram;
+  const { universo: obrigados, naoEntregaram: naoPublicaram } = rankingCache(fiscal, snapshot);
   // Quem entregou o RGF Simplificado semestral no lugar do quadrimestral.
   const simplificados = fiscal.municipios.filter((l) => l[9] === true).length;
   const quadrimestre = nomeQuadrimestre(fiscal.exercicio, fiscal.periodo);

@@ -8,7 +8,7 @@ import {
   APRESENTACAO, dominio, fontesPorExtenso, inicioPeriodo, porTema, rotuloPeriodo,
   type SnapshotBrasil,
 } from "../../lib/brasil";
-import { catalogoDe, licencaDaSerie, trilha } from "../../lib/jsonld";
+import { catalogoDe, licencaDaSerie, trilha, jsonLdHtml } from "../../lib/jsonld";
 import { cartaoSocial, lerBrasil, SITE } from "../../lib/servidor";
 import { CAMINHO, NotaFaixas, Presidencia, TITULO } from "./comum";
 import estilos from "./brasil.module.css";
@@ -86,12 +86,12 @@ export default async function Pagina() {
     <main className={estilos.pagina} id="conteudo">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdHtml(jsonLd) }}
       />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
+          __html: jsonLdHtml({
             "@context": "https://schema.org",
             ...trilha(SITE, [
               { nome: "Números Públicos", caminho: "/" },

@@ -1,4 +1,4 @@
-import { br, concorda, fracaoDe } from "../../../lib/dados";
+import { br, concorda, fracaoDe, maiuscula } from "../../../lib/dados";
 import type { Contexto } from "./contexto";
 
 /**
@@ -14,7 +14,11 @@ export default function SecaoIdeb({ c }: { c: Contexto }) {
   if (!(semRede > 0 || semRedeFinais > 0)) return null;
   return (
     <section className={estilos.texto} id="ideb">
-      <h2>Por que nem todo município {de} tem IDEB aqui</h2>
+      <h2>
+        {r.uf.municipios === 1
+          ? `Por que falta o IDEB do município ${de}`
+          : `Por que nem todo município ${de} tem IDEB aqui`}
+      </h2>
       <p>
         O INEP publica o IDEB <strong>por rede</strong>, e este site mostra
         a <strong>municipal</strong> — a que a prefeitura administra, e a
@@ -24,14 +28,14 @@ export default function SecaoIdeb({ c }: { c: Contexto }) {
       <ul className={estilos.lista}>
         {semRede > 0 && (
           <li>
-            <strong>{fracaoDe(semRede, r.uf.municipios)}</strong> {de}{" "}
+            <strong>{maiuscula(fracaoDe(semRede, r.uf.municipios))}</strong> {de}{" "}
             {concorda(semRede, r.uf.municipios, "não tem", "não têm")} rede
             municipal nos <strong>anos iniciais</strong> (1º ao 5º).
           </li>
         )}
         {semRedeFinais > 0 && (
           <li>
-            <strong>{fracaoDe(semRedeFinais, r.uf.municipios)}</strong>{" "}
+            <strong>{maiuscula(fracaoDe(semRedeFinais, r.uf.municipios))}</strong>{" "}
             {concorda(semRedeFinais, r.uf.municipios, "não tem", "não têm")}{" "}
             nos <strong>anos finais</strong> (6º ao 9º)
             {r.uf.municipios > 1 &&

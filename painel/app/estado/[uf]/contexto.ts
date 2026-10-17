@@ -125,7 +125,7 @@ export function montarContexto(dados: Dados, r: ResumoEstado) {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Dataset",
-    name: `Dados abertos dos municípios ${de}`,
+    name: `Dados abertos ${r.uf.municipios === 1 ? "do município" : "dos municípios"} ${de}`,
     description:
       `População, PIB, despesa com pessoal e despesa liquidada por função ` +
       `${r.uf.municipios === 1 ? "do município" : `dos ${r.uf.municipios} municípios`} ` +
@@ -158,7 +158,7 @@ export function montarContexto(dados: Dados, r: ResumoEstado) {
         "@type": "DataDownload",
         encodingFormat: "text/csv",
         contentUrl: `${SITE}/estado/${slugUf(r.uf.sigla)}/dados.csv`,
-        name: `Municípios ${de} em CSV`,
+        name: `${r.uf.municipios === 1 ? "Município" : "Municípios"} ${de} em CSV`,
       },
     ],
   };

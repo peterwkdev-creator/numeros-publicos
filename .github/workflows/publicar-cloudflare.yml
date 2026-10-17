@@ -51,13 +51,19 @@ jobs:
       run:
         working-directory: painel
     steps:
-      - uses: actions/checkout@v7
+      # As actions vão pinadas pelo SHA do commit (17/10/2026), e não pela
+      # tag: a tag `v7` se move, e quem a controla mudaria o que roda aqui com
+      # o token da Cloudflare no ambiente. O comentário diz a versão do SHA.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          # Este job não faz push: o token do GitHub não precisa ficar no
+          # .git/config enquanto rodam o npm e o wrangler.
+          persist-credentials: false
           # Sempre o último do main: a coleta pede a publicação depois do
           # commit dela, e o que se publica é esse commit.
           ref: main
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
           cache: npm
@@ -102,6 +108,14 @@ jobs:
           curl -sf -o /dev/null http://127.0.0.1:8791/ || { cat /tmp/serve.log; exit 1; }
           npm run auditar
           npm run medir-inp
+
+      # A CSP do _headers contra as páginas que interagem, num navegador. Até
+      # 17/10/2026 só rodava à mão, e o script-src deixou de aceitar inline
+      # nesse dia: um <script> inline novo quebraria só no ar, em silêncio.
+      - name: A CSP não bloqueia nada
+        env:
+          CHROME: /usr/bin/google-chrome
+        run: npm run conferir-csp
 
       - name: Cabeçalhos do Pages
         run: cp ../cloudflare/_headers out/_headers

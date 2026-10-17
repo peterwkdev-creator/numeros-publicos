@@ -62,6 +62,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.9,
     },
     {
+      // Os dois índices de 17/10/2026: até ali `/ranking/` e `/estado/` davam
+      // 404. Prioridade baixa: são páginas de passagem, e o que disputa busca
+      // é o ranking e o estado.
+      url: `${SITE}/ranking/`,
+      lastModified: atualizadoEm(snapshot, fiscal, caged.coletadoEm),
+      changeFrequency: "monthly",
+      priority: 0.5,
+    },
+    {
+      url: `${SITE}/estado/`,
+      lastModified: new Date(snapshot.geradoEm),
+      changeFrequency: "monthly",
+      priority: 0.5,
+    },
+    {
       // A segunda página de cabeça: "cidades que mais geraram empregos". O
       // dado muda uma vez por mês, com a competência nova do Caged.
       url: `${SITE}/ranking/emprego-com-carteira/`,

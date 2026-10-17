@@ -7,6 +7,7 @@ import { deEstado } from "../../../lib/estado";
 import { LIMITE_PLAUSIVEL, nomeQuadrimestre } from "../../../lib/fiscal";
 import {
   catalogoDe, coberturaTemporal, FONTES, palavrasChave, trilha, LICENCA_DADOS,
+  jsonLdHtml,
 } from "../../../lib/jsonld";
 import { cartaoSocial, lerFiscal, lerIdeb, lerSnapshot, SITE } from "../../../lib/servidor";
 import estilos from "./ranking.module.css";
@@ -130,7 +131,7 @@ export default async function Pagina() {
     <main className={estilos.pagina} id="conteudo">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdHtml(jsonLd) }}
       />
       {/* A trilha, num bloco separado de proposito: o no acima ja funciona e a
           auditoria o confere; acrescentar um `@graph` mexeria na forma dele
@@ -138,7 +139,7 @@ export default async function Pagina() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
+          __html: jsonLdHtml({
             "@context": "https://schema.org",
             ...trilha(SITE, [
               { nome: "Números Públicos", caminho: "/" },

@@ -485,6 +485,15 @@ export function fracaoDe(
   return `${br(quantos)} ${quantos === 1 ? "de" : "dos"} ${br(total)} ${nome}s`;
 }
 
+/**
+ * `fracaoDe` no começo de frase ou de item de lista. Com número ela já começa
+ * certa ("12 dos 184"); com um município só ela devolve "o único município", e
+ * até 17/10/2026 a página do Distrito Federal tinha item de lista em minúscula.
+ */
+export function maiuscula(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
 /** O verbo que acompanha `fracaoDe`: singular quando ela devolve singular. */
 export function concorda(
   quantos: number,

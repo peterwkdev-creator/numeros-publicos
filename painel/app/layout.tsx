@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import BuscaCabecalho from "./componentes/busca-cabecalho";
+import { FONTES_DO_SITE } from "../lib/jsonld";
 
 // Escolhida por MOTIVO TEMÁTICO, não por gosto: o Braille Institute a desenhou
 // para que caracteres não possam ser confundidos entre si, e os numerais são
@@ -113,14 +114,14 @@ export default function RootLayout({
           {/* Fixa no topo (`position: sticky`, ver `globals.css`) desde
               15/10/2026. O menu é um `<details>`, sem JavaScript: abaixo de
               48rem recolhe sob o botão "Menu"; de 48rem para cima o CSS o
-              mantém aberto e esconde o botão. "Rankings" leva ao bloco da
-              capa que lista os dois (não há página-índice de rankings). */}
+              mantém aberto e esconde o botão. "Rankings" leva ao índice dos
+              dois, `/ranking/` (até 17/10/2026, ao bloco da capa). */}
           <nav aria-label="Atalhos do site" className="barra-menu">
             <details className="menu-recolhivel">
               <summary>Menu</summary>
               <div className="menu-links">
                 <a href="/brasil/">Brasil</a>
-                <a href="/#rankings">Rankings</a>
+                <a href="/ranking/">Rankings</a>
                 <a href="/ajuda/">Ajuda</a>
                 <a href="/ajuda/#baixar">Baixar dados</a>
               </div>
@@ -150,10 +151,8 @@ export default function RootLayout({
             </a>
           </nav>
           <p>
-            Dados abertos de órgãos oficiais (IBGE, Tesouro Nacional, INEP,
-            Ministério da Saúde, Ministério do Trabalho, INSS, Banco Central,
-            Ipea, INPE e Portal da Transparência), com a fonte e a data de
-            coleta ao lado de cada número. Os
+            Dados abertos de órgãos oficiais ({FONTES_DO_SITE}), com a fonte e
+            a data de coleta ao lado de cada número. Os
             dados seguem a{" "}
             <a href="/ajuda/#licenca">licença de cada fonte</a>; o código é
             software livre sob AGPL-3.0. Este site não coleta nada sobre quem o

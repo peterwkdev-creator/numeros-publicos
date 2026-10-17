@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { br, descricaoDe as comCauda } from "../../lib/dados";
 import { dataBr, dias, gruposComPagina, mesPorExtenso, pct } from "../../lib/inss";
-import { trilha } from "../../lib/jsonld";
+import { trilha, jsonLdHtml } from "../../lib/jsonld";
 import { cartaoSocial, lerInss, SITE } from "../../lib/servidor";
 import estilos from "./[grupo]/inss.module.css";
 
@@ -50,7 +50,7 @@ export default async function IndiceInss() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
+          __html: jsonLdHtml({
             "@context": "https://schema.org",
             ...trilha(SITE, [
               { nome: "Números Públicos", caminho: "/" },

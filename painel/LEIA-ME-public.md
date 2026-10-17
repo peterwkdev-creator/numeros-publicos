@@ -2,6 +2,8 @@
 
 Arquivos servidos na **raiz** do site, sem passar pelo build do Next.
 
+Este texto fica fora de `public/` porque tudo o que está lá é publicado: até 17/10/2026 ele era servido em `/LEIA-ME.md`.
+
 ## `f0aeb82722eec0f6b54f7d0c9b4274c8.txt`
 
 A chave do [IndexNow](https://www.indexnow.org/). **Não é segredo** — o

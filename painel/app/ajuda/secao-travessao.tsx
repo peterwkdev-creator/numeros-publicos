@@ -17,7 +17,8 @@ export default function SecaoTravessao({ ctx }: { ctx: Contexto }) {
       <p>
         No {quadrimestre}, <strong>{br(naoPublicaram)}</strong> dos{" "}
         {br(obrigados)} municípios consultados
-        {naoInstalados > 0 && " que já estavam instalados"} não têm no
+        {naoInstalados > 0 && " que já estavam instalados"} (o Distrito
+        Federal fica de fora porque presta contas como estado) não têm no
         SICONFI nem o Relatório de Gestão Fiscal quadrimestral nem o
         semestral simplificado. Isso não significa que gastem zero com
         pessoal: significa que o site não tem o número. Outros{" "}

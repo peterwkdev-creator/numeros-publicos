@@ -8,7 +8,7 @@ import {
   type GrupoInss, type SnapshotInss,
 } from "../../../lib/inss";
 import { deEstado, slugUf } from "../../../lib/estado";
-import { catalogoDe, trilha } from "../../../lib/jsonld";
+import { catalogoDe, trilha, jsonLdHtml } from "../../../lib/jsonld";
 import { cartaoSocial, lerInss, SITE } from "../../../lib/servidor";
 import estilos from "./inss.module.css";
 
@@ -140,12 +140,12 @@ export default async function Pagina({ params }: Params) {
     <main className={estilos.pagina} id="conteudo">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdHtml(jsonLd) }}
       />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
+          __html: jsonLdHtml({
             "@context": "https://schema.org",
             ...trilha(SITE, [
               { nome: "Números Públicos", caminho: "/" },

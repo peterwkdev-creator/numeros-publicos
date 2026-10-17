@@ -11,6 +11,7 @@ import { deEstado } from "../../../lib/estado";
 import { slugDe } from "../../../lib/fiscal";
 import {
   catalogoDe, FONTES_DA_BASE, palavrasChave, trilha, LICENCA_DADOS,
+  jsonLdHtml,
 } from "../../../lib/jsonld";
 import { cartaoSocial, lerCaged, lerSnapshot, SITE } from "../../../lib/servidor";
 import estilos from "../gasto-com-pessoal/ranking.module.css";
@@ -175,12 +176,12 @@ export default async function Pagina() {
     <main className={estilos.pagina} id="conteudo">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdHtml(jsonLd) }}
       />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
+          __html: jsonLdHtml({
             "@context": "https://schema.org",
             ...trilha(SITE, [
               { nome: "Números Públicos", caminho: "/" },

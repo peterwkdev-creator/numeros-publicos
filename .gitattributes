@@ -1,3 +1,7 @@
 # O teste lê o cabeçalho dos PNGs de `painel/public/og/` byte a byte: nenhuma
 # conversão de fim de linha pode tocá-los, mesmo com core.autocrlf ligado.
 *.png binary
+
+# O `favicon.ico` também é lido byte a byte pelo teste (cabeçalho do ICO e
+# os PNGs dentro dele).
+*.ico binary

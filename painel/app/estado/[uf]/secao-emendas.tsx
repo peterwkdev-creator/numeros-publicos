@@ -1,5 +1,5 @@
 import Termo from "../../componentes/termo";
-import { br, concorda, dataCurta, escalaComSinal, fracaoDe } from "../../../lib/dados";
+import { br, concorda, dataCurta, escalaComSinal, fracaoDe, maiuscula } from "../../../lib/dados";
 import { mesDeCorte } from "../../../lib/emendas";
 import type { Contexto } from "./contexto";
 
@@ -27,7 +27,7 @@ export default function SecaoEmendas({ c }: { c: Contexto }) {
             estado, pela população estimada de {anoEstimada}
           </>
         )}
-        . <strong>{fracaoDe(emendasUf.comPagamento, r.uf.municipios)}</strong>{" "}
+        . <strong>{maiuscula(fracaoDe(emendasUf.comPagamento, r.uf.municipios))}</strong>{" "}
         {concorda(emendasUf.comPagamento, r.uf.municipios, "teve", "tiveram")}{" "}
         algum pagamento no ano.
         {emendasUf.parcial && (

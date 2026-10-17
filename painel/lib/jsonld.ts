@@ -285,6 +285,36 @@ export const FONTES_DA_BASE = [
 ] as const;
 
 /**
+ * O JSON-LD pronto para ir dentro de `<script type="application/ld+json">`.
+ *
+ * `JSON.stringify` não escapa `<`, e um `</script>` dentro de um nome fecharia
+ * a tag e deixaria o resto virar HTML. Nenhum dado de hoje tem `<` (o nome
+ * vem do IBGE, da CGU, do INSS), mas o nome de uma emenda ou de uma série nova
+ * pode ter, e o escape custa nada. `<` é o mesmo `<` para quem lê o JSON.
+ * Antes de 17/10/2026 eram 18 `JSON.stringify` soltos em 10 arquivos.
+ */
+export function jsonLdHtml(dado: unknown): string {
+  return JSON.stringify(dado).replace(/</g, "\\u003c");
+}
+
+/**
+ * As fontes oficiais de que o site lê, por extenso, para a faixa da capa. Só
+ * os nomes: cada página diz a tabela e o endereço de cada número.
+ *
+ * Fica aqui, ao lado de `FONTES_DA_BASE`, porque até 17/10/2026 a capa tinha a
+ * sua própria lista e ela esqueceu a CGU e o SIOPS, que o JSON-LD já citava.
+ * O rodapé de toda página também tinha a sua, com o Banco Central, o Ipea e o
+ * INPE que a da capa esquecia: as duas usam esta desde então. Um teste cobra
+ * que cada fonte de `FONTES_DA_BASE` e de `FONTE_COM_ARTIGO` (as séries de
+ * `/brasil/`) apareça aqui. O INSS não está em nenhuma das duas: ele está nas
+ * páginas de estado e em `/inss/`.
+ */
+export const FONTES_DO_SITE =
+  "IBGE, Tesouro Nacional (SICONFI), Ministério da Saúde (SIOPS), INEP, " +
+  "Ministério do Trabalho (Novo Caged), INSS, Banco Central, Ipea, INPE e " +
+  "Portal da Transparência (CGU)";
+
+/**
  * A trilha de navegação como `BreadcrumbList`.
  *
  * **Descreve o que a página JÁ MOSTRA**, e essa é a condição para existir: o

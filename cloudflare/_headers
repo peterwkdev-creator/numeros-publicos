@@ -5,16 +5,18 @@
 # Segurança, em toda página (11/10/2026; até ali o Pages só mandava nosniff e
 # referrer-policy). O site é estático, sem login nem formulário, e não carrega
 # nada de fora: a CSP diz exatamente isso, e o que vier de outra origem passa a
-# ser bloqueado em vez de rodar. 'unsafe-inline' em script-src é pela capa, a
-# única página que hidrata (o Next põe a carga em <script> inline, e export
-# estático não tem nonce); em style-src, pelo <style> do mapa e pelas barras
-# com style=. scripts/conferir-csp.mjs serve o out/ com ESTE arquivo e reprova
-# qualquer violação: mudou aqui ou entrou script novo, rodar de novo.
+# ser bloqueado em vez de rodar. script-src é só 'self' desde 17/10/2026: até
+# ali levava 'unsafe-inline' pela capa, que hidratava; desde a desidratação
+# nenhuma página tem <script> inline que execute (as 11.248 tags do build são
+# type="module" com src; o JSON-LD é dado, e a CSP não o barra). Em style-src
+# o 'unsafe-inline' fica, pelo <style> do mapa e pelas barras com style=.
+# scripts/conferir-csp.mjs serve o out/ com ESTE arquivo e reprova qualquer
+# violação; o CI o roda antes de publicar.
 # HSTS sem includeSubDomains nem preload: preload é decisão de anos e difícil
 # de desfazer, e fica para quando o domínio inteiro estiver conferido.
 /*
   Strict-Transport-Security: max-age=31536000
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests
   X-Frame-Options: DENY
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
   Cross-Origin-Opener-Policy: same-origin

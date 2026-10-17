@@ -4,8 +4,8 @@
  *
  *     npm run build
  *     node scripts/conferir-csp.mjs              (a política do _headers)
- *     node scripts/conferir-csp.mjs --plantar    (a prova: script-src sem
- *                                                 'unsafe-inline' TEM de reprovar a capa)
+ *     node scripts/conferir-csp.mjs --plantar    (a prova: um <script> inline
+ *                                                 plantado na capa TEM de reprovar)
  *
  * Existe porque a CSP só vale em produção: o `npm start` (serve) não lê o
  * _headers, e um script de outra origem, um `<script>` inline novo numa página
@@ -71,9 +71,13 @@ const servidor = createServer(async (req, res) => {
     const corpo = await readFile(arquivo);
     const cab = { "Content-Type": TIPOS[extname(arquivo)] ?? "application/octet-stream" };
     for (const r of regras) if (casa(r.padrao, caminho)) Object.assign(cab, r.cabecalhos);
-    if (PLANTAR && cab["Content-Security-Policy"]) {
-      cab["Content-Security-Policy"] = cab["Content-Security-Policy"]
-        .replace(/(script-src[^;]*?) 'unsafe-inline'/, "$1");
+    // A prova (17/10/2026): um <script> inline na capa, o que uma página nova
+    // ou um componente que volte a hidratar poria. Até ali a prova tirava o
+    // 'unsafe-inline' do script-src, e o _headers deixou de tê-lo.
+    if (PLANTAR && caminho === "/") {
+      res.writeHead(200, cab).end(String(corpo).replace(
+        "</body>", "<script>document.title = 'plantado'</script></body>"));
+      return;
     }
     res.writeHead(200, cab).end(corpo);
   } catch {
@@ -83,15 +87,21 @@ const servidor = createServer(async (req, res) => {
 await new Promise((ok) => servidor.listen(0, "127.0.0.1", ok));
 const base = `http://127.0.0.1:${servidor.address().port}`;
 
-/** Página e o que fazer nela: a capa hidrata, as outras usam busca.js. */
+/** Página e o que fazer nela: o mapa, as buscas e o "Copiar link". */
 const ROTEIRO = [
   ["/", async (p) => {
     await p.click('label[for="mapa-pib-habitante"]').catch(() => {});
     // na capa a busca da barra fica escondida; a que se usa é a do herói
     await p.type("#busca-capa", "sao paulo");
   }],
-  ["/municipio/sao-paulo-sp/", async (p) => { await p.type("#busca-cab", "recife"); }],
-  ["/estado/sp/", async (p) => { await p.click('label[for="mapa-agua"]').catch(() => {}); }],
+  ["/municipio/sao-paulo-sp/", async (p) => {
+    await p.type("#busca-cab", "recife");
+    await p.click('[data-acao="copiar"]');
+  }],
+  ["/estado/sp/", async (p) => {
+    await p.click('label[for="mapa-agua"]').catch(() => {});
+    await p.click('[data-acao="copiar"]');
+  }],
   ["/brasil/", null],
   ["/brasil/ipca/", null],
   ["/ranking/gasto-com-pessoal/", null],

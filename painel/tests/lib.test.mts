@@ -15,7 +15,7 @@ import { inflateRawSync } from "node:zlib";
 
 import {
   concorda, descricaoDe, escala, escalaComSinal, fracaoDe, INDICADORES_DA_CAPA,
-  periodoDe,
+  maiuscula, periodoDe,
   br, dataCurta, dataPorExtenso, inteiroImpresso, projetar,
   COLUNA_DA_CAPA, rotuloCurto, unidadeDaColuna, type Snapshot,
 } from "../lib/dados.ts";
@@ -3188,4 +3188,74 @@ test("compartilhar: tudo nasce escondido, nas duas páginas, e o script só most
   assert.match(js, /grupo\.hidden = false/);
   // Nada sai do navegador por aqui.
   assert.ok(!/fetch\(|sendBeacon|XMLHttpRequest/.test(js));
+});
+
+test("a lista de fontes da capa e do rodapé nomeia toda fonte que o site lê", async () => {
+  // Até 17/10/2026 a capa tinha a sua lista e esquecia a CGU e o SIOPS, e o
+  // rodapé a dele, com o Banco Central, o Ipea e o INPE que a capa esquecia.
+  const { FONTES_DA_BASE, FONTES_DO_SITE } = await import("../lib/jsonld.ts");
+  const { FONTE_COM_ARTIGO } = await import("../lib/brasil.ts");
+  for (const { name } of FONTES_DA_BASE) {
+    const chaves = [name.split(" — ")[0], name.match(/\((\w+)\)/)?.[1]];
+    assert.ok(chaves.some((c) => c && FONTES_DO_SITE.includes(c)), `${name} falta na lista`);
+  }
+  for (const fonte of Object.keys(FONTE_COM_ARTIGO)) {
+    assert.ok(FONTES_DO_SITE.includes(fonte), `${fonte} (de /brasil/) falta na lista`);
+  }
+  assert.match(fs.readFileSync("app/layout.tsx", "utf-8"), /órgãos oficiais \(\{FONTES_DO_SITE\}\)/);
+});
+
+test("jsonLdHtml escapa o < e nenhuma página volta ao JSON.stringify solto", async () => {
+  const { jsonLdHtml } = await import("../lib/jsonld.ts");
+  const dado = { name: "a</script><b>" };
+  const html = jsonLdHtml(dado);
+  assert.ok(!html.includes("<"));
+  assert.deepEqual(JSON.parse(html), dado);
+  const soltos = (fs.readdirSync("app", { recursive: true }) as string[])
+    .filter((f) => f.endsWith(".tsx") || f.endsWith(".ts"))
+    .filter((f) => fs.readFileSync(`app/${f}`, "utf-8").includes("__html: JSON.stringify"));
+  assert.deepEqual(soltos, []);
+});
+
+test("maiuscula abre a frase de fracaoDe, inclusive no DF", () => {
+  assert.equal(maiuscula(fracaoDe(1, 1)), "O único município");
+  assert.equal(maiuscula(fracaoDe(0, 1)), "Nenhum município");
+  assert.equal(maiuscula(""), "");
+});
+
+test("a Ajuda conta os que não publicaram com a mesma conta do ranking", () => {
+  // Até 17/10/2026 a Ajuda dizia "46 dos 5.570" e o ranking "45 de 5.569".
+  const contexto = fs.readFileSync("app/ajuda/contexto.ts", "utf-8");
+  assert.match(contexto, /universo: obrigados, naoEntregaram: naoPublicaram \} = rankingCache\(fiscal, snapshot\)/);
+});
+
+test("o favicon.ico tem 16, 32 e 48 px, cada um um PNG inteiro", () => {
+  const ico = fs.readFileSync("public/favicon.ico");
+  assert.equal(ico.readUInt16LE(0), 0);
+  assert.equal(ico.readUInt16LE(2), 1);
+  assert.equal(ico.readUInt16LE(4), 3);
+  let fim = 6 + 16 * 3;
+  for (const [i, lado] of [16, 32, 48].entries()) {
+    const e = 6 + 16 * i;
+    assert.equal(ico[e], lado);
+    assert.equal(ico[e + 1], lado);
+    const tamanho = ico.readUInt32LE(e + 8);
+    const inicio = ico.readUInt32LE(e + 12);
+    assert.equal(inicio, fim, `o PNG de ${lado} px começa onde o anterior acaba`);
+    assert.deepEqual([...ico.subarray(inicio, inicio + 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
+    assert.equal(ico.readUInt32BE(inicio + 16), lado, "largura no IHDR");
+    fim = inicio + tamanho;
+  }
+  assert.equal(fim, ico.length);
+  // Sem `binary`, o git trocaria bytes 0A por 0D 0A no Windows.
+  assert.match(fs.readFileSync("../.gitattributes", "utf-8"), /^\*\.ico binary/m);
+});
+
+test("o security.txt tem os campos da RFC 9116 e nenhum e-mail", () => {
+  const rota = fs.readFileSync("app/.well-known/security.txt/route.ts", "utf-8");
+  for (const campo of ["Contact:", "Expires:", "Canonical:", "Preferred-Languages:"]) {
+    assert.ok(rota.includes(campo), campo);
+  }
+  assert.match(rota, /security\/advisories\/new/);
+  assert.ok(!/mailto:|@[a-z0-9-]+\.[a-z]/i.test(rota));
 });

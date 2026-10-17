@@ -86,10 +86,10 @@ export function montarContexto(dados: Dados) {
     isPartOf: siteDe(SITE),
     about: conjuntoDoSite(SITE),
     description:
-      "Glossário e perguntas frequentes sobre os números publicados: RCL " +
-      "ajustada, limites da Lei de Responsabilidade Fiscal, despesa " +
-      "liquidada por função, IDEB, Censo, Caged, emendas, saúde e as " +
-      "convenções de ausência de dado, com um glossário de A a Z.",
+      "Perguntas frequentes e glossário de A a Z sobre os números " +
+      "publicados: RCL ajustada, limites da Lei de Responsabilidade Fiscal, " +
+      "despesa liquidada por função, IDEB, Censo, Caged, emendas, saúde, a " +
+      "fila do INSS, as séries do país e as convenções de ausência de dado.",
   };
 
   return {

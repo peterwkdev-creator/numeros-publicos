@@ -65,8 +65,8 @@ import SecaoGlossario from "./secao-glossario";
 export const metadata: Metadata = {
   title: TITULO,
   description:
-    "O que significa cada número: RCL ajustada, limite prudencial, despesa " +
-    "liquidada, IDEB, e por que às vezes aparece um travessão.",
+    "Como ler cada número: gasto com pessoal e RCL, IDEB, Censo, Caged, " +
+    "saúde, emendas, a fila do INSS e as séries do país, e o que o travessão quer dizer.",
   alternates: { canonical: `${SITE}/ajuda/` },
   // Pelo `cartaoSocial`, como as outras páginas: o `openGraph` à mão deixava o
   // `twitter:title` herdado do layout.

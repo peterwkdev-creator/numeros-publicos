@@ -1,5 +1,6 @@
 import { dataCurta, periodoDe } from "../../lib/dados";
 import { atualDeFuncoes } from "../../lib/fiscal";
+import { mesPorExtenso } from "../../lib/inss";
 import type { Contexto } from "./contexto";
 
 /**
@@ -7,7 +8,7 @@ import type { Contexto } from "./contexto";
  * Extraído de `page.tsx` em 16/10/2026 (item 10 da modernização): o HTML é o mesmo, byte a byte.
  */
 export default function SecaoQuando({ ctx }: { ctx: Contexto }) {
-  const { snapshot, fiscal, quadrimestre, f, estilos } = ctx;
+  const { snapshot, fiscal, quadrimestre, f, ideb, inss, estilos } = ctx;
   return (
     <section className={estilos.bloco} id="quando">
       <h2>De quando são os dados</h2>
@@ -44,6 +45,26 @@ export default function SecaoQuando({ ctx }: { ctx: Contexto }) {
               : ""}.
           </li>
         )}
+        <li>
+          <strong>IDEB:</strong> INEP, edições de {ideb.edicoes[0]} a{" "}
+          {ideb.edicoes[ideb.edicoes.length - 1]}
+          {ideb.coletadoEm ? `, coletado em ${dataCurta(ideb.coletadoEm)}` : ""}.
+          O INEP publica uma edição a cada dois anos.
+        </li>
+        {inss.fila && (
+          <li>
+            <strong>Fila do INSS:</strong> Portal de Dados Abertos do INSS,
+            pedidos pendentes em {mesPorExtenso(inss.fila.mes)}
+            {inss.negados ? ` e indeferimentos de ${mesPorExtenso(inss.negados.mes)}` : ""}.
+            O INSS publica um arquivo por mês.
+          </li>
+        )}
+        <li>
+          <strong>Emprego, saúde, emendas e as séries do país:</strong> Novo
+          Caged, SIOPS, SIM, Portal da Transparência, Banco Central, Ipea e
+          INPE têm cada um o seu ritmo, e o período de cada número está
+          escrito ao lado dele, na página onde aparece.
+        </li>
       </ul>
     </section>
   );

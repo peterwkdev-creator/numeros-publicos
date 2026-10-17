@@ -27,6 +27,41 @@ export default function SecaoOutras({ ctx }: { ctx: Contexto }) {
           — população, PIB e todas as outras estatísticas municipais.
         </li>
         <li>
+          <a href="https://www.gov.br/inep/pt-br/areas-de-atuacao/pesquisas-estatisticas-e-indicadores/ideb" rel="noopener">
+            INEP — IDEB
+          </a>{" "}
+          — as planilhas completas, com as outras redes e os resultados
+          por escola.
+        </li>
+        <li>
+          <a href="https://www.gov.br/trabalho-e-emprego/pt-br/acesso-a-informacao/acoes-e-programas/programas-projetos-acoes-obras-e-atividades/estatisticas-trabalho/novo-caged" rel="noopener">
+            Novo Caged — Ministério do Trabalho
+          </a>{" "}
+          — o emprego com carteira por setor, ocupação e salário.
+        </li>
+        <li>
+          <a href="https://www.gov.br/inss/pt-br" rel="noopener">INSS</a> — a
+          situação de um pedido específico só o Meu INSS ou a central 135
+          informam; este site mostra a fila em conjunto, não a de cada pessoa.
+        </li>
+        <li>
+          <a href="https://portaldatransparencia.gov.br/download-de-dados/emendas-parlamentares" rel="noopener">
+            Portal da Transparência
+          </a>{" "}
+          — cada emenda com o autor, a área e o valor pago.
+        </li>
+        <li>
+          <a href="https://dadosabertos.saude.gov.br/dataset/siops" rel="noopener">
+            SIOPS — Ministério da Saúde
+          </a>{" "}
+          — os demonstrativos completos que cada município declara.
+        </li>
+        <li>
+          <strong>As séries do país</strong> — o CSV de cada série traz o
+          endereço exato, no Banco Central, no IBGE, no Ipea, no INPE ou no
+          Ministério da Saúde, de onde cada número foi lido.
+        </li>
+        <li>
           <strong>A prefeitura do município</strong>, pelo portal da
           transparência ou pelo pedido de acesso à informação (Lei 12.527/2011)
           — é quem pode explicar uma declaração específica.

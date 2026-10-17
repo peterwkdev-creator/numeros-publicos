@@ -4,6 +4,7 @@ import { slugUf } from "../../../lib/estado";
 import { trilha } from "../../../lib/jsonld";
 import { SITE } from "../../../lib/servidor";
 import ComoLer from "../../componentes/como-ler";
+import Compartilhar from "../../componentes/compartilhar";
 import { jsonLdDe } from "./json-ld";
 import type { Contexto } from "./contexto";
 
@@ -76,6 +77,7 @@ export default function Cabecalho({ c }: { c: Contexto }) {
           Dados atualizados em{" "}
           <time dateTime={atualizado.toISOString()}>{dataPorExtenso(atualizado)}</time>.
         </p>
+        <Compartilhar />
         <ComoLer tipo="municipio" />
       </header>
     </>

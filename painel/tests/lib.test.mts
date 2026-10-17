@@ -3167,3 +3167,25 @@ test("todo download (CSV e XLSX) tem noindex no _headers da Cloudflare", () => {
     assert.ok(!regras.some((r) => r.noindex && r.padrao.test(pagina)), `${pagina} pegou noindex`);
   }
 });
+
+test("compartilhar: tudo nasce escondido, nas duas páginas, e o script só mostra o que o navegador faz", () => {
+  // Sem script, nenhum botão promete o que não faz (M9 da auditoria de 05/10/2026).
+  const componente = fs.readFileSync("app/componentes/compartilhar.tsx", "utf-8");
+  assert.match(componente, /data-compartilhar="" hidden>/);
+  assert.match(componente, /data-acao="compartilhar" hidden>/);
+  assert.match(componente, /data-acao="copiar" hidden>/);
+  assert.match(componente, /role="status" aria-atomic="true"/);
+  assert.match(componente, /<script type="module" src="\/compartilhar\.js" \/>/);
+  const css = fs.readFileSync("app/componentes/compartilhar.module.css", "utf-8");
+  assert.match(css, /\.compartilhar\[hidden\],\s*\.compartilhar button\[hidden\] \{\s*display: none;/);
+  for (const pagina of ["app/municipio/[slug]/secao-cabecalho.tsx", "app/estado/[uf]/secao-cabecalho.tsx"]) {
+    assert.match(fs.readFileSync(pagina, "utf-8"), /<Compartilhar \/>/, pagina);
+  }
+  const js = fs.readFileSync("public/compartilhar.js", "utf-8");
+  assert.match(js, /link\[rel="canonical"\]/);
+  assert.match(js, /typeof navigator\.share === "function"/);
+  assert.match(js, /if \(!podeCompartilhar && !podeCopiar\) return;/);
+  assert.match(js, /grupo\.hidden = false/);
+  // Nada sai do navegador por aqui.
+  assert.ok(!/fetch\(|sendBeacon|XMLHttpRequest/.test(js));
+});

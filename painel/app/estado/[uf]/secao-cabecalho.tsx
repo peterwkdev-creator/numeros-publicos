@@ -1,5 +1,6 @@
 import Link from "next/link";
 import ComoLer from "../../componentes/como-ler";
+import Compartilhar from "../../componentes/compartilhar";
 import { br, dataPorExtenso } from "../../../lib/dados";
 import { slugUf } from "../../../lib/estado";
 import { trilha } from "../../../lib/jsonld";
@@ -60,6 +61,7 @@ export default function Cabecalho({ c }: { c: Contexto }) {
           Dados atualizados em{" "}
           <time dateTime={atualizado.toISOString()}>{dataPorExtenso(atualizado)}</time>.
         </p>
+        <Compartilhar />
         <ComoLer tipo="estado" />
       </header>
     </>

@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+# O banco e artefato de execucao: reconstruido por `ingerir` em segundos, ao
+# contrario do painel fiscal, cuja varredura leva uma hora e vale versionar.
+educacao.db

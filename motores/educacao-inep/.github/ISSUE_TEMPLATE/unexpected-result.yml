@@ -1,0 +1,36 @@
+name: Figure differs from the source
+description: An IDEB figure differs from the INEP spreadsheet or from your own count, or a municipality is missing.
+title: "Figure differs: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not post anyone's personal data (taxpayer IDs, addresses, contacts).
+        Figures are read from the INEP spreadsheet as published: this is not an evaluation of any school or municipality.
+  - type: input
+    id: version
+    attributes:
+      label: Commit
+      description: "Output of `git rev-parse --short HEAD`."
+    validations:
+      required: true
+  - type: textarea
+    id: input
+    attributes:
+      label: What you ran
+      description: The command, the municipality (IBGE code), the stage and the edition.
+    validations:
+      required: true
+  - type: textarea
+    id: got
+    attributes:
+      label: What it returned
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected, and where it comes from
+      description: The INEP file and edition, the row, or your own count.
+    validations:
+      required: true

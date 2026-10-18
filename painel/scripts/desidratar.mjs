@@ -38,7 +38,7 @@
  * gera de qualquer jeito, e uma página em `HIDRATAM` os usaria.
  */
 
-import { readdirSync, readFileSync, statSync, writeFileSync, existsSync } from "node:fs";
+import { readdirSync, readFileSync, rmSync, statSync, writeFileSync, existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -98,11 +98,48 @@ function htmls(dir, acc = []) {
   return acc;
 }
 
+// Sem React, o runtime do Next (`_next/static/chunks/*.js`, os manifestos do
+// build) e as cópias de mídia que a página cita por outro caminho
+// (`/opengraph-image.png`) só pesam no deploy: 13 arquivos, 0,6 MB em 17/10.
+// Conta-se pelo NOME do arquivo, porque o CSS cita a fonte por caminho
+// relativo (`url(../media/...)`) e o HTML por absoluto.
+const CITACAO_HTML = /\/_next\/static\/[^"'\s?)]+/g;
+const CITACAO_CSS = /url\(\s*["']?([^"')?]+)/g;
+
+function nome(caminho) {
+  return caminho.slice(caminho.lastIndexOf("/") + 1);
+}
+
+/** Os nomes de arquivo de `_next/static` que o HTML cita. */
+export function citadosNoHtml(html) {
+  return [...html.matchAll(CITACAO_HTML)].map((m) => nome(m[0]));
+}
+
+/** Os nomes de arquivo que uma folha de estilo cita em `url(...)`. */
+export function citadosNoCss(css) {
+  return [...css.matchAll(CITACAO_CSS)].map((m) => nome(m[1]));
+}
+
+/** Os caminhos cujo nome ninguém cita. */
+export function orfaos(caminhos, citados) {
+  return caminhos.filter((c) => !citados.has(nome(c)));
+}
+
+function arquivos(dir, acc = []) {
+  for (const n of readdirSync(dir)) {
+    const p = path.join(dir, n);
+    if (statSync(p).isDirectory()) arquivos(p, acc);
+    else acc.push(p.replace(/\\/g, "/"));
+  }
+  return acc;
+}
+
 function principal() {
   if (!existsSync(OUT)) {
     console.error("out/ não existe — rode `npm run build` antes.");
     return 1;
   }
+  const citados = new Set();
   let paginas = 0;
   let antes = 0;
   let depois = 0;
@@ -110,6 +147,7 @@ function principal() {
   for (const arq of htmls(OUT)) {
     const rel = path.relative(OUT, arq).replace(/\\/g, "/");
     if (HIDRATAM.has(rel)) {
+      for (const n of citadosNoHtml(readFileSync(arq, "utf-8"))) citados.add(n);
       mantidas.push(rel);
       continue;
     }
@@ -124,6 +162,7 @@ function principal() {
     paginas += 1;
     antes += Buffer.byteLength(html);
     depois += Buffer.byteLength(novo);
+    for (const n of citadosNoHtml(novo)) citados.add(n);
     if (!seco) writeFileSync(arq, novo, "utf-8");
   }
   for (const rel of HIDRATAM) {
@@ -131,6 +170,27 @@ function principal() {
       console.error(`\nRECUSADO: ${rel} está em HIDRATAM e não existe em out/.`);
       return 1;
     }
+  }
+  const estatico = path.join(OUT, "_next", "static");
+  if (existsSync(estatico)) {
+    const todos = arquivos(estatico);
+    for (const css of todos.filter((c) => c.endsWith(".css") && citados.has(nome(c)))) {
+      for (const n of citadosNoCss(readFileSync(css, "utf-8"))) citados.add(n);
+    }
+    // Nenhuma citação é formato novo do Next, não página sem estilo: apagar
+    // tudo aqui tiraria o CSS do site inteiro.
+    if (citados.size === 0) {
+      console.error("\nRECUSADO: nenhuma página cita /_next/static/; o formato mudou?");
+      return 1;
+    }
+    const sobra = orfaos(todos, citados);
+    let bytes = 0;
+    for (const c of sobra) {
+      bytes += statSync(c).size;
+      if (!seco) rmSync(c);
+    }
+    console.log(`${seco ? "[seco] " : ""}sem citação em _next/static: ${sobra.length} arquivos, `
+                + `${(bytes / 1e3).toFixed(0)} KB${seco ? "" : " apagados"}`);
   }
   const mb = (n) => `${(n / 1e6).toFixed(0)} MB`;
   console.log(`${seco ? "[seco] " : ""}desidratadas: ${paginas} páginas, `

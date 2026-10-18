@@ -3259,3 +3259,26 @@ test("o security.txt tem os campos da RFC 9116 e nenhum e-mail", () => {
   assert.match(rota, /security\/advisories\/new/);
   assert.ok(!/mailto:|@[a-z0-9-]+\.[a-z]/i.test(rota));
 });
+
+test("o desidratar apaga de _next/static só o que nenhum HTML nem CSS cita", async () => {
+  const { citadosNoHtml, citadosNoCss, orfaos } = await import("../scripts/desidratar.mjs");
+  const html = '<link rel="stylesheet" href="/_next/static/chunks/a1.css"/>'
+    + '<link rel="preload" as="font" href="/_next/static/media/fonte.p.woff2"/>'
+    + '<meta property="og:image" content="/opengraph-image.png?opengraph-image.x9.png"/>';
+  const citados = new Set(citadosNoHtml(html));
+  // A fonte também chega pelo CSS, por caminho relativo e entre aspas.
+  for (const n of citadosNoCss('@font-face{src:url("../media/fonte2.woff2") format("woff2")}')) citados.add(n);
+  const todos = [
+    "out/_next/static/chunks/a1.css",
+    "out/_next/static/chunks/runtime.js",
+    "out/_next/static/media/fonte.p.woff2",
+    "out/_next/static/media/fonte2.woff2",
+    "out/_next/static/media/opengraph-image.x9.png",
+    "out/_next/static/abc/_buildManifest.js",
+  ];
+  assert.deepEqual(orfaos(todos, citados), [
+    "out/_next/static/chunks/runtime.js",
+    "out/_next/static/media/opengraph-image.x9.png",
+    "out/_next/static/abc/_buildManifest.js",
+  ]);
+});

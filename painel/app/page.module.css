@@ -119,7 +119,7 @@
 }
 
 /* Município e estado são números: um degrau acima. */
-.faixa .tabular {
+.faixa :global(.tabular) {
   font-size: var(--texto-xl);
   line-height: 1.2;
   letter-spacing: -0.02em;

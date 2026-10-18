@@ -204,7 +204,7 @@
    um filtro de deuteranopia: as quatro barras saíam com a mesma espessura, e
    as duas primeiras com o mesmo tom. */
 .faixas li.acima-legal {
-  border-left: 6px solid #b4442f;
+  border-left: 6px solid var(--alerta);
 }
 .faixas li.acima-prudencial {
   border-left: 6px double var(--atencao);

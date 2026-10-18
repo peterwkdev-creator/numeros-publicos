@@ -124,6 +124,14 @@
      nenhuma outra cor. Alternam pela ordem no cargo, nada mais. */
   --faixa-0: #eef1f4;
   --faixa-1: #dfe5ea;
+  /* O mapa por UF: rampa de um matiz só (a ordem, não a identidade de cor),
+     e a ausência no fundo, nunca uma cor da rampa. */
+  --mapa-0: #dbeafe;
+  --mapa-1: #a8cdea;
+  --mapa-2: #6ea9d4;
+  --mapa-3: #3b82b8;
+  --mapa-4: #14537f;
+  --mapa-sem: var(--fundo);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -165,6 +173,11 @@
     --rosca-8: #3a4650;
     --faixa-0: #151f26;
     --faixa-1: #202d37;
+    --mapa-0: #16354d;
+    --mapa-1: #1d4f74;
+    --mapa-2: #2a6f9c;
+    --mapa-3: #4b96c4;
+    --mapa-4: #8cc4e6;
   }
 }
 
@@ -641,6 +654,12 @@ body:has(#busca-capa) .barra-site [data-busca] {
     --rosca-8: #d8dde1;
     --faixa-0: #f2f2f2;
     --faixa-1: #dcdcdc;
+    --mapa-0: #eef2f6;
+    --mapa-1: #c9d6e2;
+    --mapa-2: #94aec5;
+    --mapa-3: #5b81a3;
+    --mapa-4: #24486b;
+    --mapa-sem: #fff;
   }
 
   body {

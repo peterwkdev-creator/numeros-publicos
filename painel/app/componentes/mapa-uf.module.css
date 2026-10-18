@@ -99,38 +99,10 @@
    o que o mapa precisa comunicar é ordem (mais/menos), não identidade de cor. */
 .uf { fill: var(--mapa-3); }
 
-:global(:root) {
-  --mapa-0: #dbeafe;
-  --mapa-1: #a8cdea;
-  --mapa-2: #6ea9d4;
-  --mapa-3: #3b82b8;
-  --mapa-4: #14537f;
-  --mapa-sem: var(--fundo);
-}
+/* A rampa (`--mapa-0..4` e `--mapa-sem`, nos três modos) está em
+   `globals.css`, com os outros tokens de cor. */
 
-@media (prefers-color-scheme: dark) {
-  :global(:root:not([data-theme="light"])) {
-    --mapa-0: #16354d;
-    --mapa-1: #1d4f74;
-    --mapa-2: #2a6f9c;
-    --mapa-3: #4b96c4;
-    --mapa-4: #8cc4e6;
-    --mapa-sem: var(--fundo);
-  }
-}
-
-/* A folha de impressão sobrescreve TODA cor definida só no bloco escuro.
-   `prefers-color-scheme` continua reportando a preferência do sistema ao
-   imprimir, e sem isto o mapa sai no papel com as cores do tema escuro. */
 @media print {
-  :global(:root) {
-    --mapa-0: #eef2f6;
-    --mapa-1: #c9d6e2;
-    --mapa-2: #94aec5;
-    --mapa-3: #5b81a3;
-    --mapa-4: #24486b;
-    --mapa-sem: #fff;
-  }
   .uf { stroke: #fff; stroke-width: 2; }
   .opcoes { display: none; }
 }

@@ -4,6 +4,7 @@ import {
   type CamadaMapa,
 } from "@/lib/mapa";
 import estilos from "./mapa-uf.module.css";
+import FonteGrafico from "./fonte-grafico";
 
 /**
  * Mapa dos 27 estados, colorido por indicador. **Componente de servidor.**
@@ -38,6 +39,26 @@ import estilos from "./mapa-uf.module.css";
  * página: até 11/10/2026 o `aria-label` mandava para "a tabela abaixo", e a da
  * capa não tinha nem esgoto nem alfabetização.
  */
+
+/**
+ * A fonte de cada camada, pela chave. `CamadaMapa` não tem campo de fonte nem
+ * de período (18/10/2026); até ter, mora aqui, ao lado de quem a mostra.
+ * Camada sem entrada fica sem linha: melhor nenhuma que uma errada. O ano do
+ * PIB e o quadrimestre do RGF não estão no objeto da camada, e não se chutam.
+ */
+const FONTE_DA_CAMADA: Record<string, [fonte: string, periodo?: string]> = {
+  esgoto: ["IBGE, Censo Demográfico", "2022"],
+  agua: ["IBGE, Censo Demográfico", "2022"],
+  lixo: ["IBGE, Censo Demográfico", "2022"],
+  internet: ["IBGE, Censo Demográfico", "2022"],
+  alfabetizacao: ["IBGE, Censo Demográfico", "2022"],
+  superior: ["IBGE, Censo Demográfico", "2022"],
+  desocupacao: ["IBGE, Censo Demográfico", "2022"],
+  previdencia: ["IBGE, Censo Demográfico", "2022"],
+  "pib-habitante": ["IBGE, PIB dos Municípios e Censo Demográfico 2022"],
+  entrega: ["Tesouro Nacional, SICONFI, Relatório de Gestão Fiscal"],
+  pessoal: ["Tesouro Nacional, SICONFI, Relatório de Gestão Fiscal"],
+};
 
 export default function MapaUf({
   camadas,
@@ -165,6 +186,19 @@ export default function MapaUf({
           <span className={`${estilos.passo} ${estilos.passoSem}`} data-faixa="sem" />
           <span className={estilos.extremo}>sem dado</span>
         </span>
+        {destaque && (
+          <span className={estilos.chaveContorno}>
+            Contorno grosso: {nomes[destaque] ?? destaque}, o estado desta página.
+          </span>
+        )}
+        {/* A fonte da camada ativa, pela mesma troca de CSS do texto acima. */}
+        {camadas.map((c) => {
+          const fonte = FONTE_DA_CAMADA[c.chave];
+          return fonte ? (
+            <FonteGrafico key={c.chave} fonte={fonte[0]} periodo={fonte[1]}
+              className={estilos.textoEscala} de={c.chave} />
+          ) : null;
+        })}
       </figcaption>
 
       <details className={estilos.valores}>

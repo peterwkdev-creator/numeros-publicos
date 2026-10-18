@@ -77,8 +77,8 @@ function limites(vs: number[]): string {
 }
 
 const L = 300;   // largura do viewBox; o SVG escala para o container
-const A = 72;    // altura
-const M = { topo: 10, base: 18, esq: 24, dir: 4 };
+const A = 84;    // altura (era 72; +12 no topo para a unidade do eixo)
+const M = { topo: 22, base: 18, esq: 24, dir: 4 };
 
 export default function SerieSvg({
   pontos,
@@ -172,6 +172,11 @@ export default function SerieSvg({
           que na escala costumam ser ~7 unidades, e os dois rótulos alinhados
           à direita se sobrepunham inteiros (no telefone, com a fonte de 11,
           em toda página medida). */}
+      {/* A unidade no topo do eixo, acima da régua mais alta: o topo de 22
+          deixa a linha da unidade livre do rótulo de uma régua no alto. */}
+      <text x={0} y={9} fontSize="8" fill="var(--tinta-fraca)">
+        % da RCL
+      </text>
       {marcas.map((v) => (
         <g key={`m-${v}`}>
           <line x1={M.esq} x2={L - M.dir} y1={y(v)} y2={y(v)}

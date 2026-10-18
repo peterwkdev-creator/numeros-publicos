@@ -4,6 +4,7 @@ import { contarMetas } from "../../../lib/ideb";
 import IdebSvg from "../../componentes/ideb-svg";
 import Termo from "../../componentes/termo";
 import type { Contexto } from "./contexto";
+import FonteGrafico from "../../componentes/fonte-grafico";
 
 /**
  * Educação: o IDEB das duas etapas ao lado da fatia do orçamento; sem IDEB da rede municipal, a seção diz por quê.
@@ -70,11 +71,17 @@ export default function SecaoEducacao({ c }: { c: Contexto }) {
       </p>
 
       <h3 className={estilos.subtitulo}>
-        Nos {iniciais.rotuloEtapa}
+        IDEB nos {iniciais.rotuloEtapa}, nota de 0 a 10
       </h3>
 
       <div className={estilos.grafico}>
         <IdebSvg trajetoria={iniciais} municipio={m.nome} />
+        <FonteGrafico
+          fonte={ideb.fonte}
+          periodo={`edições de ${iniciais.pontos[0]!.edicao} a ${iniciais.pontos[iniciais.pontos.length - 1]!.edicao}`}
+        >
+          {ideb.coletadoEm ? `Coletado em ${dataCurta(ideb.coletadoEm)}.` : null}
+        </FonteGrafico>
       </div>
 
       <p>
@@ -149,7 +156,7 @@ export default function SecaoEducacao({ c }: { c: Contexto }) {
       {finais && (
         <>
           <h3 className={estilos.subtitulo}>
-            E nos {finais.rotuloEtapa}
+            IDEB nos {finais.rotuloEtapa}, nota de 0 a 10
           </h3>
           <p>
             A mesma rede saiu de{" "}
@@ -190,6 +197,12 @@ export default function SecaoEducacao({ c }: { c: Contexto }) {
               cada um se lê contra a sua meta, pelas marcas escritas. */}
           <div className={estilos.grafico}>
             <IdebSvg trajetoria={finais} municipio={m.nome} />
+            <FonteGrafico
+              fonte={ideb.fonte}
+              periodo={`edições de ${finais.pontos[0]!.edicao} a ${finais.pontos[finais.pontos.length - 1]!.edicao}`}
+            >
+              {ideb.coletadoEm ? `Coletado em ${dataCurta(ideb.coletadoEm)}.` : null}
+            </FonteGrafico>
           </div>
 
           <p className={estilos.ressalva}>
@@ -226,8 +239,7 @@ export default function SecaoEducacao({ c }: { c: Contexto }) {
         <strong>nenhuma das duas fontes os publica juntos</strong> — não
         porque um explique o outro. Quanto um município gasta e o que os
         seus alunos aprendem dependem de muita coisa que não está nesta
-        página. Fonte: {ideb.fonte}
-        {ideb.coletadoEm ? `, coletado em ${dataCurta(ideb.coletadoEm)}` : ""}.{" "}
+        página.{" "}
         <Link href="/ajuda/#ideb">O que é o IDEB?</Link>
       </p>
     </section>

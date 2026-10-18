@@ -20,8 +20,10 @@ import { comSinal, type CagedAno } from "../../lib/caged";
  */
 
 const L = 320;
-const A = 120;
-const M = { topo: 14, base: 16, esq: 6, dir: 6 };
+// `topo` de 26 (era 14, com A de 120) para caber a unidade acima do número
+// da barra mais alta.
+const A = 132;
+const M = { topo: 26, base: 16, esq: 6, dir: 6 };
 /** A folga abaixo da barra negativa, para o número escrito. */
 const FOLGA_NEGATIVA = 14;
 
@@ -59,6 +61,10 @@ export default function CagedAnosSvg({
       aria-label={rotulo}
       style={{ width: "100%", height: "auto", display: "block" }}
     >
+      {/* A unidade do número escrito em cada barra. */}
+      <text x={M.esq} y={9} fontSize="8" fill="var(--tinta-fraca)">
+        saldo, em vagas
+      </text>
       {anos.map((a, i) => {
         const topo = Math.min(y(a.saldo), y(0));
         const altura = Math.abs(y(a.saldo) - y(0));

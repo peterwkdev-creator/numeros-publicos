@@ -4,6 +4,7 @@ import { DESLOCAMENTO_MINIMO } from "../../../lib/fiscal";
 import Termo from "../../componentes/termo";
 import SerieFuncoes from "../../componentes/serie-funcoes";
 import type { Contexto } from "./contexto";
+import FonteGrafico from "../../componentes/fonte-grafico";
 
 /**
  * A mudança de composição entre dois anos e a série das funções.
@@ -24,7 +25,7 @@ export default function SecaoOQueMudou({ c }: { c: Contexto }) {
       {comparacao && (
         <>
           <h2>O que mudou de {comparacao.exercicioAnterior} para{" "}
-            {comparacao.exercicioAtual}</h2>
+            {comparacao.exercicioAtual} na fatia de cada área, em % do gasto</h2>
           <p>
             Entre o {comparacao.periodo}º bimestre de{" "}
             {comparacao.exercicioAnterior} e o mesmo bimestre de{" "}
@@ -80,10 +81,10 @@ export default function SecaoOQueMudou({ c }: { c: Contexto }) {
         <>
           {comparacao ? (
             <h3 className={estilos.subtitulo}>
-              A composição ao longo dos anos
+              A composição ao longo dos anos, em % do gasto
             </h3>
           ) : (
-            <h2>A composição ao longo dos anos</h2>
+            <h2>A composição ao longo dos anos, em % do gasto</h2>
           )}
           <p>
             Cada barra soma <strong>100%</strong> — o que muda é a
@@ -94,6 +95,10 @@ export default function SecaoOQueMudou({ c }: { c: Contexto }) {
             inflação onde se procura prioridade.
           </p>
           <SerieFuncoes pontos={serieFuncoes} />
+          <FonteGrafico
+            fonte={fiscal.funcoes?.fonte ?? "Tesouro Nacional, SICONFI (RREO)"}
+            periodo={`até o ${fiscal.funcoes?.periodo}º bimestre de cada ano, de ${serieFuncoes[0]!.exercicio} a ${serieFuncoes[serieFuncoes.length - 1]!.exercicio}`}
+          />
           <div className={`${estilos.rolagem} rola-x`}>
             {/* Os valores do gráfico, que até 11/10/2026 dizia "estão na
                 tabela abaixo" sobre uma tabela que só tinha o total: o
@@ -103,8 +108,7 @@ export default function SecaoOQueMudou({ c }: { c: Contexto }) {
               <caption className={estilos.legenda}>
                 Despesa de {m.nome} por função, em % do total declarado até
                 o {fiscal.funcoes?.periodo}º <Termo chave="bimestre">bimestre</Termo>{" "}
-                de cada ano; o total, em reais nominais. Fonte: Tesouro
-                Nacional, SICONFI (<Termo chave="rreo">RREO</Termo>).
+                de cada ano; o total, em reais nominais.
               </caption>
               <thead>
                 <tr>

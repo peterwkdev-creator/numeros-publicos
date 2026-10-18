@@ -46,6 +46,9 @@ export default function ComposicaoBarras({
   cabecalhoPercentual = "% do gasto",
   /** O singular e o plural da cauda agrupada, quando ela existir. */
   nomeDaCauda = ["função", "funções"],
+  /** Amostra da cor fixa por função (`--rosca-*`), a mesma da fatia: só para
+   * a tabela ao lado da rosca, onde a cor liga uma à outra. */
+  cores = false,
 }: {
   fatias: FatiaFuncao[];
   total: number | null;
@@ -57,6 +60,7 @@ export default function ComposicaoBarras({
   cabecalho?: string;
   cabecalhoPercentual?: string;
   nomeDaCauda?: [singular: string, plural: string];
+  cores?: boolean;
 }) {
   if (fatias.length === 0) return null;
 
@@ -74,9 +78,19 @@ export default function ComposicaoBarras({
   const largura = (v: number) =>
     maior > 0 && v > 0 ? `${Math.max((v * 100) / maior, 1.5)}%` : "0%";
 
-  const linha = (nome: string, valor: number, pct: number | null, chave: string) => (
+  const linha = (
+    nome: string, valor: number, pct: number | null, chave: string, funcao?: number,
+  ) => (
     <tr key={chave}>
-      <th scope="row">{nome}</th>
+      <th scope="row">
+        {/* Decorativa: o nome ao lado já diz a função. O índice acima de 8 é
+            "outras", como na rosca. */}
+        {cores && (
+          <span className={estilos.amostra} aria-hidden="true"
+            data-funcao={Math.min(funcao ?? NOMEADAS, NOMEADAS)} />
+        )}
+        {nome}
+      </th>
       <td className={`${estilos.num} tabular`}>
         {pct === null ? "—" : `${br(pct, 1).replace("-", "−")}%`}
       </td>
@@ -112,13 +126,14 @@ export default function ComposicaoBarras({
         </tr>
       </thead>
       <tbody>
-        {cabeca.map((f) => linha(f.nome, f.valor, f.percentual, f.nome))}
+        {cabeca.map((f) => linha(f.nome, f.valor, f.percentual, f.nome, f.funcao))}
         {cauda.length > 0 &&
           linha(
             `outras ${cauda.length} ${cauda.length === 1 ? nomeDaCauda[0] : nomeDaCauda[1]}`,
             somaCauda,
             pctCauda,
             "__cauda",
+            NOMEADAS,
           )}
       </tbody>
     </table>

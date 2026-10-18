@@ -3,6 +3,7 @@ import { br } from "../../../lib/dados";
 import { deEstado } from "../../../lib/estado";
 import DistribuicaoSvg from "../../componentes/distribuicao-svg";
 import type { Contexto } from "./contexto";
+import FonteGrafico from "../../componentes/fonte-grafico";
 
 /**
  * O gasto com pessoal contra os municípios do mesmo estado.
@@ -50,6 +51,10 @@ export default function SecaoIssoEMuito({ c }: { c: Contexto }) {
           com o ponto é {m.nome}; as tracejadas, o limite prudencial e o
           teto legal.
         </p>
+        <FonteGrafico
+          fonte={fiscal.fonte}
+          periodo={`${fiscal.periodo}º quadrimestre de ${fiscal.exercicio}`}
+        />
       </div>
 
       {/* O contexto NACIONAL, e só para quem passou do teto.

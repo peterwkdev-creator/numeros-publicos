@@ -3,6 +3,7 @@ import { deEstado } from "../../../lib/estado";
 import Termo from "../../componentes/termo";
 import SaudeSvg, { ANO_DO_PISO_CHEIO, PISO } from "./saude-svg";
 import type { Contexto } from "./contexto";
+import FonteGrafico from "../../componentes/fonte-grafico";
 
 /**
  * A aplicação em saúde (SIOPS), 26 exercícios.
@@ -80,6 +81,12 @@ export default function SecaoSaude({ c }: { c: Contexto }) {
       </p>
       <div className={estilos.grafico}>
         <SaudeSvg pontos={saude.pontos} municipio={m.nome} />
+        <FonteGrafico
+          fonte={saude.fonte}
+          periodo={`${saude.pontos[0]![0]} a ${saude.pontos[saude.pontos.length - 1]![0]}`}
+        >
+          {saude.coletadoEm ? `Coleta de ${dataCurta(saude.coletadoEm)}.` : null}
+        </FonteGrafico>
       </div>
       {/* A tabela que o texto do gráfico promete. Até 11/10/2026 ele dizia
           "os mesmos valores estão na tabela abaixo" e não havia tabela: o
@@ -89,7 +96,7 @@ export default function SecaoSaude({ c }: { c: Contexto }) {
         <table className={estilos.serie}>
           <caption className={estilos.legenda}>
             Recursos próprios aplicados em saúde por {m.nome}, em % da
-            receita própria de impostos, ano a ano. Fonte: {saude.fonte}.
+            receita própria de impostos, ano a ano.
           </caption>
           <thead>
             <tr>
@@ -113,8 +120,7 @@ export default function SecaoSaude({ c }: { c: Contexto }) {
         </table>
       </div>
       <p className={estilos.ressalva}>
-        {saude.rotulo}. Fonte: {saude.fonte}
-        {saude.coletadoEm ? `, coleta de ${dataCurta(saude.coletadoEm)}` : ""}.
+        {saude.rotulo}.
       </p>
     </section>
   );

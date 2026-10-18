@@ -29,8 +29,9 @@ import { eixoJusto } from "../../../lib/eixo";
  */
 
 const L = 300;
-const A = 78;
-const M = { topo: 10, base: 18, esq: 24, dir: 4 };
+// `topo` de 16 (era 10, com A de 78) para caber a unidade no topo do eixo.
+const A = 84;
+const M = { topo: 16, base: 18, esq: 24, dir: 4 };
 
 /** O primeiro ano em que os 15% valem cheios — ver o comentário acima.
  *  Exportados para a tabela da página marcar os mesmos anos que o gráfico. */
@@ -105,6 +106,11 @@ export default function SaudeSvg({
       aria-label={rotulo}
       style={{ width: "100%", height: "auto", display: "block" }}
     >
+      {/* A unidade no topo do eixo: o percentual é da receita de impostos e
+          transferências, não do orçamento inteiro. */}
+      <text x={0} y={9} fontSize="8" fill="var(--tinta-fraca)">
+        % dos impostos
+      </text>
       {marcas.map((v) => (
         <g key={`m-${v}`}>
           <line x1={M.esq} x2={L - M.dir} y1={y(v)} y2={y(v)}

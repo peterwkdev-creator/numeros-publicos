@@ -4,6 +4,7 @@ import { nomePonto } from "../../../lib/fiscal";
 import Termo from "../../componentes/termo";
 import SerieSvg from "./serie-svg";
 import type { Contexto } from "./contexto";
+import FonteGrafico from "../../componentes/fonte-grafico";
 
 /**
  * A série do gasto com pessoal: texto, gráfico e tabela.
@@ -14,7 +15,7 @@ export default function SecaoAoLongoDoTempo({ c }: { c: Contexto }) {
   if (!(serie.length > 1)) return null;
   return (
     <section className={estilos.texto} id="ao-longo-do-tempo">
-      <h2>Como isso mudou ao longo do tempo</h2>
+      <h2>Gasto com pessoal ao longo do tempo, em % da receita corrente líquida</h2>
       <p>
         {delta === null ? (
           <>
@@ -69,13 +70,17 @@ export default function SecaoAoLongoDoTempo({ c }: { c: Contexto }) {
           legal={fiscal.limites.legal}
           municipio={m.nome}
         />
+        <FonteGrafico
+          fonte={fiscal.fonte}
+          periodo={`${nomePonto(usaveis[0]!)} a ${nomePonto(usaveis[usaveis.length - 1]!)}`}
+        />
       </div>
 
       <div className={`${estilos.rolagem} rola-x`}>
         <table className={estilos.serie}>
           <caption className={estilos.legenda}>
             Gasto com pessoal de {m.nome} em cada {umPeriodo} entregue, em %
-            da receita corrente líquida. Fonte: Tesouro Nacional, SICONFI.
+            da receita corrente líquida.
           </caption>
           <thead>
             <tr>

@@ -9,6 +9,7 @@ import TabelaCaged from "../../componentes/tabela-caged";
 import CagedAnosSvg from "../../componentes/caged-anos-svg";
 import Termo from "../../componentes/termo";
 import type { Contexto } from "./contexto";
+import FonteGrafico from "../../componentes/fonte-grafico";
 
 /**
  * Trabalho e renda: Censo, cadastro de empresas e Novo Caged.
@@ -159,6 +160,10 @@ export default function SecaoTrabalho({ c }: { c: Contexto }) {
           </p>
           <div className={estilos.grafico}>
             <CagedAnosSvg anos={cagedAnosM} municipio={`${m.nome} (${m.uf})`} />
+            <FonteGrafico
+              fonte="Ministério do Trabalho e Emprego, microdados do Novo Caged"
+              periodo={`${cagedAnos.anos[0]} a ${cagedAnos.anos[cagedAnos.anos.length - 1]}, com ajustes até ${nomeCompetencia(cagedAnos.ajustesAte)}`}
+            />
           </div>
           <div className={`${estilos.rolagem} rola-x`}>
             <table className={estilos.serie}>
@@ -220,8 +225,10 @@ export default function SecaoTrabalho({ c }: { c: Contexto }) {
         mora aqui; o cadastro de empresas e o Caged, quem trabalha numa
         empresa daqui. Numa cidade vizinha de um polo, muita gente
         trabalha fora. Fontes: IBGE, Censo Demográfico 2022 e Cadastro
-        Central de Empresas, pelas APIs públicas de agregados; Ministério
-        do Trabalho e Emprego, microdados do Novo Caged.
+        Central de Empresas, pelas APIs públicas de agregados
+        {cagedAnosM
+          ? "; a do Novo Caged está junto do gráfico."
+          : "; Ministério do Trabalho e Emprego, microdados do Novo Caged."}
       </p>
     </section>
   );

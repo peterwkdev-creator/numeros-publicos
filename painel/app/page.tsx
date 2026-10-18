@@ -27,6 +27,7 @@ import { Municipios } from "./municipios";
 import Termo from "./componentes/termo";
 import BuscaCabecalho from "./componentes/busca-cabecalho";
 import s from "./page.module.css";
+import FonteGrafico from "./componentes/fonte-grafico";
 
 /**
  * A capa era a ÚNICA página do site sem `canonical`.
@@ -381,8 +382,7 @@ export default async function Pagina() {
             orçado nem o empenhado — acumulada até o {pais.periodo}º <Termo chave="bimestre">bimestre</Termo> de{" "}
             {pais.exercicio}, somada nos{" "}
             <strong>{br(pais.municipios)}</strong> municípios que entregaram o
-            relatório. Fonte: Tesouro Nacional, SICONFI (
-            <Termo chave="rreo">RREO</Termo>).
+            relatório.
           </p>
 
           {/* Rosca e tabela lado a lado, e cada uma faz o que a outra não faz:
@@ -390,15 +390,21 @@ export default async function Pagina() {
               5ª com a 6ª e é o que o leitor de tela lê. De quebra ocupam a
               largura que esta seção desperdiçava. Em tela estreita empilham. */}
           <div className={s.duasVistas}>
-            <RoscaFuncoes fatias={pais.fatias} total={pais.total} />
+            <RoscaFuncoes fatias={pais.fatias} total={pais.total}
+              periodo={`${pais.periodo}º bimestre de ${pais.exercicio}`} />
             <div className={s.aoLado}>
               <ComposicaoBarras
                 fatias={pais.fatias}
                 total={pais.total}
                 municipio={`${br(pais.municipios)} municípios do Brasil`}
+                cores
               />
             </div>
           </div>
+          <FonteGrafico
+            fonte={<>Tesouro Nacional, SICONFI (<Termo chave="rreo">RREO</Termo>)</>}
+            periodo={`despesa liquidada acumulada até o ${pais.periodo}º bimestre de ${pais.exercicio}`}
+          />
 
           {/* A ressalva vai junto do número, não num rodapé. Chamar isto de
               "gasto dos municípios brasileiros" erra por quase metade, e a

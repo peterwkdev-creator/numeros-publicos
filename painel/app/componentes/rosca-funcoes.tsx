@@ -38,9 +38,12 @@ const NOMEADAS = 8;
 export default function RoscaFuncoes({
   fatias,
   total,
+  periodo,
 }: {
   fatias: FatiaFuncao[];
   total: number;
+  /** "6º bimestre de 2025": entra na descrição do SVG. */
+  periodo?: string;
 }) {
   if (!fatias.length || !(total > 0)) return null;
 
@@ -81,7 +84,9 @@ export default function RoscaFuncoes({
         aria-label={
           `Composição do gasto em ${arcos.length} fatias. ` +
           `${maiores.map((f) => f.nome).join(" e ")} somam ` +
-          `${br(somaDuas, 0)}% do total. Os valores estão na tabela ao lado.`
+          `${br(somaDuas, 0)}% do total` +
+          (periodo ? `, na despesa acumulada até o ${periodo}` : "") +
+          `. Os valores estão na tabela ao lado.`
         }
       >
         {arcos.map((f, i) => (
@@ -90,7 +95,11 @@ export default function RoscaFuncoes({
             d={f.caminho}
             className={estilos.fatia}
             data-funcao={Math.min(funcaoDe.get(f.nome) ?? NOMEADAS, NOMEADAS)}
-          />
+          >
+            {/* Nome e fatia ao passar o ponteiro; quem usa leitor de tela já
+                tem a tabela ao lado. */}
+            <title>{`${f.nome}: ${br(f.percentual, 1)}%`}</title>
+          </path>
         ))}
         {/* O total no buraco. `pointer-events: none` no CSS para não roubar o
             hover das fatias. */}

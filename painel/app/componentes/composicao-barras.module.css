@@ -94,3 +94,26 @@
     display: none !important;
   }
 }
+
+
+/* A amostra da cor fixa por função, quando a tabela está ao lado da rosca:
+   as `--rosca-*` de `globals.css`, pelo mesmo `data-funcao` das fatias.
+   `forced-color-adjust` pela mesma razão da barra. */
+.amostra {
+  display: inline-block;
+  width: 0.7em;
+  height: 0.7em;
+  margin-right: 0.4em;
+  border-radius: var(--raio-xs);
+  vertical-align: baseline;
+  forced-color-adjust: none;
+}
+.amostra[data-funcao="0"] { background: var(--rosca-0); }
+.amostra[data-funcao="1"] { background: var(--rosca-1); }
+.amostra[data-funcao="2"] { background: var(--rosca-2); }
+.amostra[data-funcao="3"] { background: var(--rosca-3); }
+.amostra[data-funcao="4"] { background: var(--rosca-4); }
+.amostra[data-funcao="5"] { background: var(--rosca-5); }
+.amostra[data-funcao="6"] { background: var(--rosca-6); }
+.amostra[data-funcao="7"] { background: var(--rosca-7); }
+.amostra[data-funcao="8"] { background: var(--rosca-8); }

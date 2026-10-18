@@ -25,8 +25,9 @@ import type { Trajetoria } from "../../lib/ideb";
  */
 
 const L = 320;
-const A = 96;
-const M = { topo: 8, base: 20, esq: 22, dir: 6 };
+// `topo` de 16 (era 8, com A de 96) para caber a unidade no topo do eixo.
+const A = 104;
+const M = { topo: 16, base: 20, esq: 22, dir: 6 };
 /** O vão mínimo do eixo, em pontos do índice. */
 const VAO_MINIMO = 2;
 
@@ -82,6 +83,10 @@ export default function IdebSvg({
       aria-label={rotulo}
       style={{ width: "100%", height: "auto", display: "block" }}
     >
+      {/* A unidade no topo do eixo: sem ela, "5,8" não diz que é nota. */}
+      <text x={0} y={9} fontSize="8" fill="var(--tinta-fraca)">
+        nota (0–10)
+      </text>
       {/* As marcas do eixo, escritas: com a escala presa aos dados, é o
           número ao lado que diz onde a linha está. */}
       {marcas.map((v) => (

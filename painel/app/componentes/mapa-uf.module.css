@@ -248,3 +248,9 @@
 @media print {
   .destacada { stroke: #000; stroke-width: 5; }
 }
+
+/* A chave do contorno: o que o traço grosso em volta de um estado quer dizer. */
+.chaveContorno {
+  display: block;
+  margin-top: 0.35rem;
+}

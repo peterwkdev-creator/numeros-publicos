@@ -1,0 +1,12 @@
+/* A linha de fonte e período colada ao gráfico. O mesmo tom e corpo da
+   `.fonte` de `serie-brasil.module.css`: `--tinta-suave` passa de 4,5:1 nos
+   três modos (ver o comentário em `globals.css`).
+   Classe dobrada de propósito: a linha mora dentro de `.texto` no município
+   e no estado, e `.texto p` (0,1,1) vencia `.fonte` (0,1,0) com o corpo e a
+   margem do texto corrido (achado em 18/10 no build local). */
+.fonte.fonte {
+  margin: 0.3rem 0 0.75rem;
+  font-size: var(--texto-xs);
+  line-height: 1.45;
+  color: var(--tinta-suave);
+}

@@ -134,6 +134,16 @@ export function trajetoriaDe(
   };
 }
 
+/**
+ * O período da linha de fonte do gráfico: "edições de 2005 a 2025", ou
+ * "edição de 2025" quando há uma só (até 18/10/2026 saía "edições de 2025 a
+ * 2025" nos anos finais de quem só tem a edição mais recente).
+ */
+export function periodoEdicoes(t: Trajetoria): string {
+  if (t.primeiro.edicao === t.ultimo.edicao) return `edição de ${t.ultimo.edicao}`;
+  return `edições de ${t.primeiro.edicao} a ${t.ultimo.edicao}`;
+}
+
 /** Quantas edições da trajetória bateram a meta, entre as que tinham meta. */
 export function contarMetas(t: Trajetoria): { bateu: number; comMeta: number } {
   const comMeta = t.pontos.filter((p) => p.bateuMeta !== null);

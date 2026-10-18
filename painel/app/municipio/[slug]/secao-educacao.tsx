@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { br, dataCurta } from "../../../lib/dados";
-import { contarMetas } from "../../../lib/ideb";
+import { contarMetas, periodoEdicoes } from "../../../lib/ideb";
 import IdebSvg from "../../componentes/ideb-svg";
 import Termo from "../../componentes/termo";
 import type { Contexto } from "./contexto";
@@ -78,7 +78,7 @@ export default function SecaoEducacao({ c }: { c: Contexto }) {
         <IdebSvg trajetoria={iniciais} municipio={m.nome} />
         <FonteGrafico
           fonte={ideb.fonte}
-          periodo={`edições de ${iniciais.pontos[0]!.edicao} a ${iniciais.pontos[iniciais.pontos.length - 1]!.edicao}`}
+          periodo={periodoEdicoes(iniciais)}
         >
           {ideb.coletadoEm ? `Coletado em ${dataCurta(ideb.coletadoEm)}.` : null}
         </FonteGrafico>
@@ -199,7 +199,7 @@ export default function SecaoEducacao({ c }: { c: Contexto }) {
             <IdebSvg trajetoria={finais} municipio={m.nome} />
             <FonteGrafico
               fonte={ideb.fonte}
-              periodo={`edições de ${finais.pontos[0]!.edicao} a ${finais.pontos[finais.pontos.length - 1]!.edicao}`}
+              periodo={periodoEdicoes(finais)}
             >
               {ideb.coletadoEm ? `Coletado em ${dataCurta(ideb.coletadoEm)}.` : null}
             </FonteGrafico>

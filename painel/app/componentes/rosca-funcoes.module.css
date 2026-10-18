@@ -42,19 +42,19 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* --- a rampa ------------------------------------------------------------
+/* --- a cor por função ----------------------------------------------------
    Os tokens `--rosca-0..8` moram em `app/globals.css`, e nao aqui.
    Modulo CSS so carrega quando o componente renderiza: com eles neste arquivo,
    a serie de funcoes na pagina do municipio -- que nao usa a rosca -- sairia
    sem cor nenhuma. Paleta compartilhada por mais de um componente e token
    global, nao detalhe de um deles. */
 
-.fatia[data-ordem="0"] { fill: var(--rosca-0); }
-.fatia[data-ordem="1"] { fill: var(--rosca-1); }
-.fatia[data-ordem="2"] { fill: var(--rosca-2); }
-.fatia[data-ordem="3"] { fill: var(--rosca-3); }
-.fatia[data-ordem="4"] { fill: var(--rosca-4); }
-.fatia[data-ordem="5"] { fill: var(--rosca-5); }
-.fatia[data-ordem="6"] { fill: var(--rosca-6); }
-.fatia[data-ordem="7"] { fill: var(--rosca-7); }
-.fatia[data-ordem="8"] { fill: var(--rosca-8); }
+.fatia[data-funcao="0"] { fill: var(--rosca-0); }
+.fatia[data-funcao="1"] { fill: var(--rosca-1); }
+.fatia[data-funcao="2"] { fill: var(--rosca-2); }
+.fatia[data-funcao="3"] { fill: var(--rosca-3); }
+.fatia[data-funcao="4"] { fill: var(--rosca-4); }
+.fatia[data-funcao="5"] { fill: var(--rosca-5); }
+.fatia[data-funcao="6"] { fill: var(--rosca-6); }
+.fatia[data-funcao="7"] { fill: var(--rosca-7); }
+.fatia[data-funcao="8"] { fill: var(--rosca-8); }

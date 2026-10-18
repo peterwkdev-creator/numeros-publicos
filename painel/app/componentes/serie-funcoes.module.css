@@ -60,15 +60,16 @@
   forced-color-adjust: none;
 }
 
-/* A rampa vem de `rosca-funcoes.module.css`, que define `--rosca-0..8` em
-   `:root` para os três modos — claro, escuro e impressão. Repeti-la aqui
-   criaria uma segunda verdade que divergiria no dia em que uma fosse ajustada. */
-.fatia[data-ordem="0"], .amostra[data-ordem="0"] { fill: var(--rosca-0); background: var(--rosca-0); }
-.fatia[data-ordem="1"], .amostra[data-ordem="1"] { fill: var(--rosca-1); background: var(--rosca-1); }
-.fatia[data-ordem="2"], .amostra[data-ordem="2"] { fill: var(--rosca-2); background: var(--rosca-2); }
-.fatia[data-ordem="3"], .amostra[data-ordem="3"] { fill: var(--rosca-3); background: var(--rosca-3); }
-.fatia[data-ordem="4"], .amostra[data-ordem="4"] { fill: var(--rosca-4); background: var(--rosca-4); }
-.fatia[data-ordem="5"], .amostra[data-ordem="5"] { fill: var(--rosca-5); background: var(--rosca-5); }
-.fatia[data-ordem="6"], .amostra[data-ordem="6"] { fill: var(--rosca-6); background: var(--rosca-6); }
-.fatia[data-ordem="7"], .amostra[data-ordem="7"] { fill: var(--rosca-7); background: var(--rosca-7); }
-.fatia[data-ordem="8"], .amostra[data-ordem="8"] { fill: var(--rosca-8); background: var(--rosca-8); }
+/* A cor de cada função vem de `app/globals.css`, que define `--rosca-0..8`
+   em `:root` para os três modos — claro, escuro e impressão — e a rosca da
+   capa usa as mesmas. Repeti-la aqui criaria uma segunda verdade que
+   divergiria no dia em que uma fosse ajustada. */
+.fatia[data-funcao="0"], .amostra[data-funcao="0"] { fill: var(--rosca-0); background: var(--rosca-0); }
+.fatia[data-funcao="1"], .amostra[data-funcao="1"] { fill: var(--rosca-1); background: var(--rosca-1); }
+.fatia[data-funcao="2"], .amostra[data-funcao="2"] { fill: var(--rosca-2); background: var(--rosca-2); }
+.fatia[data-funcao="3"], .amostra[data-funcao="3"] { fill: var(--rosca-3); background: var(--rosca-3); }
+.fatia[data-funcao="4"], .amostra[data-funcao="4"] { fill: var(--rosca-4); background: var(--rosca-4); }
+.fatia[data-funcao="5"], .amostra[data-funcao="5"] { fill: var(--rosca-5); background: var(--rosca-5); }
+.fatia[data-funcao="6"], .amostra[data-funcao="6"] { fill: var(--rosca-6); background: var(--rosca-6); }
+.fatia[data-funcao="7"], .amostra[data-funcao="7"] { fill: var(--rosca-7); background: var(--rosca-7); }
+.fatia[data-funcao="8"], .amostra[data-funcao="8"] { fill: var(--rosca-8); background: var(--rosca-8); }

@@ -25,10 +25,11 @@ import estilos from "./rosca-funcoes.module.css";
  *
  * ## As cores
  *
- * Rampa de um matiz só, escura para clara na ordem das fatias. Não é escolha
- * estética: a auditoria de daltonismo desta base reprovaria uma paleta
- * categórica, e aqui a cor não precisa identificar a função — a tabela ao lado
- * identifica. A cor só precisa **separar vizinhas**.
+ * Uma cor **fixa por função**, a mesma da série na página do município:
+ * Educação é a mesma cor nos dois lugares. A cor sai de `funcao` (o índice em
+ * `rotulos`), não da posição da fatia — se Saúde passar Educação num ano, as
+ * fatias trocam de lugar e as cores vão junto. Paleta e medida de daltonismo:
+ * `--rosca-*` em `app/globals.css`. A tabela ao lado continua dizendo o nome.
  */
 
 /** As mesmas 8 nomeadas da tabela, mais "outras": as duas têm de concordar. */
@@ -47,16 +48,20 @@ export default function RoscaFuncoes({
   const cauda = fatias.slice(NOMEADAS);
   const somaCauda = cauda.reduce((a, f) => a + f.valor, 0);
   const entradas = [
-    ...cabeca.map((f) => ({ nome: f.nome, valor: f.valor })),
+    ...cabeca.map((f) => ({ nome: f.nome, valor: f.valor, funcao: f.funcao })),
     ...(somaCauda > 0
       ? [{
           nome: `outras ${cauda.length} ${cauda.length === 1 ? "função" : "funções"}`,
           valor: somaCauda,
+          funcao: NOMEADAS,
         }]
       : []),
   ];
 
   const arcos = fatiasDaRosca(entradas, total);
+  // `fatiasDaRosca` pula fatia de valor zero: a função se acha pelo nome, não
+  // pelo índice do arco. Sem índice (ou fora das 8), a cor de "outras".
+  const funcaoDe = new Map(entradas.map((e) => [e.nome, e.funcao]));
   if (!arcos.length) return null;
 
   const maiores = arcos.slice(0, 2);
@@ -84,7 +89,7 @@ export default function RoscaFuncoes({
             key={f.nome}
             d={f.caminho}
             className={estilos.fatia}
-            data-ordem={Math.min(i, 8)}
+            data-funcao={Math.min(funcaoDe.get(f.nome) ?? NOMEADAS, NOMEADAS)}
           />
         ))}
         {/* O total no buraco. `pointer-events: none` no CSS para não roubar o

@@ -101,6 +101,9 @@ export type FatiaFuncao = {
    *  produziria `Infinity` ou `NaN`, e os dois viram "—" na tela sem que
    *  ninguém entenda por quê. */
   percentual: number | null;
+  /** O índice da função em `rotulos`, quando quem montou a fatia o tem: é a
+   *  chave da cor fixa por função (`--rosca-*`). */
+  funcao?: number;
 };
 
 /**

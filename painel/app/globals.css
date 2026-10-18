@@ -103,23 +103,27 @@
      (2.5.8); onde o ponteiro é o dedo, 44px (ver `pointer: coarse` abaixo). */
   --alvo: 24px;
 
-  /* --- rampa de composição -------------------------------------------------
-     Um matiz só, escuro para claro na ordem das fatias. Usada pela rosca do
-     gasto e pela série de funções: a cor separa vizinhas, e quem identifica
-     cada função é a legenda ao lado. Paleta categórica reprovaria na auditoria
-     de daltonismo e não compraria nada em troca.
+  /* --- cor por função -----------------------------------------------------
+     Uma cor FIXA por função, pelo índice em `rotulos` do fiscal.json (0 =
+     Educação, 1 = Saúde, ... 7 = Assistência Social; 8 = "outras"), usada pela
+     rosca da capa e pela série do município: Educação tem a mesma cor nos
+     dois. Paleta Tol muted, sem o vinho (#882255 leria como `--alerta`).
+     Medido em 17/10 (CIEDE2000, daltonismo por Machado 2009): pior par entre
+     as 9 cores 15,3 no claro e 16,1 no escuro, e >= 10,4 em protanopia,
+     deuteranopia e tritanopia; a rampa azul que ela substitui dava 4,4-6,1.
+     A legenda e a tabela continuam dizendo o nome: a cor ajuda, não substitui.
 
      Mora AQUI, e não no módulo da rosca, porque módulo CSS só carrega quando o
      componente renderiza — e a série existe em páginas onde a rosca não. */
-  --rosca-0: #0f4f79;
-  --rosca-1: #1a6a9e;
-  --rosca-2: #2a84bd;
-  --rosca-3: #4b9dd0;
-  --rosca-4: #6fb3dd;
-  --rosca-5: #94c7e8;
-  --rosca-6: #b6d9f0;
-  --rosca-7: #d3e7f7;
-  --rosca-8: #cbd5dd;
+  --rosca-0: #332288;
+  --rosca-1: #44aa99;
+  --rosca-2: #ddcc77;
+  --rosca-3: #88ccee;
+  --rosca-4: #aa4499;
+  --rosca-5: #999933;
+  --rosca-6: #cc6677;
+  --rosca-7: #117733;
+  --rosca-8: #c9cfd4;
   /* As faixas de quem ocupava a Presidência, em /brasil/: dois cinzas, e
      nenhuma outra cor. Alternam pela ordem no cargo, nada mais. */
   --faixa-0: #eef1f4;
@@ -162,15 +166,15 @@
     /* No escuro, sombra preta não se vê sobre o fundo quase preto (medido na
        captura de 16/10): a borda clareia em vez de escurecer. */
     --rola-sombra: rgb(150 180 205 / 0.28);
-    --rosca-0: #8fc6e8;
-    --rosca-1: #6fb0d8;
-    --rosca-2: #559ac6;
-    --rosca-3: #4084b1;
-    --rosca-4: #316e97;
-    --rosca-5: #26597c;
-    --rosca-6: #1d4661;
-    --rosca-7: #173648;
-    --rosca-8: #3a4650;
+    --rosca-0: #8478e0;
+    --rosca-1: #44aa99;
+    --rosca-2: #ddcc77;
+    --rosca-3: #88ccee;
+    --rosca-4: #aa4499;
+    --rosca-5: #999933;
+    --rosca-6: #cc6677;
+    --rosca-7: #2a8a48;
+    --rosca-8: #4a545c;
     --faixa-0: #151f26;
     --faixa-1: #202d37;
     --mapa-0: #16354d;
@@ -643,15 +647,15 @@ body:has(#busca-capa) .barra-site [data-busca] {
     --positivo-tinta: #17553f;
     --sombra: none;
     --sombra-alta: none;
-    --rosca-0: #1f3b52;
-    --rosca-1: #35566f;
-    --rosca-2: #4d6f8a;
-    --rosca-3: #6888a2;
-    --rosca-4: #86a2b8;
-    --rosca-5: #a5bccd;
-    --rosca-6: #c4d4e0;
-    --rosca-7: #e0e9f0;
-    --rosca-8: #d8dde1;
+    --rosca-0: #332288;
+    --rosca-1: #44aa99;
+    --rosca-2: #ddcc77;
+    --rosca-3: #88ccee;
+    --rosca-4: #aa4499;
+    --rosca-5: #999933;
+    --rosca-6: #cc6677;
+    --rosca-7: #117733;
+    --rosca-8: #c9cfd4;
     --faixa-0: #f2f2f2;
     --faixa-1: #dcdcdc;
     --mapa-0: #eef2f6;

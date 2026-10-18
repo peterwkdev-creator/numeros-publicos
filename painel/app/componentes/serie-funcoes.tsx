@@ -96,7 +96,7 @@ export default function SerieFuncoes({ pontos }: { pontos: PontoFuncoes[] }) {
                   <rect
                     key={f.nome}
                     className={estilos.fatia}
-                    data-ordem={Math.min(i, 8)}
+                    data-funcao={Math.min(i, 8)}
                     x={atual}
                     y={y}
                     width={largura}
@@ -119,7 +119,7 @@ export default function SerieFuncoes({ pontos }: { pontos: PontoFuncoes[] }) {
             <li key={nome} className={estilos.chave}>
               <span
                 className={estilos.amostra}
-                data-ordem={Math.min(i, 8)}
+                data-funcao={Math.min(i, 8)}
                 aria-hidden="true"
               />
               {nome}

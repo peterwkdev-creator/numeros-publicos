@@ -194,6 +194,7 @@ export function funcoesDoPais(fiscal: SnapshotFiscal): PanoramaFuncoes | null {
       // Mesmo cuidado de `funcoesDe`: rótulo faltante viraria `undefined`
       // impresso como texto se o export mudasse a ordem sem regerar o resto.
       nome: bloco.rotulos[i] ?? `Função ${i}`,
+      funcao: i,
       valor,
       percentual: (valor * 100) / total,
     }))

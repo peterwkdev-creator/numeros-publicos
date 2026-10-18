@@ -8,7 +8,7 @@ import type { Contexto } from "./contexto";
  * Extraído de `page.tsx` em 16/10/2026 (item 10 da modernização): o HTML é o mesmo, byte a byte.
  */
 export default function SecaoComparacao({ c }: { c: Contexto }) {
-  const { r, panorama, meu, sc, rs, ba, ma, contraste, posTaxa, medianas, posMediana, de, quadrimestre, estilos } = c;
+  const { r, panorama, meu, brasilTaxa, brasilMediana, sc, rs, ba, ma, contraste, posTaxa, medianas, posMediana, de, quadrimestre, estilos } = c;
   // A pergunta que a página do município faz e a do estado não fazia.
   // Só ficou possível com os 5.570 municípios consultados — antes disso
   // não havia contra o que comparar. Ver `lib/nacional.ts`.
@@ -53,14 +53,16 @@ export default function SecaoComparacao({ c }: { c: Contexto }) {
         <p className={estilos.fonte}>
           Municípios que entregaram o relatório fiscal do {quadrimestre},
           em % do total de cada estado. Cada ponto é uma unidade da
-          federação; o losango é {r.uf.nome}. Fonte: Tesouro Nacional,
-          SICONFI.
+          federação; o losango é {r.uf.nome}
+          {brasilTaxa !== null && "; o traço, o Brasil"}. Fonte: Tesouro
+          Nacional, SICONFI.
         </p>
         <TiraEstados
           panorama={panorama}
           destaque={r.uf.sigla}
           valorDe={(x) => x.taxa}
           formatar={(v) => `${br(v, 0)}%`}
+          referencia={brasilTaxa !== null ? { valor: brasilTaxa, rotulo: "Brasil" } : null}
           rotuloEixo="Percentual de municípios que entregaram o relatório fiscal, por estado"
           descricao={
             `As ${panorama.length} unidades da federação pelo percentual ` +
@@ -68,7 +70,8 @@ export default function SecaoComparacao({ c }: { c: Contexto }) {
             `relatório fiscal. ${r.uf.nome} está em ${br(meu.taxa, 0)}%, ` +
             `acima de ${br(posTaxa.abaixo)} dos outros. O menor é ` +
             `${br(Math.min(...panorama.map((x) => x.taxa)), 0)}% e o maior ` +
-            `${br(Math.max(...panorama.map((x) => x.taxa)), 0)}%.`
+            `${br(Math.max(...panorama.map((x) => x.taxa)), 0)}%.` +
+            (brasilTaxa !== null ? ` No país, ${br(brasilTaxa, 0)}%.` : "")
           }
         />
       </div>
@@ -115,21 +118,26 @@ export default function SecaoComparacao({ c }: { c: Contexto }) {
             <p className={estilos.fonte}>
               Mediana do gasto com pessoal dos municípios de cada estado
               no {quadrimestre}, em % da receita corrente líquida, só onde
-              a base é suficiente. O losango é {r.uf.nome}. Fonte: Tesouro
-              Nacional, SICONFI.
+              a base é suficiente. O losango é {r.uf.nome}
+              {brasilMediana !== null && "; o traço, a mediana de todos os municípios do país"}.
+              Fonte: Tesouro Nacional, SICONFI.
             </p>
             <TiraEstados
               panorama={panorama}
               destaque={r.uf.sigla}
               valorDe={(x) => x.mediana}
               formatar={(v) => `${br(v, 2)}%`}
+              referencia={brasilMediana !== null ? { valor: brasilMediana, rotulo: "Brasil" } : null}
               rotuloEixo="Mediana do gasto com pessoal, por estado"
               descricao={
                 `As unidades da federação pela mediana do gasto com ` +
                 `pessoal. ` +
                 `${r.uf.nome} está em ${br(meu.mediana, 2)}%, acima de ` +
                 `${br(posMediana.abaixo)} das ${br(posMediana.de)} ` +
-                `com base suficiente.`
+                `com base suficiente.` +
+                (brasilMediana !== null
+                  ? ` A mediana de todos os municípios do país é ${br(brasilMediana, 2)}%.`
+                  : "")
               }
             />
           </div>

@@ -40,9 +40,12 @@ export const PISO = 15;
 
 export default function SaudeSvg({
   pontos,
+  mediana = [],
   municipio,
 }: {
   pontos: [ano: number, valor: number][];
+  /** A mediana do estado ano a ano, nos anos da série (revisão 2, lote C). */
+  mediana?: [ano: number, valor: number][];
   municipio: string;
 }) {
   if (pontos.length < 2) return null;
@@ -55,7 +58,8 @@ export default function SaudeSvg({
 
   // O eixo dos dados (`lib/eixo.ts`, 5 pontos de vão no mínimo): o piso entra
   // quando está perto deles e é desenhado; longe, o pé do gráfico diz onde.
-  const { baixo, alto, marcas, fora } = eixoJusto(pontos.map((p) => p[1]), {
+  // A mediana entra no eixo: é dado desenhado, e cortá-la na borda mentiria.
+  const { baixo, alto, marcas, fora } = eixoJusto([...pontos, ...mediana].map((p) => p[1]), {
     vaoMinimo: 5, reguas: temRegua ? [PISO] : [],
   });
   const desenhaRegua = temRegua && fora.length === 0;
@@ -67,13 +71,15 @@ export default function SaudeSvg({
     M.topo + ((alto - v) / (alto - baixo)) * (A - M.topo - M.base);
 
   // `M` inicia traço novo: anos vizinhos continuam a linha, um buraco a corta.
-  const linha = pontos
+  const tracar = (serie: [number, number][]) => serie
     .map(([ano, v], i) => {
-      const anterior = pontos[i - 1];
+      const anterior = serie[i - 1];
       const segue = anterior !== undefined && ano - anterior[0] === 1;
       return `${segue ? "L" : "M"}${x(ano)},${y(v)}`;
     })
     .join(" ");
+  const linha = tracar(pontos);
+  const linhaMediana = mediana.length > 1 ? tracar(mediana) : null;
 
   const buracos = pontos.filter(
     (p, i) => i > 0 && p[0] - pontos[i - 1]![0] !== 1,
@@ -94,6 +100,11 @@ export default function SaudeSvg({
     (buracos
       ? `A série tem ${buracos === 1 ? "uma interrupção" : `${buracos} interrupções`}, ` +
         `em anos sem dado na fonte. `
+      : "") +
+    (linhaMediana
+      ? `A mediana dos municípios do estado vai de ${br(mediana[0]![1], 2)}% em ` +
+        `${mediana[0]![0]} a ${br(mediana[mediana.length - 1]![1], 2)}% em ` +
+        `${mediana[mediana.length - 1]![0]}. `
       : "") +
     (fora.length ? `O mínimo de 15% fica ${PISO > alto ? "acima" : "abaixo"} da escala do gráfico. ` : "") +
     `Os mesmos valores estão na tabela abaixo.`;
@@ -136,6 +147,20 @@ export default function SaudeSvg({
             mínimo 15% (desde 2004)
           </text>
         </g>
+      )}
+
+      {/* A mediana do estado: fina, na cor do texto e atrás do município,
+          que é o assunto. Quebra no ano sem mediana, como a série. */}
+      {linhaMediana && (
+        <path
+          d={linhaMediana}
+          fill="none"
+          stroke="var(--tinta)"
+          strokeWidth="1"
+          opacity="0.6"
+          strokeLinejoin="round"
+          vectorEffect="non-scaling-stroke"
+        />
       )}
 
       <path

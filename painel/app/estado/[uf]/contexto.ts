@@ -7,7 +7,7 @@ import { nomeQuadrimestre, atualDeFuncoes } from "../../../lib/fiscal";
 import { medianaUltimaEdicao } from "../../../lib/ideb";
 import { inssDaUf } from "../../../lib/inss";
 import { FONTES, VARIAVEIS, catalogoDe, coberturaTemporal, palavrasChave, LICENCA_DADOS } from "../../../lib/jsonld";
-import { mediana, panoramaEstados, posicaoNaLista } from "../../../lib/nacional";
+import { mediana, panoramaEstados, posicaoNaLista, rankingCache } from "../../../lib/nacional";
 import { SITE } from "../../../lib/servidor";
 import { atualizadoEm } from "../../../lib/sitemap";
 import type { Snapshot } from "../../../lib/dados";
@@ -65,6 +65,14 @@ export function montarContexto(dados: Dados, r: ResumoEstado) {
   const posMediana = meu?.mediana != null
     ? posicaoNaLista(meu.mediana, medianas)
     : null;
+  // O país como referência desenhada nas duas tiras (revisão 2, lote C):
+  // a entrega somada dos estados com relatório municipal e a mediana
+  // nacional do ranking, a mesma que a página do ranking publica.
+  const somaMunicipios = panorama.reduce((t, x) => t + x.municipios, 0);
+  const brasilTaxa = somaMunicipios
+    ? (panorama.reduce((t, x) => t + x.publicaram, 0) / somaMunicipios) * 100
+    : null;
+  const brasilMediana = rankingCache(fiscal, snapshot).mediana;
 
   // Mediana e não média: o IDEB vai de 0 a 10, e um punhado de municípios
   // pequenos com nota extrema desloca a média sem descrever o estado.
@@ -164,7 +172,7 @@ export function montarContexto(dados: Dados, r: ResumoEstado) {
   };
 
   return {
-    anoEstimada, atualizado, ausentes, ba, bimestre, caged, cagedUf, contraste, de, emendas, emendasPh, emendasUf, esperaUf, fiscal, inss, inssUf, jsonLd, ma, medIdeb, medianaPh, medianas, medidasCenso, meu, panorama, phMunicipios, pibReais, pop, posMediana, posTaxa, quadrimestre, r, rs, sc, semMunicipio, semRede, semRedeFinais, snapshot, taxasPais,
+    anoEstimada, atualizado, ausentes, ba, bimestre, brasilMediana, brasilTaxa, caged, cagedUf, contraste, de, emendas, emendasPh, emendasUf, esperaUf, fiscal, inss, inssUf, jsonLd, ma, medIdeb, medianaPh, medianas, medidasCenso, meu, panorama, phMunicipios, pibReais, pop, posMediana, posTaxa, quadrimestre, r, rs, sc, semMunicipio, semRede, semRedeFinais, snapshot, taxasPais,
   };
 }
 

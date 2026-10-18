@@ -80,7 +80,13 @@ export default function SecaoSaude({ c }: { c: Contexto }) {
         )}
       </p>
       <div className={estilos.grafico}>
-        <SaudeSvg pontos={saude.pontos} municipio={m.nome} />
+        <SaudeSvg pontos={saude.pontos} mediana={saude.medianaSerie} municipio={m.nome} />
+        {saude.medianaSerie.length > 1 && (
+          <p className={estilos.legenda}>
+            A linha grossa é {m.nome}; a fina, a mediana dos municípios{" "}
+            {deEstado(m.uf)} em cada ano; a tracejada, quando cabe na escala, o mínimo de 15%.
+          </p>
+        )}
         <FonteGrafico
           fonte={saude.fonte}
           periodo={`${saude.pontos[0]![0]} a ${saude.pontos[saude.pontos.length - 1]![0]}`}

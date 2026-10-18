@@ -48,8 +48,8 @@ export default function SecaoIssoEMuito({ c }: { c: Contexto }) {
         <p className={estilos.legenda}>
           Cada coluna é um grupo de municípios {deEstado(m.uf)} com gasto
           parecido: quanto mais alta, mais municípios ali. A linha cheia
-          com o ponto é {m.nome}; as tracejadas, o limite prudencial e o
-          teto legal.
+          com o ponto é {m.nome}; a fina, a mediana do estado; as
+          tracejadas, o limite prudencial e o teto legal.
         </p>
         <FonteGrafico
           fonte={fiscal.fonte}

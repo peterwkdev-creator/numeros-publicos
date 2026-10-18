@@ -27,16 +27,26 @@ import type { Posicao } from "../../lib/posicao";
  * posição e por rótulo, não por cor de alerta — a página não está dizendo que
  * ele é melhor ou pior que os vizinhos, só onde ele cai. Julgar é do leitor;
  * o painel põe a régua.
+ *
+ * ## A mediana e o nome, desenhados (18/10/2026)
+ *
+ * A mediana do estado estava só no texto, e a linha cheia só se explicava
+ * pela legenda. Agora cada uma tem uma linha de rótulo acima do desenho:
+ * em cima o município, embaixo dela a mediana, que é um traço fino na cor
+ * do texto. Linhas separadas porque os dois valores costumam cair a poucos
+ * pixels um do outro, como os dois limites legais embaixo.
  */
 
 const L = 320;
-const A = 112;
+// `A` de 132 e `topo` de 26 (eram 112 e 6): as duas linhas de rótulo de cima,
+// com a mesma altura útil de antes para as colunas.
+const A = 132;
 //: `base` reserva espaço para DUAS linhas de rótulo escalonadas mais a
 //: escala do eixo. Ver a nota dos rótulos, mais abaixo. O degrau de 16 e a
 //: base de 44 cabem o rótulo de 11 unidades que o telefone usa
 //: (`.grafico-svg` em `globals.css`), cuja caixa mede ~15 em 375px: com
 //: degrau de 12 as caixas se sobrepunham 2,9px. Com 7 o vão sobra.
-const M = { topo: 6, base: 44, esq: 4, dir: 4 };
+const M = { topo: 26, base: 44, esq: 4, dir: 4 };
 const DEGRAU = 16;
 
 /** 54 vira "54" e 51,3 vira "51,3": a régua com o número que ela marca,
@@ -44,6 +54,26 @@ const DEGRAU = 16;
 const casas = (v: number) =>
   Number.isInteger(v) ? 0 : Math.abs(v * 10 - Math.round(v * 10)) < 1e-9 ? 1 : 2;
 const FAIXAS = 24;
+
+/** Largura de um rótulo pela fonte de 11 do telefone, a maior do site
+ *  (~0,56 em por letra): estimar por cima evita o nome sair do desenho. */
+const larguraDe = (texto: string) => texto.length * 6.2;
+
+/** Onde ancorar um rótulo ao lado de uma linha vertical em `xv`: do lado
+ *  `preferido` se couber, do outro se não, centrado e preso às bordas se
+ *  nenhum couber. */
+function ancorar(
+  xv: number,
+  texto: string,
+  preferido: "direita" | "esquerda",
+): { x: number; anchor: "start" | "end" | "middle" } {
+  const w = larguraDe(texto);
+  const direita = xv + 4 + w <= L;
+  const esquerda = xv - 4 - w >= 0;
+  if (preferido === "direita" ? direita : !esquerda && direita) return { x: xv + 4, anchor: "start" };
+  if (esquerda) return { x: xv - 4, anchor: "end" };
+  return { x: Math.min(Math.max(xv, w / 2), L - w / 2), anchor: "middle" };
+}
 
 export default function DistribuicaoSvg({
   posicao,
@@ -80,6 +110,17 @@ export default function DistribuicaoSvg({
   const alturaUtil = A - M.topo - M.base;
   const y = (n: number) => M.topo + alturaUtil - (n / pico) * alturaUtil;
   const esquerda = x(legal) > L * 0.75;
+
+  // Os rótulos de cima: o município puxa para o lado com mais espaço, a
+  // mediana para o lado oposto ao do município, para não cruzar a linha dele.
+  const textoMunicipio = `${municipio} ${br(percentual, 2)}%`;
+  const posMunicipio = ancorar(
+    x(percentual), textoMunicipio, x(percentual) < L / 2 ? "direita" : "esquerda",
+  );
+  const textoMediana = `mediana do estado ${br(mediana, 2)}%`;
+  const posMediana = ancorar(
+    x(mediana), textoMediana, mediana < percentual ? "esquerda" : "direita",
+  );
 
   const rotulo =
     `Distribuição do gasto com pessoal ${conjunto}: ${base} municípios com ` +
@@ -145,15 +186,36 @@ export default function DistribuicaoSvg({
         ),
       )}
 
+      {/* A mediana do estado: traço fino na cor do texto, sem tracejado (o
+          tracejado é dos limites legais), com o rótulo na 2ª linha de cima. */}
+      <line
+        x1={x(mediana)} x2={x(mediana)}
+        y1={M.topo - 2} y2={M.topo + alturaUtil}
+        stroke="var(--tinta)" strokeWidth="1"
+      />
+      <text
+        x={posMediana.x} y={M.topo - 4} textAnchor={posMediana.anchor}
+        fontSize="7" fill="var(--tinta)"
+      >
+        {textoMediana}
+      </text>
+
       {/* Este município: linha cheia e marcador. Destacado por FORMA e
-          posição, não por cor de alerta -- o gráfico situa, não julga. */}
+          posição, não por cor de alerta -- o gráfico situa, não julga. A
+          linha sobe até o rótulo com o nome, na 1ª linha de cima. */}
       <line
         x1={x(percentual)} x2={x(percentual)}
-        y1={M.topo - 3} y2={M.topo + alturaUtil}
+        y1={10} y2={M.topo + alturaUtil}
         stroke="var(--acento)" strokeWidth="2"
         vectorEffect="non-scaling-stroke"
       />
       <circle cx={x(percentual)} cy={M.topo - 3} r="3.5" fill="var(--acento)" />
+      <text
+        x={posMunicipio.x} y={10} textAnchor={posMunicipio.anchor}
+        fontSize="7" fontWeight="600" fill="var(--acento)"
+      >
+        {textoMunicipio}
+      </text>
 
       <text x={M.esq} y={A - 2} fontSize="7" fill="var(--tinta-fraca)">
         {br(min, 0)}%

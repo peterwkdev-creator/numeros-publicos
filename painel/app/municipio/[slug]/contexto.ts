@@ -206,11 +206,23 @@ export function montarContexto(dados: Dados, m: Municipio) {
         const medianaUf = i >= 0
           ? (medianasSaudeCache(fiscal)[m.uf]?.[i] ?? null)
           : null;
+        // A mediana do estado ano a ano, desenhada atrás da série (revisão 2,
+        // lote C), só nos anos que o gráfico do município cobre.
+        const primeiro = pontosSaude.pontos[0]!;
+        const porAno = medianasSaudeCache(fiscal)[m.uf] ?? [];
+        const medianaSerie: [number, number][] = [];
+        fiscal.saude!.anos.forEach((ano, j) => {
+          const v = porAno[j];
+          if (typeof v === "number" && ano >= primeiro[0] && ano <= ultimo[0]) {
+            medianaSerie.push([ano, v]);
+          }
+        });
         return {
           pontos: pontosSaude.pontos,
-          primeiro: pontosSaude.pontos[0]!,
+          primeiro,
           ultimo,
           medianaUf,
+          medianaSerie,
           rotulo: fiscal.saude!.rotulo,
           fonte: fiscal.saude!.fonte,
           coletadoEm: fiscal.saude!.coletadoEm,

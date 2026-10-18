@@ -101,6 +101,27 @@ export default function RoscaFuncoes({
             <title>{`${f.nome}: ${br(f.percentual, 1)}%`}</title>
           </path>
         ))}
+        {/* O % escrito dentro da fatia de 8% ou mais (revisão 2, lote D), no
+            arco médio: raio 81, o meio entre 62 e 100 de `lib/rosca.ts`. Abaixo
+            de 8% o arco não comporta o número; a tabela ao lado o diz. A cor do
+            texto contra a fatia está no CSS, por função e por modo. */}
+        {arcos.map((f, i) => {
+          if (f.percentual < 8) return null;
+          const antes = arcos.slice(0, i).reduce((a, g) => a + g.percentual, 0);
+          const angulo = ((antes + f.percentual / 2) * 3.6 - 90) * (Math.PI / 180);
+          return (
+            <text
+              key={`pct-${f.nome}`}
+              className={estilos.percentual}
+              data-funcao={Math.min(funcaoDe.get(f.nome) ?? NOMEADAS, NOMEADAS)}
+              x={(81 * Math.cos(angulo)).toFixed(1)}
+              y={(81 * Math.sin(angulo)).toFixed(1)}
+              aria-hidden="true"
+            >
+              {br(f.percentual, 0)}%
+            </text>
+          );
+        })}
         {/* O total no buraco. `pointer-events: none` no CSS para não roubar o
             hover das fatias. */}
         <text className={estilos.totalRotulo} x="0" y="-14">

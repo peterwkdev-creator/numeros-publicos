@@ -1,5 +1,6 @@
 import { br } from "../../../lib/dados";
 import { eixoJusto } from "../../../lib/eixo";
+import { HALO, lugarDoValor } from "../../../lib/valor-final";
 
 /**
  * A aplicação de recursos próprios em saúde, 2000–2025, como um traço.
@@ -88,6 +89,21 @@ export default function SaudeSvg({
   const abaixoDoPiso = pontos.filter(
     ([ano, v]) => ano >= ANO_DO_PISO_CHEIO && v < PISO,
   ).length;
+
+  // O último valor junto do último ponto. A caixa de "mínimo 15% (desde
+  // 2004)" (23 caracteres, à direita) entra como obstáculo: o valor sobe ou
+  // desce para não a cobrir. 9 + 3 é a altura da caixa na fonte de 11, e o
+  // piso fica acima do ano escrito no canto.
+  const textoFinal = `${br(ultimo[1], 1)}%`;
+  const valorFinal = lugarDoValor(
+    textoFinal, x(ultimo[0]), y(ultimo[1]), y(pontos[pontos.length - 2]![1]),
+    {
+      largura: L, teto: 1, piso: A - 4 - 9 - 1,
+      evitar: desenhaRegua
+        ? [{ x0: L - M.dir - 23 * 6.2, x1: L - M.dir, base: y(PISO) - 3 }]
+        : [],
+    },
+  );
 
   const rotulo =
     `Recursos próprios aplicados em saúde por ${municipio}, ` +
@@ -181,6 +197,11 @@ export default function SaudeSvg({
           fill="var(--acento)"
         />
       ))}
+
+      <text x={valorFinal.x} y={valorFinal.y} textAnchor={valorFinal.anchor}
+        fontSize="9" {...HALO}>
+        {textoFinal}
+      </text>
 
       <text x={M.esq} y={A - 4} fontSize="8" fill="var(--tinta-fraca)">
         {primeiro[0]}

@@ -1,5 +1,6 @@
 import { br } from "../../../lib/dados";
 import { eixoJusto } from "../../../lib/eixo";
+import { HALO, SOBE, larguraDe, lugarDoValor } from "../../../lib/valor-final";
 import {
   contiguos,
   indiceQuadrimestre,
@@ -140,6 +141,21 @@ export default function SerieSvg({
   const buracos = interrupcoes(bons);
   const subiu = ultimo[3] > primeiro[3];
 
+  // O último valor escrito junto do último ponto, sem cobrir o rótulo de régua.
+  const textoFinal = `${br(ultimo[3], 1)}%`;
+  const valorFinal = lugarDoValor(
+    textoFinal, x(ultimo), y(ultimo[3]), y(bons[bons.length - 2]![3]),
+    {
+      largura: L, teto: 1, piso: A - 4 - SOBE - 1,
+      evitar: reguas.filter(({ v }) => !fora.includes(v)).map(({ v, texto, direita }) => {
+        const w = larguraDe(`${texto} ${br(v, 1)}%`);
+        return direita
+          ? { x0: L - M.dir - w, x1: L - M.dir, base: y(v) - 3 }
+          : { x0: M.esq, x1: M.esq + w, base: y(v) - 3 };
+      }),
+    },
+  );
+
   const rotulo =
     `Gasto com pessoal de ${municipio} em ${bons.length} ` +
     `${bons.some((p) => p[4] === true) ? "relatórios" : "quadrimestres"}: ` +
@@ -221,6 +237,11 @@ export default function SerieSvg({
           fill="var(--acento)"
         />
       ))}
+
+      <text x={valorFinal.x} y={valorFinal.y} textAnchor={valorFinal.anchor}
+        fontSize="9" {...HALO}>
+        {textoFinal}
+      </text>
 
       {/* Só o primeiro e o último rótulo: seis datas no eixo viram borrão. */}
       <text x={M.esq} y={A - 4} fontSize="8" fill="var(--tinta-fraca)">

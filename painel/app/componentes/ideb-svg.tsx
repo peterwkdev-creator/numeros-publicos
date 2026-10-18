@@ -1,6 +1,7 @@
 import { br } from "../../lib/dados";
 import { eixoJusto } from "../../lib/eixo";
 import type { Trajetoria } from "../../lib/ideb";
+import { HALO, lugarDoValor } from "../../lib/valor-final";
 
 /**
  * A trajetória do IDEB contra a meta do INEP, em SVG embutido.
@@ -63,6 +64,16 @@ export default function IdebSvg({
   const linhaMeta = comMeta
     .map((p, i) => `${i ? "L" : "M"}${x(p.edicao)},${y(p.projecao as number)}`)
     .join(" ");
+
+  // O último Ideb junto do último ponto, no formato das marcas do eixo. Sem
+  // rótulo de régua à direita; o piso fica acima do ano escrito no canto.
+  const ultimo = pontos[pontos.length - 1]!;
+  const textoFinal = br(ultimo.observado, 1);
+  const valorFinal = lugarDoValor(
+    textoFinal, x(ultimo.edicao), y(ultimo.observado),
+    y(pontos[pontos.length - 2]!.observado),
+    { largura: L, teto: 1, piso: A - 4 - 9 - 1, evitar: [] },
+  );
 
   const rotulo =
     `IDEB de ${municipio}, ${trajetoria.rotuloEtapa}, rede municipal: ` +
@@ -133,6 +144,11 @@ export default function IdebSvg({
           fill="var(--acento)"
         />
       ))}
+
+      <text x={valorFinal.x} y={valorFinal.y} textAnchor={valorFinal.anchor}
+        fontSize="9" {...HALO}>
+        {textoFinal}
+      </text>
 
       <text x={M.esq} y={A - 4} fontSize="8" fill="var(--tinta-fraca)">
         {minAno}

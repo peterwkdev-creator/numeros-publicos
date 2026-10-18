@@ -73,3 +73,20 @@
 .fatia[data-funcao="6"], .amostra[data-funcao="6"] { fill: var(--rosca-6); background: var(--rosca-6); }
 .fatia[data-funcao="7"], .amostra[data-funcao="7"] { fill: var(--rosca-7); background: var(--rosca-7); }
 .fatia[data-funcao="8"], .amostra[data-funcao="8"] { fill: var(--rosca-8); background: var(--rosca-8); }
+
+/* A escala 0/50/100% (revisão 2, lote D). Fina e tracejada para ler como
+   grade, não como dado; por cima das barras, sem roubar o título delas. */
+.grade {
+  stroke: var(--tinta-suave);
+  stroke-width: 1;
+  stroke-dasharray: 2 2;
+  opacity: 0.55;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+.escala {
+  font-size: 11px;
+  fill: var(--tinta-suave);
+  font-variant-numeric: tabular-nums;
+}

@@ -35,6 +35,8 @@ const ESPACO = 10;
 /** Largura reservada ao rótulo do ano, à esquerda. */
 const ROTULO = 46;
 const LARGURA = 320;
+/** Faixa embaixo das barras para os números da escala, na fonte de 11. */
+const ESCALA = 16;
 
 export default function SerieFuncoes({ pontos }: { pontos: PontoFuncoes[] }) {
   // Uma barra só não é série: sem duas, não há "mudou" a mostrar, e o
@@ -53,11 +55,15 @@ export default function SerieFuncoes({ pontos }: { pontos: PontoFuncoes[] }) {
         - (primeiro.fatias[i]?.percentual ?? 0),
     }))
     .sort((a, b) => Math.abs(b.pontos) - Math.abs(a.pontos))[0];
+  // A maior fatia do último ano, para o rótulo falado (revisão 2, lote D).
+  const maiorUltimo = ultimo.fatias
+    .filter((f) => (f.percentual ?? 0) > 0)
+    .sort((a, b) => (b.percentual ?? 0) - (a.percentual ?? 0))[0];
 
   return (
     <figure className={estilos.bloco}>
       <svg
-        viewBox={`0 0 ${ROTULO + LARGURA} ${alturaTotal}`}
+        viewBox={`0 0 ${ROTULO + LARGURA} ${alturaTotal + ESCALA}`}
         className={estilos.grafico}
         role="img"
         aria-label={
@@ -67,6 +73,10 @@ export default function SerieFuncoes({ pontos }: { pontos: PontoFuncoes[] }) {
             ? `A maior mudança foi em ${maiorMudanca.nome}, ` +
               `${maiorMudanca.pontos >= 0 ? "de mais" : "de menos"} ` +
               `${br(Math.abs(maiorMudanca.pontos), 1)} pontos. `
+            : "") +
+          (maiorUltimo
+            ? `Em ${ultimo.exercicio}, a maior fatia foi ${maiorUltimo.nome}, ` +
+              `com ${br(maiorUltimo.percentual ?? 0, 1)}%. `
             : "") +
           "Os valores de cada ano estão na tabela abaixo."
         }
@@ -108,6 +118,23 @@ export default function SerieFuncoes({ pontos }: { pontos: PontoFuncoes[] }) {
                   </rect>
                 );
               })}
+            </g>
+          );
+        })}
+
+        {/* A escala 0/50/100% (revisão 2, lote D): três linhas finas por cima
+            das barras, para ler a proporção sem contar, e o número embaixo.
+            `pointer-events: none` no CSS para não roubar o título das fatias. */}
+        {[0, 50, 100].map((v) => {
+          const xv = ROTULO + (v * LARGURA) / 100;
+          return (
+            <g key={`escala-${v}`}>
+              <line className={estilos.grade} x1={xv} x2={xv}
+                y1={0} y2={alturaTotal + 3} />
+              <text className={estilos.escala} x={xv} y={alturaTotal + ESCALA - 3}
+                textAnchor={v === 0 ? "start" : v === 100 ? "end" : "middle"}>
+                {v}%
+              </text>
             </g>
           );
         })}

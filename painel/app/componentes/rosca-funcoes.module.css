@@ -58,3 +58,35 @@
 .fatia[data-funcao="6"] { fill: var(--rosca-6); }
 .fatia[data-funcao="7"] { fill: var(--rosca-7); }
 .fatia[data-funcao="8"] { fill: var(--rosca-8); }
+
+/* --- o % dentro da fatia (revisão 2, lote D) -----------------------------
+   Texto escuro (#111) ou branco, o que tiver mais contraste com a cor da
+   fatia em cada modo (WCAG, medido em 18/10/2026). Claro e papel: branco em
+   0 (12,2:1), 4 (5,3:1) e 7 (5,7:1); escuro nas outras (5,2:1 a 12,0:1).
+   Tema escuro: a 0 clareia (#8478e0, escuro 5,2:1) e a 8 escurece
+   (#4a545c, branco 7,7:1); a 7 (#2a8a48) empata, 4,35 contra 4,34, e fica
+   branca como nos outros modos. */
+.percentual {
+  font-size: 13px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+  fill: #111;
+  forced-color-adjust: none;
+}
+
+.percentual[data-funcao="0"],
+.percentual[data-funcao="4"],
+.percentual[data-funcao="7"] { fill: #fff; }
+
+@media (prefers-color-scheme: dark) {
+  .percentual[data-funcao="0"] { fill: #111; }
+  .percentual[data-funcao="8"] { fill: #fff; }
+}
+
+@media print {
+  .percentual[data-funcao="0"] { fill: #fff; }
+  .percentual[data-funcao="8"] { fill: #111; }
+}

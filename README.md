@@ -30,10 +30,12 @@ contra o limite legal, o índice escolar e trabalho e renda (desocupação,
 cobertura previdenciária e rendimento do Censo 2022; empresas, pessoal ocupado
 e salário médio do Cadastro Central de Empresas), unidos pelo código do IBGE.
 
-A metade fiscal vem do [painel-fiscal](https://github.com/peterwkdev-creator/painel-fiscal),
-entregue como um retrato versionado em vez de buscada na hora do build: um
-build que entrasse em outro repositório falharia em silêncio no dia em que
-esse repositório mudasse.
+A metade fiscal vem do motor em [`motores/painel-fiscal/`](motores/painel-fiscal/),
+e o Ideb do motor em [`motores/educacao-inep/`](motores/educacao-inep/) (até
+18/10/2026, repositórios próprios; vieram para cá com o histórico inteiro).
+Os dois entregam um retrato versionado em `painel/dados/`: o build do site não
+roda os motores nem depende dos bancos deles, que ficam fora do git. Os dois
+estão sob a mesma AGPL-3.0 (o `LICENSE` de cada pasta).
 
 ## Trabalho independente, sem vínculo
 
@@ -112,6 +114,13 @@ distância entre os dois casos é de centenas de vezes.
 
 ```bash
 python -m unittest discover -s tests -t .
+```
+
+Os motores têm suítes próprias, em pytest:
+
+```bash
+(cd motores/painel-fiscal && python -m pytest -q)
+(cd motores/educacao-inep && python -m pytest -q)
 ```
 
 A suíte roda **sem rede e sem espera de verdade**: o transporte HTTP e o
@@ -410,7 +419,7 @@ Trabalho, por FTP público (`ftp.mtps.gov.br`), conferidos contra o sumário
 executivo mensal publicado no gov.br.
 
 O Ideb vem das planilhas do INEP, pelo motor
-[educacao-inep](https://github.com/peterwkdev-creator/educacao-inep); a fila e
+[educacao-inep](motores/educacao-inep/); a fila e
 os benefícios do INSS, do portal de dados abertos dele
 (`dadosabertos.inss.gov.br`); as emendas parlamentares, do download de dados
 do Portal da Transparência. As séries de `/brasil/` vêm do Banco Central
@@ -448,7 +457,7 @@ description is in Portuguese above; this is the short version.
 - **Sources, all public and token-free:** IBGE's public APIs
   (`https://servicodados.ibge.gov.br`), municipal fiscal filings from
   SICONFI (`https://apidatalake.tesouro.gov.br`, through
-  [painel-fiscal](https://github.com/peterwkdev-creator/painel-fiscal)),
+  [painel-fiscal](motores/painel-fiscal/)),
   school results from INEP, INSS open data, the Ministry of Labour's Novo
   Caged microdata (`ftp.mtps.gov.br`) and parliamentary amendments from the
   Transparency Portal. The `/brasil/` page groups national series (Central

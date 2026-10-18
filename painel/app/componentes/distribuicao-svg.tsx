@@ -1,4 +1,5 @@
 import { br } from "../../lib/dados";
+import { brLimite } from "../../lib/titulo";
 import type { Posicao } from "../../lib/posicao";
 
 /**
@@ -49,10 +50,6 @@ const A = 132;
 const M = { topo: 26, base: 44, esq: 4, dir: 4 };
 const DEGRAU = 16;
 
-/** 54 vira "54" e 51,3 vira "51,3": a régua com o número que ela marca,
- *  sem casas que não existem (até 11/10/2026 dizia só "teto legal"). */
-const casas = (v: number) =>
-  Number.isInteger(v) ? 0 : Math.abs(v * 10 - Math.round(v * 10)) < 1e-9 ? 1 : 2;
 const FAIXAS = 24;
 
 /** Largura de um rótulo pela fonte de 11 do telefone, a maior do site
@@ -109,7 +106,12 @@ export default function DistribuicaoSvg({
   const larguraFaixa = (L - M.esq - M.dir) / FAIXAS;
   const alturaUtil = A - M.topo - M.base;
   const y = (n: number) => M.topo + alturaUtil - (n / pico) * alturaUtil;
-  const esquerda = x(legal) > L * 0.75;
+  // Os rótulos das réguas vão à esquerda quando o teto cai no último quarto
+  // ou quando um deles não cabe à direita (fonte 7, ~0,56 em por letra).
+  const cabe = (v: number, texto: string) =>
+    x(v) + 2 + `${texto} ${brLimite(v)}%`.length * 3.9 <= L;
+  const esquerda = x(legal) > L * 0.75 ||
+    !cabe(prudencial, "limite prudencial") || !cabe(legal, "teto legal");
 
   // Os rótulos de cima: o município puxa para o lado com mais espaço, a
   // mediana para o lado oposto ao do município, para não cruzar a linha dele.
@@ -126,8 +128,8 @@ export default function DistribuicaoSvg({
     `Distribuição do gasto com pessoal ${conjunto}: ${base} municípios com ` +
     `relatório entregue e valor plausível. A mediana é ${br(mediana, 2)}% e ` +
     `${municipio} está em ${br(percentual, 2)}%, acima de ${br(percentil, 0)}% ` +
-    `deles. O limite prudencial é ${br(prudencial, 2)}% e o teto legal ` +
-    `${br(legal, 2)}%.`;
+    `deles. O limite prudencial é ${brLimite(prudencial)}% e o teto legal ` +
+    `${brLimite(legal)}%.`;
 
   return (
     <svg
@@ -164,23 +166,23 @@ export default function DistribuicaoSvg({
           régua; o de baixo, se ficasse em cima, seria cortado por ela, que
           desce até o seu próprio rótulo. */}
       {[
-        { v: prudencial, texto: "prudencial", linha: esquerda ? 0 : 1 },
-        { v: legal, texto: "teto legal", linha: esquerda ? 1 : 0 },
-      ].map(({ v, texto, linha }) =>
+        { v: prudencial, cor: "var(--atencao)", texto: "limite prudencial", linha: esquerda ? 0 : 1 },
+        { v: legal, cor: "var(--alerta)", texto: "teto legal", linha: esquerda ? 1 : 0 },
+      ].map(({ v, cor, texto, linha }) =>
         v < min || v > max ? null : (
           <g key={texto}>
             <line
               x1={x(v)} x2={x(v)} y1={M.topo}
               y2={M.topo + alturaUtil + 10 + linha * DEGRAU}
-              stroke="var(--tinta-fraca)" strokeWidth="1" strokeDasharray="3 3"
+              stroke={cor} strokeWidth="1" strokeDasharray="3 3" opacity="0.75"
             />
             <text
               x={esquerda ? x(v) - 2 : x(v) + 2}
               y={M.topo + alturaUtil + 10 + linha * DEGRAU}
               textAnchor={esquerda ? "end" : "start"}
-              fontSize="7" fill="var(--tinta-fraca)"
+              fontSize="7" fill={cor}
             >
-              {texto} {br(v, casas(v))}%
+              {texto} {brLimite(v)}%
             </text>
           </g>
         ),

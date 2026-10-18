@@ -1,4 +1,5 @@
 import { br } from "../../lib/dados";
+import { brLimite } from "../../lib/titulo";
 import type { Contexto } from "./contexto";
 
 /**
@@ -26,11 +27,11 @@ export default function SecaoPessoal({ ctx }: { ctx: Contexto }) {
       </p>
       <ul className={estilos.lista}>
         <li>
-          <strong>{br(fiscal.limites.prudencial, 2)}% — limite prudencial.</strong>{" "}
+          <strong>{brLimite(fiscal.limites.prudencial)}% — limite prudencial.</strong>{" "}
           Passar dele já proíbe criar cargo, conceder aumento e contratar.
         </li>
         <li>
-          <strong>{br(fiscal.limites.legal, 2)}% — teto legal.</strong>{" "}
+          <strong>{brLimite(fiscal.limites.legal)}% — teto legal.</strong>{" "}
           O limite máximo propriamente dito.
         </li>
       </ul>

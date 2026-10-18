@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Termo from "../../componentes/termo";
 import { br } from "../../../lib/dados";
+import { brLimite } from "../../../lib/titulo";
 import { ROTULO_FAIXA } from "../../../lib/fiscal";
 import type { Contexto } from "./contexto";
 
@@ -19,9 +20,9 @@ export default function SecaoLimiteDePessoal({ c }: { c: Contexto }) {
       </h2>
       <p>
         A Lei de Responsabilidade Fiscal fixa{" "}
-        <strong>{br(fiscal.limites.legal, 2)}%</strong> da receita corrente
+        <strong>{brLimite(fiscal.limites.legal)}%</strong> da receita corrente
         líquida ajustada como <Termo chave="teto-legal">teto</Termo> para o Executivo municipal, e{" "}
-        <strong>{br(fiscal.limites.prudencial, 2)}%</strong> como{" "}
+        <strong>{brLimite(fiscal.limites.prudencial)}%</strong> como{" "}
         <Termo chave="limite-prudencial">limite prudencial</Termo>. No {quadrimestre}:
       </p>
       <ul className={estilos.faixas}>

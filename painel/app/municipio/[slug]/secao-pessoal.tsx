@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { br, escala } from "../../../lib/dados";
+import { brLimite } from "../../../lib/titulo";
 import { deEstado, slugUf } from "../../../lib/estado";
 import { SALTO_MINIMO } from "../../../lib/fiscal";
 import Termo from "../../componentes/termo";
@@ -81,9 +82,9 @@ export default function SecaoPessoal({ c }: { c: Contexto }) {
               os mesmos 12 meses, até dezembro.
             </>
           )} A Lei de Responsabilidade Fiscal
-          fixa <strong>{br(fiscal.limites.legal, 2)}%</strong> como teto para o
+          fixa <strong>{brLimite(fiscal.limites.legal)}%</strong> como teto para o
           Executivo municipal, e{" "}
-          <strong>{br(f.limitePrudencial ?? fiscal.limites.prudencial, 2)}%</strong>{" "}
+          <strong>{brLimite(f.limitePrudencial ?? fiscal.limites.prudencial)}%</strong>{" "}
           como{" "}
           <Termo chave="limite-prudencial">
             limite prudencial

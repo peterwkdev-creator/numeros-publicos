@@ -137,3 +137,6 @@ export function aberturaFiscalDe(
 export function casasDe(limite: number): number {
   return [0, 1].find((k) => Number(limite.toFixed(k)) === limite) ?? 2;
 }
+
+/** O limite escrito com as casas que ele tem, igual no texto e no gráfico. */
+export const brLimite = (limite: number) => br(limite, casasDe(limite));

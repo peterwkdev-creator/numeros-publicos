@@ -1,5 +1,6 @@
 import { br } from "../../../lib/dados";
 import { eixoJusto } from "../../../lib/eixo";
+import { brLimite } from "../../../lib/titulo";
 import { HALO, SOBE, larguraDe, lugarDoValor } from "../../../lib/valor-final";
 import {
   contiguos,
@@ -73,7 +74,7 @@ const VAO_MINIMO = 5;
 
 /** "teto de 54%", "limites de 51,3% e 54%": o que ficou fora, para o pé do gráfico. */
 function limites(vs: number[]): string {
-  const ps = [...vs].sort((a, b) => a - b).map((v) => `${br(v, 1)}%`);
+  const ps = [...vs].sort((a, b) => a - b).map((v) => `${brLimite(v)}%`);
   return ps.length === 1 ? `limite de ${ps[0]}` : `limites de ${ps.join(" e ")}`;
 }
 
@@ -100,7 +101,7 @@ export default function SerieSvg({
   });
   const reguas = [
     { v: legal, cor: "var(--alerta)", texto: "teto legal", direita: true },
-    { v: prudencial, cor: "var(--atencao)", texto: "prudencial", direita: false },
+    { v: prudencial, cor: "var(--atencao)", texto: "limite prudencial", direita: false },
   ];
   const acima = fora.filter((v) => v > alto);
   const abaixo = fora.filter((v) => v < baixo);
@@ -142,13 +143,13 @@ export default function SerieSvg({
   const subiu = ultimo[3] > primeiro[3];
 
   // O último valor escrito junto do último ponto, sem cobrir o rótulo de régua.
-  const textoFinal = `${br(ultimo[3], 1)}%`;
+  const textoFinal = `${br(ultimo[3], 2)}%`;
   const valorFinal = lugarDoValor(
     textoFinal, x(ultimo), y(ultimo[3]), y(bons[bons.length - 2]![3]),
     {
       largura: L, teto: 1, piso: A - 4 - SOBE - 1,
       evitar: reguas.filter(({ v }) => !fora.includes(v)).map(({ v, texto, direita }) => {
-        const w = larguraDe(`${texto} ${br(v, 1)}%`);
+        const w = larguraDe(`${texto} ${brLimite(v)}%`);
         return direita
           ? { x0: L - M.dir - w, x1: L - M.dir, base: y(v) - 3 }
           : { x0: M.esq, x1: M.esq + w, base: y(v) - 3 };
@@ -167,7 +168,7 @@ export default function SerieSvg({
       ? `A série tem ${buracos === 1 ? "uma interrupção" : `${buracos} interrupções`}` +
         `, em períodos sem relatório entregue. `
       : "") +
-    `Limite prudencial ${br(prudencial, 2)}%, teto legal ${br(legal, 2)}%` +
+    `Limite prudencial ${brLimite(prudencial)}%, teto legal ${brLimite(legal)}%` +
     (fora.length ? `; ${fora.length === 2 ? "os dois ficam" : "um fica"} fora da escala do gráfico. ` : ". ") +
     `Os mesmos valores estão na tabela abaixo.`;
 
@@ -209,13 +210,6 @@ export default function SerieSvg({
             x1={M.esq} x2={L - M.dir} y1={y(v)} y2={y(v)}
             stroke={cor} strokeWidth="1" strokeDasharray="3 3" opacity="0.75"
           />
-          <text
-            x={direita ? L - M.dir : M.esq} y={y(v) - 3}
-            textAnchor={direita ? "end" : "start"}
-            fontSize="8" fill={cor} opacity="0.9"
-          >
-            {texto} {br(v, 1)}%
-          </text>
         </g>
       ))}
 
@@ -236,6 +230,19 @@ export default function SerieSvg({
           r={i === bons.length - 1 ? 3.5 : 2}
           fill="var(--acento)"
         />
+      ))}
+
+      {/* Depois da linha e com halo: a série que cruza a régua não apaga o rótulo. */}
+      {reguas.filter(({ v }) => !fora.includes(v)).map(({ v, cor, texto, direita }) => (
+        <text
+          key={texto}
+          x={direita ? L - M.dir : M.esq} y={y(v) - 3}
+          textAnchor={direita ? "end" : "start"}
+          fontSize="8" fill={cor} stroke="var(--fundo)" strokeWidth={3}
+          strokeLinejoin="round" paintOrder="stroke"
+        >
+          {texto} {brLimite(v)}%
+        </text>
       ))}
 
       <text x={valorFinal.x} y={valorFinal.y} textAnchor={valorFinal.anchor}

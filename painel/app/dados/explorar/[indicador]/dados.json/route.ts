@@ -1,5 +1,5 @@
 import { arquivoDoIndicador, INDICADORES_EXPLORAR } from "@/lib/explorar";
-import { lerFiscal, lerSnapshot } from "@/lib/servidor";
+import { lerCaged, lerEmendas, lerFiscal, lerIdeb, lerSnapshot } from "@/lib/servidor";
 
 /**
  * Um arquivo por indicador da página /explorar, buscado só por ela.
@@ -21,8 +21,12 @@ export async function GET(
   const { indicador } = await params;
   const ind = INDICADORES_EXPLORAR.find((i) => i.chave === indicador);
   if (!ind) return new Response("indicador desconhecido", { status: 404 });
-  const [snapshot, fiscal] = await Promise.all([lerSnapshot(), lerFiscal()]);
-  return new Response(JSON.stringify(arquivoDoIndicador(ind, snapshot, fiscal)), {
+  const [snapshot, fiscal, ideb, idebFinais, caged, emendas] = await Promise.all([
+    lerSnapshot(), lerFiscal(), lerIdeb("anos_iniciais"), lerIdeb("anos_finais"),
+    lerCaged(), lerEmendas(),
+  ]);
+  const fontes = { snapshot, fiscal, ideb, idebFinais, caged, emendas };
+  return new Response(JSON.stringify(arquivoDoIndicador(ind, fontes)), {
     headers: { "Content-Type": "application/json; charset=utf-8" },
   });
 }

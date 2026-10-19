@@ -1,6 +1,9 @@
+import { cagedDe, type SnapshotCaged } from "./caged";
 import { PARES_CENSO, mediana } from "./censo";
 import type { Snapshot } from "./dados";
+import { emendasDe, type SnapshotEmendas } from "./emendas";
 import { faixaDaLinha, type SnapshotFiscal } from "./fiscal";
+import type { SnapshotIdeb } from "./ideb";
 import { PARES_TRABALHO } from "./trabalho";
 
 /**
@@ -52,7 +55,8 @@ export function faixaPopulacao(pop: number | null | undefined): number | null {
   return FAIXAS_POPULACAO.findIndex((f) => pop <= f.ate);
 }
 
-export type FormatoExplorar = "pct" | "reais" | "inteiro";
+/** `indice`: número com casas que não é percentual nem dinheiro (o IDEB). */
+export type FormatoExplorar = "pct" | "reais" | "inteiro" | "indice";
 
 type Base = {
   chave: string;
@@ -71,11 +75,19 @@ type PorRazao = Base & {
   mult: number;
   /** Coluna publicada pelo IBGE para o município, quando difere da conta. */
   valorPublicado?: string;
+  /**
+   * Município sem numerador continua no denominador do agregado. É o caso das
+   * emendas: quem não recebeu nada fica "sem dado" na linha dele (ausência não
+   * é zero), mas a população dele é do estado, e a página do estado divide o
+   * total pago pela população inteira. A célula guarda `null` no numerador
+   * quando ninguém nela recebeu, e o recorte todo `null` sai sem valor.
+   */
+  denominadorSemNumerador?: true;
 };
 /** Contagem: o agregado é a soma. */
 type PorSoma = Base & { tipo: "soma"; coluna: string };
 /** Sem par de colunas: o agregado é a mediana dos municípios do recorte. */
-type PorMediana = Base & { tipo: "mediana" };
+type PorMediana = Base & { tipo: "mediana"; coluna: string };
 
 export type IndicadorExplorar = PorRazao | PorSoma | PorMediana;
 
@@ -89,8 +101,47 @@ const doPar = (chave: string, tema: string): PorRazao => {
 };
 
 /**
- * Os indicadores da Fase 1a, decididos pelo Peter em 19/10/2026 (espec, §9).
- * Ideb, Caged e emendas entram na Fase 1b. A ORDEM é a da lista na página.
+ * Os arquivos de onde o /explorar lê. O snapshot do IBGE dá as linhas e a
+ * população; os outros entram como colunas a mais (`COLUNAS_DE_FORA`).
+ */
+export type FontesExplorar = {
+  snapshot: Snapshot;
+  fiscal: SnapshotFiscal;
+  ideb: SnapshotIdeb;
+  idebFinais: SnapshotIdeb;
+  caged: SnapshotCaged;
+  emendas: SnapshotEmendas;
+};
+
+/** O IDEB observado na edição mais recente, a de `medianaUltimaEdicao`. */
+function idebPorCodigo(s: SnapshotIdeb): Map<number, number> {
+  const ultimo = s.edicoes.length - 1;
+  const por = new Map<number, number>();
+  for (const [codigo, pontos] of Object.entries(s.serie)) {
+    const ponto = pontos.find(([i]) => i === ultimo);
+    if (ponto) por.set(Number(codigo), ponto[1]);
+  }
+  return por;
+}
+
+/**
+ * As colunas que não estão no snapshot, cada uma com a mesma função da página
+ * que a mostra: o IDEB pela edição mais recente, o Caged pela soma dos 12
+ * meses de `cagedDe`, as emendas pelo ano cheio de `emendasDe` (em reais).
+ */
+export const COLUNAS_DE_FORA: Record<string, (f: FontesExplorar) => Map<number, number | null>> = {
+  "pessoal-rcl": (f) => pessoalPorCodigo(f.fiscal),
+  "ideb-anos-iniciais": (f) => idebPorCodigo(f.ideb),
+  "ideb-anos-finais": (f) => idebPorCodigo(f.idebFinais),
+  "caged-saldo-12-meses": (f) => new Map(f.caged.municipios.map(
+    (l) => [l[0], cagedDe(f.caged, l[0])!.saldo])),
+  "emendas-pagas-ano-cheio": (f) => new Map(f.emendas.municipios.map(
+    (l) => [l[0], emendasDe(f.emendas, l[0])!.cheio.reais])),
+};
+
+/**
+ * Os indicadores, decididos pelo Peter em 19/10/2026 (espec, §9): os 12 da
+ * Fase 1a e, na 1b, IDEB, Caged e emendas. A ORDEM é a da lista na página.
  */
 export const INDICADORES_EXPLORAR: IndicadorExplorar[] = [
   {
@@ -115,6 +166,12 @@ export const INDICADORES_EXPLORAR: IndicadorExplorar[] = [
   },
   doPar("desocupacao", "Trabalho e renda"),
   doPar("previdencia", "Trabalho e renda"),
+  {
+    // Fluxo, não estoque: soma-se, e o estado é a soma dos municípios dele
+    // (`cagedDeVarios`), sem o que o MTE não atribui a município nenhum.
+    chave: "caged", rotulo: "Saldo de empregos formais em 12 meses", tema: "Trabalho e renda",
+    formato: "inteiro", casas: 0, tipo: "soma", coluna: "caged-saldo-12-meses",
+  },
   doPar("agua", "Saneamento e moradia"),
   doPar("esgoto", "Saneamento e moradia"),
   doPar("lixo", "Saneamento e moradia"),
@@ -122,8 +179,26 @@ export const INDICADORES_EXPLORAR: IndicadorExplorar[] = [
   doPar("alfabetizacao", "Educação"),
   doPar("superior", "Educação"),
   {
+    // Índice de 0 a 10, por rede: mediana, como no cartão do estado. Duas
+    // casas para a mediana de um número par de municípios sair inteira.
+    chave: "ideb-iniciais", rotulo: "IDEB dos anos iniciais (rede municipal)", tema: "Educação",
+    formato: "indice", casas: 2, tipo: "mediana", coluna: "ideb-anos-iniciais",
+  },
+  {
+    chave: "ideb-finais", rotulo: "IDEB dos anos finais (rede municipal)", tema: "Educação",
+    formato: "indice", casas: 2, tipo: "mediana", coluna: "ideb-anos-finais",
+  },
+  {
     chave: "pessoal", rotulo: "Gasto com pessoal (% da RCL)", tema: "Contas públicas",
-    formato: "pct", casas: 2, tipo: "mediana",
+    formato: "pct", casas: 2, tipo: "mediana", coluna: "pessoal-rcl",
+  },
+  {
+    // A régua da página do município (`porHabitante`): o último ano cheio
+    // sobre a população estimada. O ano entra no rótulo pela página.
+    chave: "emendas", rotulo: "Emendas parlamentares pagas por habitante", tema: "Contas públicas",
+    formato: "reais", casas: 2, tipo: "razao",
+    numerador: "emendas-pagas-ano-cheio", denominador: "populacao-estimada", mult: 1,
+    denominadorSemNumerador: true,
   },
 ];
 
@@ -196,8 +271,12 @@ export type ArquivoExplorar = {
   faixas: string;
   /** Valor por linha, na ordem do índice; nos estados, o valor da UF. */
   valores: (number | null)[];
-  /** Células [uf, faixa, Σ numerador, Σ denominador] (razão) ou [uf, faixa, Σ] (soma). */
-  celulas: (string | number)[][];
+  /**
+   * Células [uf, faixa, Σ numerador, Σ denominador] (razão) ou [uf, faixa, Σ]
+   * (soma). Σ numerador `null`: ninguém da célula tem valor, mas a população
+   * dela conta (`denominadorSemNumerador`).
+   */
+  celulas: (string | number | null)[][];
 };
 
 const arredondar = (v: number, casas: number) => {
@@ -223,65 +302,70 @@ function pessoalPorCodigo(fiscal: SnapshotFiscal): Map<number, number> {
 
 export function arquivoDoIndicador(
   ind: IndicadorExplorar,
-  snapshot: Snapshot,
-  fiscal: SnapshotFiscal,
+  fontes: FontesExplorar,
 ): ArquivoExplorar {
+  const { snapshot } = fontes;
   const entradas = entradasDoIndice(snapshot);
   const col = new Map(snapshot.colunas.map((c, i) => [c, i]));
   const linhaDe = new Map(snapshot.municipios.map((m) => [Number(m[0]), m]));
+  const deFora = new Map<string, Map<number, number | null>>();
   const ler = (m: unknown[], coluna: string): number | null => {
+    const fora = COLUNAS_DE_FORA[coluna];
+    if (fora) {
+      if (!deFora.has(coluna)) deFora.set(coluna, fora(fontes));
+      const v = deFora.get(coluna)!.get(Number(m[0]));
+      return typeof v === "number" && Number.isFinite(v) ? v : null;
+    }
     const i = col.get(coluna);
     if (i === undefined) throw new Error(`coluna ausente no snapshot: ${coluna}`);
     const v = m[i];
     return typeof v === "number" && Number.isFinite(v) ? v : null;
   };
-  const pessoal = ind.tipo === "mediana" ? pessoalPorCodigo(fiscal) : null;
 
-  // Somas por "UF|faixa"
-  const somas = new Map<string, [number, number]>();
+  // Somas por "UF|faixa"; numerador `null` só com `denominadorSemNumerador`.
+  const somas = new Map<string, [number | null, number]>();
+  const somar = (k: string, n: number | null, d: number) => {
+    const s = somas.get(k) ?? [null, 0];
+    somas.set(k, [n === null ? s[0] : (s[0] ?? 0) + n, s[1] + d]);
+  };
   const valoresPorUf = new Map<string, number[]>();
   const valorMun = new Map<number, number | null>();
   for (const m of snapshot.municipios) {
     const codigo = Number(m[0]);
     const uf = String(m[2]);
     const faixa = faixaPopulacao(ler(m, "populacao-estimada"));
+    const k = `${uf}|${faixa}`;
     let v: number | null = null;
     if (ind.tipo === "razao") {
       const n = ler(m, ind.numerador);
       const d = ler(m, ind.denominador);
       if (n !== null && d) {
         v = ind.valorPublicado ? ler(m, ind.valorPublicado) : (ind.mult * n) / d;
-        if (faixa !== null) {
-          const k = `${uf}|${faixa}`;
-          const s = somas.get(k) ?? [0, 0];
-          somas.set(k, [s[0] + n, s[1] + d]);
-        }
       }
+      if (d && (n !== null || ind.denominadorSemNumerador) && faixa !== null) somar(k, n, d);
     } else if (ind.tipo === "soma") {
       v = ler(m, ind.coluna);
-      if (v !== null && faixa !== null) {
-        const k = `${uf}|${faixa}`;
-        const s = somas.get(k) ?? [0, 0];
-        somas.set(k, [s[0] + v, 0]);
-      }
+      if (v !== null && faixa !== null) somar(k, v, 0);
     } else {
-      v = pessoal!.get(codigo) ?? null;
+      v = ler(m, ind.coluna);
       if (v !== null) valoresPorUf.set(uf, [...(valoresPorUf.get(uf) ?? []), v]);
     }
     valorMun.set(codigo, v === null ? null : arredondar(v, ind.casas));
   }
 
-  // Valor de cada UF: razão das somas, soma, ou mediana.
+  // Valor de cada UF: razão das somas, soma, ou mediana. Numerador `null` em
+  // todas as células da UF (ninguém recebeu emenda) é UF sem valor, não zero.
   const valorUf = new Map<string, number | null>();
   for (const u of snapshot.ufs) {
     const celulas = [...somas.entries()].filter(([k]) => k.startsWith(`${u.sigla}|`));
+    const numeradores = celulas.map(([, s]) => s[0]).filter((n): n is number => n !== null);
+    const n = numeradores.length ? numeradores.reduce((a, x) => a + x, 0) : null;
     let v: number | null = null;
     if (ind.tipo === "razao") {
-      const n = celulas.reduce((a, [, s]) => a + s[0], 0);
       const d = celulas.reduce((a, [, s]) => a + s[1], 0);
-      v = d ? (ind.mult * n) / d : null;
+      v = n !== null && d ? (ind.mult * n) / d : null;
     } else if (ind.tipo === "soma") {
-      v = celulas.length ? celulas.reduce((a, [, s]) => a + s[0], 0) : null;
+      v = n;
     } else {
       v = mediana(valoresPorUf.get(u.sigla) ?? []);
     }
@@ -300,7 +384,7 @@ export function arquivoDoIndicador(
     .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
     .map(([k, s]) => {
       const [uf, faixa] = k.split("|");
-      const base: (string | number)[] = [uf!, Number(faixa), arredondar(s[0], 2)];
+      const base = [uf!, Number(faixa), s[0] === null ? null : arredondar(s[0], 2)];
       return ind.tipo === "razao" ? [...base, arredondar(s[1], 2)] : base;
     });
 

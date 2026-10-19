@@ -1,3 +1,4 @@
+import { entradasDoIndice } from "@/lib/explorar";
 import { lerSnapshot } from "@/lib/servidor";
 
 /**
@@ -54,35 +55,10 @@ export async function GET() {
   // Paraná. Pela população, São Paulo estado vem antes da cidade, e Roraima
   // depois das cidades maiores que ele, que é o que o tamanho diz. O nome exato ainda passa
   // na frente de tudo, no `procurar` do `busca.js`.
-  const iPop = snapshot.colunas.indexOf("populacao-censo-2022");
-  const iEst = snapshot.colunas.indexOf("populacao-estimada");
-  type Entrada = { nome: string; uf: string; pop: number; estado: boolean };
-  const entradas: Entrada[] = [
-    ...snapshot.municipios.map(
-      (m): Entrada => ({
-        nome: String(m[1]),
-        uf: String(m[2]),
-        pop: (m[iPop] as number | null) ?? (m[iEst] as number | null) ?? -1,
-        estado: false,
-      }),
-    ),
-    ...snapshot.ufs.map(
-      (u): Entrada => ({
-        nome: u.nome,
-        uf: u.sigla,
-        pop: u.totais["populacao-censo-2022"] ?? -1,
-        estado: true,
-      }),
-    ),
-  ];
-  const indice = entradas
-    .sort((a, b) => {
-      // Sem população conhecida vai para o fim: ausência não é município
-      // pequeno. Empate desfeito pelo nome, para a ordem ser determinística —
-      // senão dois builds do mesmo dado gerariam arquivos diferentes.
-      if (a.pop !== b.pop) return b.pop - a.pop;
-      return a.nome.localeCompare(b.nome, "pt-BR");
-    })
+  // A ordenação mora em `entradasDoIndice` desde 19/10/2026: os arquivos do
+  // /explorar seguem esta mesma ordem, linha a linha, e uma cópia da regra
+  // divergiria em silêncio.
+  const indice = entradasDoIndice(snapshot)
     .map((x) => (x.estado ? [x.nome, x.uf, 1] : [x.nome, x.uf]));
 
   return new Response(JSON.stringify(indice), {

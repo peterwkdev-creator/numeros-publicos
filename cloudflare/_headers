@@ -54,6 +54,9 @@
 /dados/municipios.xlsx
   X-Robots-Tag: noindex
 
+/dados/explorar/:indicador/dados.json
+  X-Robots-Tag: noindex
+
 # O endereço *.pages.dev serve o site inteiro, e sem isto o Google o indexaria
 # como cópia do www. O canonical já aponta para o www, mas noindex no host da
 # plataforma é o que a própria Cloudflare recomenda. Não afeta o domínio próprio.

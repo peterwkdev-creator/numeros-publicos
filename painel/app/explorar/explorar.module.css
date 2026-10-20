@@ -1,0 +1,19 @@
+/* O resto vem de inss.module.css, como no índice dos rankings: largura de
+   leitura, cartões e tabela. Aqui só o que é desta página. */
+.filtros { margin-bottom: 1.5rem; }
+.campos {
+  border: 1px solid var(--borda); border-radius: .5rem; padding: .9rem 1rem; margin: 0 0 .6rem;
+  display: grid; gap: .75rem; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+}
+.campo { display: flex; flex-direction: column; gap: .25rem; font-size: var(--texto-sm); }
+.campo select { min-height: var(--alvo); font: inherit; }
+.campos:disabled .campo { color: var(--tinta-fraca); }
+
+.secao { font-size: var(--texto-xl); margin: 2rem 0 .75rem; }
+
+.extremos { display: grid; gap: 1rem 2rem; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); }
+.rankingTitulo { font-size: var(--texto-base); margin: 0 0 .5rem; }
+.ranking { margin: 0; padding-left: 1.6rem; font-size: var(--texto-sm); }
+.ranking li { margin-bottom: .35rem; }
+.ranking a { display: inline-flex; align-items: center; min-height: var(--alvo); }
+.rankingValor { font-variant-numeric: tabular-nums; color: var(--tinta-fraca); }

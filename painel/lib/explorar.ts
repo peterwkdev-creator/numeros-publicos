@@ -390,3 +390,103 @@ export function arquivoDoIndicador(
 
   return { ordem: impressaoDaOrdem(entradas), faixas, valores, celulas };
 }
+
+/**
+ * O indicador do HTML do build, o que a página mostra antes de o script
+ * carregar (e sem ele). O esgoto responde à pergunta que motivou a página
+ * (espec, §1) e é percentual, que o mapa por UF desenha.
+ */
+export const INDICADOR_PADRAO = "esgoto";
+
+/** O recorte: região, UF e faixa de população (0 a 6). Vazio é o Brasil. */
+export type FiltroExplorar = { regiao?: string; uf?: string; faixa?: number };
+
+export type LinhaRecorte = { nome: string; uf: string; codigo: number; valor: number | null };
+
+export type Recorte = {
+  /** Razão das somas, soma ou mediana do recorte; `null` sem dado nenhum. */
+  agregado: number | null;
+  municipios: number;
+  semDado: number;
+  /** Com valor, do maior para o menor; sem dado no fim. Empate pelo nome. */
+  linhas: LinhaRecorte[];
+  /** O agregado de cada UF do recorte, com a mesma regra; UF fora dele não entra. */
+  porUf: Record<string, number | null>;
+};
+
+/**
+ * As quatro vistas da página saem daqui: resumo, mapa, ranking e tabela.
+ * Lê só o arquivo do indicador e o índice, como o navegador lerá: o build e o
+ * `explorar.js` fazem a mesma conta sobre os mesmos bytes. O agregado sai das
+ * células (§5.2), nunca da média dos valores das linhas.
+ */
+export function recorteDe(
+  ind: IndicadorExplorar,
+  arquivo: ArquivoExplorar,
+  entradas: EntradaIndice[],
+  ufs: { sigla: string; regiao: string }[],
+  filtro: FiltroExplorar = {},
+): Recorte {
+  const siglas = ufs
+    .filter((u) => (!filtro.regiao || u.regiao === filtro.regiao)
+      && (!filtro.uf || u.sigla === filtro.uf))
+    .map((u) => u.sigla);
+  const dentro = new Set(siglas);
+  const naFaixa = (f: string | number) =>
+    filtro.faixa === undefined || String(f) === String(filtro.faixa);
+
+  const linhas: LinhaRecorte[] = [];
+  entradas.forEach((e, i) => {
+    if (e.estado || !dentro.has(e.uf) || !naFaixa(arquivo.faixas[i]!)) return;
+    linhas.push({ nome: e.nome, uf: e.uf, codigo: e.codigo!, valor: arquivo.valores[i] ?? null });
+  });
+  linhas.sort((a, b) => {
+    if (a.valor === null || b.valor === null) {
+      if (a.valor !== b.valor) return a.valor === null ? 1 : -1;
+    } else if (a.valor !== b.valor) return b.valor - a.valor;
+    return a.nome.localeCompare(b.nome, "pt-BR");
+  });
+
+  const agregar = (doRecorte: Set<string>): number | null => {
+    if (ind.tipo === "mediana") {
+      const v = linhas.filter((l) => doRecorte.has(l.uf) && l.valor !== null)
+        .map((l) => l.valor!);
+      const m = mediana(v);
+      return m === null ? null : arredondar(m, ind.casas);
+    }
+    let n: number | null = null;
+    let d = 0;
+    for (const c of arquivo.celulas) {
+      if (!doRecorte.has(String(c[0])) || !naFaixa(c[1]!)) continue;
+      if (typeof c[2] === "number") n = (n ?? 0) + c[2];
+      if (typeof c[3] === "number") d += c[3];
+    }
+    if (n === null) return null;
+    if (ind.tipo === "soma") return arredondar(n, ind.casas);
+    return d ? arredondar((ind.mult * n) / d, ind.casas) : null;
+  };
+
+  const semDado = linhas.filter((l) => l.valor === null).length;
+  return {
+    agregado: agregar(dentro),
+    municipios: linhas.length,
+    semDado,
+    linhas,
+    porUf: Object.fromEntries(siglas.map((s) => [s, agregar(new Set([s]))])),
+  };
+}
+
+/** O valor como a página o escreve: `48,2%`, `R$ 52.310`, `5,2`, `1.234`. */
+export function formatarExplorar(v: number | null, ind: IndicadorExplorar): string {
+  if (v === null) return "sem dado";
+  const com = (n: number, c: number) => n.toLocaleString("pt-BR", {
+    minimumFractionDigits: c, maximumFractionDigits: c,
+  });
+  switch (ind.formato) {
+    case "pct": return `${com(v, 1)}%`;
+    case "reais": return `R$ ${com(v, ind.casas)}`;
+    // O IDEB tem uma casa; a mediana de um número par de municípios pode ter duas.
+    case "indice": return com(v, Number.isInteger(Math.round(v * 100) / 10) ? 1 : 2);
+    default: return com(v, 0);
+  }
+}

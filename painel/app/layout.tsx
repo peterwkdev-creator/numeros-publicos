@@ -122,6 +122,7 @@ export default function RootLayout({
               <div className="menu-links">
                 <a href="/brasil/">Brasil</a>
                 <a href="/ranking/">Rankings</a>
+                <a href="/explorar/">Comparar municípios</a>
                 <a href="/ajuda/">Ajuda</a>
                 <a href="/ajuda/#baixar">Baixar dados</a>
               </div>
@@ -140,6 +141,7 @@ export default function RootLayout({
             <a href="/brasil/">Brasil</a>
             <a href="/ranking/gasto-com-pessoal/">Ranking do gasto com pessoal</a>
             <a href="/ranking/emprego-com-carteira/">Ranking do emprego</a>
+            <a href="/explorar/">Comparar municípios</a>
             <a href="/inss/">Fila do INSS</a>
             <a href="/ajuda/">Ajuda</a>
             <a href="/ajuda/#erro">Achei um número errado</a>

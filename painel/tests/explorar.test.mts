@@ -12,7 +12,7 @@ import zlib from "node:zlib";
 
 import {
   arquivoDoIndicador, COLUNAS_DE_FORA, entradasDoIndice, FAIXAS_POPULACAO, faixaPopulacao,
-  impressaoDaOrdem, INDICADORES_EXPLORAR, type FontesExplorar,
+  formatarExplorar, impressaoDaOrdem, INDICADORES_EXPLORAR, recorteDe, type FontesExplorar,
 } from "../lib/explorar.ts";
 import { cagedDeVarios, totalDoPais, type SnapshotCaged } from "../lib/caged.ts";
 import { emendasDeVarios, porHabitante, type SnapshotEmendas } from "../lib/emendas.ts";
@@ -171,4 +171,78 @@ test("explorar: emendas por habitante da UF dividem pela população inteira", (
   // Brasília não tem prefeitura: sem dado, nunca R$ 0,00 (nem no DF)
   assert.equal(a.valores[entradas.findIndex((e) => e.codigo === 5300108)], null);
   assert.equal(a.valores[linhaDaUf("DF")], null);
+});
+
+// --- Fase 2: o recorte que a página desenha (resumo, mapa, ranking, tabela) ---
+
+const recorte = (chave: string, filtro = {}) => recorteDe(
+  INDICADORES_EXPLORAR.find((i) => i.chave === chave)!, arquivos.get(chave)!,
+  entradas, snapshot.ufs, filtro);
+
+test("explorar: o recorte de cada UF dá o valor da linha do estado, nos 16 indicadores", () => {
+  for (const ind of INDICADORES_EXPLORAR) {
+    const a = arquivos.get(ind.chave)!;
+    for (const u of snapshot.ufs) {
+      const r = recorte(ind.chave, { uf: u.sigla });
+      const esperado = a.valores[linhaDaUf(u.sigla)] ?? null;
+      assert.equal(r.porUf[u.sigla], r.agregado, `${ind.chave} ${u.sigla}: mapa e resumo`);
+      if (ind.tipo === "mediana" && esperado !== null && r.agregado !== null) {
+        // A linha do estado é a mediana antes de arredondar cada município;
+        // o recorte, depois (é o que o navegador tem). Diferença de 1 na última casa.
+        assert.ok(Math.abs(r.agregado - esperado) <= 0.011, `${ind.chave} ${u.sigla}`);
+      } else {
+        assert.equal(r.agregado, esperado, `${ind.chave} ${u.sigla}`);
+      }
+    }
+  }
+});
+
+test("explorar: Brasil do esgoto é a razão das somas das UFs, e não a média das taxas", () => {
+  const r = recorte("esgoto");
+  const n = snapshot.ufs.reduce((s, u) => s + (u.totais["esgoto-rede"] ?? 0), 0);
+  const d = snapshot.ufs.reduce((s, u) => s + (u.totais["domicilios-total"] ?? 0), 0);
+  assert.equal(r.agregado, Math.round((1000 * n) / d) / 10);
+  // Prova plantada: a média das taxas dos municípios é outro número.
+  const comValor = r.linhas.filter((l) => l.valor !== null);
+  const media = comValor.reduce((s, l) => s + l.valor!, 0) / comValor.length;
+  assert.notEqual(Math.round(media * 10) / 10, r.agregado);
+});
+
+test("explorar: o saldo do Caged no Brasil é a soma das UFs, e as faixas somam o Brasil", () => {
+  const r = recorte("caged");
+  const somaUfs = Object.values(r.porUf).reduce((s: number, v) => s + (v ?? 0), 0);
+  assert.equal(r.agregado, somaUfs);
+  const faixas = Array.from({ length: 7 }, (_, f) => recorte("caged", { faixa: f }));
+  assert.equal(faixas.reduce((s, x) => s + (x.agregado ?? 0), 0), r.agregado);
+  assert.equal(faixas.reduce((s, x) => s + x.municipios, 0),
+    r.municipios - [...arquivos.get("caged")!.faixas].filter((f, i) =>
+      f === "-" && !entradas[i]!.estado).length);
+});
+
+test("explorar: região e UF filtram as linhas; ordem do maior ao menor, sem dado no fim", () => {
+  const ne = recorte("esgoto", { regiao: "Nordeste" });
+  assert.equal(Object.keys(ne.porUf).length, 9);
+  assert.ok(ne.linhas.every((l) => ne.porUf[l.uf] !== undefined));
+  assert.equal(ne.municipios, snapshot.municipios.filter((m) =>
+    snapshot.ufs.find((u) => u.sigla === m[2])!.regiao === "Nordeste").length);
+  const r = recorte("ideb-finais");
+  const i = r.linhas.findIndex((l) => l.valor === null);
+  assert.ok(i > 0 && r.linhas.slice(i).every((l) => l.valor === null));
+  assert.equal(r.semDado, r.linhas.length - i);
+  for (let k = 1; k < i; k++) assert.ok(r.linhas[k - 1]!.valor! >= r.linhas[k]!.valor!);
+  // Recorte vazio (UF que não existe) é vazio, sem erro e sem zero.
+  const vazio = recorte("esgoto", { uf: "XX" });
+  assert.equal(vazio.municipios, 0);
+  assert.equal(vazio.agregado, null);
+});
+
+test("explorar: formato de cada tipo de indicador", () => {
+  const ind = (c: string) => INDICADORES_EXPLORAR.find((i) => i.chave === c)!;
+  assert.equal(formatarExplorar(48.25, ind("esgoto")), "48,3%");
+  assert.equal(formatarExplorar(52310, ind("pib-habitante")), "R$ 52.310");
+  assert.equal(formatarExplorar(12.5, ind("emendas")), "R$ 12,50");
+  assert.equal(formatarExplorar(5.2, ind("ideb-finais")), "5,2");
+  assert.equal(formatarExplorar(5.25, ind("ideb-finais")), "5,25");
+  assert.equal(formatarExplorar(-1234, ind("caged")), "-1.234");
+  assert.equal(formatarExplorar(null, ind("caged")), "sem dado");
 });

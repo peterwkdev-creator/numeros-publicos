@@ -31,9 +31,10 @@ on:
     - cron: "30 21 * * *"
   workflow_dispatch: {}
 
+# Só leitura no topo; cada escrita fica no job que a usa: o commit da
+# coleta (`contents`) e o pedido de publicação (`actions`).
 permissions:
-  contents: write
-  actions: write
+  contents: read
 
 # O mesmo grupo do IBGE: os dois commitam no main, e um não pode empurrar
 # por cima do outro.
@@ -44,6 +45,8 @@ concurrency:
 jobs:
   caged:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     outputs:
       commitou: ${{ steps.commit.outputs.commitou }}
     # 36 arquivos de ~57 MB; medido localmente, 20 s cada entre baixar e
@@ -109,6 +112,10 @@ jobs:
     needs: caged
     if: needs.caged.outputs.commitou == 'true'
     runs-on: ubuntu-latest
+    # Para pedir a publicação (`gh workflow run`) e esperar o resultado.
+    permissions:
+      contents: read
+      actions: write
     timeout-minutes: 120
     env:
       GH_TOKEN: ${{ github.token }}

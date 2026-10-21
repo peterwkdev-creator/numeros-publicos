@@ -57,9 +57,10 @@ on:
         type: boolean
         default: false
 
+# Só leitura no topo; cada escrita fica no job que a usa: o commit da
+# coleta (`contents`) e o pedido de publicação (`actions`).
 permissions:
-  contents: write
-  actions: write
+  contents: read
 
 # O mesmo grupo do IBGE e do Caged: os três commitam no main, e um não pode
 # empurrar por cima do outro.
@@ -70,6 +71,8 @@ concurrency:
 jobs:
   brasil:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     outputs:
       commitou: ${{ steps.commit.outputs.commitou }}
       parcial: ${{ steps.ingerir.outputs.parcial }}
@@ -131,6 +134,10 @@ jobs:
     needs: brasil
     if: needs.brasil.outputs.commitou == 'true'
     runs-on: ubuntu-latest
+    # Para pedir a publicação (`gh workflow run`) e esperar o resultado.
+    permissions:
+      contents: read
+      actions: write
     timeout-minutes: 120
     env:
       GH_TOKEN: ${{ github.token }}

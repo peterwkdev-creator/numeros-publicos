@@ -28,10 +28,10 @@ on:
     - cron: "0 9 * * 1"
   workflow_dispatch: {}
 
+# Só leitura no topo; cada escrita fica no job que a usa: o commit da
+# coleta (`contents`) e o pedido de publicação (`actions`).
 permissions:
-  contents: write
-  # Para pedir a publicação (`gh workflow run`) quando o dado muda.
-  actions: write
+  contents: read
 
 concurrency:
   group: ingestao
@@ -40,6 +40,8 @@ concurrency:
 jobs:
   ingerir:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     outputs:
       commitou: ${{ steps.commit.outputs.commitou }}
     # 40 e não 20: com os treze indicadores do registro são ~13 × 27 = 351
@@ -144,6 +146,10 @@ jobs:
     needs: ingerir
     if: needs.ingerir.outputs.commitou == 'true'
     runs-on: ubuntu-latest
+    # Para pedir a publicação (`gh workflow run`) e esperar o resultado.
+    permissions:
+      contents: read
+      actions: write
     # A publicação leva de 9 a 44 min e pode esperar outra na fila.
     timeout-minutes: 120
     env:

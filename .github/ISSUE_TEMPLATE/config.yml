@@ -1,0 +1,6 @@
+# Sem issue em branco: os modelos pedem o município e a fonte e lembram de não pôr dado pessoal.
+blank_issues_enabled: false
+contact_links:
+  - name: Falha de segurança
+    url: https://github.com/peterwkdev-creator/numeros-publicos/security/advisories/new
+    about: Aviso privado, que só o mantenedor vê (SECURITY.md). Não abra issue pública.

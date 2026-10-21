@@ -183,6 +183,8 @@ jobs:
     needs: [brasil, publicar]
     if: always() && (needs.brasil.outputs.parcial == 'true' || needs.brasil.result == 'cancelled')
     runs-on: ubuntu-latest
+    # Só escreve o erro e sai: 5 min de teto bastam.
+    timeout-minutes: 5
     steps:
       - name: Falhar porque alguma série ficou com o dado anterior
         env:

@@ -12,6 +12,7 @@ import io
 import json
 import tempfile
 import unittest
+import urllib.error
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
@@ -21,7 +22,10 @@ from numeros_publicos.caged import (
     link_do_sumario, mes_anterior, nossos_numeros, numeros_do_sumario, retrato,
     ultima_no_ftp,
 )
-from numeros_publicos.cli import caged_anos_exportar, caged_novo, construir_parser
+from numeros_publicos.cli import (
+    _com_tentativas, caged_anos_exportar, caged_ingerir, caged_novo,
+    construir_parser,
+)
 
 FIXTURES = Path(__file__).parent / "fixtures"
 SUMARIO = (FIXTURES / "caged_sumario_202607.txt").read_text(encoding="utf-8")
@@ -296,6 +300,56 @@ class TestFtp(unittest.TestCase):
                                 pagina=lambda url: "<html>sem sumário</html>")
         self.assertEqual(codigo, 0)
         self.assertIn("nada: 202606", saida.getvalue())
+
+
+class TestRede(unittest.TestCase):
+    """Em 22/10/2026 o FTP do MTE deu timeout uma vez e o job caiu na
+    primeira. A rede se repete em falha transitória e para na resposta
+    definitiva da fonte."""
+
+    def _rodar(self, falhas):
+        self.chamadas, self.esperas = 0, []
+
+        def fazer():
+            self.chamadas += 1
+            if falhas:
+                raise falhas.pop(0)
+            return "ok"
+        with redirect_stderr(io.StringIO()):
+            return _com_tentativas(fazer, "ftp://x", dormir=self.esperas.append)
+
+    def test_timeout_se_repete_com_espera_dobrando(self):
+        self.assertEqual(self._rodar([TimeoutError("timed out")] * 2), "ok")
+        self.assertEqual((self.chamadas, self.esperas), (3, [5.0, 10.0]))
+
+    def test_5xx_se_repete(self):
+        erro = urllib.error.HTTPError("u", 503, "Service Unavailable", None, None)
+        self.assertEqual(self._rodar([erro]), "ok")
+        self.assertEqual(self.chamadas, 2)
+
+    def test_desiste_na_quarta(self):
+        with self.assertRaises(TimeoutError):
+            self._rodar([TimeoutError("timed out")] * 4)
+        self.assertEqual((self.chamadas, self.esperas), (4, [5.0, 10.0, 20.0]))
+
+    def test_404_sobe_na_hora(self):
+        erro = urllib.error.HTTPError("u", 404, "Not Found", None, None)
+        with self.assertRaises(urllib.error.HTTPError):
+            self._rodar([erro])
+        self.assertEqual((self.chamadas, self.esperas), (1, []))
+
+    def test_ingerir_sai_1_sem_traceback_quando_a_rede_cai(self):
+        def baixar(url, destino):
+            raise TimeoutError("timed out")
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
+            args = construir_parser().parse_args(
+                ["caged-ingerir", "--ate", "202606",
+                 "--banco-caged", str(Path(tmp) / "caged.db")])
+            erro = io.StringIO()
+            with redirect_stdout(io.StringIO()), redirect_stderr(erro):
+                codigo = caged_ingerir(args, baixar=baixar)
+        self.assertEqual(codigo, 1)
+        self.assertIn("timed out", erro.getvalue())
 
 
 #: Trechos reais do `pdftotext -raw` das apresentações de dezembro do MTE

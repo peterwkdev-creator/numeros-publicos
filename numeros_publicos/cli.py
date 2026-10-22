@@ -893,18 +893,53 @@ def construir_parser() -> argparse.ArgumentParser:
     return p
 
 
+#: Tentativas de rede do Caged, do INSS e das emendas. Em 22/10/2026 o FTP do
+#: MTE deu timeout uma vez, a fonte voltou logo depois, e o job caiu na
+#: primeira: sem repetição, o mês só entraria no cron do dia seguinte.
+TENTATIVAS_DE_REDE = 4
+ESPERA_DE_REDE = 5.0
+
+
+def _com_tentativas(fazer, url: str, dormir=None):
+    """`fazer()` com repetição em falha transitória (timeout, conexão caída,
+    5xx, 429), espera dobrando: 5, 10 e 20 s. HTTP 4xx sobe na hora: é a
+    resposta da fonte, e repetir não a muda (o gov.br sem o sumário do mês)."""
+    import time
+    import urllib.error
+    dormir = dormir or time.sleep
+    espera = ESPERA_DE_REDE
+    for tentativa in range(1, TENTATIVAS_DE_REDE + 1):
+        try:
+            return fazer()
+        except OSError as e:
+            definitivo = (isinstance(e, urllib.error.HTTPError)
+                          and e.code != 429 and e.code < 500)
+            if definitivo or tentativa == TENTATIVAS_DE_REDE:
+                raise
+            print(f"  [rede] {url}: {e}; tentativa {tentativa + 1} de "
+                  f"{TENTATIVAS_DE_REDE} em {espera:.0f} s", file=sys.stderr)
+            dormir(espera)
+            espera *= 2
+
+
 def _listar_ftp(url: str) -> str:
     import urllib.request
-    with urllib.request.urlopen(url, timeout=120) as r:
-        return r.read().decode("latin-1")
+
+    def fazer():
+        with urllib.request.urlopen(url, timeout=120) as r:
+            return r.read().decode("latin-1")
+    return _com_tentativas(fazer, url)
 
 
 def _pagina(url: str) -> str:
     import urllib.request
     pedido = urllib.request.Request(
         url, headers={"User-Agent": "Mozilla/5.0 (numeros-publicos)"})
-    with urllib.request.urlopen(pedido, timeout=120) as r:
-        return r.read().decode("utf-8", "replace")
+
+    def fazer():
+        with urllib.request.urlopen(pedido, timeout=120) as r:
+            return r.read().decode("utf-8", "replace")
+    return _com_tentativas(fazer, url)
 
 
 def _texto_do_pdf(caminho: str, modo: str = "-layout") -> str:
@@ -974,7 +1009,9 @@ def caged_ingerir(args, listar=_listar_ftp, baixar=None) -> int:
                     d = sum(x[1] for x in agregado.values())
                     print(f"  {nome}: {n} linhas, {a - d:+d} "
                           f"({tamanho // 1_000_000} MB, {time.time() - t:.0f} s)")
-    except caged.ErroCaged as e:
+    except (caged.ErroCaged, OSError) as e:
+        # OSError: a rede, já repetida em `_com_tentativas`. Os meses gravados
+        # ficam no banco e não se baixam de novo na próxima rodada.
         print(f"[!] {e}", file=sys.stderr)
         return 1
     return 0
@@ -1391,8 +1428,12 @@ def _baixar(url: str, destino: str) -> None:
     import urllib.request
     pedido = urllib.request.Request(
         url, headers={"User-Agent": "Mozilla/5.0 (numeros-publicos)"})
-    with urllib.request.urlopen(pedido, timeout=120) as r, open(destino, "wb") as fh:
-        shutil.copyfileobj(r, fh, length=1 << 20)
+
+    def fazer():
+        # "wb" a cada tentativa: o pedaço da tentativa anterior se descarta.
+        with urllib.request.urlopen(pedido, timeout=120) as r, open(destino, "wb") as fh:
+            shutil.copyfileobj(r, fh, length=1 << 20)
+    _com_tentativas(fazer, url)
 
 
 def inss_ingerir(args, transporte=None, baixar=_baixar) -> int:

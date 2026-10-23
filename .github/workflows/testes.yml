@@ -1,0 +1,72 @@
+# Roda os testes em Python do site e dos dois motores a cada push e pull
+# request para a main. Escrito em 23/10/2026.
+#
+# ## Por que existe
+#
+# Até aqui só o `publicar-cloudflare.yml` testava alguma coisa, e só o painel
+# (`npm test`), e só quando o commit mexia em `painel/**`. Os testes em Python
+# (coleta, conferência, motores) rodavam apenas na máquina de quem commitava:
+# um commit que só muda Python ia ao origin sem nenhuma prova no CI.
+#
+# ## O que NÃO faz
+#
+# Não publica, não commita e não baixa dado de fonte oficial: os testes usam só
+# as fixtures versionadas. Por isso o job só lê o repositório e o token não
+# fica gravado no `.git/config` (`persist-credentials: false`).
+#
+# Este arquivo não está no `paths:` do `publicar-cloudflare.yml`: mudá-lo não
+# dispara deploy.
+
+name: Testes
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# Dois pushes seguidos: o run do mais velho perde o sentido.
+concurrency:
+  group: testes-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  testes:
+    name: ${{ matrix.nome }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      # Uma suíte quebrada não esconde o resultado das outras.
+      fail-fast: false
+      matrix:
+        include:
+          - nome: site
+            pasta: .
+          - nome: painel-fiscal
+            pasta: motores/painel-fiscal
+          - nome: educacao-inep
+            pasta: motores/educacao-inep
+    defaults:
+      run:
+        working-directory: ${{ matrix.pasta }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      # Só o educacao-inep tem dependência (o `openpyxl` que lê a planilha do
+      # INEP); o site e o painel-fiscal usam só a biblioteca padrão.
+      - name: Dependências
+        if: hashFiles(format('{0}/requirements.txt', matrix.pasta)) != ''
+        run: pip install -r requirements.txt
+
+      - name: Testes
+        run: python -m unittest discover -s tests -t .

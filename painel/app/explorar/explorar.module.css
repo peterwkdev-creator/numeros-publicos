@@ -71,5 +71,6 @@ th[aria-sort="ascending"] > .ordenar::after { content: "↑" / ""; }
 
 /* No papel os controles somem: o que se imprime é o resultado. */
 @media print {
-  .aplicados, .paginas { display: none; }
+  /* O recorte impresso se lê no rótulo do resultado ("Esgoto, Ceará"). */
+  .filtros, .aplicados, .paginas { display: none; }
 }

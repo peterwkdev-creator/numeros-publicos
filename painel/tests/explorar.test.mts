@@ -12,7 +12,7 @@ import zlib from "node:zlib";
 
 import {
   arquivoDoIndicador, COLUNAS_DE_FORA, entradasDoIndice, FAIXAS_POPULACAO, faixaPopulacao,
-  formatarExplorar, impressaoDaOrdem, INDICADORES_EXPLORAR, recorteDe, type FontesExplorar,
+  fonteDoIndicador, formatarExplorar, impressaoDaOrdem, INDICADORES_EXPLORAR, recorteDe, type FontesExplorar,
 } from "../lib/explorar.ts";
 import { cagedDeVarios, totalDoPais, type SnapshotCaged } from "../lib/caged.ts";
 import { emendasDeVarios, porHabitante, type SnapshotEmendas } from "../lib/emendas.ts";
@@ -245,4 +245,19 @@ test("explorar: formato de cada tipo de indicador", () => {
   assert.equal(formatarExplorar(5.25, ind("ideb-finais")), "5,25");
   assert.equal(formatarExplorar(-1234, ind("caged")), "-1.234");
   assert.equal(formatarExplorar(null, ind("caged")), "sem dado");
+});
+
+test("explorar: cada indicador tem fonte, período e data tirados do arquivo dele", () => {
+  const notas = INDICADORES_EXPLORAR.map((i) => fonteDoIndicador(i, fontes));
+  for (const [k, nota] of notas.entries()) {
+    const chave = INDICADORES_EXPLORAR[k].chave;
+    assert.match(nota, /^Fonte: [^·]+ · .+\. (Coletado em|Arquivo de) \d{2}\/\d{2}\/\d{4}\.$/, chave);
+    assert.doesNotMatch(nota, /undefined|null|NaN|· —|\.\./, chave);
+  }
+  // A data é do indicador, não da página (armadilha 3): os arquivos são de
+  // coletas diferentes, e a nota de cada um leva a dele.
+  const data = (chave: string) => /(\d{2}\/\d{2}\/\d{4})\.$/.exec(notas[INDICADORES_EXPLORAR.findIndex((i) => i.chave === chave)])![1];
+  assert.notEqual(data("esgoto"), data("pessoal"));
+  assert.notEqual(data("caged"), data("ideb-iniciais"));
+  assert.match(notas[INDICADORES_EXPLORAR.findIndex((i) => i.chave === "esgoto")], /Censo Demográfico · 2022\./);
 });

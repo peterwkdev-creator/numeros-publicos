@@ -93,6 +93,7 @@ function iniciar(form) {
     return {
       chave, rotulo: o.textContent, tipo: o.dataset.tipo, formato: o.dataset.formato,
       casas: Number(o.dataset.casas), mult: Number(o.dataset.mult ?? 1),
+      fonte: o.dataset.fonte ?? "",
     };
   }
 
@@ -124,7 +125,9 @@ function iniciar(form) {
     aviso.hidden = !texto;
   }
 
-  async function aplicar(indicador, filtro, { endereco = true } = {}) {
+  // `aviso`: o texto que fica depois de desenhar (o do link inválido); a
+  // mudança seguinte, sem ele, o apaga.
+  async function aplicar(indicador, filtro, { endereco = true, aviso: texto = "" } = {}) {
     const meu = ++pedido;
     if (endereco) {
       history.replaceState(history.state, "",
@@ -144,7 +147,7 @@ function iniciar(form) {
       const ind = indicadorDe(indicador);
       atual = { ind, filtro, r: recorte(ind, arquivo, entradas, ufs, filtro) };
       pagina = 0;
-      avisar("");
+      avisar(texto);
       desenhar();
     } catch {
       if (meu === pedido) avisar("Não foi possível baixar os dados deste recorte. Tente de novo.");
@@ -162,6 +165,7 @@ function iniciar(form) {
     el("explorar-municipios").textContent = r.municipios.toLocaleString("pt-BR");
     el("explorar-sem-dado").textContent = r.semDado.toLocaleString("pt-BR");
     el("explorar-nota").textContent = el("explorar-nota").dataset[ind.tipo] ?? "";
+    el("explorar-fonte").textContent = ind.fonte;
     const padraoAgora = ind.chave === padrao && !Object.keys(filtro).length;
     document.title = padraoAgora ? tituloOriginal : `${ind.rotulo}, ${nome}: ${tituloOriginal}`;
     desenharAplicados(filtro);
@@ -383,7 +387,10 @@ function iniciar(form) {
   campos.disabled = false;
   avisar("");
   if (invalido || indicador !== padrao || Object.keys(filtro).length) {
-    aplicar(indicador, filtro, { endereco: invalido });
+    aplicar(indicador, filtro, {
+      endereco: invalido,
+      aviso: invalido ? "O endereço tinha um filtro que não existe; ele foi retirado." : "",
+    });
   } else {
     // O padrão já está na página; só a paginação, que o build não escreve,
     // sai do total do cartão (`garantirAtual` baixa o resto no clique).

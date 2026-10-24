@@ -4,7 +4,7 @@ import Link from "next/link";
 import MapaUf from "../componentes/mapa-uf";
 import { br, descricaoDe as comCauda } from "../../lib/dados";
 import {
-  arquivoDoIndicador, entradasDoIndice, FAIXAS_POPULACAO, formatarExplorar,
+  arquivoDoIndicador, entradasDoIndice, FAIXAS_POPULACAO, fonteDoIndicador, formatarExplorar,
   INDICADOR_PADRAO, INDICADORES_EXPLORAR, recorteDe, type LinhaRecorte,
 } from "../../lib/explorar";
 import { slugDe } from "../../lib/fiscal";
@@ -92,7 +92,8 @@ export default async function Explorar() {
     lerCaged(), lerEmendas(),
   ]);
   const ind = INDICADORES_EXPLORAR.find((i) => i.chave === INDICADOR_PADRAO)!;
-  const arquivo = arquivoDoIndicador(ind, { snapshot, fiscal, ideb, idebFinais, caged, emendas });
+  const fontes = { snapshot, fiscal, ideb, idebFinais, caged, emendas };
+  const arquivo = arquivoDoIndicador(ind, fontes);
   const r = recorteDe(ind, arquivo, entradasDoIndice(snapshot), snapshot.ufs);
   const valor = (v: number | null) => formatarExplorar(v, ind);
 
@@ -159,7 +160,8 @@ export default async function Explorar() {
                   {INDICADORES_EXPLORAR.filter((i) => i.tema === t).map((i) => (
                     <option key={i.chave} value={i.chave} data-tipo={i.tipo}
                       data-formato={i.formato} data-casas={i.casas}
-                      data-mult={i.tipo === "razao" ? i.mult : undefined}>
+                      data-mult={i.tipo === "razao" ? i.mult : undefined}
+                      data-fonte={fonteDoIndicador(i, fontes)}>
                       {i.rotulo}
                     </option>
                   ))}
@@ -230,6 +232,7 @@ export default async function Explorar() {
            data-soma={NOTAS.soma} data-razao={NOTAS.razao}>
           {NOTAS[ind.tipo]}
         </p>
+        <p className={base.ressalva} id="explorar-fonte">{fonteDoIndicador(ind, fontes)}</p>
       </section>
 
       {camada && (

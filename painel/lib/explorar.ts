@@ -1,8 +1,9 @@
-import { cagedDe, type SnapshotCaged } from "./caged";
+import { cagedDe, nomeCompetencia, type SnapshotCaged } from "./caged";
 import { PARES_CENSO, mediana } from "./censo";
-import type { Snapshot } from "./dados";
+import { dataCurta, periodoDe, type Snapshot } from "./dados";
 import { emendasDe, type SnapshotEmendas } from "./emendas";
 import { faixaDaLinha, type SnapshotFiscal } from "./fiscal";
+import { nomeQuadrimestre } from "./fiscal/serie";
 import type { SnapshotIdeb } from "./ideb";
 import { PARES_TRABALHO } from "./trabalho";
 
@@ -298,6 +299,46 @@ function pessoalPorCodigo(fiscal: SnapshotFiscal): Map<number, number> {
     if (publicou && typeof percentual === "number") por.set(Number(codigo), percentual);
   }
   return por;
+}
+
+/**
+ * A nota de fonte de cada indicador, tirada do arquivo de onde ele sai: os
+ * arquivos são coletados em dias diferentes, então a data é do indicador, não
+ * da página (armadilha 3 da espec). Os textos são os das outras páginas.
+ */
+export function fonteDoIndicador(ind: IndicadorExplorar, f: FontesExplorar): string {
+  const nota = (fonte: string, periodo: string, data: string) =>
+    `Fonte: ${fonte.replace(/\.$/, "")} · ${periodo}. ${data}.`;
+  const ibge = (fonte: string, periodo: string) =>
+    nota(fonte, periodo, `Coletado em ${dataCurta(f.snapshot.geradoEm)}`);
+  const ideb = (s: SnapshotIdeb) => nota(s.fonte, `edição de ${s.edicoes[s.edicoes.length - 1]}`,
+    `Coletado em ${dataCurta(s.coletadoEm)}`);
+  switch (ind.chave) {
+    case "populacao":
+      return ibge("IBGE, Estimativas da População", `estimativa para ${periodoDe(f.snapshot, "populacao-estimada")}`);
+    case "pib-habitante":
+      return ibge("IBGE, PIB dos Municípios e Censo Demográfico 2022",
+        `PIB de ${periodoDe(f.snapshot, "pib-municipal")} sobre a população do Censo`);
+    case "caged":
+      return nota(f.caged.fonte,
+        `${nomeCompetencia(f.caged.competencias[0] ?? f.caged.competencia)} a ${nomeCompetencia(f.caged.competencia)}`,
+        `Coletado em ${dataCurta(f.caged.coletadoEm)}`);
+    case "ideb-iniciais": return ideb(f.ideb);
+    case "ideb-finais": return ideb(f.idebFinais);
+    case "pessoal":
+      // Quem tem menos de 50 mil habitantes pode entregar o RGF Simplificado,
+      // e o do 2º semestre cobre os mesmos 12 meses (`contexto.ts` do município).
+      return nota(f.fiscal.fonte,
+        `${nomeQuadrimestre(f.fiscal.exercicio, f.fiscal.periodo)} ` +
+        `(2º semestre de ${f.fiscal.exercicio} no RGF Simplificado)`,
+        `Coletado em ${dataCurta(f.fiscal.coletadoEm)}`);
+    case "emendas":
+      return nota(f.emendas.fonte, `pagas em ${f.emendas.anoTipos}`,
+        `Arquivo de ${dataCurta(f.emendas.dataArquivo)}`);
+  }
+  // Os pares do Censo e o rendimento: o período é o do numerador.
+  if (ind.tipo !== "razao") throw new Error(`indicador sem fonte: ${ind.chave}`);
+  return ibge("IBGE, Censo Demográfico", periodoDe(f.snapshot, ind.numerador) ?? "—");
 }
 
 export function arquivoDoIndicador(

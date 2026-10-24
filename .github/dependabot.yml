@@ -3,7 +3,9 @@
 # Settings. Um PR por mês para cada ecossistema, com tudo junto; ele só entra
 # com o CI verde e o sim do mantenedor. Nasceu em 10/10/2026: os workflows
 # rodavam checkout@v4 e setup-node@v4 com o aviso de Node 20 descontinuado,
-# achado só numa revisão.
+# achado só numa revisão. O pip do motor do Ideb (openpyxl, a única
+# dependência Python do repositório) entrou em 24/10/2026, apontado na
+# auditoria de 22/10; o PR dele passa pelo workflow Testes.
 version: 2
 updates:
   - package-ecosystem: "github-actions"
@@ -21,6 +23,15 @@ updates:
       interval: "monthly"
     groups:
       npm:
+        patterns: ["*"]
+    commit-message:
+      prefix: "deps"
+  - package-ecosystem: "pip"
+    directory: "/motores/educacao-inep"
+    schedule:
+      interval: "monthly"
+    groups:
+      pip:
         patterns: ["*"]
     commit-message:
       prefix: "deps"

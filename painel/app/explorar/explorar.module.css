@@ -17,3 +17,59 @@
 .ranking li { margin-bottom: .35rem; }
 .ranking a { display: inline-flex; align-items: center; min-height: var(--alvo); }
 .rankingValor { font-variant-numeric: tabular-nums; color: var(--tinta-fraca); }
+
+/* Filtros aplicados: o que está em vigor fica visível e removível item a
+   item (padrão de `municipios.module.css`, GOV.UK). */
+.aplicados {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--e-2);
+  margin: 0 0 var(--e-4); font-size: var(--texto-sm);
+}
+/* `display: flex` venceria o atributo `hidden`, e a faixa apareceria vazia. */
+.aplicados[hidden] { display: none; }
+.aplicadosRotulo {
+  color: var(--tinta-suave); font-size: var(--texto-xs); text-transform: uppercase;
+  letter-spacing: .05em; font-weight: 600;
+}
+.aplicados ul { display: flex; flex-wrap: wrap; gap: var(--e-2); margin: 0; padding: 0; list-style: none; }
+/* 28px de altura no mínimo: acima dos 24px do critério 2.5.8 do WCAG 2.2. */
+.chip, .limpar {
+  font: inherit; font-size: var(--texto-sm); min-height: max(1.75rem, var(--alvo));
+  padding: var(--e-1) var(--e-3); border-radius: var(--raio-pilula); cursor: pointer;
+}
+.chip { background: var(--superficie); border: 1px solid var(--borda-forte); color: var(--tinta); }
+.chip:hover { border-color: var(--acento); }
+.limpar { background: none; border: 1px solid transparent; color: var(--tinta-suave); text-decoration: underline; }
+.limpar[hidden] { display: none; }
+.chip:focus-visible, .limpar:focus-visible { outline: 2px solid var(--acento); outline-offset: 1px; }
+
+/* Cabeçalho ordenável: um <button> dentro do `th` (foco, Enter e Espaço de
+   graça). A seta sai do `aria-sort`, que o leitor de tela já anuncia; por
+   isso o texto alternativo vazio depois da barra. */
+.ordenar {
+  font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit;
+  background: none; border: 0; padding: 0; cursor: pointer;
+  display: inline-flex; align-items: center; gap: var(--e-1); min-height: var(--alvo);
+}
+.ordenar:hover { color: var(--acento); }
+.ordenar:focus-visible { outline: 2px solid var(--acento); outline-offset: 2px; }
+th[aria-sort="descending"] > .ordenar::after { content: "↓" / ""; }
+th[aria-sort="ascending"] > .ordenar::after { content: "↑" / ""; }
+
+.paginas {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+  gap: var(--e-3); margin: var(--e-4) 0 0; font-size: var(--texto-sm);
+}
+.paginas[hidden] { display: none; }
+.paginas button {
+  font: inherit; min-height: var(--alvo); padding: var(--e-1) var(--e-4);
+  background: var(--superficie); border: 1px solid var(--borda-forte);
+  border-radius: .4rem; color: var(--tinta); cursor: pointer;
+}
+.paginas button:hover:not(:disabled) { border-color: var(--acento); }
+.paginas button:disabled { color: var(--tinta-fraca); cursor: default; }
+.paginas button:focus-visible { outline: 2px solid var(--acento); outline-offset: 1px; }
+
+/* No papel os controles somem: o que se imprime é o resultado. */
+@media print {
+  .aplicados, .paginas { display: none; }
+}

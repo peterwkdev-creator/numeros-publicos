@@ -34,6 +34,22 @@ const TITULO = "Comparar municípios";
 const LINHAS_TABELA = 50;
 const RANKING = 10;
 
+/** A nota sob o resumo, por tipo de conta; vai inteira para o script trocar. */
+const NOTAS = {
+  mediana: "Valor do recorte: a mediana dos municípios com dado.",
+  soma: "Valor do recorte: a soma dos municípios.",
+  razao: "Valor do recorte: a soma do que se conta sobre a soma do total, " +
+    "dos municípios do recorte. Não é a média das taxas: a cidade " +
+    "grande pesa o que pesa a população dela.",
+} as const;
+
+/** Igual a `legendaDoMapa` em `public/explorar-conta.js`. */
+const CONTA_DO_MAPA = {
+  mediana: "mediana dos municípios",
+  soma: "soma dos municípios",
+  razao: "conta dos municípios somados",
+} as const;
+
 export async function generateMetadata(): Promise<Metadata> {
   const descricao = comCauda(
     "Compare os 5.571 municípios por saneamento, renda, emprego, educação e " +
@@ -47,7 +63,8 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-function ListaRanking({ titulo, linhas, valor }: {
+function ListaRanking({ id, titulo, linhas, valor }: {
+  id: string;
   titulo: string;
   linhas: LinhaRecorte[];
   valor: (v: number | null) => string;
@@ -55,7 +72,7 @@ function ListaRanking({ titulo, linhas, valor }: {
   return (
     <div>
       <h3 className={estilos.rankingTitulo}>{titulo}</h3>
-      <ol className={estilos.ranking}>
+      <ol className={estilos.ranking} id={id}>
         {linhas.map((l) => (
           <li key={l.codigo}>
             <Link href={`/municipio/${slugDe(l.nome, l.uf)}/`} prefetch={false}>
@@ -86,12 +103,14 @@ export default async function Explorar() {
     .sort((a, b) => a.localeCompare(b, "pt-BR"));
   const ufs = [...snapshot.ufs].sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
   const temas = [...new Set(INDICADORES_EXPLORAR.map((i) => i.tema))];
-  // O padrão é percentual; o mapa da Fase 3 cobre os outros formatos.
+  // O padrão é percentual; os outros formatos, o `explorar.js` pinta na mesma
+  // camada. A chave é fixa (`valor`) porque o script troca o indicador nela, e
+  // a legenda tem o texto de `legendaDoMapa` (`public/explorar-conta.js`).
   const camada: CamadaMapa | null = ind.formato === "pct" || ind.formato === "reais" ? {
-    chave: ind.chave,
+    chave: "valor",
     rotulo: ind.rotulo,
     valores: r.porUf,
-    legenda: `${ind.rotulo}: soma dos municípios de cada estado no recorte.`,
+    legenda: `${ind.rotulo}: ${CONTA_DO_MAPA[ind.tipo]} de cada estado no recorte.`,
     formato: ind.formato,
     ...dominio(r.porUf, ind.formato === "pct" ? 5 : 1000),
   } : null;
@@ -127,8 +146,9 @@ export default async function Explorar() {
       </section>
 
       <form className={estilos.filtros} action={CAMINHO} method="get"
-            aria-label="Indicador e recorte">
-        {/* Desligado até o explorar.js chegar (Fase 3), que tira o `disabled`. */}
+            aria-label="Indicador e recorte" id="explorar-filtros" data-padrao={ind.chave}>
+        {/* Desligado até o `explorar.js` chegar, que tira o `disabled`: sem
+            ele, enviar recarregaria esta mesma página, com o mesmo recorte. */}
         <fieldset disabled className={estilos.campos}>
           <legend className="so-leitor">Indicador e recorte</legend>
           <label className={estilos.campo}>
@@ -137,7 +157,11 @@ export default async function Explorar() {
               {temas.map((t) => (
                 <optgroup key={t} label={t}>
                   {INDICADORES_EXPLORAR.filter((i) => i.tema === t).map((i) => (
-                    <option key={i.chave} value={i.chave}>{i.rotulo}</option>
+                    <option key={i.chave} value={i.chave} data-tipo={i.tipo}
+                      data-formato={i.formato} data-casas={i.casas}
+                      data-mult={i.tipo === "razao" ? i.mult : undefined}>
+                      {i.rotulo}
+                    </option>
                   ))}
                 </optgroup>
               ))}
@@ -154,7 +178,9 @@ export default async function Explorar() {
             <span>Estado</span>
             <select name="uf" defaultValue="">
               <option value="">Todos</option>
-              {ufs.map((u) => <option key={u.sigla} value={u.sigla}>{u.nome}</option>)}
+              {ufs.map((u) => (
+                <option key={u.sigla} value={u.sigla} data-regiao={u.regiao}>{u.nome}</option>
+              ))}
             </select>
           </label>
           <label className={estilos.campo}>
@@ -167,42 +193,47 @@ export default async function Explorar() {
             </select>
           </label>
         </fieldset>
-        <p className={base.ressalva} id="explorar-sem-script">
-          Os filtros ainda não funcionam nesta versão da página: abaixo, o
-          resultado para o Brasil inteiro. A tabela completa, com todos os
-          indicadores, está em <a href="/ajuda/#baixar">Baixar dados</a>.
+        {/* O script esconde este aviso ao ligar os filtros e o reusa para
+            os erros (arquivo que não baixou, dado mudado no meio). */}
+        <p className={base.ressalva} id="explorar-sem-script" role="status">
+          Os filtros precisam de JavaScript: abaixo, o resultado para o Brasil
+          inteiro. A tabela completa, com todos os indicadores, está em{" "}
+          <a href="/ajuda/#baixar">Baixar dados</a>.
         </p>
+        {/* Os filtros em vigor, removíveis um a um (`ux-padroes.md`). */}
+        <div className={estilos.aplicados} id="explorar-aplicados" hidden>
+          <span className={estilos.aplicadosRotulo}>Filtros aplicados:</span>
+          <ul data-classe-chip={estilos.chip} />
+          <button type="button" className={estilos.limpar} data-limpar="">Limpar tudo</button>
+        </div>
       </form>
 
       <section aria-labelledby="explorar-resumo">
         <h2 id="explorar-resumo" className={estilos.secao}>Resultado do recorte</h2>
         <div className={base.grade} role="status" aria-atomic="true">
           <div className={base.cartao}>
-            <span className={base.rotulo}>{ind.rotulo}, Brasil</span>
-            <span className={base.valor}>{valor(r.agregado)}</span>
+            <span className={base.rotulo} id="explorar-rotulo-agregado">
+              {ind.rotulo}, Brasil
+            </span>
+            <span className={base.valor} id="explorar-agregado">{valor(r.agregado)}</span>
           </div>
           <div className={base.cartao}>
             <span className={base.rotulo}>Municípios no recorte</span>
-            <span className={base.valor}>{br(r.municipios)}</span>
+            <span className={base.valor} id="explorar-municipios">{br(r.municipios)}</span>
           </div>
           <div className={base.cartao}>
             <span className={base.rotulo}>Sem dado</span>
-            <span className={base.valor}>{br(r.semDado)}</span>
+            <span className={base.valor} id="explorar-sem-dado">{br(r.semDado)}</span>
           </div>
         </div>
-        <p className={base.ressalva}>
-          {ind.tipo === "mediana"
-            ? "Valor do recorte: a mediana dos municípios com dado."
-            : ind.tipo === "soma"
-              ? "Valor do recorte: a soma dos municípios."
-              : "Valor do recorte: a soma do que se conta sobre a soma do total, " +
-                "dos municípios do recorte. Não é a média das taxas: a cidade " +
-                "grande pesa o que pesa a população dela."}
+        <p className={base.ressalva} id="explorar-nota" data-mediana={NOTAS.mediana}
+           data-soma={NOTAS.soma} data-razao={NOTAS.razao}>
+          {NOTAS[ind.tipo]}
         </p>
       </section>
 
       {camada && (
-        <section aria-labelledby="explorar-mapa">
+        <section aria-labelledby="explorar-mapa" id="explorar-mapa-secao">
           <h2 id="explorar-mapa" className={estilos.secao}>Por estado</h2>
           <MapaUf camadas={[camada]}
             nomes={Object.fromEntries(snapshot.ufs.map((u) => [u.sigla, u.nome]))} />
@@ -212,30 +243,35 @@ export default async function Explorar() {
       <section aria-labelledby="explorar-extremos">
         <h2 id="explorar-extremos" className={estilos.secao}>Os extremos</h2>
         <div className={estilos.extremos}>
-          <ListaRanking titulo={`Os ${RANKING} maiores`} linhas={maiores} valor={valor} />
-          <ListaRanking titulo={`Os ${RANKING} menores`} linhas={menores} valor={valor} />
+          <ListaRanking id="explorar-maiores" titulo={`Os ${RANKING} maiores`}
+            linhas={maiores} valor={valor} />
+          <ListaRanking id="explorar-menores" titulo={`Os ${RANKING} menores`}
+            linhas={menores} valor={valor} />
         </div>
       </section>
 
       <section aria-labelledby="explorar-tabela">
         <h2 id="explorar-tabela" className={estilos.secao}>Os municípios</h2>
         <div className={`${base.rolagem} rola-x`}>
-          <table className={base.lista}>
-            <caption>
-              Os {LINHAS_TABELA} primeiros de {br(r.municipios)} municípios,
-              do maior para o menor. {ind.rotulo}.
+          {/* O script troca cada `th` de `data-ordem` por um botão de
+              ordenar, com a classe de `data-classe-ordenar`. A legenda tem o
+              mesmo texto que ele escreve (`desenharTabela`). */}
+          <table className={base.lista} data-classe-ordenar={estilos.ordenar}>
+            <caption id="explorar-legenda-tabela">
+              Municípios 1 a {Math.min(LINHAS_TABELA, r.municipios)} de {br(r.municipios)}.{" "}
+              {ind.rotulo}. A posição é a do recorte, do maior para o menor.
             </caption>
             <thead>
               <tr>
-                <th scope="col" className={base.num}>Posição</th>
-                <th scope="col">Município</th>
-                <th scope="col">Estado</th>
-                <th scope="col" className={base.num} aria-sort="descending">
-                  {ind.rotulo}
+                <th scope="col" className={base.num} data-ordem="posicao">Posição</th>
+                <th scope="col" data-ordem="nome">Município</th>
+                <th scope="col" data-ordem="uf">Estado</th>
+                <th scope="col" className={base.num} aria-sort="descending" data-ordem="valor">
+                  <span id="explorar-col-valor-texto">{ind.rotulo}</span>
                 </th>
               </tr>
             </thead>
-            <tbody>
+            <tbody id="explorar-linhas">
               {r.linhas.slice(0, LINHAS_TABELA).map((l, i) => (
                 <tr key={l.codigo}>
                   <td className={base.num}>{i + 1}º</td>
@@ -251,7 +287,15 @@ export default async function Explorar() {
             </tbody>
           </table>
         </div>
+        {/* A tabela do build é a 1ª página; o script mostra a navegação com o
+            total do recorte e baixa o resto só no 1º clique. */}
+        <nav className={estilos.paginas} id="explorar-paginas" aria-label="Páginas da tabela" hidden>
+          <button type="button" data-ir="-1">Anterior</button>
+          <span data-pagina="" aria-live="polite" />
+          <button type="button" data-ir="1">Próxima</button>
+        </nav>
       </section>
+      <script type="module" src="/explorar.js" />
     </main>
   );
 }

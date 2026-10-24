@@ -19,10 +19,18 @@
  * posição no índice (`i`) no lugar do código; o resto é a mesma regra.
  */
 
-/** As 7 faixas de `FAIXAS_POPULACAO`, só os rótulos, na mesma ordem. */
+/**
+ * As 7 faixas de `FAIXAS_POPULACAO`, na mesma ordem: a chave vai no endereço
+ * (`?pop=20-50`) e o índice, no arquivo do indicador.
+ */
 export const FAIXAS = [
-  "Até 5 mil", "De 5 mil a 10 mil", "De 10 mil a 20 mil", "De 20 mil a 50 mil",
-  "De 50 mil a 100 mil", "De 100 mil a 500 mil", "Mais de 500 mil",
+  { chave: "ate-5", rotulo: "Até 5 mil" },
+  { chave: "5-10", rotulo: "De 5 mil a 10 mil" },
+  { chave: "10-20", rotulo: "De 10 mil a 20 mil" },
+  { chave: "20-50", rotulo: "De 20 mil a 50 mil" },
+  { chave: "50-100", rotulo: "De 50 mil a 100 mil" },
+  { chave: "100-500", rotulo: "De 100 mil a 500 mil" },
+  { chave: "mais-500", rotulo: "Mais de 500 mil" },
 ];
 
 /** As linhas cruas do `indice.json` viram `{ nome, uf, estado }`. */
@@ -79,10 +87,25 @@ export function lerFiltro(params, indicadores, ufs, padrao) {
   }
   const pop = params.get("pop");
   if (pop !== null) {
-    if (/^[0-6]$/.test(pop)) filtro.faixa = Number(pop);
+    const faixa = FAIXAS.findIndex((f) => f.chave === pop);
+    if (faixa >= 0) filtro.faixa = faixa;
     else invalido = true;
   }
   return { indicador, filtro, invalido };
+}
+
+/**
+ * O caminho inverso de `lerFiltro`: o endereço do recorte, sem o que está no
+ * padrão (o indicador padrão e os filtros vazios não aparecem).
+ */
+export function escreverFiltro(indicador, filtro, padrao) {
+  const params = new URLSearchParams();
+  if (indicador !== padrao) params.set("i", indicador);
+  if (filtro.regiao) params.set("regiao", filtro.regiao);
+  if (filtro.uf) params.set("uf", filtro.uf);
+  if (filtro.faixa !== undefined) params.set("pop", FAIXAS[filtro.faixa].chave);
+  const q = params.toString();
+  return q ? `?${q}` : "";
 }
 
 /** Igual a `mediana` de `lib/censo.ts`. */
@@ -149,6 +172,72 @@ export function recorte(ind, arquivo, entradas, ufs, filtro = {}) {
     linhas,
     porUf: Object.fromEntries(siglas.map((s) => [s, agregar(new Set([s]))])),
   };
+}
+
+/** Igual a `FAIXAS` e `faixaDoValor` de `lib/mapa.ts`: cinco faixas, `null` fora. */
+export const FAIXAS_MAPA = 5;
+export function faixaDoValor(v, min = 0, max = 100) {
+  if (v === null || !Number.isFinite(v) || !(max > min)) return null;
+  const t = (Math.max(min, Math.min(max, v)) - min) / (max - min);
+  return Math.min(FAIXAS_MAPA - 1, Math.floor(t * FAIXAS_MAPA));
+}
+
+/** Igual a `dominio` de `lib/mapa.ts`: os extremos arredondados para fora. */
+export function dominio(valores, passo) {
+  const v = Object.values(valores).filter((x) => x !== null && Number.isFinite(x));
+  if (!v.length) return { min: 0, max: 100 };
+  const min = Math.floor(Math.min(...v) / passo) * passo;
+  let max = Math.ceil(Math.max(...v) / passo) * passo;
+  if (max === min) max = min + passo;
+  return { min, max };
+}
+
+/**
+ * O passo da rampa do mapa. Percentual de 5 em 5 e real de mil em mil, como o
+ * build; o IDEB de meio em meio ponto; contagem (população, saldo de
+ * empregos) na potência de 10 abaixo da amplitude, para a régua não virar
+ * "0 a 46.000.000" com quatro estados na primeira faixa por arredondamento.
+ */
+export function passoDoMapa(valores, ind) {
+  if (ind.formato === "pct") return 5;
+  if (ind.formato === "reais") return 1000;
+  if (ind.formato === "indice") return 0.5;
+  const v = Object.values(valores).filter((x) => x !== null && Number.isFinite(x));
+  const amplitude = v.length ? Math.max(...v) - Math.min(...v) : 0;
+  return amplitude >= 10 ? 10 ** (Math.floor(Math.log10(amplitude)) - 1) : 1;
+}
+
+/** O extremo da rampa: igual a `formatarExtremo` no pct e no real. */
+export function formatarExtremo(v, ind) {
+  const com = (n, c) => n.toLocaleString("pt-BR", {
+    minimumFractionDigits: c, maximumFractionDigits: c,
+  });
+  switch (ind.formato) {
+    case "pct": return `${com(v, 0)}%`;
+    case "reais": return `R$ ${com(v / 1000, 0)} mil`;
+    case "indice": return com(v, 1);
+    default: return com(v, 0);
+  }
+}
+
+/** O que a legenda do mapa diz que a cor é, pelo tipo do indicador. */
+export function legendaDoMapa(ind) {
+  const conta = ind.tipo === "mediana" ? "mediana dos municípios"
+    : ind.tipo === "soma" ? "soma dos municípios"
+      : "conta dos municípios somados";
+  return `${ind.rotulo}: ${conta} de cada estado no recorte.`;
+}
+
+/**
+ * O nome do recorte, para o cartão do resumo e o `<title>`: "Brasil",
+ * "Nordeste", "Ceará", mais a faixa ("de 20 mil a 50 mil habitantes").
+ * Os nomes vão como estão (`ux-padroes.md`: sigla em minúscula deixa de ser sigla).
+ */
+export function nomeDoRecorte(filtro, nomeDaUf) {
+  const lugar = filtro.uf ? nomeDaUf(filtro.uf) : filtro.regiao ?? "Brasil";
+  if (filtro.faixa === undefined) return lugar;
+  const faixa = FAIXAS[filtro.faixa].rotulo;
+  return `${lugar}, ${faixa[0].toLowerCase()}${faixa.slice(1)} habitantes`;
 }
 
 /** Igual a `formatarExplorar`: `48,2%`, `R$ 52.310`, `5,2`, `1.234`. */

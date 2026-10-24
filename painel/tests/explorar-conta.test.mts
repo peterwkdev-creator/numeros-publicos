@@ -16,6 +16,7 @@ import {
   type FiltroExplorar, type FontesExplorar,
 } from "../lib/explorar.ts";
 import type { Snapshot } from "../lib/dados.ts";
+import * as mapa from "../lib/mapa.ts";
 
 // @ts-expect-error: o `public/` é JavaScript puro, sem tipos (`allowJs: false`).
 import * as conta from "../public/explorar-conta.js";
@@ -52,7 +53,8 @@ test("explorar-conta: o índice expandido é o do build, e a impressão digital 
     assert.deepEqual([e.nome, e.uf, e.estado], [entradas[i]!.nome, entradas[i]!.uf, entradas[i]!.estado]);
   });
   assert.equal(conta.impressaoDaOrdem(doIndice), impressaoDaOrdem(entradas));
-  assert.deepEqual(conta.FAIXAS, FAIXAS_POPULACAO.map((f) => f.rotulo));
+  assert.deepEqual(conta.FAIXAS,
+    FAIXAS_POPULACAO.map((f) => ({ chave: f.chave, rotulo: f.rotulo })));
 });
 
 test("explorar-conta: o recorte é igual ao do build nos 16 indicadores × 75 recortes", () => {
@@ -95,6 +97,40 @@ test("explorar-conta: o formato é o do build em todo agregado e numa amostra da
   }
 });
 
+test("explorar-conta: o mapa pinta igual ao MapaUf do build (faixa, domínio, extremo)", () => {
+  assert.equal(conta.FAIXAS_MAPA, mapa.FAIXAS);
+  for (const ind of INDICADORES_EXPLORAR) {
+    const arquivo = arquivos.get(ind.chave)!;
+    for (const [nome, filtro] of filtros) {
+      const { porUf } = recorteDe(ind, arquivo, entradas, ufs, filtro);
+      const passo = conta.passoDoMapa(porUf, ind);
+      const d = conta.dominio(porUf, passo);
+      assert.deepEqual(d, mapa.dominio(porUf, passo), `${ind.chave} em ${nome}: domínio`);
+      // Para fora: nenhum estado cai fora da rampa.
+      for (const v of Object.values(porUf)) {
+        if (v === null) continue;
+        assert.ok(v >= d.min && v <= d.max, `${ind.chave} em ${nome}: ${v} fora de ${d.min}–${d.max}`);
+        assert.equal(conta.faixaDoValor(v, d.min, d.max), mapa.faixaDoValor(v, d.min, d.max));
+      }
+      if (ind.formato === "pct" || ind.formato === "reais") {
+        assert.equal(conta.formatarExtremo(d.min, ind), mapa.formatarExtremo(d.min, ind.formato));
+        assert.equal(conta.formatarExtremo(d.max, ind), mapa.formatarExtremo(d.max, ind.formato));
+      }
+    }
+  }
+  assert.equal(conta.faixaDoValor(null, 0, 10), null);
+  assert.equal(conta.faixaDoValor(5, 10, 10), null);
+});
+
+test("explorar-conta: o nome do recorte leva os nomes como estão", () => {
+  const nomeDaUf = (s: string) => snapshot.ufs.find((u) => u.sigla === s)!.nome;
+  assert.equal(conta.nomeDoRecorte({}, nomeDaUf), "Brasil");
+  assert.equal(conta.nomeDoRecorte({ regiao: "Nordeste" }, nomeDaUf), "Nordeste");
+  assert.equal(conta.nomeDoRecorte({ regiao: "Nordeste", uf: "CE", faixa: 3 }, nomeDaUf),
+    "Ceará, de 20 mil a 50 mil habitantes");
+  assert.equal(conta.nomeDoRecorte({ faixa: 6 }, nomeDaUf), "Brasil, mais de 500 mil habitantes");
+});
+
 test("explorar-conta: arquivo de outra ordem não casa com o índice (armadilha 1)", () => {
   const arquivo = arquivos.get(INDICADOR_PADRAO)!;
   assert.equal(conta.casaComIndice(arquivo, doIndice), true);
@@ -114,10 +150,14 @@ test("explorar-conta: o endereço inválido cai fora e pede limpeza (armadilha 4
   const nordesteUf = ufs.find((u) => u.regiao === "Nordeste")!.sigla;
 
   assert.deepEqual(ler(""), { indicador: INDICADOR_PADRAO, filtro: {}, invalido: false });
-  assert.deepEqual(ler(`i=renda&regiao=Sul&uf=${sulUf}&pop=6`),
+  assert.deepEqual(ler(`i=renda&regiao=Sul&uf=${sulUf}&pop=mais-500`),
     { indicador: "renda", filtro: { regiao: "Sul", uf: sulUf, faixa: 6 }, invalido: false });
-  assert.deepEqual(ler("pop=0"), { indicador: INDICADOR_PADRAO, filtro: { faixa: 0 }, invalido: false });
-  for (const q of ["i=nada", "regiao=Atlantida", "uf=XX", "uf=sp", "pop=7", "pop=-1", "pop=1.5", "pop="]) {
+  // A chave é a do `<select name="pop">` da página: cada uma vira o índice dela.
+  FAIXAS_POPULACAO.forEach((f, i) => {
+    assert.deepEqual(ler(`pop=${f.chave}`), { indicador: INDICADOR_PADRAO, filtro: { faixa: i }, invalido: false });
+  });
+  for (const q of ["i=nada", "regiao=Atlantida", "uf=XX", "uf=sp", "pop=0", "pop=6", "pop=7",
+    "pop=Ate-5", "pop=20-50 ", "pop="]) {
     const r = ler(q);
     assert.equal(r.invalido, true, q);
     assert.deepEqual(r.filtro, {}, q);
@@ -126,4 +166,19 @@ test("explorar-conta: o endereço inválido cai fora e pede limpeza (armadilha 4
   // UF fora da região pedida: fica a região, a UF cai.
   assert.deepEqual(ler(`regiao=Sul&uf=${nordesteUf}`),
     { indicador: INDICADOR_PADRAO, filtro: { regiao: "Sul" }, invalido: true });
+});
+
+test("explorar-conta: o endereço escrito volta ao mesmo recorte", () => {
+  const chaves = INDICADORES_EXPLORAR.map((i) => i.chave);
+  const escrever = (i: string, f: FiltroExplorar) => conta.escreverFiltro(i, f, INDICADOR_PADRAO);
+  assert.equal(escrever(INDICADOR_PADRAO, {}), "");
+  assert.equal(escrever("renda", { regiao: "Sul", faixa: 3 }), "?i=renda&regiao=Sul&pop=20-50");
+  const sulUf = ufs.find((u) => u.regiao === "Sul")!.sigla;
+  for (const i of chaves) {
+    for (const [, filtro] of [...filtros, ["Sul + UF", { regiao: "Sul", uf: sulUf, faixa: 0 }] as const]) {
+      const q = escrever(i, filtro);
+      assert.deepEqual(conta.lerFiltro(new URLSearchParams(q), chaves, ufs, INDICADOR_PADRAO),
+        { indicador: i, filtro, invalido: false }, q);
+    }
+  }
 });

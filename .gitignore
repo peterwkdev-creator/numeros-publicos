@@ -33,3 +33,6 @@ venv/
 node_modules/
 .next/
 out/
+
+# Motores: o export fica no disco (o site versiona a copia em painel/dados/)
+motores/*/painel/dados/

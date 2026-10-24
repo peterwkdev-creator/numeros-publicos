@@ -77,6 +77,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.5,
     },
     {
+      // "Comparar municípios" (Fase 3 do Explorar, espec §7, passo 4). Junta
+      // o fiscal, o Caged, o Ideb e as emendas: a data é a do ranking.
+      url: `${SITE}/explorar/`,
+      lastModified: atualizadoEm(snapshot, fiscal, caged.coletadoEm),
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
+    {
       // A segunda página de cabeça: "cidades que mais geraram empregos". O
       // dado muda uma vez por mês, com a competência nova do Caged.
       url: `${SITE}/ranking/emprego-com-carteira/`,

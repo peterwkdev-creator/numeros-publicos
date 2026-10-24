@@ -253,3 +253,41 @@ export function formatar(v, ind) {
     default: return com(v, 0);
   }
 }
+
+/**
+ * A frase que o leitor de tela ouve a cada recorte, numa troca só da região
+ * `role=status`. Os três cartões como região viva, trocados um a um, faziam o
+ * NVDA ler o bloco 2 a 3 vezes e colar rótulo e número ("recorte5.571"),
+ * medido em 24/10/2026. `antes` vai na frente ("Filtro Região tirado."):
+ * tirar um filtro que não muda o recorte repetia a frase igual, e a região
+ * viva não fala texto igual.
+ */
+export function anuncioDoRecorte(ind, nome, r, antes = "") {
+  const n = (v) => v.toLocaleString("pt-BR");
+  return (antes ? `${antes} ` : "") + `${ind.rotulo}, ${nome}: ${formatar(r.agregado, ind)}. ` +
+    `Municípios no recorte: ${n(r.municipios)}. Sem dado: ${n(r.semDado)}.`;
+}
+
+const NOME_DO_CAMPO = { regiao: "Região", uf: "Estado", pop: "População" };
+
+/** O que se diz antes do recorte ao tirar um filtro (ou todos). */
+export function fraseDoTirado(campo) {
+  return campo ? `Filtro ${NOME_DO_CAMPO[campo]} tirado.` : "Filtros tirados.";
+}
+
+const SENTIDO = {
+  posicao: ["do último ao 1º", "do 1º ao último"],
+  nome: ["de Z a A", "de A a Z"],
+  uf: ["de Z a A", "de A a Z"],
+  valor: ["do maior para o menor", "do menor para o maior"],
+};
+
+/** O que se diz ao ordenar: o `aria-sort` novo no botão focado não fala. */
+export function fraseDaOrdem(coluna, sobe, rotulo) {
+  return `Ordenado por ${rotulo}, ${SENTIDO[coluna][sobe ? 1 : 0]}.`;
+}
+
+/** "Página 2 de 10": na navegação, e dito em voz só ao paginar. */
+export function textoDaPagina(pagina, total) {
+  return `Página ${(pagina + 1).toLocaleString("pt-BR")} de ${total.toLocaleString("pt-BR")}`;
+}

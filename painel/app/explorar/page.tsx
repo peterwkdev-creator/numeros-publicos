@@ -212,7 +212,9 @@ export default async function Explorar() {
 
       <section aria-labelledby="explorar-resumo">
         <h2 id="explorar-resumo" className={estilos.secao}>Resultado do recorte</h2>
-        <div className={base.grade} role="status" aria-atomic="true">
+        {/* Os cartões não são região viva: trocados um a um, o NVDA os lia 2 a
+            3 vezes por mudança. A voz é a frase do `explorar-anuncio`. */}
+        <div className={base.grade}>
           <div className={base.cartao}>
             <span className={base.rotulo} id="explorar-rotulo-agregado">
               {ind.rotulo}, Brasil
@@ -228,6 +230,7 @@ export default async function Explorar() {
             <span className={base.valor} id="explorar-sem-dado">{br(r.semDado)}</span>
           </div>
         </div>
+        <p className="so-leitor" id="explorar-anuncio" role="status" />
         <p className={base.ressalva} id="explorar-nota" data-mediana={NOTAS.mediana}
            data-soma={NOTAS.soma} data-razao={NOTAS.razao}>
           {NOTAS[ind.tipo]}
@@ -258,8 +261,11 @@ export default async function Explorar() {
         <div className={`${base.rolagem} rola-x`}>
           {/* O script troca cada `th` de `data-ordem` por um botão de
               ordenar, com a classe de `data-classe-ordenar`. A legenda tem o
-              mesmo texto que ele escreve (`desenharTabela`). */}
-          <table className={base.lista} data-classe-ordenar={estilos.ordenar}>
+              mesmo texto que ele escreve (`desenharTabela`). O nome vem do
+              `aria-labelledby`: o tirado do `caption` ficava velho no NVDA
+              depois da troca do texto (24/10/2026). */}
+          <table className={base.lista} data-classe-ordenar={estilos.ordenar}
+            aria-labelledby="explorar-legenda-tabela">
             <caption id="explorar-legenda-tabela">
               Municípios 1 a {Math.min(LINHAS_TABELA, r.municipios)} de {br(r.municipios)}.{" "}
               {ind.rotulo}. A posição é a do recorte, do maior para o menor.
@@ -294,7 +300,8 @@ export default async function Explorar() {
             total do recorte e baixa o resto só no 1º clique. */}
         <nav className={estilos.paginas} id="explorar-paginas" aria-label="Páginas da tabela" hidden>
           <button type="button" data-ir="-1">Anterior</button>
-          <span data-pagina="" aria-live="polite" />
+          {/* Sem `aria-live`: ela muda a cada filtro e só se diz ao paginar. */}
+          <span data-pagina="" />
           <button type="button" data-ir="1">Próxima</button>
         </nav>
       </section>

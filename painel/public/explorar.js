@@ -23,9 +23,9 @@
  */
 
 import {
-  casaComIndice, escreverFiltro, expandirIndice, FAIXAS, dominio,
-  faixaDoValor, formatar, formatarExtremo, legendaDoMapa, lerFiltro, nomeDoRecorte,
-  passoDoMapa, recorte,
+  anuncioDoRecorte, casaComIndice, escreverFiltro, expandirIndice, FAIXAS, dominio,
+  faixaDoValor, formatar, formatarExtremo, fraseDaOrdem, fraseDoTirado, legendaDoMapa, lerFiltro, nomeDoRecorte,
+  passoDoMapa, recorte, textoDaPagina,
 } from "./explorar-conta.js";
 import { slugDe } from "./busca.js";
 
@@ -61,6 +61,9 @@ function iniciar(form) {
   const menores = el("explorar-menores");
   const modeloItem = maiores.querySelector("li")?.cloneNode(true);
   const paginas = el("explorar-paginas");
+  // A única região viva do resultado: uma frase por recorte e, ao paginar,
+  // a página (achados do NVDA, 24/10/2026).
+  const anuncio = el("explorar-anuncio");
   const mapa = el("explorar-mapa-secao");
   const tituloOriginal = document.title;
 
@@ -127,7 +130,7 @@ function iniciar(form) {
 
   // `aviso`: o texto que fica depois de desenhar (o do link inválido); a
   // mudança seguinte, sem ele, o apaga.
-  async function aplicar(indicador, filtro, { endereco = true, aviso: texto = "" } = {}) {
+  async function aplicar(indicador, filtro, { endereco = true, aviso: texto = "", antes = "" } = {}) {
     const meu = ++pedido;
     if (endereco) {
       history.replaceState(history.state, "",
@@ -148,7 +151,7 @@ function iniciar(form) {
       atual = { ind, filtro, r: recorte(ind, arquivo, entradas, ufs, filtro) };
       pagina = 0;
       avisar(texto);
-      desenhar();
+      desenhar(antes);
     } catch {
       if (meu === pedido) avisar("Não foi possível baixar os dados deste recorte. Tente de novo.");
     } finally {
@@ -156,7 +159,7 @@ function iniciar(form) {
     }
   }
 
-  function desenhar() {
+  function desenhar(antes = "") {
     const { ind, filtro, r } = atual;
     const nome = nomeDoRecorte(filtro, nomeDaUf);
     const valor = (v) => formatar(v, ind);
@@ -164,6 +167,7 @@ function iniciar(form) {
     el("explorar-agregado").textContent = valor(r.agregado);
     el("explorar-municipios").textContent = r.municipios.toLocaleString("pt-BR");
     el("explorar-sem-dado").textContent = r.semDado.toLocaleString("pt-BR");
+    anuncio.textContent = anuncioDoRecorte(ind, nome, r, antes);
     el("explorar-nota").textContent = el("explorar-nota").dataset[ind.tipo] ?? "";
     el("explorar-fonte").textContent = ind.fonte;
     const padraoAgora = ind.chave === padrao && !Object.keys(filtro).length;
@@ -323,8 +327,7 @@ function iniciar(form) {
     }
 
     paginas.hidden = total < 2;
-    paginas.querySelector("[data-pagina]").textContent =
-      `Página ${(pagina + 1).toLocaleString("pt-BR")} de ${total.toLocaleString("pt-BR")}`;
+    paginas.querySelector("[data-pagina]").textContent = textoDaPagina(pagina, total);
     paginas.querySelector("[data-ir='-1']").disabled = pagina === 0;
     paginas.querySelector("[data-ir='1']").disabled = pagina >= total - 1;
   }
@@ -346,6 +349,7 @@ function iniciar(form) {
       ordem = { coluna, sobe };
       pagina = 0;
       desenharTabela();
+      anuncio.textContent = fraseDaOrdem(coluna, sobe, b.textContent.trim());
     });
   }
 
@@ -354,6 +358,7 @@ function iniciar(form) {
     if (!b || !(await garantirAtual())) return;
     pagina += Number(b.dataset.ir);
     desenharTabela();
+    anuncio.textContent = paginas.querySelector("[data-pagina]").textContent;
     tbody.closest("section").querySelector("h2").scrollIntoView({ block: "start" });
   });
 
@@ -377,19 +382,23 @@ function iniciar(form) {
     if (limpar) for (const k of ["regiao", "uf", "pop"]) sel[k].value = "";
     else sel[tirar].value = "";
     ufsDaRegiao();
-    aplicar(sel.i.value, filtroDosCampos());
+    aplicar(sel.i.value, filtroDosCampos(), { antes: fraseDoTirado(limpar ? "" : tirar) });
     sel.i.focus();
   });
 
   const { indicador, filtro, invalido } = lerFiltro(
     new URLSearchParams(location.search), indicadores, ufs, padrao);
+  // O aviso escrito na carga não fala no NVDA (24/10/2026): vai também no
+  // começo da frase do recorte, que muda depois de baixar o arquivo.
+  const avisoDoLink = invalido ? "O endereço tinha um filtro que não existe; ele foi retirado." : "";
   camposDoFiltro(indicador, filtro);
   campos.disabled = false;
   avisar("");
   if (invalido || indicador !== padrao || Object.keys(filtro).length) {
     aplicar(indicador, filtro, {
       endereco: invalido,
-      aviso: invalido ? "O endereço tinha um filtro que não existe; ele foi retirado." : "",
+      aviso: avisoDoLink,
+      antes: avisoDoLink,
     });
   } else {
     // O padrão já está na página; só a paginação, que o build não escreve,

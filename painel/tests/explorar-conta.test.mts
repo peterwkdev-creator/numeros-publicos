@@ -182,3 +182,80 @@ test("explorar-conta: o endereço escrito volta ao mesmo recorte", () => {
     }
   }
 });
+
+test("explorar-conta: o leitor de tela ouve uma frase por recorte, com rótulo e número separados", () => {
+  const nomeDaUf = (s: string) => snapshot.ufs.find((u) => u.sigla === s)!.nome;
+  const br = (n: number) => n.toLocaleString("pt-BR");
+  for (const ind of INDICADORES_EXPLORAR) {
+    const arquivo = arquivos.get(ind.chave)!;
+    for (const [, filtro] of filtros.slice(0, 40)) {
+      const r = conta.recorte(ind, arquivo, doIndice, ufs, filtro);
+      const nome = conta.nomeDoRecorte(filtro, nomeDaUf);
+      const frase = conta.anuncioDoRecorte(ind, nome, r);
+      assert.equal(frase, `${ind.rotulo}, ${nome}: ${formatarExplorar(r.agregado, ind)}. ` +
+        `Municípios no recorte: ${br(r.municipios)}. Sem dado: ${br(r.semDado)}.`);
+      // O defeito medido no NVDA: "recorte5.571", "dado1".
+      assert.doesNotMatch(frase, /\p{L}\d/u, frase);
+    }
+  }
+  assert.equal(conta.textoDaPagina(0, 10), "Página 1 de 10");
+  assert.equal(conta.textoDaPagina(1_233, 1_234), "Página 1.234 de 1.234");
+});
+
+test("explorar-conta: a página tem uma região viva só para o resultado", () => {
+  const pagina = fs.readFileSync(new URL("../app/explorar/page.tsx", import.meta.url), "utf-8");
+  const vivas = pagina.split("\n").filter((l) => /role="status"|aria-live=|aria-atomic=/.test(l));
+  // A do aviso (sem script, link inválido) e a da frase do recorte; os cartões
+  // e a paginação, vivos, falavam 2 a 3 vezes por troca de filtro.
+  assert.deepEqual(vivas.map((l) => l.match(/id="([^"]+)"/)?.[1]),
+    ["explorar-sem-script", "explorar-anuncio"], vivas.join("\n"));
+  const script = fs.readFileSync(new URL("../public/explorar.js", import.meta.url), "utf-8");
+  assert.match(script, /anuncio\.textContent = anuncioDoRecorte\(/);
+});
+
+test("explorar-conta: a tabela se nomeia pela legenda que o script troca", () => {
+  // O nome tirado do `caption` ficava velho no NVDA ("Esgoto ligado à rede"
+  // com a página em Lixo, 24/10/2026); o `aria-labelledby` se recalcula.
+  const pagina = fs.readFileSync(new URL("../app/explorar/page.tsx", import.meta.url), "utf-8");
+  const tabela = pagina.match(/<table\b[^>]*>/)?.[0] ?? "";
+  assert.match(tabela, /aria-labelledby="explorar-legenda-tabela"/, tabela);
+  assert.match(pagina, /<caption id="explorar-legenda-tabela">/);
+});
+
+test("explorar-conta: tirar um filtro sempre fala, mesmo sem mudar o recorte", () => {
+  const ind = { rotulo: "Lixo coletado", tipo: "pct" };
+  const r = { agregado: 98.9, municipios: 1, semDado: 0 };
+  const sem = conta.anuncioDoRecorte(ind, "Distrito Federal", r);
+  // Região tirada com Estado DF: o recorte é o mesmo, e texto igual não fala.
+  const com = conta.anuncioDoRecorte(ind, "Distrito Federal", r, conta.fraseDoTirado("regiao"));
+  assert.equal(com, `Filtro Região tirado. ${sem}`);
+  assert.notEqual(com, sem);
+  assert.equal(conta.fraseDoTirado("uf"), "Filtro Estado tirado.");
+  assert.equal(conta.fraseDoTirado("pop"), "Filtro População tirado.");
+  assert.equal(conta.fraseDoTirado(""), "Filtros tirados.");
+  const script = fs.readFileSync(new URL("../public/explorar.js", import.meta.url), "utf-8");
+  assert.match(script, /antes: fraseDoTirado\(limpar \? "" : tirar\)/);
+});
+
+test("explorar-conta: ordenar fala a coluna e o sentido", () => {
+  // O `aria-sort` novo no botão focado não é relido pelo NVDA (24/10/2026).
+  assert.equal(conta.fraseDaOrdem("valor", false, "Lixo coletado"),
+    "Ordenado por Lixo coletado, do maior para o menor.");
+  assert.equal(conta.fraseDaOrdem("valor", true, "Lixo coletado"),
+    "Ordenado por Lixo coletado, do menor para o maior.");
+  assert.equal(conta.fraseDaOrdem("nome", true, "Município"), "Ordenado por Município, de A a Z.");
+  assert.equal(conta.fraseDaOrdem("uf", false, "Estado"), "Ordenado por Estado, de Z a A.");
+  assert.equal(conta.fraseDaOrdem("posicao", true, "Posição"), "Ordenado por Posição, do 1º ao último.");
+  const script = fs.readFileSync(new URL("../public/explorar.js", import.meta.url), "utf-8");
+  const clique = script.slice(script.indexOf("ordem = { coluna, sobe };"));
+  assert.match(clique.slice(0, 200), /anuncio\.textContent = fraseDaOrdem\(coluna, sobe, /);
+});
+
+test("explorar-conta: o aviso do link inválido fala junto da frase do recorte", () => {
+  // Escrito na carga, o aviso (`role=status`) não é lido; a frase do recorte,
+  // trocada depois de baixar o arquivo, é (NVDA, 24/10/2026).
+  const script = fs.readFileSync(new URL("../public/explorar.js", import.meta.url), "utf-8");
+  const carga = script.slice(script.indexOf("const { indicador, filtro, invalido } = lerFiltro("));
+  assert.match(carga, /invalido \? "O endereço tinha um filtro que não existe; ele foi retirado\." : ""/);
+  assert.match(carga, /aviso: avisoDoLink,\s+antes: avisoDoLink,/);
+});

@@ -55,6 +55,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # O token de escrita não fica no .git/config enquanto a coleta abre
+          # arquivo de fora (.7z, PDF); ele entra só no git push do commit.
+          persist-credentials: false
 
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
@@ -89,6 +93,8 @@ jobs:
       - name: Commitar apenas se o dado mudou
         id: commit
         if: steps.novo.outputs.novo == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           if git diff --quiet -- painel/dados/caged.json; then
             echo "O caged.json não mudou. Nada a commitar."
@@ -101,7 +107,7 @@ jobs:
           # Um push no main enquanto a coleta roda faria este ser recusado
           # (não é fast-forward) e o dado do dia se perderia.
           git pull --rebase
-          git push
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:main
           echo "commitou=true" >> "$GITHUB_OUTPUT"
 
   # Job próprio, como no workflow do IBGE: a publicação leva de 9 a 44 min e

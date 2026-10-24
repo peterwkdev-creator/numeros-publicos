@@ -3,6 +3,6 @@
   "private": true,
   "description": "Só o wrangler do deploy na Cloudflare Pages, com lockfile e vigiado pelo Dependabot. O painel não o carrega.",
   "devDependencies": {
-    "wrangler": "4.141.0"
+    "wrangler": "4.151.3"
   }
 }

@@ -39,8 +39,11 @@ permissions:
   contents: read
 
 env:
-  # Versão fixada: o deploy não pode mudar de comportamento por baixo.
-  WRANGLER: wrangler@4.141.0
+  # Versão e integridade no cloudflare/package-lock.json (desde 24/10/2026;
+  # antes, `npx --yes wrangler@<versão>`, sem lockfile): o deploy não muda
+  # de comportamento por baixo, e a versão nova chega por PR do Dependabot.
+  # O caminho é relativo a `painel/`, o diretório dos passos.
+  WRANGLER: ../cloudflare/node_modules/.bin/wrangler
   PROJETO: numeros-publicos
 
 jobs:
@@ -67,7 +70,9 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: painel/package-lock.json
+          cache-dependency-path: |
+            painel/package-lock.json
+            cloudflare/package-lock.json
 
       - run: npm ci
       - run: npm test
@@ -120,15 +125,22 @@ jobs:
       - name: Cabeçalhos do Pages
         run: cp ../cloudflare/_headers out/_headers
 
+      # Sem os scripts de instalação do esbuild e do workerd (allowScripts
+      # vazio): o binário vem pelo pacote opcional da plataforma, e o
+      # `pages deploy` não usa nenhum dos dois (conferido em 24/10/2026).
+      - name: Wrangler do lockfile
+        working-directory: cloudflare
+        run: npm ci
+
       - name: O projeto existe (ou é criado)
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          if npx --yes "$WRANGLER" pages project list | grep -qw "$PROJETO"; then
+          if "$WRANGLER" pages project list | grep -qw "$PROJETO"; then
             echo "projeto $PROJETO já existe"
           else
-            npx --yes "$WRANGLER" pages project create "$PROJETO" --production-branch=main
+            "$WRANGLER" pages project create "$PROJETO" --production-branch=main
           fi
 
       - name: Enviar o out/
@@ -136,7 +148,7 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: >
-          npx --yes "$WRANGLER" pages deploy out
+          "$WRANGLER" pages deploy out
           --project-name="$PROJETO"
           --branch=main
           --commit-hash="$(git rev-parse HEAD)"

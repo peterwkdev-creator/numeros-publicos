@@ -26,6 +26,16 @@ updates:
         patterns: ["*"]
     commit-message:
       prefix: "deps"
+  # O wrangler do deploy, com lockfile próprio fora do painel (24/10/2026).
+  - package-ecosystem: "npm"
+    directory: "/cloudflare"
+    schedule:
+      interval: "monthly"
+    groups:
+      wrangler:
+        patterns: ["*"]
+    commit-message:
+      prefix: "deps"
   - package-ecosystem: "pip"
     directory: "/motores/educacao-inep"
     schedule:

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import {
-  br, dataLegivel, dataPorExtenso, INDICADORES_DA_CAPA, projetar, rotuloCurto,
+  br, dataCurta, dataLegivel, dataPorExtenso, INDICADORES_DA_CAPA, projetar, rotuloCurto,
   unidadeDaColuna, valorDoIndicador,
 } from "@/lib/dados";
 import { slugUf } from "@/lib/estado";
@@ -20,7 +20,10 @@ import {
   coberturaTemporal, FONTES_DA_BASE, FONTES_DO_SITE, idCatalogo, palavrasChave, VARIAVEIS_DA_BASE, LICENCA_DADOS,
   jsonLdHtml,
 } from "@/lib/jsonld";
-import { lerBrasil, lerFiscal, lerIdeb, lerSnapshot, SITE } from "@/lib/servidor";
+import {
+  lerBrasil, lerCaged, lerEmendas, lerFiscal, lerIdeb, lerInss, lerSnapshot, SITE,
+} from "@/lib/servidor";
+import { periodosDasFontes } from "@/lib/periodos";
 import { atualizadoEm } from "@/lib/sitemap";
 import { porTema } from "@/lib/brasil";
 import { Municipios } from "./municipios";
@@ -73,9 +76,10 @@ export default async function Pagina() {
   // colunas numéricas, e mandaria +149 KB comprimidos nas props de toda visita.
   // Ver `INDICADORES_DA_CAPA`.
   const capa = projetar(snapshot, INDICADORES_DA_CAPA);
-  const [fiscal, ideb, brasil] = await Promise.all([
-    lerFiscal(), lerIdeb("anos_iniciais"), lerBrasil(),
+  const [fiscal, ideb, brasil, caged, emendas, inss] = await Promise.all([
+    lerFiscal(), lerIdeb("anos_iniciais"), lerBrasil(), lerCaged(), lerEmendas(), lerInss(),
   ]);
+  const periodos = periodosDasFontes({ snapshot, caged, fiscal, ideb, emendas, inss });
   // Os temas e a contagem saem do dado: a lista escrita à mão citava 6 das
   // 15 séries (achado em 16/10/2026, depois do item 12).
   const temasDoBrasil = porTema(brasil.series);
@@ -239,6 +243,7 @@ export default async function Pagina() {
       </div>
 
       {/* Os números do próprio site, num só lugar: o que cobre e de onde vem. */}
+      <div className={s.faixaBloco}>
       <dl className={s.faixa} aria-label="O que o site cobre">
         <div>
           <dt>Municípios</dt>
@@ -259,6 +264,25 @@ export default async function Pagina() {
           </dd>
         </div>
       </dl>
+
+      {/* De quando é cada número (M9 (4), espec `numeros-publicos-novidades.md`):
+          o período e a data da coleta por fonte, recolhidos para o topo não crescer.
+          Nada se chama "novo": a linha diz de quando é o dado, não que mudou. */}
+      <details className={s.periodos}>
+        <summary>Período de cada fonte</summary>
+        <ul>
+          {periodos.map((p) => (
+            <li key={p.fonte}>
+              <Link href={p.href}>{p.fonte}</Link>: {p.periodo}
+              {p.coletadoEm && (
+                <> · coletado em {dataCurta(p.coletadoEm)}</>
+              )}
+              .
+            </li>
+          ))}
+        </ul>
+      </details>
+      </div>
 
       {/* As portas de entrada. Brasil, estados e rankings só se achavam no
           rodapé ou no meio da página; quem não sabe o nome de uma cidade não

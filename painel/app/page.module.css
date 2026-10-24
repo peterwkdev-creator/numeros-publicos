@@ -92,11 +92,16 @@
 
 /* ------------------------------------------------- números do próprio site */
 
+/* A faixa e o "Período de cada fonte" logo embaixo: a margem é do par. */
+.faixaBloco {
+  margin: 0 0 var(--e-8);
+}
+
 .faixa {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--e-4) var(--e-6);
-  margin: 0 0 var(--e-8);
+  margin: 0;
   padding: var(--e-4) var(--e-6);
   background: var(--superficie);
   border: 1px solid var(--borda);
@@ -138,6 +143,39 @@
   .faixaFontes {
     grid-column: auto;
   }
+}
+
+/* O mesmo desenho do "Como ler esta página" (`como-ler.module.css`). */
+.periodos {
+  margin: var(--e-3) 0 0;
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  background: var(--superficie);
+}
+
+.periodos summary {
+  cursor: pointer;
+  /* WCAG 2.5.8: o resumo inteiro é o alvo de toque. */
+  padding: max(var(--e-2), (var(--alvo) - 1lh) / 2) var(--e-4);
+  font-size: var(--texto-sm);
+  font-weight: 600;
+  color: var(--acento);
+}
+
+.periodos[open] summary {
+  border-bottom: 1px solid var(--borda);
+}
+
+.periodos ul {
+  margin: 0;
+  padding: var(--e-3) var(--e-4) var(--e-3) var(--e-8);
+  line-height: 1.55;
+  font-size: var(--texto-sm);
+  color: var(--tinta-suave);
+}
+
+.periodos li + li {
+  margin-top: var(--e-2);
 }
 
 /* ------------------------------------------------------ portas de entrada */

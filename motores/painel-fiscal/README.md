@@ -85,9 +85,10 @@ the snapshot that `exportar` writes to `painel/dados/snapshot.json`; that file
 is not versioned here, the site keeps its copy as `painel/dados/fiscal.json`
 at the repository root. The standalone Next.js panel that used to live in
 `painel/` was removed on 2026-10-10: nothing ran it any more, and its
-dependencies carried security advisories. `painel/lib/dados.ts` stays as the
-declared shape of the snapshot, which `tests/test_snapshot.py` checks the
-export against.
+dependencies carried security advisories. Since 2026-10-25
+`tests/test_snapshot.py` checks the export against the shape the site itself
+declares, `painel/lib/fiscal/tipos.ts` at the repository root (the old copy
+of `painel/lib/dados.ts` kept here was removed: nothing read it).
 
 ## Test it
 

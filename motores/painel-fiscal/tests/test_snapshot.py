@@ -5,8 +5,11 @@ O snapshot é a única costura entre as duas linguagens, e é uma costura que
 não quebra o TypeScript, e não estoura no navegador. Só produz uma página com
 travessões no lugar dos números, e ninguém desconfia.
 
-Este teste lê `painel/lib/dados.ts` como texto e compara o que o TypeScript
-**declara** com o que o Python **exporta**. Se os dois se afastarem, falha aqui.
+Este teste lê `painel/lib/fiscal/tipos.ts` do site (o mesmo repositório desde
+18/10/2026) como texto e compara o que o TypeScript **declara** com o que o
+Python **exporta**. Se os dois se afastarem, falha aqui. Até 25/10/2026 ele lia
+uma cópia antiga em `motores/painel-fiscal/painel/lib/dados.ts`, que o site não
+usava: o contrato conferia o motor contra um arquivo que ninguém lia.
 """
 
 import json
@@ -26,23 +29,24 @@ from fiscal.siconfi import (
 )
 
 RAIZ = Path(__file__).resolve().parent.parent
-DADOS_TS = RAIZ / "painel" / "lib" / "dados.ts"
+DADOS_TS = RAIZ.parent.parent / "painel" / "lib" / "fiscal" / "tipos.ts"
 
 
 def campos_da_interface(texto: str, nome: str) -> set[str]:
-    """As chaves de primeiro nível declaradas numa `interface`."""
-    corpo = re.search(rf"export interface {nome} \{{(.*?)\n\}}", texto, re.S)
+    """As chaves de primeiro nível de um tipo-objeto (`type X = {` ou `interface`)."""
+    corpo = re.search(
+        rf"export (?:interface {nome} |type {nome} = )\{{(.*?)\n\}};?", texto, re.S)
     if not corpo:
-        raise AssertionError(f"interface {nome} não encontrada em dados.ts")
+        raise AssertionError(f"tipo {nome} não encontrado em {DADOS_TS.name}")
     return set(re.findall(r"^\s{2}(\w+)\??:", corpo.group(1), re.M))
 
 
 def rotulos_da_tupla(texto: str, nome: str) -> list[str]:
-    """Os nomes dos elementos do tipo-tupla, na ordem declarada."""
+    """Os nomes dos elementos do tipo-tupla, na ordem declarada (opcional incluso)."""
     corpo = re.search(rf"export type {nome} = \[(.*?)\n\];", texto, re.S)
     if not corpo:
-        raise AssertionError(f"type {nome} não encontrado em dados.ts")
-    return re.findall(r"^\s{2}(\w+):", corpo.group(1), re.M)
+        raise AssertionError(f"type {nome} não encontrado em {DADOS_TS.name}")
+    return re.findall(r"^\s{2}(\w+)\??:", corpo.group(1), re.M)
 
 
 class ContratoEntreLinguagens(unittest.TestCase):
@@ -90,7 +94,8 @@ class ContratoEntreLinguagens(unittest.TestCase):
         cls.dir.cleanup()
 
     def test_as_chaves_do_topo_sao_exatamente_as_declaradas(self):
-        self.assertEqual(set(self.snapshot), campos_da_interface(self.ts, "Snapshot"))
+        self.assertEqual(set(self.snapshot),
+                         campos_da_interface(self.ts, "SnapshotFiscal"))
 
     def test_as_chaves_de_cobertura_sao_exatamente_as_declaradas(self):
         corpo = re.search(r"cobertura: \{(.*?)\n  \};", self.ts, re.S).group(1)
@@ -109,10 +114,10 @@ class ContratoEntreLinguagens(unittest.TestCase):
         — só passa a mostrar população onde deveria estar o percentual.
         """
         self.assertEqual(self.snapshot["colunas"],
-                         rotulos_da_tupla(self.ts, "LinhaMunicipio"))
+                         rotulos_da_tupla(self.ts, "LinhaFiscal"))
 
     def test_cada_linha_tem_o_tamanho_da_tupla(self):
-        esperado = len(rotulos_da_tupla(self.ts, "LinhaMunicipio"))
+        esperado = len(rotulos_da_tupla(self.ts, "LinhaFiscal"))
         for linha in self.snapshot["municipios"]:
             self.assertEqual(len(linha), esperado)
 
@@ -123,12 +128,6 @@ class ContratoEntreLinguagens(unittest.TestCase):
         for pontos in self.snapshot["serie"].values():
             for p in pontos:
                 self.assertEqual(len(p), esperado)
-
-    def test_o_municipio_expandido_tem_os_campos_da_interface(self):
-        # `expandir()` no TS produz `Municipio` a partir da tupla; os dois
-        # conjuntos de nomes têm de ser o mesmo.
-        self.assertEqual(set(rotulos_da_tupla(self.ts, "LinhaMunicipio")),
-                         campos_da_interface(self.ts, "Municipio"))
 
 
 class OQueOSnapshotPromete(unittest.TestCase):

@@ -17,7 +17,7 @@ from . import armazem, siops
 from .siconfi import (
     NORDESTE, PAUSA_PADRAO, RECEITAS_CORRENTES, RECEITAS_DETALHE,
     Dormir, ErroSiconfi, Transporte,
-    entes, funcoes, pessoal, receita, transporte_http,
+    entes, estados, funcoes, pessoal, receita, transporte_http,
 )
 
 BANCO_PADRAO = os.environ.get("PAINEL_FISCAL_BANCO", "painel.db")
@@ -52,12 +52,16 @@ def _br(v: float | None, casas: int = 2, sufixo: str = "") -> str:
 
 
 def cmd_ingerir_entes(args, transporte: Transporte, dormir: Dormir) -> int:
-    ufs, esperados = RECORTES[args.regiao]
-    achados = entes(transporte, dormir=dormir, uf=ufs, esfera="M")
+    if args.esfera == "E":
+        achados = estados(transporte, dormir=dormir)
+        esperados, o_que = 27, "entes estaduais (26 estados e o DF)"
+    else:
+        ufs, esperados = RECORTES[args.regiao]
+        achados = entes(transporte, dormir=dormir, uf=ufs, esfera="M")
+        o_que = "municípios " + ("do Nordeste" if args.regiao == "NE" else "do Brasil")
     with armazem.abrir(args.banco) as con:
         n = armazem.gravar_entes(con, achados)
-    onde = "do Nordeste" if args.regiao == "NE" else "do Brasil"
-    print(f"{n} municípios {onde} gravados.")
+    print(f"{n} {o_que} gravados.")
     if n != esperados:
         print(f"  ATENÇÃO: esperados {esperados}, vieram {n}. "
               f"Conferir antes de seguir — o universo mudou ou a API mudou.")
@@ -72,7 +76,8 @@ def cmd_ingerir(args, transporte: Transporte, dormir: Dormir) -> int:
     """
     with armazem.abrir(args.banco) as con:
         alvos = [r[0] for r in con.execute(
-            "SELECT codigo_ibge FROM ente WHERE esfera='M' ORDER BY codigo_ibge")]
+            "SELECT codigo_ibge FROM ente WHERE esfera=? ORDER BY codigo_ibge",
+            (args.esfera,))]
         feitos = set() if args.recomecar else armazem.ja_coletados(
             con, args.exercicio, args.periodo,
             so_publicados=args.refazer_ausentes)
@@ -169,7 +174,8 @@ def cmd_ingerir_funcoes(args, transporte: Transporte, dormir: Dormir) -> int:
     """
     with armazem.abrir(args.banco) as con:
         alvos = [r[0] for r in con.execute(
-            "SELECT codigo_ibge FROM ente WHERE esfera='M' ORDER BY codigo_ibge")]
+            "SELECT codigo_ibge FROM ente WHERE esfera=? ORDER BY codigo_ibge",
+            (args.esfera,))]
         feitos = set() if args.recomecar else armazem.ja_consultados_funcoes(
             con, args.exercicio, args.periodo,
             so_publicados=args.refazer_ausentes)
@@ -227,7 +233,8 @@ def cmd_ingerir_receita(args, transporte: Transporte, dormir: Dormir) -> int:
     """
     with armazem.abrir(args.banco) as con:
         alvos = [r[0] for r in con.execute(
-            "SELECT codigo_ibge FROM ente WHERE esfera='M' ORDER BY codigo_ibge")]
+            "SELECT codigo_ibge FROM ente WHERE esfera=? ORDER BY codigo_ibge",
+            (args.esfera,))]
         feitos = set() if args.recomecar else armazem.ja_consultados_receita(
             con, args.exercicio, args.periodo,
             so_publicados=args.refazer_ausentes)
@@ -1084,6 +1091,9 @@ def cmd_exportar(args, *_) -> int:
 def montar() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="fiscal", description="Painel Fiscal: o RGF dos municípios no SICONFI")
     p.add_argument("--banco", default=BANCO_PADRAO)
+    p.add_argument("--esfera", default="M", choices=("M", "E"),
+                   help="M, os municípios (padrão); E, os 26 estados e o DF,"
+                        " só num banco próprio (--banco estados.db)")
     sub = p.add_subparsers(dest="comando", required=True)
 
     ie = sub.add_parser("ingerir-entes",
@@ -1163,6 +1173,14 @@ def montar() -> argparse.ArgumentParser:
 def principal(argv=None, transporte: Transporte | None = None,
               dormir: Dormir = time.sleep, transporte_siops=None) -> int:
     args = montar().parse_args(argv)
+    if args.esfera == "E" and os.path.basename(args.banco) == os.path.basename(BANCO_PADRAO):
+        # O exportador e o conferidor têm ~15 consultas a `pessoal` e
+        # `despesa_funcao` sem filtro de esfera: 27 estados no banco dos
+        # municípios entrariam nas médias, nos percentis e na cobertura sem
+        # nada estourar. Banco próprio, então, e a trava aqui (25/10/2026).
+        print("erro: --esfera E grava num banco próprio (--banco estados.db),"
+              " nunca no dos municípios.", file=sys.stderr)
+        return 2
     t = transporte or transporte_http()
     # O SIOPS fala outro protocolo (POST com corpo), entao o transporte dele tem
     # outra assinatura e viaja separado -- injetavel pelo mesmo motivo do outro.

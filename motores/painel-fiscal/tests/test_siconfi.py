@@ -4,13 +4,16 @@ Cada classe aqui cobra um critério de aceite de `especs/painel-fiscal.md`.
 As fixtures são **respostas reais capturadas** em 03/09/2026.
 """
 
+import io
 import json
 import unittest
+from contextlib import redirect_stderr
 from pathlib import Path
 
 from fiscal.siconfi import (
-    FALHA_DE_REDE, NORDESTE, ErroSiconfi, Ente, Resposta,
-    buscar, entes, pessoal, url_rgf,
+    FALHA_DE_REDE, NORDESTE, UF_DO_CODIGO, ErroSiconfi, Ente, Resposta,
+    buscar, entes, esfera_de, estados, pessoal, url_rgf, url_rreo,
+    url_rreo_receita,
 )
 
 FIX = Path(__file__).parent / "fixtures"
@@ -257,6 +260,78 @@ class TestUrl(unittest.TestCase):
     def test_quadrimestre_invalido_falha_cedo(self):
         with self.assertRaises(ValueError):
             url_rgf(2024, 4, 2927408)
+
+
+def _ente(cod: int, nome: str, uf: str, esfera: str) -> dict:
+    """Um item do `/entes` no formato real (estados com `uf='BR'`, 25/10/2026)."""
+    return {"cod_ibge": cod, "ente": nome, "uf": uf, "regiao": "NE",
+            "esfera": esfera, "populacao": 1, "cnpj": None}
+
+
+class TestEsferaDosEstados(unittest.TestCase):
+    """`especs/painel-fiscal-estados.md`: o pedido do estado e do DF vai com 'E'.
+
+    Com `co_esfera='D'` o RREO e o RGF do DF voltam vazios com HTTP 200, o
+    mesmo vazio de "não publicou": o erro passaria em silêncio.
+    """
+
+    def test_esfera_sai_do_codigo(self):
+        self.assertEqual(esfera_de(29), "E")
+        self.assertEqual(esfera_de(53), "E")
+        self.assertEqual(esfera_de(2927408), "M")
+
+    def test_os_tres_urls_do_estado_pedem_e(self):
+        for u in (url_rgf(2024, 3, 53), url_rreo(2024, 6, 53),
+                  url_rreo_receita(2024, 6, 53)):
+            self.assertIn("co_esfera=E", u)
+            self.assertNotIn("co_esfera=M", u)
+            self.assertNotIn("co_esfera=D", u)
+
+    def test_municipio_continua_m(self):
+        for u in (url_rgf(2024, 3, 2927408), url_rreo(2024, 6, 2927408),
+                  url_rreo_receita(2024, 6, 2927408)):
+            self.assertIn("co_esfera=M", u)
+
+    def test_tabela_tem_os_26_estados_e_o_df(self):
+        self.assertEqual(len(UF_DO_CODIGO), 27)
+        self.assertEqual(len(set(UF_DO_CODIGO.values())), 27)
+
+
+class TestEstados(unittest.TestCase):
+    def _lista(self, *itens):
+        return transporte_fixo(ok({"items": list(itens), "hasMore": False}))
+
+    def test_uf_do_codigo_e_df_como_e(self):
+        t = self._lista(
+            _ente(53, "Distrito Federal", "BR", "D"),
+            _ente(29, "Bahia", "BR", "E"),
+            _ente(2927408, "Salvador", "BA", "M"),
+            _ente(1, "Brasil", "BR", "U"),
+        )
+        achados = estados(t, dormir=lambda s: None)
+        self.assertEqual([(e.codigo_ibge, e.uf, e.esfera) for e in achados],
+                         [(29, "BA", "E"), (53, "DF", "E")])
+
+    def test_codigo_estadual_desconhecido_estoura(self):
+        t = self._lista(_ente(99, "Novo", "BR", "E"))
+        with self.assertRaises(KeyError):
+            estados(t, dormir=lambda s: None)
+
+
+class TestTravaDoBancoDosEstados(unittest.TestCase):
+    """27 estados no `painel.db` entrariam nas médias do exportador sem estourar."""
+
+    def test_esfera_e_no_banco_padrao_sai_2_sem_tocar_a_rede(self):
+        from fiscal.cli import BANCO_PADRAO, principal
+
+        def sem_rede(url):
+            raise AssertionError("não devia pedir nada")
+
+        with redirect_stderr(io.StringIO()) as err:
+            codigo = principal(["--banco", BANCO_PADRAO, "--esfera", "E",
+                                "ingerir-entes"], transporte=sem_rede)
+        self.assertEqual(codigo, 2)
+        self.assertIn("estados.db", err.getvalue())
 
 
 if __name__ == "__main__":

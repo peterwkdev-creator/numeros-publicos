@@ -16,7 +16,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Callable
 
 BASE = "https://apidatalake.tesouro.gov.br/ords/siconfi/tt"
@@ -247,6 +247,43 @@ def entes(
     return saida
 
 
+#: Os 26 estados e o DF pelo código do IBGE de dois dígitos. No `/entes` os
+#: estados vêm com `uf='BR'` (25/10/2026): a sigla tem de sair do código.
+UF_DO_CODIGO: dict[int, str] = {
+    11: "RO", 12: "AC", 13: "AM", 14: "RR", 15: "PA", 16: "AP", 17: "TO",
+    21: "MA", 22: "PI", 23: "CE", 24: "RN", 25: "PB", 26: "PE", 27: "AL",
+    28: "SE", 29: "BA", 31: "MG", 32: "ES", 33: "RJ", 35: "SP", 41: "PR",
+    42: "SC", 43: "RS", 50: "MS", 51: "MT", 52: "GO", 53: "DF",
+}
+
+
+def esfera_de(codigo_ibge: int) -> str:
+    """O `co_esfera` do pedido: 'E' para os códigos de 2 dígitos, 'M' para os de 7.
+
+    O DF (53) vem com `esfera='D'` no `/entes`, mas o RREO e o RGF pedidos com
+    `co_esfera='D'` voltam **vazios com HTTP 200**; com 'E', 2.127 e 215
+    linhas, e cada linha diz `esfera='E'` (medido em 25/10/2026). Por isso a
+    esfera do pedido sai do código, nunca do cadastro.
+    """
+    return "E" if codigo_ibge < 100 else "M"
+
+
+def estados(transporte: "Transporte", *, dormir: "Dormir" = time.sleep) -> list[Ente]:
+    """Os 26 estados e o DF, com a UF tirada do código e o DF gravado como 'E'.
+
+    Gravar como veio daria 27 entes com `uf='BR'` e um DF com esfera que
+    nenhum pedido acha. Código estadual fora do `UF_DO_CODIGO` estoura alto:
+    o universo mudou e isso se confere antes de seguir.
+    """
+    d = buscar(url_entes(), "a lista de entes", transporte, dormir=dormir)
+    saida = []
+    for x in d["items"]:
+        e = Ente.de_json(x)
+        if e.esfera in ("E", "D"):
+            saida.append(replace(e, uf=UF_DO_CODIGO[e.codigo_ibge], esfera="E"))
+    return sorted(saida, key=lambda e: e.codigo_ibge)
+
+
 def url_rgf(exercicio: int, periodo: int, codigo_ibge: int,
             *, simplificado: bool = False) -> str:
     """RGF Anexo 01 (despesa com pessoal) do Executivo municipal.
@@ -273,7 +310,7 @@ def url_rgf(exercicio: int, periodo: int, codigo_ibge: int,
         "nr_periodo": 2 if simplificado else periodo,
         "co_tipo_demonstrativo": "RGF Simplificado" if simplificado else "RGF",
         "no_anexo": "RGF-Anexo 01",
-        "co_esfera": "M",
+        "co_esfera": esfera_de(codigo_ibge),
         "co_poder": "E",
         "id_ente": codigo_ibge,
     })
@@ -554,7 +591,7 @@ def url_rreo_receita(exercicio: int, periodo: int, codigo_ibge: int,
         "nr_periodo": periodo,
         "co_tipo_demonstrativo": "RREO Simplificado" if simplificado else "RREO",
         "no_anexo": "RREO-Anexo 01",
-        "co_esfera": "M",
+        "co_esfera": esfera_de(codigo_ibge),
         "id_ente": codigo_ibge,
     })
     return f"{BASE}/rreo?{q}"
@@ -618,7 +655,7 @@ def url_rreo(exercicio: int, periodo: int, codigo_ibge: int,
         "nr_periodo": periodo,
         "co_tipo_demonstrativo": "RREO Simplificado" if simplificado else "RREO",
         "no_anexo": "RREO-Anexo 02",
-        "co_esfera": "M",
+        "co_esfera": esfera_de(codigo_ibge),
         "id_ente": codigo_ibge,
     })
     return f"{BASE}/rreo?{q}"

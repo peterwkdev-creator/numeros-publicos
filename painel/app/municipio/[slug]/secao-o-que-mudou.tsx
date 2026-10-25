@@ -34,7 +34,7 @@ export default function SecaoOQueMudou({ c }: { c: Contexto }) {
             <strong>
               {br(Math.abs(comparacao.crescimento - 1) * 100, 1)}%
             </strong>{" "}
-            em valores nominais.{" "}
+            em valores <Termo chave="nominal">nominais</Termo>.{" "}
             {mudancas.length === 0 ? (
               <>
                 A <strong>composição</strong> do gasto, porém, ficou

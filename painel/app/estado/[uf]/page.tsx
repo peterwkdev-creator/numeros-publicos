@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { br, dataCurta, descricaoDe, expandir } from "../../../lib/dados";
 import { deEstado, resumirEstado, slugUf } from "../../../lib/estado";
 import {
-  lerCaged, lerEmendas, lerFiscal, lerIdeb, lerInss, lerSnapshot, SITE, cartaoSocial, imagemDoEstado,
+  lerCaged, lerEmendas, lerEstadosFiscal, lerFiscal, lerIdeb, lerInss, lerSnapshot, SITE, cartaoSocial, imagemDoEstado,
 } from "../../../lib/servidor";
 // A ORDEM destes imports de CSS é a que o `page.tsx` tinha antes da divisão em
 // seções (item 10 da modernização, 16/10/2026). O bundler decide em que chunk
@@ -28,6 +28,7 @@ import SecaoNoPais from "./secao-no-pais";
 import SecaoComoSeVive from "./secao-como-se-vive";
 import SecaoEmprego from "./secao-emprego";
 import SecaoEmendas from "./secao-emendas";
+import SecaoGovernoEstadual from "./secao-governo-estadual";
 import SecaoInss from "./secao-inss";
 import SecaoLimiteDePessoal from "./secao-limite-de-pessoal";
 import SecaoParaOndeVai from "./secao-para-onde-vai";
@@ -57,12 +58,12 @@ import SecaoOutrosEstados from "./secao-outros-estados";
  */
 
 async function carregar() {
-  const [snapshot, fiscal, ideb, idebFinais, caged, emendas, inss] = await Promise.all([
-    lerSnapshot(), lerFiscal(), lerIdeb("anos_iniciais"), lerIdeb("anos_finais"),
+  const [snapshot, fiscal, estadosFiscal, ideb, idebFinais, caged, emendas, inss] = await Promise.all([
+    lerSnapshot(), lerFiscal(), lerEstadosFiscal(), lerIdeb("anos_iniciais"), lerIdeb("anos_finais"),
     lerCaged(), lerEmendas(), lerInss(),
   ]);
   return {
-    snapshot, fiscal, ideb, idebFinais, caged, emendas, inss,
+    snapshot, fiscal, estadosFiscal, ideb, idebFinais, caged, emendas, inss,
     expandidos: expandir(snapshot),
   };
 }
@@ -132,7 +133,7 @@ export default async function PaginaEstado(
   const r = resumirEstado(snapshot, fiscal, expandidos, uf.toUpperCase());
   if (!r) notFound();
   const c: Contexto = { ...montarContexto(dados, r), estilos };
-  const { medidasCenso, cagedUf, emendasUf, inssUf, semRede, semRedeFinais, meu, posTaxa } = c;
+  const { medidasCenso, cagedUf, emendasUf, governo, inssUf, semRede, semRedeFinais, meu, posTaxa } = c;
 
   return (
     <main className={`${estilos.pagina} ${comSumario}`} id="conteudo">
@@ -149,6 +150,10 @@ export default async function PaginaEstado(
         !!cagedUf && { id: "emprego", titulo: "Emprego com carteira" },
         emendasUf.comPagamento > 0 && { id: "emendas", titulo: "Emendas parlamentares" },
         inssUf.length > 0 && { id: "inss", titulo: "Pedidos ao INSS" },
+        !!governo && {
+          id: "governo-estadual",
+          titulo: r.comoEstado > 0 ? "O governo distrital" : "O governo estadual",
+        },
         { id: "limite-de-pessoal", titulo: "Limite de pessoal" },
         !!r.funcoes && { id: "para-onde-vai", titulo: "Para onde vai o dinheiro" },
         (semRede > 0 || semRedeFinais > 0) && { id: "ideb", titulo: "IDEB" },
@@ -167,6 +172,8 @@ export default async function PaginaEstado(
       <SecaoEmendas c={c} />
       <VoltaSumario />
       <SecaoInss c={c} />
+      <VoltaSumario />
+      <SecaoGovernoEstadual c={c} />
       <VoltaSumario />
       <SecaoLimiteDePessoal c={c} />
       <VoltaSumario />

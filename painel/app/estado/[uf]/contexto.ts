@@ -3,6 +3,7 @@ import { medidasDe, taxasCache } from "../../../lib/censo";
 import { milReaisParaReais, periodoDe } from "../../../lib/dados";
 import { emendasDeVarios, porHabitante, porHabitanteDaUf } from "../../../lib/emendas";
 import { slugUf, deEstado } from "../../../lib/estado";
+import { governoDe } from "../../../lib/estados-fiscal";
 import { nomeQuadrimestre, atualDeFuncoes } from "../../../lib/fiscal";
 import { medianaUltimaEdicao } from "../../../lib/ideb";
 import { inssDaUf } from "../../../lib/inss";
@@ -13,6 +14,7 @@ import { atualizadoEm } from "../../../lib/sitemap";
 import type { Snapshot } from "../../../lib/dados";
 import type { ResumoEstado } from "../../../lib/estado";
 import type { SnapshotFiscal } from "../../../lib/fiscal";
+import type { SnapshotEstadosFiscal } from "../../../lib/estados-fiscal";
 import type { SnapshotIdeb } from "../../../lib/ideb";
 import type { SnapshotCaged } from "../../../lib/caged";
 import type { SnapshotEmendas } from "../../../lib/emendas";
@@ -23,6 +25,7 @@ import type Estilos from "./estado.module.css";
 export type Dados = {
   snapshot: Snapshot;
   fiscal: SnapshotFiscal;
+  estadosFiscal: SnapshotEstadosFiscal;
   ideb: SnapshotIdeb;
   idebFinais: SnapshotIdeb;
   caged: SnapshotCaged;
@@ -35,7 +38,10 @@ export type Dados = {
  * Extraído de `page.tsx` em 16/10/2026 (item 10 da modernização): o HTML é o mesmo, byte a byte.
  */
 export function montarContexto(dados: Dados, r: ResumoEstado) {
-  const { snapshot, fiscal, ideb, idebFinais, caged, emendas, inss } = dados;
+  const { snapshot, fiscal, estadosFiscal, ideb, idebFinais, caged, emendas, inss } = dados;
+  // O governo estadual, ao lado (e nunca somado) dos municípios: ver o topo
+  // de `lib/estados-fiscal.ts`.
+  const governo = governoDe(estadosFiscal, r.uf.sigla);
   // Os mesmos argumentos do sitemap geral, que é o que lista os estados.
   const atualizado = atualizadoEm(snapshot, fiscal);
   // Quem presta contas como estado sai da conta de ausentes: ele entregou, na
@@ -172,7 +178,7 @@ export function montarContexto(dados: Dados, r: ResumoEstado) {
   };
 
   return {
-    anoEstimada, atualizado, ausentes, ba, bimestre, brasilMediana, brasilTaxa, caged, cagedUf, contraste, de, emendas, emendasPh, emendasUf, esperaUf, fiscal, inss, inssUf, jsonLd, ma, medIdeb, medianaPh, medianas, medidasCenso, meu, panorama, phMunicipios, pibReais, pop, posMediana, posTaxa, quadrimestre, r, rs, sc, semMunicipio, semRede, semRedeFinais, snapshot, taxasPais,
+    anoEstimada, atualizado, ausentes, ba, bimestre, brasilMediana, brasilTaxa, caged, cagedUf, contraste, de, emendas, emendasPh, emendasUf, esperaUf, estadosFiscal, fiscal, governo, inss, inssUf, jsonLd, ma, medIdeb, medianaPh, medianas, medidasCenso, meu, panorama, phMunicipios, pibReais, pop, posMediana, posTaxa, quadrimestre, r, rs, sc, semMunicipio, semRede, semRedeFinais, snapshot, taxasPais,
   };
 }
 

@@ -3,6 +3,7 @@ import path from "node:path";
 
 import type { Snapshot } from "./dados";
 import type { SnapshotFiscal } from "./fiscal";
+import type { SnapshotEstadosFiscal } from "./estados-fiscal";
 import type { SnapshotIdeb } from "./ideb";
 import type { SnapshotInss } from "./inss";
 import type { SnapshotCaged, SnapshotCagedAnos } from "./caged";
@@ -42,6 +43,20 @@ export async function lerFiscal(): Promise<SnapshotFiscal> {
   const arquivo = path.join(process.cwd(), "dados", "fiscal.json");
   cacheFiscal = JSON.parse(await readFile(arquivo, "utf-8")) as SnapshotFiscal;
   return cacheFiscal;
+}
+
+/**
+ * O dado dos 26 governos estaduais e do DF (`dados/estados-fiscal.json`),
+ * entregue pelo `exportar-estados` do motor fiscal. Separado do
+ * `fiscal.json` dos municípios: ver o topo de `lib/estados-fiscal.ts`.
+ */
+let cacheEstadosFiscal: SnapshotEstadosFiscal | null = null;
+
+export async function lerEstadosFiscal(): Promise<SnapshotEstadosFiscal> {
+  if (cacheEstadosFiscal) return cacheEstadosFiscal;
+  const arquivo = path.join(process.cwd(), "dados", "estados-fiscal.json");
+  cacheEstadosFiscal = JSON.parse(await readFile(arquivo, "utf-8")) as SnapshotEstadosFiscal;
+  return cacheEstadosFiscal;
 }
 
 /**

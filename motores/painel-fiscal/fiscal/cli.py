@@ -9,14 +9,16 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import sys
 import time
+from pathlib import Path
 
 from . import armazem, siops
 from .siconfi import (
     NORDESTE, PAUSA_PADRAO, RECEITAS_CORRENTES, RECEITAS_DETALHE,
-    Dormir, ErroSiconfi, Transporte,
+    FUNCOES, Dormir, ErroSiconfi, Transporte,
     entes, estados, funcoes, pessoal, receita, transporte_http,
 )
 
@@ -1088,6 +1090,128 @@ def cmd_exportar(args, *_) -> int:
     return 0
 
 
+#: Onde o site lê o dado dos governos estaduais: `site/painel/dados/`, achado
+#: a partir deste arquivo (`site/motores/painel-fiscal/fiscal/cli.py`).
+SAIDA_ESTADOS = Path(__file__).resolve().parents[3] / "painel" / "dados" / "estados-fiscal.json"
+
+#: O limite legal do Executivo estadual (LRF, art. 20, II, "c", e §4º): 49%
+#: da RCL, ou 48,6% onde há Tribunal de Contas dos Municípios (BA, GO, PA).
+#: O prudencial é 95% dele (art. 22). Só estes dois são aceitos.
+LIMITES_LEGAIS_ESTADO = (49.0, 48.6)
+
+
+def cmd_exportar_estados(args, *_) -> int:
+    """O dado dos 26 governos estaduais e do DF que a página de estado lê.
+
+    Lê o banco próprio dos estados (`--banco estados.db`, `--esfera E`) e grava
+    um arquivo separado do snapshot dos municípios: as ~15 consultas do
+    `exportar` não filtram por esfera, e o arquivo pequeno não pesa no build.
+
+    Três travas, todas antes de gravar:
+    - os 27 entes no banco, ou nada sai;
+    - o limite legal sai do prudencial do relatório (÷ 0,95) e tem de ser
+      um de `LIMITES_LEGAIS_ESTADO`: outro valor é leitura errada ou lei nova;
+    - função de um ano cuja soma não fecha com o total declarado fica fora,
+      com o motivo no arquivo; e o arquivo não encolhe sem `--permitir-encolher`.
+    """
+    with armazem.abrir(args.banco) as con:
+        entes_e = con.execute(
+            "SELECT codigo_ibge, uf, nome FROM ente WHERE esfera='E'"
+            " ORDER BY codigo_ibge").fetchall()
+        if len(entes_e) != 27:
+            print(f"erro: {len(entes_e)} entes estaduais em {args.banco}, esperados 27."
+                  " Rodar `--banco estados.db --esfera E ingerir-entes` antes.",
+                  file=sys.stderr)
+            return 1
+        indice = {f: i for i, f in enumerate(FUNCOES)}
+        estados_: dict[str, dict] = {}
+        fora: list[dict] = []
+        anos: set[int] = set()
+        for e in entes_e:
+            cod = e["codigo_ibge"]
+            funcoes_e: dict[str, list] = {}
+            for c in con.execute(
+                    "SELECT exercicio, periodo, publicou, fecha FROM funcao_consulta"
+                    " WHERE codigo_ibge=? AND periodo=6 ORDER BY exercicio", (cod,)):
+                if not c["publicou"]:
+                    continue
+                if c["fecha"] != 1:
+                    fora.append({"codigo": cod, "exercicio": c["exercicio"],
+                                 "motivo": "soma das funções não fecha com o total declarado"})
+                    continue
+                linhas = con.execute(
+                    "SELECT funcao, valor, total_declarado FROM despesa_funcao"
+                    " WHERE codigo_ibge=? AND exercicio=? AND periodo=6"
+                    " AND valor IS NOT NULL ORDER BY valor DESC",
+                    (cod, c["exercicio"])).fetchall()
+                funcoes_e[str(c["exercicio"])] = [
+                    round(linhas[0]["total_declarado"], 2),
+                    [[indice[r["funcao"]], round(r["valor"], 2)] for r in linhas]]
+                anos.add(c["exercicio"])
+            pessoal_e: dict[str, list] = {}
+            for p in con.execute(
+                    "SELECT exercicio, rcl_ajustada, despesa, percentual,"
+                    " limite_prudencial FROM pessoal WHERE codigo_ibge=?"
+                    " AND periodo=3 AND publicou=1 ORDER BY exercicio", (cod,)):
+                legal = round(p["limite_prudencial"] / 0.95, 2)
+                if legal not in LIMITES_LEGAIS_ESTADO:
+                    print(f"erro: {e['uf']} {p['exercicio']}: prudencial "
+                          f"{p['limite_prudencial']} dá limite legal {legal}, fora de "
+                          f"{LIMITES_LEGAIS_ESTADO}. Conferir a leitura antes de publicar.",
+                          file=sys.stderr)
+                    return 1
+                pessoal_e[str(p["exercicio"])] = [
+                    round(p["rcl_ajustada"], 2), round(p["despesa"], 2),
+                    p["percentual"], p["limite_prudencial"], legal]
+                anos.add(p["exercicio"])
+            estados_[str(cod)] = {"uf": e["uf"], "nome": e["nome"],
+                                  "funcoes": funcoes_e, "pessoal": pessoal_e}
+        coletado = con.execute(
+            "SELECT MAX(coletado_em) FROM funcao_consulta").fetchone()[0]
+
+    saida = {
+        "geradoEm": armazem.agora(),
+        "coletadoEm": coletado,
+        "fonte": {"funcoes": armazem.FONTE_FUNCOES + ", 6º bimestre (o ano inteiro)",
+                  "pessoal": armazem.FONTE + ", Poder Executivo, 3º quadrimestre"},
+        "exercicios": sorted(anos, reverse=True),
+        "rotulos": list(FUNCOES),
+        "colunasFuncoes": ["total", "valores"],
+        "colunasPessoal": ["rclAjustada", "despesa", "percentual",
+                           "limitePrudencial", "limiteLegal"],
+        "estados": estados_,
+        "fora": fora,
+    }
+    destino = Path(args.saida)
+    velho = None
+    if destino.exists():
+        try:
+            velho = json.loads(destino.read_text(encoding="utf-8"))
+        except ValueError:
+            velho = None
+    if velho is not None:
+        def pares(s):
+            return {(c, b, a) for c, x in s.get("estados", {}).items()
+                    for b in ("funcoes", "pessoal") for a in x.get(b, {})}
+        sumiram = pares(velho) - pares(saida)
+        if sumiram and not args.permitir_encolher:
+            print(f"erro: {len(sumiram)} (estado, relatório, ano) que estavam em "
+                  f"{destino} sumiriam, ex.: {sorted(sumiram)[:3]}. "
+                  "--permitir-encolher se for a intenção.", file=sys.stderr)
+            return 1
+        if _sem_carimbos(velho) == _sem_carimbos(saida):
+            print(f"{destino} · NADA MUDOU no dado — arquivo intacto.")
+            return 0
+    destino.parent.mkdir(parents=True, exist_ok=True)
+    destino.write_text(json.dumps(saida, ensure_ascii=False, separators=(",", ":"))
+                       + "\n", encoding="utf-8")
+    n_f = sum(len(x["funcoes"]) for x in estados_.values())
+    n_p = sum(len(x["pessoal"]) for x in estados_.values())
+    print(f"27 entes em {destino} ({destino.stat().st_size // 1024} KB): "
+          f"{n_f} anos de função, {n_p} de pessoal, {len(fora)} fora.")
+    return 0
+
+
 def montar() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="fiscal", description="Painel Fiscal: o RGF dos municípios no SICONFI")
     p.add_argument("--banco", default=BANCO_PADRAO)
@@ -1136,6 +1260,10 @@ def montar() -> argparse.ArgumentParser:
             s.add_argument("--limite", type=int, default=15)
         if nome == "exportar":
             s.add_argument("--saida", default="painel/dados/snapshot.json")
+            se = sub.add_parser("exportar-estados",
+                                help="gera o arquivo dos governos estaduais que a página de estado lê")
+            se.add_argument("--saida", default=str(SAIDA_ESTADOS))
+            se.add_argument("--permitir-encolher", action="store_true")
         if nome == "ingerir":
             s.add_argument("--pausa", type=float, default=PAUSA_PADRAO)
             s.add_argument("--recomecar", action="store_true")
@@ -1188,6 +1316,7 @@ def principal(argv=None, transporte: Transporte | None = None,
     fn = {"ingerir-entes": cmd_ingerir_entes, "ingerir": cmd_ingerir,
           "resumo": cmd_resumo, "listar": cmd_listar,
           "conferir": cmd_conferir, "exportar": cmd_exportar,
+          "exportar-estados": cmd_exportar_estados,
           "ingerir-funcoes": cmd_ingerir_funcoes, "funcoes": cmd_funcoes,
           "ingerir-receita": cmd_ingerir_receita,
           "conferir-receita": cmd_conferir_receita,

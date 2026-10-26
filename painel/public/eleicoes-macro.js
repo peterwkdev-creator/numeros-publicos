@@ -59,9 +59,10 @@ function iniciar() {
 
   // ---- A dica ----
   function mostrarDica(uf, x, y) {
-    const texto = dados?.ufs?.[cargo]?.[uf]?.d;
-    if (!dica || !caixa || !texto) return esconderDica();
-    dica.textContent = texto;
+    // Uma linha por item: o nome do estado (em negrito) e depois os dados.
+    const linhas = dados?.ufs?.[cargo]?.[uf]?.d;
+    if (!dica || !caixa || !Array.isArray(linhas) || !linhas.length) return esconderDica();
+    dica.replaceChildren(...linhas.map((t, i) => el("span", i ? "dica-linha" : "dica-uf", t)));
     dica.hidden = false;
     const largura = caixa.clientWidth;
     const w = dica.offsetWidth;

@@ -160,7 +160,7 @@ export default async function Pagina() {
                 return (
                   <path key={s} d={caminhos[s]} data-uf={u} {...cores}
                     data-cor={inicial.ufs[u]?.c ?? "sem"} className={m.uf}>
-                    <title>{inicial.ufs[u]?.d ?? `${UF_NOME[u] ?? s}: sem dado`}</title>
+                    <title>{(inicial.ufs[u]?.d ?? [UF_NOME[u] ?? s, "Sem dado"]).join("\n")}</title>
                   </path>
                 );
               })}

@@ -95,7 +95,8 @@ test("macro: cada cargo cobre as 27 UFs, com cor pintável, dica e link", () => 
     assert.equal(ufs.length, ESTADOS, `${m.chave}: ${ufs.length} UFs`);
     for (const [u, x] of Object.entries(m.ufs)) {
       assert.ok(CORES_MAPA.has(x.c), `${m.chave}/${u}: cor ${x.c}`);
-      assert.ok(x.d.length > 0 && x.s.length > 0, `${m.chave}/${u}: dica e subtítulo`);
+      // A dica é o nome do estado e pelo menos uma linha de dado, nenhuma vazia.
+      assert.ok(x.d.length > 1 && x.d.every((t) => t.length > 0) && x.s.length > 0, `${m.chave}/${u}: dica e subtítulo`);
       // O link do cartão aponta para um id que a página de dados gera.
       const ancora = /^\/eleicoes-2026\/dados\/#([a-z0-9]+)-([a-z]{2})$/.exec(x.h);
       assert.ok(ancora && ancora[2] === u, `${m.chave}/${u}: link ${x.h}`);
@@ -132,7 +133,7 @@ test("macro: empate no topo das cadeiras pinta 'empate', nunca um partido", { sk
   assert.equal(lider(b), null);
   const depf = montarMacro(e, c).find((m) => m.chave === "depf")!;
   assert.equal(depf.ufs.ac!.c, "empate");
-  assert.match(depf.ufs.ac!.d, /empate entre PT e PL/);
+  assert.match(depf.ufs.ac!.d.join("\n"), /Empate entre PT e PL/);
   // A legenda do empate diz quem empatou, entre parênteses.
   assert.ok(depf.legenda.some((g) => g.cor === "empate" && g.ufs.some((u) => /^Acre \(.+ e .+\)$/.test(u))));
 });

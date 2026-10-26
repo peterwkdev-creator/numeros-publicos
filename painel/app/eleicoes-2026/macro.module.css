@@ -59,6 +59,9 @@
   background: var(--superficie); color: var(--tinta); box-shadow: var(--sombra-alta);
   font-size: var(--texto-sm); line-height: 1.35;
 }
+/* Uma linha por item: o estado em negrito, depois um dado por linha. */
+.dica :global(.dica-uf), .dica :global(.dica-linha) { display: block; }
+.dica :global(.dica-uf) { font-weight: 600; margin-bottom: .15rem; }
 
 .legenda { font-size: var(--texto-sm); margin: 0; }
 .legenda p { margin: 0 0 .4rem; }

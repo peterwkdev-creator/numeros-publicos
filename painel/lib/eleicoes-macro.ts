@@ -27,8 +27,8 @@ export interface LinhaCartao { r: string; v: string; p?: number; c?: CorMapa; e?
 export interface UfCargo {
   /** Cor no mapa. */
   c: CorMapa;
-  /** A dica do cursor. */
-  d: string;
+  /** A dica do cursor, uma linha por item: o nome do estado e depois os dados. */
+  d: string[];
   /** O subtítulo do cartão. */
   s: string;
   l: LinhaCartao[];
@@ -116,7 +116,7 @@ function presidente(e: Eleicoes2026, turno: "1" | "2"): CargoMacro {
     const max = turno === "2" ? 2 : 4;
     ufs[u] = {
       c,
-      d: `${UF_NOME[u]}: ${v.slice(0, 2).map((x) => `${comPartido(x)} ${pct(x.pct)}`).join(", ")}`,
+      d: [UF_NOME[u]!, ...v.slice(0, 2).map((x) => `${comPartido(x)}: ${pct(x.pct)}`)],
       s: `Presidente, ${turno}º turno`,
       l: linhasCandidatos(v, max),
       n: [`Comparecimento ${pct(r.pctComparecimento)} do eleitorado.`, resto(v.length, max)].filter(Boolean).join(" "),
@@ -145,8 +145,8 @@ function governador(e: Eleicoes2026): CargoMacro {
     if (eleito) partidoDe.set(u, eleito.partido);
     ufs[u] = {
       c: eleito ? corDoPartido(eleito.partido) : "sem",
-      d: eleito ? `${UF_NOME[u]}: ${comPartido(eleito)} ${pct(eleito.pct)}, eleito no ${turno}º turno`
-        : `${UF_NOME[u]}: sem eleito no arquivo`,
+      d: eleito ? [UF_NOME[u]!, `${comPartido(eleito)}: ${pct(eleito.pct)}`, `Eleito no ${turno}º turno`]
+        : [UF_NOME[u]!, "Sem eleito no arquivo"],
       s: eleito ? `Governador, eleito no ${turno}º turno` : "Governador",
       l: linhasCandidatos(v, 4),
       n: resto(v.length, 4),
@@ -175,12 +175,16 @@ function senador(c: Cargos2026): CargoMacro {
     // % sobre os válidos; o TSE soma os anulados ao divisor (até 5 pontos no AC).
     // Na dica (`d`) e no cartão (`s`): a dica só abre com o mouse.
     const nota = s.votosAnulados ? `% sobre os válidos; o TSE soma ao total os ${br(s.votosAnulados)} votos anulados` : "";
-    const aviso = nota ? ` (${nota})` : "";
     ufs[u] = {
       c: eleitos[0] ? corDoPartido(eleitos[0].partido) : "sem",
       d: eleitos.length
-        ? `${UF_NOME[u]}: ${eleitos.length === 1 ? "eleito" : "eleitos"} ${eleitos.map((x) => `${comPartido(x)} ${pct(x.pct)}`).join(", ")}${aviso}`
-        : `${UF_NOME[u]}: sem eleito no arquivo`,
+        ? [
+          UF_NOME[u]!,
+          eleitos.length === 1 ? "Eleito:" : "Eleitos:",
+          ...eleitos.map((x) => `${comPartido(x)}: ${pct(x.pct)}`),
+          ...(nota ? [nota] : []),
+        ]
+        : [UF_NOME[u]!, "Sem eleito no arquivo"],
       s: `Senador: ${plural(s.vagas, "vaga", "vagas")}${nota ? `. ${nota}` : ""}`,
       l: linhasCandidatos(todos, max),
       n: resto(todos.length, max),
@@ -214,9 +218,13 @@ function deputados(dep: Record<string, Bancada>, chave: "depf" | "depe"): CargoM
     const maisVotados = [...b.eleitos].sort((x, y) => y.votos - x.votos).slice(0, 3);
     ufs[u] = {
       c: l ? corDoPartido(l.partido) : lista.length ? "empate" : "sem",
-      d: !lista.length ? `${UF_NOME[u]}: sem eleito no arquivo`
-        : l ? `${UF_NOME[u]}: ${l.partido} elegeu ${br(l.eleitos)} de ${plural(b.vagas, "cadeira", "cadeiras")}; ${topo}`
-        : `${UF_NOME[u]}: empate entre ${emFrase(empatados)}, ${br(lista[0]!.eleitos)} de ${plural(b.vagas, "cadeira", "cadeiras")} cada; ${topo}`,
+      d: !lista.length ? [UF_NOME[u]!, "Sem eleito no arquivo"]
+        : [
+          UF_NOME[u]!,
+          l ? `${l.partido} elegeu ${br(l.eleitos)} de ${plural(b.vagas, "cadeira", "cadeiras")}`
+            : `Empate entre ${emFrase(empatados)}, ${br(lista[0]!.eleitos)} de ${plural(b.vagas, "cadeira", "cadeiras")} cada`,
+          `Cadeiras: ${topo}`,
+        ],
       s: `${nome}: ${plural(b.vagas, "cadeira", "cadeiras")}`,
       l: lista.map((p) => ({
         r: p.partido, v: `${plural(p.eleitos, "cadeira", "cadeiras")} · ${pct(p.pct)} dos votos`,

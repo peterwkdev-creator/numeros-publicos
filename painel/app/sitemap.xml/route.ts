@@ -2,6 +2,8 @@ import {
   atualizadoEm, caminhosDosFilhos, indiceDeSitemaps, ufsComSitemap,
 } from "../../lib/sitemap";
 import { dadoAtualizadoEm } from "../../lib/inss";
+import { maisRecente } from "../../lib/sitemap";
+import sitemapGeral from "../geral/sitemap";
 import { lerCaged, lerFiscal, lerInss, lerSnapshot, SITE } from "../../lib/servidor";
 
 /**
@@ -47,6 +49,11 @@ export async function GET() {
     caminhos.filter((c) => c.startsWith("/municipio/"))
       .map((c) => [c, dataMunicipios]));
   if (dataInss) porFilho["/inss/sitemap.xml"] = new Date(dataInss);
+  // O geral junta fontes de ritmos diferentes (eleições, séries do país,
+  // Caged nos índices): a data dele sai das próprias URLs, e não de uma regra
+  // daqui que precisaria lembrar de cada fonte nova.
+  const dataGeral = maisRecente(await sitemapGeral());
+  if (dataGeral) porFilho["/geral/sitemap.xml"] = dataGeral;
   const corpo = indiceDeSitemaps(
     SITE,
     caminhos,

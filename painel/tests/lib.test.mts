@@ -36,7 +36,7 @@ import { posicaoEntre, posicaoNoEstado } from "../lib/posicao.ts";
 import { daMesmaRegiao, deEstado, emContracao, type SnapshotRegioes } from "../lib/estado.ts";
 import { trilha } from "../lib/jsonld.ts";
 import {
-  atualizadoEm, caminhosDosFilhos, escaparXml, indiceDeSitemaps,
+  atualizadoEm, caminhosDosFilhos, escaparXml, indiceDeSitemaps, maisRecente,
 } from "../lib/sitemap.ts";
 import {
   camadasPadrao, cssDasCamadas, dominio, FAIXAS, faixaDoValor, percentuaisPorUf,
@@ -1734,6 +1734,19 @@ test("o filho do INSS leva a data dele, e os outros a sua", () => {
     { "/inss/sitemap.xml": new Date("2026-09-26T23:51:21Z") });
   const datas = [...xml.matchAll(/<lastmod>([^<]+)<\/lastmod>/g)].map((m) => m[1]);
   assert.deepEqual(datas, ["2026-09-07T00:03:08.000Z", "2026-09-26T23:51:21.000Z"]);
+});
+
+test("o filho leva a data da URL mais nova dele, de qualquer fonte", () => {
+  // Até 26/10/2026 o índice datava o geral em 15/10 (snapshot e fiscal),
+  // com as eleições de 26/10 dentro dele.
+  const d = maisRecente([
+    { url: "https://x.br/", lastModified: "2026-10-15T03:00:00Z" },
+    { url: "https://x.br/eleicoes-2026/", lastModified: new Date("2026-10-26T21:00:00Z") },
+    { url: "https://x.br/ajuda/" },
+  ]);
+  assert.equal(d?.toISOString(), "2026-10-26T21:00:00.000Z");
+  assert.equal(maisRecente([{ url: "https://x.br/" }]), undefined,
+    "sem data nenhuma, o índice fica com a regra geral, e não com 1970");
 });
 
 test("fonte sem data não zera a data do sitemap", () => {

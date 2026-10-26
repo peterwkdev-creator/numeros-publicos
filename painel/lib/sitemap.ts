@@ -78,6 +78,23 @@ export function indiceDeSitemaps(
     + linhas.join("\n") + "\n</sitemapindex>\n";
 }
 
+/**
+ * A data mais recente entre as URLs de um sitemap filho: o `lastmod` dele no
+ * índice.
+ *
+ * Existe porque até 26/10/2026 o índice datava o filho `geral` pela regra dos
+ * municípios (snapshot e fiscal, 15/10), enquanto o próprio `geral` já levava
+ * as eleições e as séries do país de 26/10: o índice dizia ao buscador que
+ * nada tinha mudado ali. Calcular a data a partir das URLs do filho é a única
+ * forma de as duas pontas não divergirem quando entrar outra fonte.
+ */
+export function maisRecente(urls: MetadataRoute.Sitemap): Date | undefined {
+  const tempos = urls
+    .map((u) => (u.lastModified ? new Date(u.lastModified).getTime() : NaN))
+    .filter((t) => !Number.isNaN(t));
+  return tempos.length ? new Date(Math.max(...tempos)) : undefined;
+}
+
 /** Os caminhos dos sitemaps filhos, na ordem em que entram no índice. */
 export function caminhosDosFilhos(ufs: string[]): string[] {
   return ["/geral/sitemap.xml", "/inss/sitemap.xml",

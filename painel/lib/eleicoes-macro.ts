@@ -173,13 +173,15 @@ function senador(c: Cargos2026): CargoMacro {
     if (eleitos[0]) partidoDe.set(u, eleitos[0].partido);
     const max = Math.max(4, s.vagas + 2);
     // % sobre os válidos; o TSE soma os anulados ao divisor (até 5 pontos no AC).
-    const aviso = s.votosAnulados ? ` (% sobre os válidos; o TSE soma ao total os ${br(s.votosAnulados)} votos anulados)` : "";
+    // Na dica (`d`) e no cartão (`s`): a dica só abre com o mouse.
+    const nota = s.votosAnulados ? `% sobre os válidos; o TSE soma ao total os ${br(s.votosAnulados)} votos anulados` : "";
+    const aviso = nota ? ` (${nota})` : "";
     ufs[u] = {
       c: eleitos[0] ? corDoPartido(eleitos[0].partido) : "sem",
       d: eleitos.length
         ? `${UF_NOME[u]}: ${eleitos.length === 1 ? "eleito" : "eleitos"} ${eleitos.map((x) => `${comPartido(x)} ${pct(x.pct)}`).join(", ")}${aviso}`
         : `${UF_NOME[u]}: sem eleito no arquivo`,
-      s: `Senador: ${plural(s.vagas, "vaga", "vagas")}`,
+      s: `Senador: ${plural(s.vagas, "vaga", "vagas")}${nota ? `. ${nota}` : ""}`,
       l: linhasCandidatos(todos, max),
       n: resto(todos.length, max),
       h: `${DADOS}#sen-${u}`,

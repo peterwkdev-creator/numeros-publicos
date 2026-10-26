@@ -1,0 +1,73 @@
+# Diagnóstico da rede do runner até o IBGE. Só leitura, só à mão.
+#
+# Em 26/10/2026 o "Atualizar dados do IBGE" caiu duas vezes (15:56 e 22:07
+# UTC) com `URLError: timed out` no primeiro pedido, a lista de municípios
+# de Rondônia: 4 tentativas de 30 s sem abrir a conexão. Da máquina do
+# projeto a mesma URL respondia em 1,4 s, e o mesmo `servicodados` tinha
+# respondido ao "Atualizar dados do Brasil" em 21/10. Este job mede, a partir
+# do runner, onde o pedido para: DNS, IPv4 ou IPv6, conexão, TLS ou corpo, e
+# se o caminho do código (urllib) se comporta diferente do curl.
+#
+# Não commita, não publica e não toca em segredo.
+
+name: Diagnosticar rede até o IBGE
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  medir:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: DNS
+        run: |
+          for h in servicodados.ibge.gov.br apisidra.ibge.gov.br; do
+            echo "== $h"
+            getent ahosts "$h" || echo "sem resposta do DNS"
+          done
+
+      - name: curl com tempo por fase (IPv4 e IPv6)
+        run: |
+          urls="
+          https://servicodados.ibge.gov.br/api/v1/localidades/estados/11/municipios
+          https://servicodados.ibge.gov.br/api/v3/agregados/6579/periodos/-1/variaveis/9324?localidades=N1[all]
+          https://apisidra.ibge.gov.br/values/t/6579/n1/all/v/9324/p/last
+          "
+          for u in $urls; do
+            for ip in -4 -6; do
+              echo "== $ip $u"
+              curl $ip -gsSL -o /dev/null --connect-timeout 20 --max-time 40 \
+                -w "http=%{http_code} ip=%{remote_ip} dns=%{time_namelookup} conexao=%{time_connect} tls=%{time_appconnect} primeiro_byte=%{time_starttransfer} total=%{time_total}\n" \
+                "$u" || echo "curl falhou (saída $?)"
+            done
+          done
+
+      - name: urllib, o caminho do ibge.py
+        run: |
+          python3 - <<'FIM'
+          import time, urllib.request
+          url = "https://servicodados.ibge.gov.br/api/v1/localidades/estados/11/municipios"
+          for i in range(1, 4):
+              t = time.monotonic()
+              try:
+                  req = urllib.request.Request(url, headers={
+                      "Accept": "application/json",
+                      "Accept-Encoding": "gzip",
+                      "User-Agent": "numeros-publicos/0.1 (dados abertos; uso pessoal)",
+                  })
+                  with urllib.request.urlopen(req, timeout=30) as r:
+                      n = len(r.read())
+                  print(f"tentativa {i}: {r.status}, {n} bytes, {time.monotonic() - t:.2f} s")
+              except Exception as e:
+                  print(f"tentativa {i}: {type(e).__name__}: {e}, {time.monotonic() - t:.2f} s")
+          FIM
+
+      - name: Rota (primeiros saltos)
+        run: |
+          sudo apt-get install -y -qq traceroute >/dev/null 2>&1 || true
+          traceroute -T -p 443 -m 20 -w 2 servicodados.ibge.gov.br || true

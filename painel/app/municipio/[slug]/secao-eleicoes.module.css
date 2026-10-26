@@ -1,8 +1,15 @@
 /* O bloco das eleições na página do município (`secao-eleicoes.tsx`). */
 .cargo { font-size: var(--texto-base); margin: 1.25rem 0 .4rem; }
-.tabela { width: 100%; max-width: 34rem; border-collapse: collapse; font-size: var(--texto-sm); font-variant-numeric: tabular-nums; }
+.tabela { width: 100%; max-width: 44rem; border-collapse: collapse; font-size: var(--texto-sm); font-variant-numeric: tabular-nums; }
 .tabela th, .tabela td { padding: .3rem .5rem; border-bottom: 1px solid var(--borda); text-align: right; }
 .tabela th[scope="row"], .tabela th:first-child { text-align: left; }
 .tabela th[scope="col"] { font-size: var(--texto-xs); text-transform: uppercase; letter-spacing: .03em; color: var(--tinta-fraca); }
 .partido { color: var(--tinta-fraca); font-weight: 400; }
+/* Uma cor só para todos os candidatos, como na página das eleições. */
+.colBarra { width: 35%; }
+.barra {
+  display: block; height: .8rem; min-width: 0; border-radius: var(--raio-xs);
+  background: var(--acento); forced-color-adjust: none;
+}
+@media (max-width: 30rem) { .colBarra { display: none; } }
 .rodape { font-size: var(--texto-sm); color: var(--tinta-fraca); margin: .4rem 0 .8rem; }

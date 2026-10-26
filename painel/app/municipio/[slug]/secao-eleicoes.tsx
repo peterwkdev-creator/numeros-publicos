@@ -40,7 +40,11 @@ export default function SecaoEleicoes(
         publica (sobre os votos de todos os candidatos). País, estados e a
         prorrogação de 25/10 na <a href={CAMINHO}>página das eleições</a>.
       </p>
-      {ele.cargos.map((g) => (
+      {ele.cargos.map((g) => {
+        // A barra escala pela maior fatia do cargo (`numeros-publicos-desenho.md`,
+        // "Barra em tabela"); o JS ao vivo refaz a largura com o número do TSE.
+        const maior = Math.max(...g.linhas.map((l) => l.pct ?? 0));
+        return (
         <div key={g.chave} data-cargo={g.chave} data-url={urlMunicipio(g.chave, ele.uf, ele.tse)}>
           <h3 className={est.cargo}>{g.cargo}, {g.turno}º turno ({dataDoTurno(g.turno)})</h3>
           <table className={est.tabela}>
@@ -52,6 +56,7 @@ export default function SecaoEleicoes(
                 <th scope="col">Candidato</th>
                 <th scope="col">Votos</th>
                 <th scope="col">%</th>
+                <th scope="col" className={est.colBarra}><span className="so-leitor">Barra</span></th>
               </tr>
             </thead>
             <tbody>
@@ -60,6 +65,11 @@ export default function SecaoEleicoes(
                   <th scope="row">{l.nome} <span className={est.partido}>({l.partido})</span></th>
                   <td data-v>{br(l.votos)}</td>
                   <td data-p>{l.pct === null ? "anulado" : `${br(l.pct, 2)}%`}</td>
+                  <td className={est.colBarra} aria-hidden="true">
+                    {/* Anulado não tem barra: um filete diria 0%. */}
+                    {l.pct !== null && <span className={est.barra} data-b
+                      style={{ width: `${maior > 0 ? (l.pct / maior) * 100 : 0}%` }} />}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -70,7 +80,8 @@ export default function SecaoEleicoes(
             <span data-vb>{br(g.brancos)}</span>, nulos <span data-vn>{br(g.nulos)}</span>.
           </p>
         </div>
-      ))}
+        );
+      })}
       <p className={est.rodape} role="status" aria-atomic="true" data-eleicao-status>
         Dados do TSE coletados em {coleta}.
       </p>

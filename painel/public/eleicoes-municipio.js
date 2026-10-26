@@ -34,7 +34,12 @@ async function atualizar(bloco) {
     }
   }));
   if (lidos.some((l) => !l)) return;
-  for (const { trocas } of lidos) for (const [e, t] of trocas) e.textContent = t;
+  for (const { trocas } of lidos) {
+    for (const [e, t, largura] of trocas) {
+      if (largura === undefined) e.textContent = t;
+      else e.style.width = largura;
+    }
+  }
   const gerado = lidos.map((l) => l.gerado).filter(Boolean).sort((a, b) => b.data - a.data)[0];
   const agora = new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
   status.textContent = `Atualizado ao vivo do TSE às ${agora}` +
@@ -71,6 +76,7 @@ function preparar(cargo, d) {
     }
   }
   const trocas = [];
+  const barras = [];
   const linhas = [...cargo.querySelectorAll("tr[data-n]")];
   if (linhas.length === 0) return null;
   for (const tr of linhas) {
@@ -84,8 +90,13 @@ function preparar(cargo, d) {
       const valido = String(c.dvt || "").startsWith("V");
       if (valido && !/^\d+,\d{2}$/.test(String(c.pvap))) return null;
       trocas.push([p, valido ? `${c.pvap}%` : "anulado"]);
+      const b = tr.querySelector("[data-b]");
+      if (b) barras.push([b, valido ? Number(String(c.pvap).replace(",", ".")) : 0]);
     }
   }
+  // A barra escala pela maior fatia do cargo, como no build.
+  const maior = Math.max(0, ...barras.map(([, x]) => x));
+  for (const [b, x] of barras) trocas.push([b, null, `${maior > 0 ? (x / maior) * 100 : 0}%`]);
   for (const [sel, valor] of [["[data-c]", d.e?.c], ["[data-te]", d.e?.te], ["[data-vb]", d.v?.vb], ["[data-vn]", d.v?.tvn]]) {
     const e = cargo.querySelector(sel);
     if (!e) continue;

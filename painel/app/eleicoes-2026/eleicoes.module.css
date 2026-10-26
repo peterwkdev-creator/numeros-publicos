@@ -1,5 +1,14 @@
 /* A mesma linguagem da /brasil/: largura, trilha, título e chamada iguais. */
-.pagina { max-width: 64rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+.pagina {
+  max-width: 64rem; margin: 0 auto; padding: 1.5rem 1rem 4rem;
+  /* Os dois lados das barras de divisão: azul e ocre, distintos no
+     daltonismo e na impressão, definidos nos três modos pelo globals.css.
+     Nenhuma cor de partido (`numeros-publicos-desenho.md`). O ocre aqui
+     não é alerta: a página não usa `--atencao` para mais nada, e a ressalva
+     do placar diz que as cores só separam os dois lados. */
+  --lado-a: var(--acento);
+  --lado-b: var(--atencao);
+}
 .trilha { font-size: var(--texto-sm); color: var(--tinta-fraca); margin-bottom: 1rem; }
 .trilha a { color: var(--tinta-fraca); display: inline-flex; align-items: center; min-height: var(--alvo); }
 .titulo { font-size: var(--texto-2xl); line-height: 1.15; margin: 0 0 .5rem; }
@@ -45,6 +54,60 @@
   background: var(--acento); forced-color-adjust: none; margin-top: .2rem;
 }
 @media (max-width: 34rem) { .colBarra { display: none; } }
+
+/* As barras de divisão (26/10/2026): placar, estados e comparecimento. A
+   abstenção é hachura, não cor: é ausência, e a hachura não se confunde com
+   o lado azul nem na impressão em preto. */
+.divisao { max-width: 52rem; margin: 0 0 1rem; }
+.neutro { --lado-b: repeating-linear-gradient(135deg, var(--tinta-fraca) 0 2px, transparent 2px 6px); }
+.tituloDivisao { font-size: var(--texto-sm); font-weight: 600; margin: 0 0 .3rem; }
+.pontas {
+  display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+  font-size: var(--texto-sm); font-variant-numeric: tabular-nums; margin: 0 0 .3rem;
+}
+.amostra {
+  display: inline-block; width: .75rem; height: .75rem; margin-right: .35rem;
+  border-radius: 2px; vertical-align: -.05rem;
+}
+.ladoA { background: var(--lado-a); forced-color-adjust: none; }
+.ladoB { background: var(--lado-b); forced-color-adjust: none; }
+.neutro .ladoB { border: 1px solid var(--tinta-fraca); }
+.regua { position: relative; padding: 4px 0; }
+.trilho {
+  display: flex; height: 1.4rem; overflow: hidden; border-radius: var(--raio-xs);
+  background: var(--borda); forced-color-adjust: none;
+}
+.trilho.fino { height: .8rem; }
+.trilho > span { display: block; flex: none; height: 100%; }
+.trilho > .ladoB { border-width: 0 0 0 2px; border-style: solid; border-color: var(--superficie); }
+.meio {
+  position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; margin-left: -1px;
+  background: var(--tinta); forced-color-adjust: none;
+  /* O contorno da superfície separa o traço dos dois lados no escuro (~2:1
+     sem ele) e no papel, onde o lado A e a tinta são os dois #000. */
+  box-shadow: 0 0 0 1px var(--superficie);
+}
+.placarUf { width: 100%; max-width: 52rem; border-collapse: collapse; font-size: var(--texto-sm); font-variant-numeric: tabular-nums; }
+.placarUf th, .placarUf td { padding: .3rem .5rem; border-bottom: 1px solid var(--borda); text-align: left; vertical-align: middle; }
+.placarUf th[scope="col"] { font-size: var(--texto-xs); color: var(--tinta-fraca); font-weight: 600; }
+.placarUf th[scope="row"] { font-weight: 400; white-space: nowrap; }
+.colDivisao { width: 45%; min-width: 6rem; }
+
+/* O mapa por vencedor (26/10/2026): as mesmas duas cores das barras, por
+   classe (atributo `fill` com `var()` sai literal). */
+.figuraMapa { margin: 0 0 1rem; max-width: 52rem; }
+.mapaVenc { display: block; width: 100%; max-width: 34rem; height: auto; margin: 0 auto; }
+.ufVenc { stroke: var(--fundo); stroke-width: 3; stroke-linejoin: round; forced-color-adjust: none; }
+.ufA { fill: var(--lado-a); }
+.ufB { fill: var(--lado-b); }
+.ufEmpate { fill: var(--borda); }
+/* "Sem dado" é ausência: sem cor, só o contorno tracejado (revisão de 26/10). */
+.ufVenc.ufSem { fill: transparent; stroke: var(--tinta-fraca); stroke-width: 1.5; stroke-dasharray: 4 3; }
+.amostraEmpate { background: var(--borda); forced-color-adjust: none; }
+.amostraSem { border: 1px dashed var(--tinta-fraca); }
+.legendaMapa { font-size: var(--texto-sm); max-width: 46rem; margin: .75rem auto 0; }
+.legendaMapa p { margin: 0 0 .4rem; }
+@media print { .ufVenc { stroke: #fff; stroke-width: 2; } }
 
 .gov { max-width: 52rem; border-bottom: 1px solid var(--borda); padding: .35rem 0; }
 .gov summary { cursor: pointer; min-height: var(--alvo); display: list-item; padding: .2rem 0; }

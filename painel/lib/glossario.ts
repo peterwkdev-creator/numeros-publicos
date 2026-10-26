@@ -61,8 +61,8 @@ export const GLOSSARIO = {
     curta: "O Distrito Federal entrega o relatório fiscal como estado, onde de fato responde, e não como município. O site cobre municípios, e por isso não há número aqui — o que falta é o recorte, não a prestação de contas.",
   },
   desocupacao: {
-    termo: "Desocupação",
-    curta: "Pessoas de 14 anos ou mais que estavam sem trabalho, tinham procurado um e podiam começar, em proporção de todos os que trabalham ou procuram trabalho.",
+    termo: "Desemprego",
+    curta: "Pessoas de 14 anos ou mais que estavam sem trabalho, tinham procurado um e podiam começar, em proporção de todos os que trabalham ou procuram trabalho. O IBGE chama de desocupação.",
     secao: "censo",
   },
   "emenda-parlamentar": {
@@ -146,7 +146,7 @@ export const GLOSSARIO = {
   },
   pnad: {
     termo: "PNAD Contínua",
-    curta: "A pesquisa do IBGE, por amostra de domicílios, que mede a desocupação do país e dos estados a cada trimestre. Não é desenhada para medir cada município.",
+    curta: "A pesquisa do IBGE, por amostra de domicílios, que mede o desemprego do país e dos estados a cada trimestre. Não é desenhada para medir cada município.",
     secao: "censo",
   },
   "pontos-percentuais": {

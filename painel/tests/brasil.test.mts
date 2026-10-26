@@ -14,7 +14,7 @@ import {
   contiguos, dominio, escala, faixas, FONTE_COM_ARTIGO, fimPeriodo,
   fontesPorExtenso, inicioPeriodo, meioPeriodo, recortar, RECORTES, resumo,
   rotuloPeriodo, SELO, trechosMeta,
-  caminhoDaSerie, descricaoDaSerie, miniatura, partesDoValor, porTema, TEMAS, tituloDaSerie, valorDe,
+  caminhoDaSerie, descricaoDaSerie, enderecoDaSerie, miniatura, partesDoValor, porTema, TEMAS, tituloDaSerie, valorDe,
   type Mandato, type SerieBrasil, type SnapshotBrasil,
 } from "../lib/brasil.ts";
 
@@ -224,7 +224,7 @@ test("brasil: a faixa é recortada à cobertura e não se estende para trás", (
   assert.equal(f[0]!.tom, faixas(MANDATOS, 1990, 2030)[2]!.tom);
 });
 
-test("brasil: no JSON real, a desocupação começa em 2012 e a faixa também", () => {
+test("brasil: no JSON real, o desemprego começa em 2012 e a faixa também", () => {
   const s = real.series.find((x) => x.codigo === "desocupacao")!;
   const [c0, c1] = cobertura(s);
   const f = faixas(real.mandatos, c0, c1);
@@ -359,11 +359,14 @@ test("páginas: título até 60 e descrição até 160 caracteres, sem repetir e
     const d = descricaoDaSerie(s);
     assert.ok(d.length <= 160, `${s.codigo}: ${d.length} caracteres`);
     assert.ok(d.includes(`os ${s.pontos.length.toLocaleString("pt-BR")} valores`), `${s.codigo}: ${d}`);
-    assert.equal(caminhoDaSerie(s.codigo), `/brasil/${s.codigo}/`);
+    assert.equal(caminhoDaSerie(s.codigo), `/brasil/${enderecoDaSerie(s.codigo)}/`);
   }
+  // O nome do site, não o do IBGE; o endereço velho redireciona (cloudflare/_redirects).
+  assert.equal(caminhoDaSerie("desocupacao"), "/brasil/desemprego/");
+  assert.equal(new Set(real.series.map((s) => caminhoDaSerie(s.codigo))).size, real.series.length);
   assert.equal(new Set(titulos).size, titulos.length);
   assert.equal(tituloDaSerie(real.series.find((s) => s.codigo === "desocupacao")!),
-    `Taxa de desocupação, Brasil, 2012 a ${real.series.find((s) => s.codigo === "desocupacao")!.pontos.at(-1)![0].slice(0, 4)}`);
+    `Taxa de desemprego, Brasil, 2012 a ${real.series.find((s) => s.codigo === "desocupacao")!.pontos.at(-1)![0].slice(0, 4)}`);
 });
 
 test("valor: a moeda antes, o por cento colado, o resto depois", () => {

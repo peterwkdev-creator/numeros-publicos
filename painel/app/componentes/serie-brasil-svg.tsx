@@ -12,7 +12,7 @@ import estilos from "./serie-brasil.module.css";
  * **Componente de servidor.** Usado na página de cada série,
  * `/brasil/<série>/` (até 16/10/2026, as 15 juntas em `/brasil/`). O eixo de
  * tempo vai do primeiro ao último dado DESTA série (`cobertura`): até 15/10/2026
- * era o mesmo em todas, e a desocupação, que começa em 2012, ocupava só o
+ * era o mesmo em todas, e o desemprego, que começa em 2012, ocupava só o
  * terço da direita de um eixo que começava em 1988. A regra continua uma só
  * para todas as séries; o que muda é que cada uma enche o próprio desenho.
  *

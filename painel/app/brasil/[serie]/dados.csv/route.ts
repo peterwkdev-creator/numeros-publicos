@@ -1,4 +1,5 @@
 import { cabecalhosCsv, paraCsv } from "../../../../lib/csv";
+import { enderecoDaSerie } from "../../../../lib/brasil";
 import { lerBrasil } from "../../../../lib/servidor";
 
 /**
@@ -14,7 +15,7 @@ export const dynamic = "force-static";
 
 export async function generateStaticParams() {
   const { series } = await lerBrasil();
-  return series.map((s) => ({ serie: s.codigo }));
+  return series.map((s) => ({ serie: enderecoDaSerie(s.codigo) }));
 }
 
 export async function GET(
@@ -22,7 +23,7 @@ export async function GET(
   { params }: { params: Promise<{ serie: string }> },
 ) {
   const { serie } = await params;
-  const s = (await lerBrasil()).series.find((x) => x.codigo === serie);
+  const s = (await lerBrasil()).series.find((x) => enderecoDaSerie(x.codigo) === serie);
   if (!s) return new Response("não encontrado", { status: 404 });
 
   const cabecalho = [

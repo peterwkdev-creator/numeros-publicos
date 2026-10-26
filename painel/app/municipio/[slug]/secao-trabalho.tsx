@@ -217,7 +217,7 @@ export default function SecaoTrabalho({ c }: { c: Contexto }) {
         <Termo chave="pnad">PNAD Contínua</Termo>,
         que o IBGE publica a cada trimestre, vai só até os estados e as
         capitais, e mede de outro jeito — as duas não se comparam. No
-        Censo, a desocupação do país inteiro foi de{" "}
+        Censo, o desemprego do país inteiro foi de{" "}
         <strong>{br(taxasTrabalho["desocupacao"] ?? 0, 1)}%</strong>.{" "}
         {/* Do dado, e não do teclado: é a regra que o teste de
             percentual literal cobra desta página. */}

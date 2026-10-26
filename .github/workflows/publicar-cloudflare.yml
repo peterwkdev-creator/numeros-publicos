@@ -123,7 +123,7 @@ jobs:
         run: npm run conferir-csp
 
       - name: Cabeçalhos do Pages
-        run: cp ../cloudflare/_headers out/_headers
+        run: cp ../cloudflare/_headers out/_headers && cp ../cloudflare/_redirects out/_redirects
 
       # Sem os scripts de instalação do esbuild e do workerd (allowScripts
       # vazio): o binário vem pelo pacote opcional da plataforma, e o

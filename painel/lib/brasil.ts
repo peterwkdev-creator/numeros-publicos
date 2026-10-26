@@ -102,7 +102,7 @@ export interface Apresentacao {
  * JSON sem entrada aqui reprova no teste, em vez de sair sem título.
  *
  * O lado melhor de cada uma é a leitura corrente da própria série (a meta que
- * o Banco Central persegue, a desocupação mais baixa), e não um juízo sobre
+ * o Banco Central persegue, o desemprego mais baixo), e não um juízo sobre
  * quem governava: dizer quem a moveu é o que a página não faz.
  */
 export const APRESENTACAO: Record<string, Apresentacao> = {
@@ -119,12 +119,14 @@ export const APRESENTACAO: Record<string, Apresentacao> = {
       "do ano anterior.",
   },
   desocupacao: {
-    titulo: "Taxa de desocupação",
+    titulo: "Taxa de desemprego",
     fiscal: false,
     como:
       "De cada 100 pessoas que procuram trabalho, quantas não encontram.",
     melhor: "baixo",
-    nota: "A PNAD Contínua começa em 2012; antes disso a pesquisa era outra.",
+    nota:
+      "O IBGE chama de taxa de desocupação. A PNAD Contínua começa em 2012; " +
+      "antes disso a pesquisa era outra.",
   },
   rendimento: {
     titulo: "Rendimento médio real do trabalho",
@@ -569,7 +571,14 @@ export function resumo(s: SerieBrasil): {
 
 /** Onde mora a página de cada série (desde 16/10/2026; antes, as 15 numa
  *  página só, e o endereço era uma âncora de `/brasil/`). */
-export const caminhoDaSerie = (codigo: string) => `/brasil/${codigo}/`;
+export const caminhoDaSerie = (codigo: string) => `/brasil/${enderecoDaSerie(codigo)}/`;
+
+/** O pedaço do endereço de cada série: o código do dado, salvo onde o site
+ *  usa outra palavra. A taxa de desocupação do IBGE se chama desemprego no
+ *  site desde 26/10/2026, e o endereço velho redireciona
+ *  (`cloudflare/_redirects`). */
+const ENDERECO: Readonly<Record<string, string>> = { desocupacao: "desemprego" };
+export const enderecoDaSerie = (codigo: string) => ENDERECO[codigo] ?? codigo;
 
 /**
  * Um valor com a unidade da série, do jeito que se fala: "R$ 3.061",
@@ -602,7 +611,7 @@ export function partesDoValor(s: SerieBrasil): (v: number) => [string, string] {
 /**
  * O título da página de uma série: o da apresentação, com o país e os anos
  * quando cabem nos 60 caracteres que o Google mostra (`LIMITE_TITULO`); sem
- * o país, quando não cabem. "Taxa de desocupação no Brasil, 2012 a 2026".
+ * o país, quando não cabem. "Taxa de desemprego no Brasil, 2012 a 2026".
  */
 export function tituloDaSerie(s: SerieBrasil): string {
   const t = APRESENTACAO[s.codigo]?.titulo ?? s.nome;

@@ -1,0 +1,6 @@
+# Endereços que mudaram. Copiado para out/ na publicação
+# (.github/workflows/publicar-cloudflare.yml, "Cabeçalhos do Pages").
+# 26/10/2026: a taxa de desocupação do IBGE se chama desemprego no site.
+/brasil/desocupacao /brasil/desemprego/ 301
+/brasil/desocupacao/ /brasil/desemprego/ 301
+/brasil/desocupacao/dados.csv /brasil/desemprego/dados.csv 301

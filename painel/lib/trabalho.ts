@@ -34,7 +34,7 @@ import { mediana, type ParCenso } from "./censo";
 export const PARES_TRABALHO: ParCenso[] = [
   {
     chave: "desocupacao",
-    rotulo: "Desocupação",
+    rotulo: "Desemprego",
     numerador: "desocupados-14-mais",
     denominador: "forca-de-trabalho-14-mais",
     contagem: "pessoas de 14 anos ou mais na força de trabalho",

@@ -26,7 +26,7 @@ projeto abaixo.
 todos os municípios atrás de um filtro, e por isso ninguém que buscasse uma
 cidade específica conseguia chegar a ela. Cada município agora tem endereço,
 título, descrição e canonical próprios, com população, PIB, gasto com pessoal
-contra o limite legal, o índice escolar e trabalho e renda (desocupação,
+contra o limite legal, o índice escolar e trabalho e renda (desemprego,
 cobertura previdenciária e rendimento do Censo 2022; empresas, pessoal ocupado
 e salário médio do Cadastro Central de Empresas), unidos pelo código do IBGE.
 
@@ -85,7 +85,7 @@ R$ 2,92, porque a contagem foi arredondada depois que o IBGE calculou a
 média. Somar médias não tem sentido, então `conferir` confere a média de cada
 município contra `total ÷ contagem`, dentro do erro que o próprio
 arredondamento do IBGE permite. E as tabelas de trabalho do Censo são
-expandidas de uma amostra, arredondadas por município: os desocupados somam 44
+expandidas de uma amostra, arredondadas por município: os desempregados somam 44
 a menos que o total nacional, o que só passa nas séries que declaram
 `amostra=True` (no máximo meia pessoa por município).
 

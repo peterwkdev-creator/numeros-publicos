@@ -6,7 +6,7 @@ import SerieBrasilSvg from "../../componentes/serie-brasil-svg";
 import ComoLer from "../../componentes/como-ler";
 import { br } from "../../../lib/dados";
 import {
-  APRESENTACAO, caminhoDaSerie, descricaoDaSerie, FONTE_COM_ARTIGO, inicioPeriodo, porTema,
+  APRESENTACAO, caminhoDaSerie, descricaoDaSerie, enderecoDaSerie, FONTE_COM_ARTIGO, inicioPeriodo, porTema,
   rotuloPeriodo, tituloDaSerie, type SerieBrasil,
 } from "../../../lib/brasil";
 import { catalogoDe, licencaDaSerie, trilha, jsonLdHtml } from "../../../lib/jsonld";
@@ -31,14 +31,14 @@ export const dynamicParams = false;
 
 export async function generateStaticParams() {
   const { series } = await lerBrasil();
-  return series.map((s) => ({ serie: s.codigo }));
+  return series.map((s) => ({ serie: enderecoDaSerie(s.codigo) }));
 }
 
 type Props = { params: Promise<{ serie: string }> };
 
 async function serieDe(params: Props["params"]): Promise<SerieBrasil> {
   const { serie } = await params;
-  const s = (await lerBrasil()).series.find((x) => x.codigo === serie);
+  const s = (await lerBrasil()).series.find((x) => enderecoDaSerie(x.codigo) === serie);
   if (!s) notFound();
   return s;
 }

@@ -5,7 +5,7 @@ import CartaoSerieBrasil from "../componentes/cartao-serie-brasil";
 import ComoLer from "../componentes/como-ler";
 import { br, dataCurta } from "../../lib/dados";
 import {
-  APRESENTACAO, dominio, fontesPorExtenso, inicioPeriodo, porTema, rotuloPeriodo,
+  APRESENTACAO, caminhoDaSerie, dominio, fontesPorExtenso, inicioPeriodo, porTema, rotuloPeriodo,
   type SnapshotBrasil,
 } from "../../lib/brasil";
 import { catalogoDe, licencaDaSerie, trilha, jsonLdHtml } from "../../lib/jsonld";
@@ -43,7 +43,7 @@ function anoInicial(b: SnapshotBrasil): number {
   return Math.floor(dominio(b.series)[0]);
 }
 
-const csvDe = (codigo: string) => `${CAMINHO}${codigo}/dados.csv`;
+const csvDe = (codigo: string) => `${caminhoDaSerie(codigo)}dados.csv`;
 
 export default async function Pagina() {
   const b = await lerBrasil();

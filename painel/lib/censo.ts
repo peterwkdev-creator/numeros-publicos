@@ -137,7 +137,7 @@ export const ROTULO_DOWNLOAD: Record<string, string> = {
   "forca-de-trabalho-14-mais":
     "Censo: pessoas de 14 anos ou mais na força de trabalho (total)",
   "desocupados-14-mais":
-    "Censo: pessoas de 14 anos ou mais desocupadas (sem trabalho, procurando e disponíveis)",
+    "Censo: pessoas de 14 anos ou mais desempregadas (sem trabalho, procurando e disponíveis)",
   "ocupados-14-mais": "Censo: pessoas de 14 anos ou mais ocupadas (total)",
   "ocupados-contribuintes":
     "Censo: pessoas ocupadas que contribuíam para instituto de previdência oficial",

@@ -2632,7 +2632,7 @@ test("o cartão de população não volta a afirmar 'mais recente' por escrito",
 
 // ------------------------------------------------------------------ trabalho
 
-test("a desocupação é desocupados sobre a FORÇA de trabalho", () => {
+test("o desemprego é desempregados sobre a FORÇA de trabalho", () => {
   // Salvador no Censo 2022: 114.533 de 1.180.828, 9,7%. O denominador não é a
   // população nem os ocupados -- é quem trabalhava ou procurava.
   const m = medidasDe({
@@ -2642,7 +2642,7 @@ test("a desocupação é desocupados sobre a FORÇA de trabalho", () => {
   assert.equal(m.parte, 114533);
 });
 
-test("desocupação ZERO é zero, e ausência continua null", () => {
+test("desemprego ZERO é zero, e ausência continua null", () => {
   // 29 municípios pequenos têm `-` no IBGE, que é zero: ninguém procurava.
   const zero = medidasDe({
     "desocupados-14-mais": 0, "forca-de-trabalho-14-mais": 617,

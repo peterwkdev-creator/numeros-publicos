@@ -7,7 +7,7 @@ vêm da fonte, medidos naquele dia:
   R$ 19.310.453,29 -- a divisão dá 2.154,70, e a diferença é arredondamento;
 - a mediana do mesmo município é bem menor que a média, e trocá-las é o erro
   que a conferência tem de pegar;
-- os desocupados somam 44 a menos que o total nacional, em 5.570 municípios.
+- os desempregados somam 44 a menos que o total nacional, em 5.570 municípios.
 """
 
 from __future__ import annotations

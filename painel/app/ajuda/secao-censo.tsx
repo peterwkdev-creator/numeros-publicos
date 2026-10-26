@@ -31,7 +31,7 @@ export default function SecaoCenso({ ctx }: { ctx: Contexto }) {
         </li>
         <li>
           <strong>PNAD Contínua</strong> — a pesquisa por amostra que mede
-          a desocupação do país, dos estados e das capitais a cada
+          o desemprego do país, dos estados e das capitais a cada
           trimestre. Não é desenhada para medir cada município.
         </li>
       </ul>

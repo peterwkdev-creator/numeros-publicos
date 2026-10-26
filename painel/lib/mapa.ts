@@ -26,7 +26,7 @@ export type CamadaMapa = {
   /**
    * Os extremos da rampa, **por camada**. Com 0–100% fixo para todas, o
    * ensino superior (de 9,9% a 33,2% entre os estados, medido em 11/10/2026)
-   * caía inteiro nas duas primeiras faixas e a desocupação (2,5% a 9,0%) na
+   * caía inteiro nas duas primeiras faixas e o desemprego (2,5% a 9,0%) na
    * primeira: um mapa de uma cor só, que não diz nada. Ver `dominio`.
    */
   min: number;

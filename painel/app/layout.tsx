@@ -121,6 +121,7 @@ export default function RootLayout({
               <summary>Menu</summary>
               <div className="menu-links">
                 <a href="/brasil/">Brasil</a>
+                <a href="/eleicoes-2026/">Eleições 2026</a>
                 <a href="/ranking/">Rankings</a>
                 <a href="/explorar/">Comparar municípios</a>
                 <a href="/ajuda/">Ajuda</a>
@@ -139,6 +140,7 @@ export default function RootLayout({
                 INSS, o Brasil e o ranking só se achavam pela /ajuda/ ou pela
                 busca: página que só o sitemap aponta, o Google rebaixa. */}
             <a href="/brasil/">Brasil</a>
+            <a href="/eleicoes-2026/">Eleições 2026</a>
             <a href="/ranking/gasto-com-pessoal/">Ranking do gasto com pessoal</a>
             <a href="/ranking/emprego-com-carteira/">Ranking do emprego</a>
             <a href="/explorar/">Comparar municípios</a>

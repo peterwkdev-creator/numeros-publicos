@@ -890,7 +890,52 @@ def construir_parser() -> argparse.ArgumentParser:
     rx.add_argument("--minimo", type=int, default=5500,
                     help="municípios abaixo disto: recusa gravar")
     rx.set_defaults(func=regioes_exportar)
+    el = sub.add_parser("eleicoes-2026",
+                        help="baixa o resultado oficial do TSE (presidente e "
+                             "governador, país, UFs e municípios) e grava os "
+                             "JSON da página /eleicoes-2026/")
+    el.add_argument("--saida", default="painel/dados/eleicoes-2026.json")
+    el.add_argument("--saida-municipios",
+                    default="painel/dados/eleicoes-2026-municipios.json")
+    el.add_argument("--snapshot", default="painel/dados/snapshot.json",
+                    help="de onde vêm os municípios do site (para o semPar)")
+    el.add_argument("--cache", default=".cache/tse-2026",
+                    help="cópia em disco de cada resposta (ignorada pelo git)")
+    el.add_argument("--reusar-cache", action="store_true",
+                    help="não pede de novo o que já está no cache (retomar "
+                         "depois de falha parcial)")
+    el.add_argument("--paralelos", type=int, default=8)
+    el.set_defaults(func=eleicoes_2026)
     return p
+
+
+def eleicoes_2026(args, pedir=None) -> int:
+    """Coleta e grava; falha parcial ou soma que não bate: sai 1 e não grava."""
+    from . import eleicoes
+    pedir = pedir or eleicoes.pedir_http(Path_(args.cache), reusar=args.reusar_cache)
+    site = eleicoes.ibge_do_snapshot(args.snapshot) if args.snapshot else None
+    paralelos = max(1, min(args.paralelos, eleicoes.PARALELOS))
+
+    def andamento(i, n):
+        print(f"  municípios: {i}/{n}", file=sys.stderr, flush=True)
+
+    try:
+        resumo, municipios = eleicoes.coletar(pedir, site, paralelos, andamento)
+    except eleicoes.ErroEleicoes as e:
+        linhas = str(e).splitlines()
+        print(f"ERRO: a coleta não fechou ({len(linhas)} problemas); nada gravado.",
+              file=sys.stderr)
+        for linha in linhas[:40]:
+            print(f"  {linha}", file=sys.stderr)
+        return 1
+    eleicoes.gravar(args.saida, resumo)
+    eleicoes.gravar(args.saida_municipios, municipios, compacto_=True)
+    br = resumo["presidente"]["2"]["brasil"]
+    print(f"gravado {args.saida} e {args.saida_municipios}: "
+          f"{resumo['municipios']['total']} municípios, "
+          f"{len(resumo['municipios']['semPar'])} do site sem par no TSE; "
+          f"2º turno gerado {br['gerado']}")
+    return 0
 
 
 #: Tentativas de rede do Caged, do INSS e das emendas. Em 22/10/2026 o FTP do

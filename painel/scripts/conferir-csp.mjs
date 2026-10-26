@@ -109,6 +109,23 @@ const ROTEIRO = [
   ["/inss/", null],
   ["/inss/aposentadoria-por-idade/", null],
   ["/ajuda/", null],
+  // As duas consultas ao TSE no navegador (connect-src): a seção, escolhida
+  // nos seletores, e o bloco do município, que se atualiza sozinho. Sem
+  // rede, o status diz que falhou e a CSP continua conferida.
+  ["/eleicoes-2026/", async (p) => {
+    const opcao = (sel) => p.waitForFunction((s) => document.querySelector(s)?.options.length > 1, { timeout: 20000 }, sel);
+    await p.select("#cs-uf", "rr");
+    await opcao("#cs-mun"); await p.select("#cs-mun", "03085");
+    await opcao("#cs-zona"); await p.select("#cs-zona", "0008");
+    await opcao("#cs-secao"); await p.select("#cs-secao", "0001");
+    await p.click('form[data-consulta-secao] button[type="submit"]');
+    await p.waitForFunction(() => document.querySelector("#cs-resultado")?.children.length > 0, { timeout: 60000 }).catch(() => {});
+    console.log(`  /eleicoes-2026/ consulta: ${await p.$eval("#cs-status", (e) => e.textContent)}`);
+  }],
+  ["/municipio/imperatriz-ma/", async (p) => {
+    await p.waitForFunction(() => /ao vivo/.test(document.querySelector("[data-eleicao-status]")?.textContent), { timeout: 30000 }).catch(() => {});
+    console.log(`  /municipio/imperatriz-ma/ eleições: ${await p.$eval("[data-eleicao-status]", (e) => e.textContent)}`);
+  }],
 ];
 
 const nav = await puppeteer.launch({ executablePath: CHROME, headless: "new" });

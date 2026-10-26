@@ -1,0 +1,7793 @@
+{
+ "fonte": {
+  "orgao": "Tribunal Superior Eleitoral (TSE)",
+  "origem": "https://resultados.tse.jus.br/oficial/ele2026",
+  "exemplo": "https://resultados.tse.jus.br/oficial/ele2026/6258/dados/br/br-c0001-e006258-u.json",
+  "municipios": "https://resultados.tse.jus.br/oficial/ele2026/6258/config/mun-e006258-cm.json",
+  "licenca": {
+   "resultados": "O resultado (resultados.tse.jus.br) e o arquivo de urna não trazem licença nem termos de uso no arquivo nem na página (conferido em 26/10/2026).",
+   "dadosAbertos": "O mesmo resultado, por boletim de urna, está no Portal de Dados Abertos do TSE (dadosabertos.tse.jus.br, conjunto resultados-2026-boletim-de-urna) sob Creative Commons Atribuição (CC BY); a fonte é citada aqui."
+  },
+  "coletadoEm": "2026-10-26T13:08:14+00:00"
+ },
+ "turnos": {
+  "1": "2026-10-04",
+  "2": "2026-10-25"
+ },
+ "presidente": {
+  "1": {
+   "brasil": {
+    "gerado": "05/10/2026 12:51:47",
+    "final": true,
+    "secoesTotal": 499248,
+    "secoesTotalizadas": 499248,
+    "eleitorado": 158745502,
+    "comparecimento": 125275835,
+    "pctComparecimento": 78.92,
+    "abstencao": 33469244,
+    "pctAbstencao": 21.08,
+    "validos": 119300788,
+    "anulados": 0,
+    "brancos": 2300798,
+    "pctBrancos": 1.84,
+    "nulos": 3674249,
+    "pctNulos": 2.93,
+    "candidatos": [
+     {
+      "n": "22",
+      "nome": "FLAVIO BOLSONARO",
+      "partido": "PL",
+      "votos": 56104503,
+      "pct": 47.03,
+      "eleito": false,
+      "situacao": "2º turno",
+      "destino": "Válido"
+     },
+     {
+      "n": "13",
+      "nome": "LULA",
+      "partido": "PT",
+      "votos": 53879538,
+      "pct": 45.16,
+      "eleito": false,
+      "situacao": "2º turno",
+      "destino": "Válido"
+     },
+     {
+      "n": "70",
+      "nome": "ESCRITOR AUGUSTO CURY",
+      "partido": "AVANTE",
+      "votos": 3448569,
+      "pct": 2.89,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "14",
+      "nome": "RENAN SANTOS",
+      "partido": "MISSÃO",
+      "votos": 2675887,
+      "pct": 2.24,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "55",
+      "nome": "RONALDO CAIADO",
+      "partido": "PSD",
+      "votos": 2605148,
+      "pct": 2.18,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "30",
+      "nome": "ZEMA",
+      "partido": "NOVO",
+      "votos": 326488,
+      "pct": 0.27,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "80",
+      "nome": "SAMARA",
+      "partido": "UP",
+      "votos": 122911,
+      "pct": 0.1,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "16",
+      "nome": "HERTZ DIAS",
+      "partido": "PSTU",
+      "votos": 43103,
+      "pct": 0.04,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "27",
+      "nome": "CLARIANA BARAO",
+      "partido": "DC",
+      "votos": 40043,
+      "pct": 0.03,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "21",
+      "nome": "EDMILSON COSTA",
+      "partido": "PCB",
+      "votos": 22693,
+      "pct": 0.02,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "35",
+      "nome": "VETERINÁRIO WILSON GRASSI",
+      "partido": "DEMOCRATA",
+      "votos": 16881,
+      "pct": 0.01,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "29",
+      "nome": "RUI COSTA PIMENTA",
+      "partido": "PCO",
+      "votos": 15024,
+      "pct": 0.01,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     }
+    ]
+   },
+   "ufs": {
+    "ac": {
+     "gerado": "05/10/2026 12:51:40",
+     "final": true,
+     "secoesTotal": 2270,
+     "secoesTotalizadas": 2270,
+     "eleitorado": 613742,
+     "comparecimento": 488330,
+     "pctComparecimento": 79.57,
+     "abstencao": 125412,
+     "pctAbstencao": 20.43,
+     "validos": 469066,
+     "anulados": 0,
+     "brancos": 5579,
+     "pctBrancos": 1.14,
+     "nulos": 13685,
+     "pctNulos": 2.8,
+     "candidatos": [
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 302807,
+       "pct": 64.56,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 134770,
+       "pct": 28.73,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "70",
+       "nome": "ESCRITOR AUGUSTO CURY",
+       "partido": "AVANTE",
+       "votos": 13523,
+       "pct": 2.88,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "55",
+       "nome": "RONALDO CAIADO",
+       "partido": "PSD",
+       "votos": 8594,
+       "pct": 1.83,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "14",
+       "nome": "RENAN SANTOS",
+       "partido": "MISSÃO",
+       "votos": 7980,
+       "pct": 1.7,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "30",
+       "nome": "ZEMA",
+       "partido": "NOVO",
+       "votos": 573,
+       "pct": 0.12,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "80",
+       "nome": "SAMARA",
+       "partido": "UP",
+       "votos": 314,
+       "pct": 0.07,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "27",
+       "nome": "CLARIANA BARAO",
+       "partido": "DC",
+       "votos": 215,
+       "pct": 0.05,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "21",
+       "nome": "EDMILSON COSTA",
+       "partido": "PCB",
+       "votos": 140,
+       "pct": 0.03,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "16",
+       "nome": "HERTZ DIAS",
+       "partido": "PSTU",
+       "votos": 71,
+       "pct": 0.02,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "29",
+       "nome": "RUI COSTA PIMENTA",
+       "partido": "PCO",
+       "votos": 40,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "35",
+       "nome": "VETERINÁRIO WILSON GRASSI",
+       "partido": "DEMOCRATA",
+       "votos": 39,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "al": {
+     "gerado": "05/10/2026 12:51:41",
+     "final": true,
+     "secoesTotal": 7101,
+     "secoesTotalizadas": 7101,
+     "eleitorado": 2442126,
+     "comparecimento": 1938428,
+     "pctComparecimento": 79.37,
+     "abstencao": 503698,
+     "pctAbstencao": 20.63,
+     "validos": 1818856,
+     "anulados": 0,
+     "brancos": 33712,
+     "pctBrancos": 1.74,
+     "nulos": 85860,
+     "pctNulos": 4.43,
+     "candidatos": [
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 995459,
+       "pct": 54.73,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 735718,
+       "pct": 40.45,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "70",
+       "nome": "ESCRITOR AUGUSTO CURY",
+       "partido": "AVANTE",
+       "votos": 42427,
+       "pct": 2.33,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "14",
+       "nome": "RENAN SANTOS",
+       "partido": "MISSÃO",
+       "votos": 26851,
+       "pct": 1.48,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "55",
+       "nome": "RONALDO CAIADO",
+       "partido": "PSD",
+       "votos": 14198,
+       "pct": 0.78,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "80",
+       "nome": "SAMARA",
+       "partido": "UP",
+       "votos": 1345,
+       "pct": 0.07,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "30",
+       "nome": "ZEMA",
+       "partido": "NOVO",
+       "votos": 1168,
+       "pct": 0.06,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "27",
+       "nome": "CLARIANA BARAO",
+       "partido": "DC",
+       "votos": 636,
+       "pct": 0.03,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "16",
+       "nome": "HERTZ DIAS",
+       "partido": "PSTU",
+       "votos": 431,
+       "pct": 0.02,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "21",
+       "nome": "EDMILSON COSTA",
+       "partido": "PCB",
+       "votos": 267,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "35",
+       "nome": "VETERINÁRIO WILSON GRASSI",
+       "partido": "DEMOCRATA",
+       "votos": 246,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "29",
+       "nome": "RUI COSTA PIMENTA",
+       "partido": "PCO",
+       "votos": 110,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "ap": {
+     "gerado": "05/10/2026 12:51:40",
+     "final": true,
+     "secoesTotal": 1914,
+     "secoesTotalizadas": 1914,
+     "eleitorado": 576988,
+     "comparecimento": 476562,
+     "pctComparecimento": 82.59,
+     "abstencao": 100426,
+     "pctAbstencao": 17.41,
+     "validos": 464858,
+     "anulados": 0,
+     "brancos": 4415,
+     "pctBrancos": 0.93,
+     "nulos": 7289,
+     "pctNulos": 1.53,
+     "candidatos": [
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 212503,
+       "pct": 45.71,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 212278,
+       "pct": 45.67,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "70",
+       "nome": "ESCRITOR AUGUSTO CURY",
+       "partido": "AVANTE",
+       "votos": 19057,
+       "pct": 4.1,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "14",
+       "nome": "RENAN SANTOS",
+       "partido": "MISSÃO",
+       "votos": 11342,
+       "pct": 2.44,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "55",
+       "nome": "RONALDO CAIADO",
+       "partido": "PSD",
+       "votos": 8304,
+       "pct": 1.79,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "80",
+       "nome": "SAMARA",
+       "partido": "UP",
+       "votos": 508,
+       "pct": 0.11,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "30",
+       "nome": "ZEMA",
+       "partido": "NOVO",
+       "votos": 341,
+       "pct": 0.07,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "27",
+       "nome": "CLARIANA BARAO",
+       "partido": "DC",
+       "votos": 229,
+       "pct": 0.05,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "16",
+       "nome": "HERTZ DIAS",
+       "partido": "PSTU",
+       "votos": 132,
+       "pct": 0.03,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "21",
+       "nome": "EDMILSON COSTA",
+       "partido": "PCB",
+       "votos": 62,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "29",
+       "nome": "RUI COSTA PIMENTA",
+       "partido": "PCO",
+       "votos": 53,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "35",
+       "nome": "VETERINÁRIO WILSON GRASSI",
+       "partido": "DEMOCRATA",
+       "votos": 49,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "am": {
+     "gerado": "05/10/2026 12:51:41",
+     "final": true,
+     "secoesTotal": 8157,
+     "secoesTotalizadas": 8157,
+     "eleitorado": 2798611,
+     "comparecimento": 2234549,
+     "pctComparecimento": 79.84,
+     "abstencao": 564062,
+     "pctAbstencao": 20.16,
+     "validos": 2170763,
+     "anulados": 0,
+     "brancos": 24402,
+     "pctBrancos": 1.09,
+     "nulos": 39384,
+     "pctNulos": 1.76,
+     "candidatos": [
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 1046996,
+       "pct": 48.23,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 976764,
+       "pct": 45.0,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "70",
+       "nome": "ESCRITOR AUGUSTO CURY",
+       "partido": "AVANTE",
+       "votos": 77531,
+       "pct": 3.57,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "14",
+       "nome": "RENAN SANTOS",
+       "partido": "MISSÃO",
+       "votos": 35411,
+       "pct": 1.63,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "55",
+       "nome": "RONALDO CAIADO",
+       "partido": "PSD",
+       "votos": 28310,
+       "pct": 1.3,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "80",
+       "nome": "SAMARA",
+       "partido": "UP",
+       "votos": 1867,
+       "pct": 0.09,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "30",
+       "nome": "ZEMA",
+       "partido": "NOVO",
+       "votos": 1781,
+       "pct": 0.08,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "27",
+       "nome": "CLARIANA BARAO",
+       "partido": "DC",
+       "votos": 929,
+       "pct": 0.04,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "16",
+       "nome": "HERTZ DIAS",
+       "partido": "PSTU",
+       "votos": 457,
+       "pct": 0.02,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "35",
+       "nome": "VETERINÁRIO WILSON GRASSI",
+       "partido": "DEMOCRATA",
+       "votos": 291,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "21",
+       "nome": "EDMILSON COSTA",
+       "partido": "PCB",
+       "votos": 265,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "29",
+       "nome": "RUI COSTA PIMENTA",
+       "partido": "PCO",
+       "votos": 161,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "ba": {
+     "gerado": "05/10/2026 12:51:55",
+     "final": true,
+     "secoesTotal": 35476,
+     "secoesTotalizadas": 35476,
+     "eleitorado": 11312752,
+     "comparecimento": 9053601,
+     "pctComparecimento": 80.03,
+     "abstencao": 2259151,
+     "pctAbstencao": 19.97,
+     "validos": 8560291,
+     "anulados": 0,
+     "brancos": 154936,
+     "pctBrancos": 1.71,
+     "nulos": 338374,
+     "pctNulos": 3.74,
+     "candidatos": [
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 5664771,
+       "pct": 66.17,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 2442585,
+       "pct": 28.53,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "70",
+       "nome": "ESCRITOR AUGUSTO CURY",
+       "partido": "AVANTE",
+       "votos": 195451,
+       "pct": 2.28,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "55",
+       "nome": "RONALDO CAIADO",
+       "partido": "PSD",
+       "votos": 122705,
+       "pct": 1.43,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "14",
+       "nome": "RENAN SANTOS",
+       "partido": "MISSÃO",
+       "votos": 117518,
+       "pct": 1.37,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "30",
+       "nome": "ZEMA",
+       "partido": "NOVO",
+       "votos": 6497,
+       "pct": 0.08,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "80",
+       "nome": "SAMARA",
+       "partido": "UP",
+       "votos": 4649,
+       "pct": 0.05,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "16",
+       "nome": "HERTZ DIAS",
+       "partido": "PSTU",
+       "votos": 1791,
+       "pct": 0.02,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "27",
+       "nome": "CLARIANA BARAO",
+       "partido": "DC",
+       "votos": 1676,
+       "pct": 0.02,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "21",
+       "nome": "EDMILSON COSTA",
+       "partido": "PCB",
+       "votos": 1299,
+       "pct": 0.02,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "29",
+       "nome": "RUI COSTA PIMENTA",
+       "partido": "PCO",
+       "votos": 724,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "35",
+       "nome": "VETERINÁRIO WILSON GRASSI",
+       "partido": "DEMOCRATA",
+       "votos": 625,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "ce": {
+     "gerado": "05/10/2026 12:51:44",
+     "final": true,
+     "secoesTotal": 23765,
+     "secoesTotalizadas": 23765,
+     "eleitorado": 6996545,
+     "comparecimento": 5910471,
+     "pctComparecimento": 84.48,
+     "abstencao": 1086074,
+     "pctAbstencao": 15.52,
+     "validos": 5617814,
+     "anulados": 0,
+     "brancos": 103295,
+     "pctBrancos": 1.75,
+     "nulos": 189362,
+     "pctNulos": 3.2,
+     "candidatos": [
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 3555263,
+       "pct": 63.29,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 1756850,
+       "pct": 31.27,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "70",
+       "nome": "ESCRITOR AUGUSTO CURY",
+       "partido": "AVANTE",
+       "votos": 140524,
+       "pct": 2.5,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "14",
+       "nome": "RENAN SANTOS",
+       "partido": "MISSÃO",
+       "votos": 107587,
+       "pct": 1.92,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "55",
+       "nome": "RONALDO CAIADO",
+       "partido": "PSD",
+       "votos": 45604,
+       "pct": 0.81,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "30",
+       "nome": "ZEMA",
+       "partido": "NOVO",
+       "votos": 4310,
+       "pct": 0.08,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "80",
+       "nome": "SAMARA",
+       "partido": "UP",
+       "votos": 3352,
+       "pct": 0.06,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "16",
+       "nome": "HERTZ DIAS",
+       "partido": "PSTU",
+       "votos": 1491,
+       "pct": 0.03,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "27",
+       "nome": "CLARIANA BARAO",
+       "partido": "DC",
+       "votos": 1071,
+       "pct": 0.02,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "21",
+       "nome": "EDMILSON COSTA",
+       "partido": "PCB",
+       "votos": 783,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "29",
+       "nome": "RUI COSTA PIMENTA",
+       "partido": "PCO",
+       "votos": 498,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "35",
+       "nome": "VETERINÁRIO WILSON GRASSI",
+       "partido": "DEMOCRATA",
+       "votos": 481,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "df": {
+     "gerado": "05/10/2026 12:51:40",
+     "final": true,
+     "secoesTotal": 6969,
+     "secoesTotalizadas": 6969,
+     "eleitorado": 2258320,
+     "comparecimento": 1831396,
+     "pctComparecimento": 81.1,
+     "abstencao": 426924,
+     "pctAbstencao": 18.9,
+     "validos": 1772808,
+     "anulados": 0,
+     "brancos": 25362,
+     "pctBrancos": 1.38,
+     "nulos": 33226,
+     "pctNulos": 1.81,
+     "candidatos": [
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 909616,
+       "pct": 51.31,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 675627,
+       "pct": 38.11,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "55",
+       "nome": "RONALDO CAIADO",
+       "partido": "PSD",
+       "votos": 85076,
+       "pct": 4.8,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "14",
+       "nome": "RENAN SANTOS",
+       "partido": "MISSÃO",
+       "votos": 46714,
+       "pct": 2.64,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "70",
+       "nome": "ESCRITOR AUGUSTO CURY",
+       "partido": "AVANTE",
+       "votos": 45979,
+       "pct": 2.59,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "30",
+       "nome": "ZEMA",
+       "partido": "NOVO",
+       "votos": 4915,
+       "pct": 0.28,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "80",
+       "nome": "SAMARA",
+       "partido": "UP",
+       "votos": 2297,
+       "pct": 0.13,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "16",
+       "nome": "HERTZ DIAS",
+       "partido": "PSTU",
+       "votos": 828,
+       "pct": 0.05,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "27",
+       "nome": "CLARIANA BARAO",
+       "partido": "DC",
+       "votos": 716,
+       "pct": 0.04,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "29",
+       "nome": "RUI COSTA PIMENTA",
+       "partido": "PCO",
+       "votos": 382,
+       "pct": 0.02,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "21",
+       "nome": "EDMILSON COSTA",
+       "partido": "PCB",
+       "votos": 334,
+       "pct": 0.02,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "35",
+       "nome": "VETERINÁRIO WILSON GRASSI",
+       "partido": "DEMOCRATA",
+       "votos": 324,
+       "pct": 0.02,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "es": {
+     "gerado": "05/10/2026 12:51:41",
+     "final": true,
+     "secoesTotal": 9844,
+     "secoesTotalizadas": 9844,
+     "eleitorado": 2991650,
+     "comparecimento": 2352282,
+     "pctComparecimento": 78.63,
+     "abstencao": 639368,
+     "pctAbstencao": 21.37,
+     "validos": 2251078,
+     "anulados": 0,
+     "brancos": 43211,
+     "pctBrancos": 1.84,
+     "nulos": 57993,
+     "pctNulos": 2.47,
+     "candidatos": [
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 1233194,
+       "pct": 54.78,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 850028,
+       "pct": 37.76,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "70",
+       "nome": "ESCRITOR AUGUSTO CURY",
+       "partido": "AVANTE",
+       "votos": 65121,
+       "pct": 2.89,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "14",
+       "nome": "RENAN SANTOS",
+       "partido": "MISSÃO",
+       "votos": 53236,
+       "pct": 2.36,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "55",
+       "nome": "RONALDO CAIADO",
+       "partido": "PSD",
+       "votos": 39097,
+       "pct": 1.74,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "30",
+       "nome": "ZEMA",
+       "partido": "NOVO",
+       "votos": 5873,
+       "pct": 0.26,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "80",
+       "nome": "SAMARA",
+       "partido": "UP",
+       "votos": 1973,
+       "pct": 0.09,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "27",
+       "nome": "CLARIANA BARAO",
+       "partido": "DC",
+       "votos": 974,
+       "pct": 0.04,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "16",
+       "nome": "HERTZ DIAS",
+       "partido": "PSTU",
+       "votos": 638,
+       "pct": 0.03,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "21",
+       "nome": "EDMILSON COSTA",
+       "partido": "PCB",
+       "votos": 388,
+       "pct": 0.02,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "35",
+       "nome": "VETERINÁRIO WILSON GRASSI",
+       "partido": "DEMOCRATA",
+       "votos": 311,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "29",
+       "nome": "RUI COSTA PIMENTA",
+       "partido": "PCO",
+       "votos": 245,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "go": {
+     "gerado": "05/10/2026 12:51:44",
+     "final": true,
+     "secoesTotal": 15686,
+     "secoesTotalizadas": 15686,
+     "eleitorado": 5080590,
+     "comparecimento": 3971587,
+     "pctComparecimento": 78.17,
+     "abstencao": 1109003,
+     "pctAbstencao": 21.83,
+     "validos": 3827823,
+     "anulados": 0,
+     "brancos": 45643,
+     "pctBrancos": 1.15,
+     "nulos": 98121,
+     "pctNulos": 2.47,
+     "candidatos": [
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 2051888,
+       "pct": 53.6,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 1188880,
+       "pct": 31.06,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "55",
+       "nome": "RONALDO CAIADO",
+       "partido": "PSD",
+       "votos": 472041,
+       "pct": 12.33,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "14",
+       "nome": "RENAN SANTOS",
+       "partido": "MISSÃO",
+       "votos": 54105,
+       "pct": 1.41,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "70",
+       "nome": "ESCRITOR AUGUSTO CURY",
+       "partido": "AVANTE",
+       "votos": 53849,
+       "pct": 1.41,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "30",
+       "nome": "ZEMA",
+       "partido": "NOVO",
+       "votos": 2672,
+       "pct": 0.07,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "80",
+       "nome": "SAMARA",
+       "partido": "UP",
+       "votos": 2087,
+       "pct": 0.05,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "16",
+       "nome": "HERTZ DIAS",
+       "partido": "PSTU",
+       "votos": 668,
+       "pct": 0.02,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "27",
+       "nome": "CLARIANA BARAO",
+       "partido": "DC",
+       "votos": 559,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "21",
+       "nome": "EDMILSON COSTA",
+       "partido": "PCB",
+       "votos": 468,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "35",
+       "nome": "VETERINÁRIO WILSON GRASSI",
+       "partido": "DEMOCRATA",
+       "votos": 346,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "29",
+       "nome": "RUI COSTA PIMENTA",
+       "partido": "PCO",
+       "votos": 260,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "ma": {
+     "gerado": "05/10/2026 12:51:45",
+     "final": true,
+     "secoesTotal": 18093,
+     "secoesTotalizadas": 18093,
+     "eleitorado": 5183115,
+     "comparecimento": 4160343,
+     "pctComparecimento": 80.27,
+     "abstencao": 1022772,
+     "pctAbstencao": 19.73,
+     "validos": 4010439,
+     "anulados": 0,
+     "brancos": 46315,
+     "pctBrancos": 1.11,
+     "nulos": 103589,
+     "pctNulos": 2.49,
+     "candidatos": [
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 2566301,
+       "pct": 63.99,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 1239040,
+       "pct": 30.9,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "70",
+       "nome": "ESCRITOR AUGUSTO CURY",
+       "partido": "AVANTE",
+       "votos": 84830,
+       "pct": 2.12,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "14",
+       "nome": "RENAN SANTOS",
+       "partido": "MISSÃO",
+       "votos": 60387,
+       "pct": 1.51,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "55",
+       "nome": "RONALDO CAIADO",
+       "partido": "PSD",
+       "votos": 50155,
+       "pct": 1.25,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "30",
+       "nome": "ZEMA",
+       "partido": "NOVO",
+       "votos": 4584,
+       "pct": 0.11,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "80",
+       "nome": "SAMARA",
+       "partido": "UP",
+       "votos": 1795,
+       "pct": 0.04,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "16",
+       "nome": "HERTZ DIAS",
+       "partido": "PSTU",
+       "votos": 1459,
+       "pct": 0.04,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "27",
+       "nome": "CLARIANA BARAO",
+       "partido": "DC",
+       "votos": 895,
+       "pct": 0.02,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "21",
+       "nome": "EDMILSON COSTA",
+       "partido": "PCB",
+       "votos": 475,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "35",
+       "nome": "VETERINÁRIO WILSON GRASSI",
+       "partido": "DEMOCRATA",
+       "votos": 307,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "29",
+       "nome": "RUI COSTA PIMENTA",
+       "partido": "PCO",
+       "votos": 211,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "mt": {
+     "gerado": "05/10/2026 12:51:42",
+     "final": true,
+     "secoesTotal": 8287,
+     "secoesTotalizadas": 8287,
+     "eleitorado": 2637801,
+     "comparecimento": 2052133,
+     "pctComparecimento": 77.8,
+     "abstencao": 585668,
+     "pctAbstencao": 22.2,
+     "validos": 1993288,
+     "anulados": 0,
+     "brancos": 20756,
+     "pctBrancos": 1.01,
+     "nulos": 38089,
+     "pctNulos": 1.86,
+     "candidatos": [
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 1298581,
+       "pct": 65.15,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 581681,
+       "pct": 29.18,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "70",
+       "nome": "ESCRITOR AUGUSTO CURY",
+       "partido": "AVANTE",
+       "votos": 40019,
+       "pct": 2.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "14",
+       "nome": "RENAN SANTOS",
+       "partido": "MISSÃO",
+       "votos": 33170,
+       "pct": 1.66,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "55",
+       "nome": "RONALDO CAIADO",
+       "partido": "PSD",
+       "votos": 33079,
+       "pct": 1.66,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "30",
+       "nome": "ZEMA",
+       "partido": "NOVO",
+       "votos": 2424,
+       "pct": 0.12,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "27",
+       "nome": "CLARIANA BARAO",
+       "partido": "DC",
+       "votos": 1869,
+       "pct": 0.09,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "80",
+       "nome": "SAMARA",
+       "partido": "UP",
+       "votos": 1584,
+       "pct": 0.08,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "16",
+       "nome": "HERTZ DIAS",
+       "partido": "PSTU",
+       "votos": 340,
+       "pct": 0.02,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "21",
+       "nome": "EDMILSON COSTA",
+       "partido": "PCB",
+       "votos": 239,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "35",
+       "nome": "VETERINÁRIO WILSON GRASSI",
+       "partido": "DEMOCRATA",
+       "votos": 172,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "29",
+       "nome": "RUI COSTA PIMENTA",
+       "partido": "PCO",
+       "votos": 130,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "ms": {
+     "gerado": "05/10/2026 12:51:41",
+     "final": true,
+     "secoesTotal": 7106,
+     "secoesTotalizadas": 7106,
+     "eleitorado": 2024430,
+     "comparecimento": 1541220,
+     "pctComparecimento": 76.13,
+     "abstencao": 483210,
+     "pctAbstencao": 23.87,
+     "validos": 1490278,
+     "anulados": 0,
+     "brancos": 21270,
+     "pctBrancos": 1.38,
+     "nulos": 29672,
+     "pctNulos": 1.93,
+     "candidatos": [
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 873351,
+       "pct": 58.6,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 516855,
+       "pct": 34.68,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "70",
+       "nome": "ESCRITOR AUGUSTO CURY",
+       "partido": "AVANTE",
+       "votos": 39148,
+       "pct": 2.63,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "14",
+       "nome": "RENAN SANTOS",
+       "partido": "MISSÃO",
+       "votos": 31847,
+       "pct": 2.14,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "55",
+       "nome": "RONALDO CAIADO",
+       "partido": "PSD",
+       "votos": 23291,
+       "pct": 1.56,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "30",
+       "nome": "ZEMA",
+       "partido": "NOVO",
+       "votos": 2792,
+       "pct": 0.19,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "80",
+       "nome": "SAMARA",
+       "partido": "UP",
+       "votos": 1291,
+       "pct": 0.09,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "27",
+       "nome": "CLARIANA BARAO",
+       "partido": "DC",
+       "votos": 626,
+       "pct": 0.04,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "16",
+       "nome": "HERTZ DIAS",
+       "partido": "PSTU",
+       "votos": 353,
+       "pct": 0.02,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "21",
+       "nome": "EDMILSON COSTA",
+       "partido": "PCB",
+       "votos": 332,
+       "pct": 0.02,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "35",
+       "nome": "VETERINÁRIO WILSON GRASSI",
+       "partido": "DEMOCRATA",
+       "votos": 209,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "29",
+       "nome": "RUI COSTA PIMENTA",
+       "partido": "PCO",
+       "votos": 183,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "mg": {
+     "gerado": "05/10/2026 12:52:05",
+     "final": true,
+     "secoesTotal": 52062,
+     "secoesTotalizadas": 52062,
+     "eleitorado": 16372372,
+     "comparecimento": 12637274,
+     "pctComparecimento": 77.19,
+     "abstencao": 3735098,
+     "pctAbstencao": 22.81,
+     "validos": 11976235,
+     "anulados": 0,
+     "brancos": 268302,
+     "pctBrancos": 2.12,
+     "nulos": 392737,
+     "pctNulos": 3.11,
+     "candidatos": [
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 5777548,
+       "pct": 48.24,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 5188936,
+       "pct": 43.33,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "70",
+       "nome": "ESCRITOR AUGUSTO CURY",
+       "partido": "AVANTE",
+       "votos": 409737,
+       "pct": 3.42,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "14",
+       "nome": "RENAN SANTOS",
+       "partido": "MISSÃO",
+       "votos": 247209,
+       "pct": 2.06,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "55",
+       "nome": "RONALDO CAIADO",
+       "partido": "PSD",
+       "votos": 230423,
+       "pct": 1.92,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "30",
+       "nome": "ZEMA",
+       "partido": "NOVO",
+       "votos": 98407,
+       "pct": 0.82,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "80",
+       "nome": "SAMARA",
+       "partido": "UP",
+       "votos": 11026,
+       "pct": 0.09,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "16",
+       "nome": "HERTZ DIAS",
+       "partido": "PSTU",
+       "votos": 4085,
+       "pct": 0.03,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "27",
+       "nome": "CLARIANA BARAO",
+       "partido": "DC",
+       "votos": 3411,
+       "pct": 0.03,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "21",
+       "nome": "EDMILSON COSTA",
+       "partido": "PCB",
+       "votos": 2300,
+       "pct": 0.02,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "35",
+       "nome": "VETERINÁRIO WILSON GRASSI",
+       "partido": "DEMOCRATA",
+       "votos": 1732,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "29",
+       "nome": "RUI COSTA PIMENTA",
+       "partido": "PCO",
+       "votos": 1421,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "pa": {
+     "gerado": "05/10/2026 12:51:45",
+     "final": true,
+     "secoesTotal": 20827,
+     "secoesTotalizadas": 20827,
+     "eleitorado": 6262397,
+     "comparecimento": 5066504,
+     "pctComparecimento": 80.9,
+     "abstencao": 1195893,
+     "pctAbstencao": 19.1,
+     "validos": 4863172,
+     "anulados": 0,
+     "brancos": 54203,
+     "pctBrancos": 1.07,
+     "nulos": 149129,
+     "pctNulos": 2.94,
+     "candidatos": [
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 2427237,
+       "pct": 49.91,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 2163957,
+       "pct": 44.5,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "70",
+       "nome": "ESCRITOR AUGUSTO CURY",
+       "partido": "AVANTE",
+       "votos": 125172,
+       "pct": 2.57,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "14",
+       "nome": "RENAN SANTOS",
+       "partido": "MISSÃO",
+       "votos": 84165,
+       "pct": 1.73,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "55",
+       "nome": "RONALDO CAIADO",
+       "partido": "PSD",
+       "votos": 51991,
+       "pct": 1.07,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "80",
+       "nome": "SAMARA",
+       "partido": "UP",
+       "votos": 3824,
+       "pct": 0.08,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "30",
+       "nome": "ZEMA",
+       "partido": "NOVO",
+       "votos": 3064,
+       "pct": 0.06,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "27",
+       "nome": "CLARIANA BARAO",
+       "partido": "DC",
+       "votos": 1293,
+       "pct": 0.03,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "16",
+       "nome": "HERTZ DIAS",
+       "partido": "PSTU",
+       "votos": 1045,
+       "pct": 0.02,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "21",
+       "nome": "EDMILSON COSTA",
+       "partido": "PCB",
+       "votos": 674,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "35",
+       "nome": "VETERINÁRIO WILSON GRASSI",
+       "partido": "DEMOCRATA",
+       "votos": 442,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "29",
+       "nome": "RUI COSTA PIMENTA",
+       "partido": "PCO",
+       "votos": 308,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "pb": {
+     "gerado": "05/10/2026 12:51:44",
+     "final": true,
+     "secoesTotal": 10712,
+     "secoesTotalizadas": 10712,
+     "eleitorado": 3248531,
+     "comparecimento": 2683988,
+     "pctComparecimento": 82.62,
+     "abstencao": 564543,
+     "pctAbstencao": 17.38,
+     "validos": 2513747,
+     "anulados": 0,
+     "brancos": 52297,
+     "pctBrancos": 1.95,
+     "nulos": 117944,
+     "pctNulos": 4.39,
+     "candidatos": [
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 1541127,
+       "pct": 61.31,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 831377,
+       "pct": 33.07,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "70",
+       "nome": "ESCRITOR AUGUSTO CURY",
+       "partido": "AVANTE",
+       "votos": 73831,
+       "pct": 2.94,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "14",
+       "nome": "RENAN SANTOS",
+       "partido": "MISSÃO",
+       "votos": 42247,
+       "pct": 1.68,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "55",
+       "nome": "RONALDO CAIADO",
+       "partido": "PSD",
+       "votos": 19511,
+       "pct": 0.78,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "30",
+       "nome": "ZEMA",
+       "partido": "NOVO",
+       "votos": 1988,
+       "pct": 0.08,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "80",
+       "nome": "SAMARA",
+       "partido": "UP",
+       "votos": 1593,
+       "pct": 0.06,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "16",
+       "nome": "HERTZ DIAS",
+       "partido": "PSTU",
+       "votos": 627,
+       "pct": 0.02,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "27",
+       "nome": "CLARIANA BARAO",
+       "partido": "DC",
+       "votos": 604,
+       "pct": 0.02,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "21",
+       "nome": "EDMILSON COSTA",
+       "partido": "PCB",
+       "votos": 347,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "29",
+       "nome": "RUI COSTA PIMENTA",
+       "partido": "PCO",
+       "votos": 274,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "35",
+       "nome": "VETERINÁRIO WILSON GRASSI",
+       "partido": "DEMOCRATA",
+       "votos": 221,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "pr": {
+     "gerado": "05/10/2026 12:51:50",
+     "final": true,
+     "secoesTotal": 27142,
+     "secoesTotalizadas": 27142,
+     "eleitorado": 8613657,
+     "comparecimento": 6841457,
+     "pctComparecimento": 79.43,
+     "abstencao": 1772200,
+     "pctAbstencao": 20.57,
+     "validos": 6585243,
+     "anulados": 0,
+     "brancos": 122499,
+     "pctBrancos": 1.79,
+     "nulos": 133715,
+     "pctNulos": 1.95,
+     "candidatos": [
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 3945345,
+       "pct": 59.91,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 2054597,
+       "pct": 31.2,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "70",
+       "nome": "ESCRITOR AUGUSTO CURY",
+       "partido": "AVANTE",
+       "votos": 205095,
+       "pct": 3.11,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "14",
+       "nome": "RENAN SANTOS",
+       "partido": "MISSÃO",
+       "votos": 177434,
+       "pct": 2.69,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "55",
+       "nome": "RONALDO CAIADO",
+       "partido": "PSD",
+       "votos": 171294,
+       "pct": 2.6,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "30",
+       "nome": "ZEMA",
+       "partido": "NOVO",
+       "votos": 17172,
+       "pct": 0.26,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "80",
+       "nome": "SAMARA",
+       "partido": "UP",
+       "votos": 6731,
+       "pct": 0.1,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "27",
+       "nome": "CLARIANA BARAO",
+       "partido": "DC",
+       "votos": 2445,
+       "pct": 0.04,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "16",
+       "nome": "HERTZ DIAS",
+       "partido": "PSTU",
+       "votos": 2056,
+       "pct": 0.03,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "21",
+       "nome": "EDMILSON COSTA",
+       "partido": "PCB",
+       "votos": 1195,
+       "pct": 0.02,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "35",
+       "nome": "VETERINÁRIO WILSON GRASSI",
+       "partido": "DEMOCRATA",
+       "votos": 962,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "29",
+       "nome": "RUI COSTA PIMENTA",
+       "partido": "PCO",
+       "votos": 917,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "pe": {
+     "gerado": "05/10/2026 12:51:44",
+     "final": true,
+     "secoesTotal": 21418,
+     "secoesTotalizadas": 21418,
+     "eleitorado": 7223450,
+     "comparecimento": 5911062,
+     "pctComparecimento": 81.83,
+     "abstencao": 1312388,
+     "pctAbstencao": 18.17,
+     "validos": 5601017,
+     "anulados": 0,
+     "brancos": 109491,
+     "pctBrancos": 1.85,
+     "nulos": 200554,
+     "pctNulos": 3.39,
+     "candidatos": [
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 3553971,
+       "pct": 63.45,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 1738043,
+       "pct": 31.03,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "70",
+       "nome": "ESCRITOR AUGUSTO CURY",
+       "partido": "AVANTE",
+       "votos": 137960,
+       "pct": 2.46,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "14",
+       "nome": "RENAN SANTOS",
+       "partido": "MISSÃO",
+       "votos": 85865,
+       "pct": 1.53,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "55",
+       "nome": "RONALDO CAIADO",
+       "partido": "PSD",
+       "votos": 73176,
+       "pct": 1.31,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "30",
+       "nome": "ZEMA",
+       "partido": "NOVO",
+       "votos": 6060,
+       "pct": 0.11,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "80",
+       "nome": "SAMARA",
+       "partido": "UP",
+       "votos": 2387,
+       "pct": 0.04,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "16",
+       "nome": "HERTZ DIAS",
+       "partido": "PSTU",
+       "votos": 1114,
+       "pct": 0.02,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "27",
+       "nome": "CLARIANA BARAO",
+       "partido": "DC",
+       "votos": 869,
+       "pct": 0.02,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "21",
+       "nome": "EDMILSON COSTA",
+       "partido": "PCB",
+       "votos": 705,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "35",
+       "nome": "VETERINÁRIO WILSON GRASSI",
+       "partido": "DEMOCRATA",
+       "votos": 457,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "29",
+       "nome": "RUI COSTA PIMENTA",
+       "partido": "PCO",
+       "votos": 410,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "pi": {
+     "gerado": "05/10/2026 12:51:46",
+     "final": true,
+     "secoesTotal": 10225,
+     "secoesTotalizadas": 10225,
+     "eleitorado": 2704758,
+     "comparecimento": 2240883,
+     "pctComparecimento": 82.85,
+     "abstencao": 463875,
+     "pctAbstencao": 17.15,
+     "validos": 2146394,
+     "anulados": 0,
+     "brancos": 28329,
+     "pctBrancos": 1.26,
+     "nulos": 66160,
+     "pctNulos": 2.95,
+     "candidatos": [
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 1523710,
+       "pct": 70.99,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 517028,
+       "pct": 24.09,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "70",
+       "nome": "ESCRITOR AUGUSTO CURY",
+       "partido": "AVANTE",
+       "votos": 47692,
+       "pct": 2.22,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "14",
+       "nome": "RENAN SANTOS",
+       "partido": "MISSÃO",
+       "votos": 32274,
+       "pct": 1.5,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "55",
+       "nome": "RONALDO CAIADO",
+       "partido": "PSD",
+       "votos": 21629,
+       "pct": 1.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "30",
+       "nome": "ZEMA",
+       "partido": "NOVO",
+       "votos": 1357,
+       "pct": 0.06,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "80",
+       "nome": "SAMARA",
+       "partido": "UP",
+       "votos": 1099,
+       "pct": 0.05,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "27",
+       "nome": "CLARIANA BARAO",
+       "partido": "DC",
+       "votos": 504,
+       "pct": 0.02,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "16",
+       "nome": "HERTZ DIAS",
+       "partido": "PSTU",
+       "votos": 443,
+       "pct": 0.02,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "21",
+       "nome": "EDMILSON COSTA",
+       "partido": "PCB",
+       "votos": 319,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "35",
+       "nome": "VETERINÁRIO WILSON GRASSI",
+       "partido": "DEMOCRATA",
+       "votos": 193,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "29",
+       "nome": "RUI COSTA PIMENTA",
+       "partido": "PCO",
+       "votos": 146,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "rj": {
+     "gerado": "05/10/2026 12:51:43",
+     "final": true,
+     "secoesTotal": 37675,
+     "secoesTotalizadas": 37675,
+     "eleitorado": 12857648,
+     "comparecimento": 9859802,
+     "pctComparecimento": 76.68,
+     "abstencao": 2997846,
+     "pctAbstencao": 23.32,
+     "validos": 9369700,
+     "anulados": 0,
+     "brancos": 201979,
+     "pctBrancos": 2.05,
+     "nulos": 288123,
+     "pctNulos": 2.92,
+     "candidatos": [
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 4966844,
+       "pct": 53.01,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 3693021,
+       "pct": 39.41,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "70",
+       "nome": "ESCRITOR AUGUSTO CURY",
+       "partido": "AVANTE",
+       "votos": 247397,
+       "pct": 2.64,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "14",
+       "nome": "RENAN SANTOS",
+       "partido": "MISSÃO",
+       "votos": 211843,
+       "pct": 2.26,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "55",
+       "nome": "RONALDO CAIADO",
+       "partido": "PSD",
+       "votos": 199844,
+       "pct": 2.13,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "30",
+       "nome": "ZEMA",
+       "partido": "NOVO",
+       "votos": 21907,
+       "pct": 0.23,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "80",
+       "nome": "SAMARA",
+       "partido": "UP",
+       "votos": 14186,
+       "pct": 0.15,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "27",
+       "nome": "CLARIANA BARAO",
+       "partido": "DC",
+       "votos": 4082,
+       "pct": 0.04,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "16",
+       "nome": "HERTZ DIAS",
+       "partido": "PSTU",
+       "votos": 3999,
+       "pct": 0.04,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "21",
+       "nome": "EDMILSON COSTA",
+       "partido": "PCB",
+       "votos": 2854,
+       "pct": 0.03,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "35",
+       "nome": "VETERINÁRIO WILSON GRASSI",
+       "partido": "DEMOCRATA",
+       "votos": 1930,
+       "pct": 0.02,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "29",
+       "nome": "RUI COSTA PIMENTA",
+       "partido": "PCO",
+       "votos": 1793,
+       "pct": 0.02,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "rn": {
+     "gerado": "05/10/2026 12:51:43",
+     "final": true,
+     "secoesTotal": 8115,
+     "secoesTotalizadas": 8115,
+     "eleitorado": 2659825,
+     "comparecimento": 2171013,
+     "pctComparecimento": 81.62,
+     "abstencao": 488812,
+     "pctAbstencao": 18.38,
+     "validos": 2071898,
+     "anulados": 0,
+     "brancos": 33172,
+     "pctBrancos": 1.53,
+     "nulos": 65943,
+     "pctNulos": 3.04,
+     "candidatos": [
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 1237963,
+       "pct": 59.75,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 720493,
+       "pct": 34.77,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "70",
+       "nome": "ESCRITOR AUGUSTO CURY",
+       "partido": "AVANTE",
+       "votos": 57367,
+       "pct": 2.77,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "14",
+       "nome": "RENAN SANTOS",
+       "partido": "MISSÃO",
+       "votos": 35261,
+       "pct": 1.7,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "55",
+       "nome": "RONALDO CAIADO",
+       "partido": "PSD",
+       "votos": 16407,
+       "pct": 0.79,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "30",
+       "nome": "ZEMA",
+       "partido": "NOVO",
+       "votos": 1525,
+       "pct": 0.07,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "80",
+       "nome": "SAMARA",
+       "partido": "UP",
+       "votos": 1228,
+       "pct": 0.06,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "16",
+       "nome": "HERTZ DIAS",
+       "partido": "PSTU",
+       "votos": 572,
+       "pct": 0.03,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "27",
+       "nome": "CLARIANA BARAO",
+       "partido": "DC",
+       "votos": 405,
+       "pct": 0.02,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "21",
+       "nome": "EDMILSON COSTA",
+       "partido": "PCB",
+       "votos": 315,
+       "pct": 0.02,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "35",
+       "nome": "VETERINÁRIO WILSON GRASSI",
+       "partido": "DEMOCRATA",
+       "votos": 185,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "29",
+       "nome": "RUI COSTA PIMENTA",
+       "partido": "PCO",
+       "votos": 177,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "rs": {
+     "gerado": "05/10/2026 12:51:50",
+     "final": true,
+     "secoesTotal": 27547,
+     "secoesTotalizadas": 27547,
+     "eleitorado": 8522545,
+     "comparecimento": 6702903,
+     "pctComparecimento": 78.65,
+     "abstencao": 1819642,
+     "pctAbstencao": 21.35,
+     "validos": 6423046,
+     "anulados": 0,
+     "brancos": 148339,
+     "pctBrancos": 2.21,
+     "nulos": 131518,
+     "pctNulos": 1.96,
+     "candidatos": [
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 3573783,
+       "pct": 55.64,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 2294759,
+       "pct": 35.73,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "70",
+       "nome": "ESCRITOR AUGUSTO CURY",
+       "partido": "AVANTE",
+       "votos": 195296,
+       "pct": 3.04,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "14",
+       "nome": "RENAN SANTOS",
+       "partido": "MISSÃO",
+       "votos": 167558,
+       "pct": 2.61,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "55",
+       "nome": "RONALDO CAIADO",
+       "partido": "PSD",
+       "votos": 158821,
+       "pct": 2.47,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "30",
+       "nome": "ZEMA",
+       "partido": "NOVO",
+       "votos": 18988,
+       "pct": 0.3,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "80",
+       "nome": "SAMARA",
+       "partido": "UP",
+       "votos": 6632,
+       "pct": 0.1,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "16",
+       "nome": "HERTZ DIAS",
+       "partido": "PSTU",
+       "votos": 2146,
+       "pct": 0.03,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "27",
+       "nome": "CLARIANA BARAO",
+       "partido": "DC",
+       "votos": 2066,
+       "pct": 0.03,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "29",
+       "nome": "RUI COSTA PIMENTA",
+       "partido": "PCO",
+       "votos": 1043,
+       "pct": 0.02,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "21",
+       "nome": "EDMILSON COSTA",
+       "partido": "PCB",
+       "votos": 1031,
+       "pct": 0.02,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "35",
+       "nome": "VETERINÁRIO WILSON GRASSI",
+       "partido": "DEMOCRATA",
+       "votos": 923,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "ro": {
+     "gerado": "05/10/2026 12:51:40",
+     "final": true,
+     "secoesTotal": 4698,
+     "secoesTotalizadas": 4698,
+     "eleitorado": 1265893,
+     "comparecimento": 991080,
+     "pctComparecimento": 78.29,
+     "abstencao": 274813,
+     "pctAbstencao": 21.71,
+     "validos": 968059,
+     "anulados": 0,
+     "brancos": 9846,
+     "pctBrancos": 0.99,
+     "nulos": 13175,
+     "pctNulos": 1.33,
+     "candidatos": [
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 652988,
+       "pct": 67.45,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 250667,
+       "pct": 25.89,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "70",
+       "nome": "ESCRITOR AUGUSTO CURY",
+       "partido": "AVANTE",
+       "votos": 25280,
+       "pct": 2.61,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "14",
+       "nome": "RENAN SANTOS",
+       "partido": "MISSÃO",
+       "votos": 19187,
+       "pct": 1.98,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "55",
+       "nome": "RONALDO CAIADO",
+       "partido": "PSD",
+       "votos": 16929,
+       "pct": 1.75,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "30",
+       "nome": "ZEMA",
+       "partido": "NOVO",
+       "votos": 1318,
+       "pct": 0.14,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "80",
+       "nome": "SAMARA",
+       "partido": "UP",
+       "votos": 843,
+       "pct": 0.09,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "27",
+       "nome": "CLARIANA BARAO",
+       "partido": "DC",
+       "votos": 356,
+       "pct": 0.04,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "16",
+       "nome": "HERTZ DIAS",
+       "partido": "PSTU",
+       "votos": 174,
+       "pct": 0.02,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "21",
+       "nome": "EDMILSON COSTA",
+       "partido": "PCB",
+       "votos": 160,
+       "pct": 0.02,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "35",
+       "nome": "VETERINÁRIO WILSON GRASSI",
+       "partido": "DEMOCRATA",
+       "votos": 97,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "29",
+       "nome": "RUI COSTA PIMENTA",
+       "partido": "PCO",
+       "votos": 60,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "rr": {
+     "gerado": "05/10/2026 12:51:40",
+     "final": true,
+     "secoesTotal": 1519,
+     "secoesTotalizadas": 1519,
+     "eleitorado": 401521,
+     "comparecimento": 332772,
+     "pctComparecimento": 82.88,
+     "abstencao": 68749,
+     "pctAbstencao": 17.12,
+     "validos": 325545,
+     "anulados": 0,
+     "brancos": 2618,
+     "pctBrancos": 0.79,
+     "nulos": 4609,
+     "pctNulos": 1.39,
+     "candidatos": [
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 231322,
+       "pct": 71.06,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 74420,
+       "pct": 22.86,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "70",
+       "nome": "ESCRITOR AUGUSTO CURY",
+       "partido": "AVANTE",
+       "votos": 8579,
+       "pct": 2.64,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "14",
+       "nome": "RENAN SANTOS",
+       "partido": "MISSÃO",
+       "votos": 6623,
+       "pct": 2.03,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "55",
+       "nome": "RONALDO CAIADO",
+       "partido": "PSD",
+       "votos": 3639,
+       "pct": 1.12,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "30",
+       "nome": "ZEMA",
+       "partido": "NOVO",
+       "votos": 337,
+       "pct": 0.1,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "80",
+       "nome": "SAMARA",
+       "partido": "UP",
+       "votos": 280,
+       "pct": 0.09,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "27",
+       "nome": "CLARIANA BARAO",
+       "partido": "DC",
+       "votos": 168,
+       "pct": 0.05,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "16",
+       "nome": "HERTZ DIAS",
+       "partido": "PSTU",
+       "votos": 60,
+       "pct": 0.02,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "21",
+       "nome": "EDMILSON COSTA",
+       "partido": "PCB",
+       "votos": 42,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "35",
+       "nome": "VETERINÁRIO WILSON GRASSI",
+       "partido": "DEMOCRATA",
+       "votos": 41,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "29",
+       "nome": "RUI COSTA PIMENTA",
+       "partido": "PCO",
+       "votos": 34,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "sc": {
+     "gerado": "05/10/2026 12:51:45",
+     "final": true,
+     "secoesTotal": 17326,
+     "secoesTotalizadas": 17326,
+     "eleitorado": 5734651,
+     "comparecimento": 4648159,
+     "pctComparecimento": 81.05,
+     "abstencao": 1086492,
+     "pctAbstencao": 18.95,
+     "validos": 4500897,
+     "anulados": 0,
+     "brancos": 69007,
+     "pctBrancos": 1.48,
+     "nulos": 78255,
+     "pctNulos": 1.68,
+     "candidatos": [
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 3000020,
+       "pct": 66.65,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 1127168,
+       "pct": 25.04,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "70",
+       "nome": "ESCRITOR AUGUSTO CURY",
+       "partido": "AVANTE",
+       "votos": 134273,
+       "pct": 2.98,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "14",
+       "nome": "RENAN SANTOS",
+       "partido": "MISSÃO",
+       "votos": 132795,
+       "pct": 2.95,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "55",
+       "nome": "RONALDO CAIADO",
+       "partido": "PSD",
+       "votos": 79911,
+       "pct": 1.78,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "30",
+       "nome": "ZEMA",
+       "partido": "NOVO",
+       "votos": 16718,
+       "pct": 0.37,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "80",
+       "nome": "SAMARA",
+       "partido": "UP",
+       "votos": 5049,
+       "pct": 0.11,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "16",
+       "nome": "HERTZ DIAS",
+       "partido": "PSTU",
+       "votos": 1503,
+       "pct": 0.03,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "27",
+       "nome": "CLARIANA BARAO",
+       "partido": "DC",
+       "votos": 1429,
+       "pct": 0.03,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "21",
+       "nome": "EDMILSON COSTA",
+       "partido": "PCB",
+       "votos": 828,
+       "pct": 0.02,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "29",
+       "nome": "RUI COSTA PIMENTA",
+       "partido": "PCO",
+       "votos": 643,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "35",
+       "nome": "VETERINÁRIO WILSON GRASSI",
+       "partido": "DEMOCRATA",
+       "votos": 560,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "se": {
+     "gerado": "05/10/2026 12:51:41",
+     "final": true,
+     "secoesTotal": 5923,
+     "secoesTotalizadas": 5923,
+     "eleitorado": 1740135,
+     "comparecimento": 1439082,
+     "pctComparecimento": 82.7,
+     "abstencao": 301053,
+     "pctAbstencao": 17.3,
+     "validos": 1364196,
+     "anulados": 0,
+     "brancos": 24859,
+     "pctBrancos": 1.73,
+     "nulos": 50027,
+     "pctNulos": 3.48,
+     "candidatos": [
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 856019,
+       "pct": 62.75,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 417839,
+       "pct": 30.63,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "70",
+       "nome": "ESCRITOR AUGUSTO CURY",
+       "partido": "AVANTE",
+       "votos": 38895,
+       "pct": 2.85,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "55",
+       "nome": "RONALDO CAIADO",
+       "partido": "PSD",
+       "votos": 26651,
+       "pct": 1.95,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "14",
+       "nome": "RENAN SANTOS",
+       "partido": "MISSÃO",
+       "votos": 21405,
+       "pct": 1.57,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "30",
+       "nome": "ZEMA",
+       "partido": "NOVO",
+       "votos": 1158,
+       "pct": 0.08,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "80",
+       "nome": "SAMARA",
+       "partido": "UP",
+       "votos": 991,
+       "pct": 0.07,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "27",
+       "nome": "CLARIANA BARAO",
+       "partido": "DC",
+       "votos": 457,
+       "pct": 0.03,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "16",
+       "nome": "HERTZ DIAS",
+       "partido": "PSTU",
+       "votos": 331,
+       "pct": 0.02,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "21",
+       "nome": "EDMILSON COSTA",
+       "partido": "PCB",
+       "votos": 204,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "35",
+       "nome": "VETERINÁRIO WILSON GRASSI",
+       "partido": "DEMOCRATA",
+       "votos": 138,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "29",
+       "nome": "RUI COSTA PIMENTA",
+       "partido": "PCO",
+       "votos": 108,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "sp": {
+     "gerado": "05/10/2026 12:51:59",
+     "final": true,
+     "secoesTotal": 103656,
+     "secoesTotalizadas": 103656,
+     "eleitorado": 34122892,
+     "comparecimento": 26431992,
+     "pctComparecimento": 77.46,
+     "abstencao": 7690900,
+     "pctAbstencao": 22.54,
+     "validos": 24882948,
+     "anulados": 0,
+     "brancos": 632801,
+     "pctBrancos": 2.39,
+     "nulos": 916243,
+     "pctNulos": 3.47,
+     "candidatos": [
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 12922023,
+       "pct": 51.93,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 9505413,
+       "pct": 38.2,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "70",
+       "nome": "ESCRITOR AUGUSTO CURY",
+       "partido": "AVANTE",
+       "votos": 892368,
+       "pct": 3.59,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "14",
+       "nome": "RENAN SANTOS",
+       "partido": "MISSÃO",
+       "votos": 804310,
+       "pct": 3.23,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "55",
+       "nome": "RONALDO CAIADO",
+       "partido": "PSD",
+       "votos": 579571,
+       "pct": 2.33,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "30",
+       "nome": "ZEMA",
+       "partido": "NOVO",
+       "votos": 94635,
+       "pct": 0.38,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "80",
+       "nome": "SAMARA",
+       "partido": "UP",
+       "votos": 42532,
+       "pct": 0.17,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "16",
+       "nome": "HERTZ DIAS",
+       "partido": "PSTU",
+       "votos": 15815,
+       "pct": 0.06,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "27",
+       "nome": "CLARIANA BARAO",
+       "partido": "DC",
+       "votos": 10563,
+       "pct": 0.04,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "21",
+       "nome": "EDMILSON COSTA",
+       "partido": "PCB",
+       "votos": 6129,
+       "pct": 0.02,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "35",
+       "nome": "VETERINÁRIO WILSON GRASSI",
+       "partido": "DEMOCRATA",
+       "votos": 5160,
+       "pct": 0.02,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "29",
+       "nome": "RUI COSTA PIMENTA",
+       "partido": "PCO",
+       "votos": 4429,
+       "pct": 0.02,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "to": {
+     "gerado": "05/10/2026 12:51:42",
+     "final": true,
+     "secoesTotal": 4384,
+     "secoesTotalizadas": 4384,
+     "eleitorado": 1182023,
+     "comparecimento": 965196,
+     "pctComparecimento": 81.66,
+     "abstencao": 216827,
+     "pctAbstencao": 18.34,
+     "validos": 930447,
+     "anulados": 0,
+     "brancos": 8344,
+     "pctBrancos": 0.86,
+     "nulos": 26405,
+     "pctNulos": 2.74,
+     "candidatos": [
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 469321,
+       "pct": 50.44,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 404009,
+       "pct": 43.42,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "70",
+       "nome": "ESCRITOR AUGUSTO CURY",
+       "partido": "AVANTE",
+       "votos": 22434,
+       "pct": 2.41,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "55",
+       "nome": "RONALDO CAIADO",
+       "partido": "PSD",
+       "votos": 20189,
+       "pct": 2.17,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "14",
+       "nome": "RENAN SANTOS",
+       "partido": "MISSÃO",
+       "votos": 12983,
+       "pct": 1.4,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "30",
+       "nome": "ZEMA",
+       "partido": "NOVO",
+       "votos": 595,
+       "pct": 0.06,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "80",
+       "nome": "SAMARA",
+       "partido": "UP",
+       "votos": 395,
+       "pct": 0.04,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "27",
+       "nome": "CLARIANA BARAO",
+       "partido": "DC",
+       "votos": 171,
+       "pct": 0.02,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "21",
+       "nome": "EDMILSON COSTA",
+       "partido": "PCB",
+       "votos": 117,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "16",
+       "nome": "HERTZ DIAS",
+       "partido": "PSTU",
+       "votos": 101,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "35",
+       "nome": "VETERINÁRIO WILSON GRASSI",
+       "partido": "DEMOCRATA",
+       "votos": 67,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "29",
+       "nome": "RUI COSTA PIMENTA",
+       "partido": "PCO",
+       "votos": 65,
+       "pct": 0.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "zz": {
+     "gerado": "24/10/2026 20:12:57",
+     "final": true,
+     "secoesTotal": 1351,
+     "secoesTotalizadas": 1351,
+     "eleitorado": 916534,
+     "comparecimento": 341766,
+     "pctComparecimento": 37.31,
+     "abstencao": 574345,
+     "pctAbstencao": 62.69,
+     "validos": 330882,
+     "anulados": 0,
+     "brancos": 5816,
+     "pctBrancos": 1.7,
+     "nulos": 5068,
+     "pctNulos": 1.48,
+     "candidatos": [
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 157387,
+       "pct": 47.57,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 143900,
+       "pct": 43.49,
+       "eleito": false,
+       "situacao": "2º turno",
+       "destino": "Válido"
+      },
+      {
+       "n": "70",
+       "nome": "ESCRITOR AUGUSTO CURY",
+       "partido": "AVANTE",
+       "votos": 9734,
+       "pct": 2.94,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "14",
+       "nome": "RENAN SANTOS",
+       "partido": "MISSÃO",
+       "votos": 8580,
+       "pct": 2.59,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "55",
+       "nome": "RONALDO CAIADO",
+       "partido": "PSD",
+       "votos": 4708,
+       "pct": 1.42,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "30",
+       "nome": "ZEMA",
+       "partido": "NOVO",
+       "votos": 3329,
+       "pct": 1.01,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "80",
+       "nome": "SAMARA",
+       "partido": "UP",
+       "votos": 1053,
+       "pct": 0.32,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "27",
+       "nome": "CLARIANA BARAO",
+       "partido": "DC",
+       "votos": 825,
+       "pct": 0.25,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "21",
+       "nome": "EDMILSON COSTA",
+       "partido": "PCB",
+       "votos": 421,
+       "pct": 0.13,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "16",
+       "nome": "HERTZ DIAS",
+       "partido": "PSTU",
+       "votos": 373,
+       "pct": 0.11,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "35",
+       "nome": "VETERINÁRIO WILSON GRASSI",
+       "partido": "DEMOCRATA",
+       "votos": 373,
+       "pct": 0.11,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "29",
+       "nome": "RUI COSTA PIMENTA",
+       "partido": "PCO",
+       "votos": 199,
+       "pct": 0.06,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      }
+     ]
+    }
+   }
+  },
+  "2": {
+   "brasil": {
+    "gerado": "25/10/2026 23:27:02",
+    "final": true,
+    "secoesTotal": 499248,
+    "secoesTotalizadas": 499248,
+    "eleitorado": 158745502,
+    "comparecimento": 128236074,
+    "pctComparecimento": 80.78,
+    "abstencao": 30509005,
+    "pctAbstencao": 19.22,
+    "validos": 124082273,
+    "anulados": 0,
+    "brancos": 1430496,
+    "pctBrancos": 1.12,
+    "nulos": 2723305,
+    "pctNulos": 2.12,
+    "candidatos": [
+     {
+      "n": "13",
+      "nome": "LULA",
+      "partido": "PT",
+      "votos": 64256232,
+      "pct": 51.79,
+      "eleito": true,
+      "situacao": "Eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "22",
+      "nome": "FLAVIO BOLSONARO",
+      "partido": "PL",
+      "votos": 59826041,
+      "pct": 48.21,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     }
+    ]
+   },
+   "ufs": {
+    "ac": {
+     "gerado": "25/10/2026 23:26:56",
+     "final": true,
+     "secoesTotal": 2270,
+     "secoesTotalizadas": 2270,
+     "eleitorado": 613715,
+     "comparecimento": 453654,
+     "pctComparecimento": 73.92,
+     "abstencao": 160061,
+     "pctAbstencao": 26.08,
+     "validos": 432228,
+     "anulados": 0,
+     "brancos": 5016,
+     "pctBrancos": 1.11,
+     "nulos": 16410,
+     "pctNulos": 3.62,
+     "candidatos": [
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 287715,
+       "pct": 66.57,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 144513,
+       "pct": 33.43,
+       "eleito": true,
+       "situacao": "Eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "al": {
+     "gerado": "25/10/2026 23:26:57",
+     "final": true,
+     "secoesTotal": 7101,
+     "secoesTotalizadas": 7101,
+     "eleitorado": 2442081,
+     "comparecimento": 1951632,
+     "pctComparecimento": 79.92,
+     "abstencao": 490449,
+     "pctAbstencao": 20.08,
+     "validos": 1896761,
+     "anulados": 0,
+     "brancos": 16983,
+     "pctBrancos": 0.87,
+     "nulos": 37888,
+     "pctNulos": 1.94,
+     "candidatos": [
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 1152621,
+       "pct": 60.77,
+       "eleito": true,
+       "situacao": "Eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 744140,
+       "pct": 39.23,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "ap": {
+     "gerado": "25/10/2026 23:26:56",
+     "final": true,
+     "secoesTotal": 1914,
+     "secoesTotalizadas": 1914,
+     "eleitorado": 576910,
+     "comparecimento": 429975,
+     "pctComparecimento": 74.53,
+     "abstencao": 146935,
+     "pctAbstencao": 25.47,
+     "validos": 421642,
+     "anulados": 0,
+     "brancos": 3320,
+     "pctBrancos": 0.77,
+     "nulos": 5013,
+     "pctNulos": 1.17,
+     "candidatos": [
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 222968,
+       "pct": 52.88,
+       "eleito": true,
+       "situacao": "Eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 198674,
+       "pct": 47.12,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "am": {
+     "gerado": "25/10/2026 23:26:57",
+     "final": true,
+     "secoesTotal": 8157,
+     "secoesTotalizadas": 8157,
+     "eleitorado": 2798661,
+     "comparecimento": 2192059,
+     "pctComparecimento": 78.33,
+     "abstencao": 606602,
+     "pctAbstencao": 21.67,
+     "validos": 2121028,
+     "anulados": 0,
+     "brancos": 18324,
+     "pctBrancos": 0.84,
+     "nulos": 52707,
+     "pctNulos": 2.4,
+     "candidatos": [
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 1145783,
+       "pct": 54.02,
+       "eleito": true,
+       "situacao": "Eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 975245,
+       "pct": 45.98,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "ba": {
+     "gerado": "25/10/2026 23:27:06",
+     "final": true,
+     "secoesTotal": 35476,
+     "secoesTotalizadas": 35476,
+     "eleitorado": 11312891,
+     "comparecimento": 9422047,
+     "pctComparecimento": 83.29,
+     "abstencao": 1890844,
+     "pctAbstencao": 16.71,
+     "validos": 9094019,
+     "anulados": 0,
+     "brancos": 92721,
+     "pctBrancos": 0.98,
+     "nulos": 235307,
+     "pctNulos": 2.5,
+     "candidatos": [
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 6485258,
+       "pct": 71.31,
+       "eleito": true,
+       "situacao": "Eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 2608761,
+       "pct": 28.69,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "ce": {
+     "gerado": "25/10/2026 23:26:58",
+     "final": true,
+     "secoesTotal": 23765,
+     "secoesTotalizadas": 23765,
+     "eleitorado": 6996521,
+     "comparecimento": 6024843,
+     "pctComparecimento": 86.11,
+     "abstencao": 971678,
+     "pctAbstencao": 13.89,
+     "validos": 5855602,
+     "anulados": 0,
+     "brancos": 56386,
+     "pctBrancos": 0.94,
+     "nulos": 112855,
+     "pctNulos": 1.87,
+     "candidatos": [
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 4036124,
+       "pct": 68.93,
+       "eleito": true,
+       "situacao": "Eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 1819478,
+       "pct": 31.07,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "df": {
+     "gerado": "25/10/2026 23:26:57",
+     "final": true,
+     "secoesTotal": 6969,
+     "secoesTotalizadas": 6969,
+     "eleitorado": 2258995,
+     "comparecimento": 1868280,
+     "pctComparecimento": 82.7,
+     "abstencao": 390715,
+     "pctAbstencao": 17.3,
+     "validos": 1804766,
+     "anulados": 0,
+     "brancos": 22386,
+     "pctBrancos": 1.2,
+     "nulos": 41128,
+     "pctNulos": 2.2,
+     "candidatos": [
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 979542,
+       "pct": 54.28,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 825224,
+       "pct": 45.72,
+       "eleito": true,
+       "situacao": "Eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "es": {
+     "gerado": "25/10/2026 23:26:57",
+     "final": true,
+     "secoesTotal": 9844,
+     "secoesTotalizadas": 9844,
+     "eleitorado": 2991515,
+     "comparecimento": 2409214,
+     "pctComparecimento": 80.53,
+     "abstencao": 582301,
+     "pctAbstencao": 19.47,
+     "validos": 2296469,
+     "anulados": 0,
+     "brancos": 33080,
+     "pctBrancos": 1.37,
+     "nulos": 79665,
+     "pctNulos": 3.31,
+     "candidatos": [
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 1294504,
+       "pct": 56.37,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 1001965,
+       "pct": 43.63,
+       "eleito": true,
+       "situacao": "Eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "go": {
+     "gerado": "25/10/2026 23:26:59",
+     "final": true,
+     "secoesTotal": 15686,
+     "secoesTotalizadas": 15686,
+     "eleitorado": 5080385,
+     "comparecimento": 4047280,
+     "pctComparecimento": 79.66,
+     "abstencao": 1033105,
+     "pctAbstencao": 20.34,
+     "validos": 3930889,
+     "anulados": 0,
+     "brancos": 43214,
+     "pctBrancos": 1.07,
+     "nulos": 73177,
+     "pctNulos": 1.81,
+     "candidatos": [
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 2345334,
+       "pct": 59.66,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 1585555,
+       "pct": 40.34,
+       "eleito": true,
+       "situacao": "Eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "ma": {
+     "gerado": "25/10/2026 23:27:00",
+     "final": true,
+     "secoesTotal": 18093,
+     "secoesTotalizadas": 18093,
+     "eleitorado": 5183049,
+     "comparecimento": 4127771,
+     "pctComparecimento": 79.64,
+     "abstencao": 1055278,
+     "pctAbstencao": 20.36,
+     "validos": 4038202,
+     "anulados": 0,
+     "brancos": 30855,
+     "pctBrancos": 0.75,
+     "nulos": 58714,
+     "pctNulos": 1.42,
+     "candidatos": [
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 2808231,
+       "pct": 69.54,
+       "eleito": true,
+       "situacao": "Eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 1229971,
+       "pct": 30.46,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "mt": {
+     "gerado": "25/10/2026 23:26:58",
+     "final": true,
+     "secoesTotal": 8287,
+     "secoesTotalizadas": 8287,
+     "eleitorado": 2637879,
+     "comparecimento": 2085334,
+     "pctComparecimento": 79.05,
+     "abstencao": 552545,
+     "pctAbstencao": 20.95,
+     "validos": 2045266,
+     "anulados": 0,
+     "brancos": 15431,
+     "pctBrancos": 0.74,
+     "nulos": 24637,
+     "pctNulos": 1.18,
+     "candidatos": [
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 1351099,
+       "pct": 66.06,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 694167,
+       "pct": 33.94,
+       "eleito": true,
+       "situacao": "Eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "ms": {
+     "gerado": "25/10/2026 23:26:57",
+     "final": true,
+     "secoesTotal": 7106,
+     "secoesTotalizadas": 7106,
+     "eleitorado": 2024437,
+     "comparecimento": 1594460,
+     "pctComparecimento": 78.76,
+     "abstencao": 429977,
+     "pctAbstencao": 21.24,
+     "validos": 1556865,
+     "anulados": 0,
+     "brancos": 14958,
+     "pctBrancos": 0.94,
+     "nulos": 22637,
+     "pctNulos": 1.42,
+     "candidatos": [
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 927892,
+       "pct": 59.6,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 628973,
+       "pct": 40.4,
+       "eleito": true,
+       "situacao": "Eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "mg": {
+     "gerado": "25/10/2026 23:27:09",
+     "final": true,
+     "secoesTotal": 52062,
+     "secoesTotalizadas": 52062,
+     "eleitorado": 16372144,
+     "comparecimento": 13044203,
+     "pctComparecimento": 79.67,
+     "abstencao": 3327941,
+     "pctAbstencao": 20.33,
+     "validos": 12592885,
+     "anulados": 0,
+     "brancos": 164141,
+     "pctBrancos": 1.26,
+     "nulos": 287177,
+     "pctNulos": 2.2,
+     "candidatos": [
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 6351099,
+       "pct": 50.43,
+       "eleito": true,
+       "situacao": "Eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 6241786,
+       "pct": 49.57,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "pa": {
+     "gerado": "25/10/2026 23:26:59",
+     "final": true,
+     "secoesTotal": 20827,
+     "secoesTotalizadas": 20827,
+     "eleitorado": 6262063,
+     "comparecimento": 4989573,
+     "pctComparecimento": 79.68,
+     "abstencao": 1272490,
+     "pctAbstencao": 20.32,
+     "validos": 4890389,
+     "anulados": 0,
+     "brancos": 36501,
+     "pctBrancos": 0.73,
+     "nulos": 62683,
+     "pctNulos": 1.26,
+     "candidatos": [
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 2690449,
+       "pct": 55.02,
+       "eleito": true,
+       "situacao": "Eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 2199940,
+       "pct": 44.98,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "pb": {
+     "gerado": "25/10/2026 23:26:59",
+     "final": true,
+     "secoesTotal": 10712,
+     "secoesTotalizadas": 10712,
+     "eleitorado": 3248434,
+     "comparecimento": 2743560,
+     "pctComparecimento": 84.46,
+     "abstencao": 504874,
+     "pctAbstencao": 15.54,
+     "validos": 2659269,
+     "anulados": 0,
+     "brancos": 25943,
+     "pctBrancos": 0.95,
+     "nulos": 58348,
+     "pctNulos": 2.13,
+     "candidatos": [
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 1794059,
+       "pct": 67.46,
+       "eleito": true,
+       "situacao": "Eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 865210,
+       "pct": 32.54,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "pr": {
+     "gerado": "25/10/2026 23:27:02",
+     "final": true,
+     "secoesTotal": 27142,
+     "secoesTotalizadas": 27142,
+     "eleitorado": 8613628,
+     "comparecimento": 7059339,
+     "pctComparecimento": 81.96,
+     "abstencao": 1554289,
+     "pctAbstencao": 18.04,
+     "validos": 6857948,
+     "anulados": 0,
+     "brancos": 82572,
+     "pctBrancos": 1.17,
+     "nulos": 118819,
+     "pctNulos": 1.68,
+     "candidatos": [
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 4291444,
+       "pct": 62.58,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 2566504,
+       "pct": 37.42,
+       "eleito": true,
+       "situacao": "Eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "pe": {
+     "gerado": "25/10/2026 23:26:59",
+     "final": true,
+     "secoesTotal": 21418,
+     "secoesTotalizadas": 21418,
+     "eleitorado": 7223227,
+     "comparecimento": 6126467,
+     "pctComparecimento": 84.82,
+     "abstencao": 1096760,
+     "pctAbstencao": 15.18,
+     "validos": 5950067,
+     "anulados": 0,
+     "brancos": 56758,
+     "pctBrancos": 0.93,
+     "nulos": 119642,
+     "pctNulos": 1.95,
+     "candidatos": [
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 4117513,
+       "pct": 69.2,
+       "eleito": true,
+       "situacao": "Eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 1832554,
+       "pct": 30.8,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "pi": {
+     "gerado": "25/10/2026 23:26:59",
+     "final": true,
+     "secoesTotal": 10225,
+     "secoesTotalizadas": 10225,
+     "eleitorado": 2704695,
+     "comparecimento": 2239830,
+     "pctComparecimento": 82.81,
+     "abstencao": 464865,
+     "pctAbstencao": 17.19,
+     "validos": 2179848,
+     "anulados": 0,
+     "brancos": 16137,
+     "pctBrancos": 0.72,
+     "nulos": 43845,
+     "pctNulos": 1.96,
+     "candidatos": [
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 1653989,
+       "pct": 75.88,
+       "eleito": true,
+       "situacao": "Eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 525859,
+       "pct": 24.12,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "rj": {
+     "gerado": "25/10/2026 23:26:58",
+     "final": true,
+     "secoesTotal": 37675,
+     "secoesTotalizadas": 37675,
+     "eleitorado": 12857526,
+     "comparecimento": 10077449,
+     "pctComparecimento": 78.38,
+     "abstencao": 2780077,
+     "pctAbstencao": 21.62,
+     "validos": 9734426,
+     "anulados": 0,
+     "brancos": 111682,
+     "pctBrancos": 1.11,
+     "nulos": 231341,
+     "pctNulos": 2.3,
+     "candidatos": [
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 5169033,
+       "pct": 53.1,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 4565393,
+       "pct": 46.9,
+       "eleito": true,
+       "situacao": "Eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "rn": {
+     "gerado": "25/10/2026 23:26:58",
+     "final": true,
+     "secoesTotal": 8115,
+     "secoesTotalizadas": 8115,
+     "eleitorado": 2659867,
+     "comparecimento": 2232823,
+     "pctComparecimento": 83.94,
+     "abstencao": 427044,
+     "pctAbstencao": 16.06,
+     "validos": 2151005,
+     "anulados": 0,
+     "brancos": 19939,
+     "pctBrancos": 0.89,
+     "nulos": 61879,
+     "pctNulos": 2.77,
+     "candidatos": [
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 1413596,
+       "pct": 65.72,
+       "eleito": true,
+       "situacao": "Eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 737409,
+       "pct": 34.28,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "rs": {
+     "gerado": "25/10/2026 23:27:07",
+     "final": true,
+     "secoesTotal": 27547,
+     "secoesTotalizadas": 27547,
+     "eleitorado": 8522318,
+     "comparecimento": 6889638,
+     "pctComparecimento": 80.84,
+     "abstencao": 1632680,
+     "pctAbstencao": 19.16,
+     "validos": 6698930,
+     "anulados": 0,
+     "brancos": 89463,
+     "pctBrancos": 1.3,
+     "nulos": 101245,
+     "pctNulos": 1.47,
+     "candidatos": [
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 3874378,
+       "pct": 57.84,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 2824552,
+       "pct": 42.16,
+       "eleito": true,
+       "situacao": "Eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "ro": {
+     "gerado": "25/10/2026 23:26:57",
+     "final": true,
+     "secoesTotal": 4698,
+     "secoesTotalizadas": 4698,
+     "eleitorado": 1265926,
+     "comparecimento": 988489,
+     "pctComparecimento": 78.08,
+     "abstencao": 277437,
+     "pctAbstencao": 21.92,
+     "validos": 968828,
+     "anulados": 0,
+     "brancos": 8361,
+     "pctBrancos": 0.85,
+     "nulos": 11300,
+     "pctNulos": 1.14,
+     "candidatos": [
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 674382,
+       "pct": 69.61,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 294446,
+       "pct": 30.39,
+       "eleito": true,
+       "situacao": "Eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "rr": {
+     "gerado": "25/10/2026 23:26:57",
+     "final": true,
+     "secoesTotal": 1519,
+     "secoesTotalizadas": 1519,
+     "eleitorado": 401540,
+     "comparecimento": 308597,
+     "pctComparecimento": 76.85,
+     "abstencao": 92943,
+     "pctAbstencao": 23.15,
+     "validos": 303180,
+     "anulados": 0,
+     "brancos": 2176,
+     "pctBrancos": 0.71,
+     "nulos": 3241,
+     "pctNulos": 1.05,
+     "candidatos": [
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 219675,
+       "pct": 72.46,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 83505,
+       "pct": 27.54,
+       "eleito": true,
+       "situacao": "Eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "sc": {
+     "gerado": "25/10/2026 23:27:01",
+     "final": true,
+     "secoesTotal": 17326,
+     "secoesTotalizadas": 17326,
+     "eleitorado": 5734687,
+     "comparecimento": 4762303,
+     "pctComparecimento": 83.04,
+     "abstencao": 972384,
+     "pctAbstencao": 16.96,
+     "validos": 4638385,
+     "anulados": 0,
+     "brancos": 48674,
+     "pctBrancos": 1.02,
+     "nulos": 75244,
+     "pctNulos": 1.58,
+     "candidatos": [
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 3220071,
+       "pct": 69.42,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 1418314,
+       "pct": 30.58,
+       "eleito": true,
+       "situacao": "Eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "se": {
+     "gerado": "25/10/2026 23:26:57",
+     "final": true,
+     "secoesTotal": 5923,
+     "secoesTotalizadas": 5923,
+     "eleitorado": 1740093,
+     "comparecimento": 1466659,
+     "pctComparecimento": 84.29,
+     "abstencao": 273434,
+     "pctAbstencao": 15.71,
+     "validos": 1422395,
+     "anulados": 0,
+     "brancos": 13135,
+     "pctBrancos": 0.9,
+     "nulos": 31129,
+     "pctNulos": 2.12,
+     "candidatos": [
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 989041,
+       "pct": 69.53,
+       "eleito": true,
+       "situacao": "Eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 433354,
+       "pct": 30.47,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "sp": {
+     "gerado": "25/10/2026 23:27:11",
+     "final": true,
+     "secoesTotal": 103656,
+     "secoesTotalizadas": 103656,
+     "eleitorado": 34123591,
+     "comparecimento": 27364389,
+     "pctComparecimento": 80.19,
+     "abstencao": 6759202,
+     "pctAbstencao": 19.81,
+     "validos": 26258452,
+     "anulados": 0,
+     "brancos": 389606,
+     "pctBrancos": 1.42,
+     "nulos": 716331,
+     "pctNulos": 2.62,
+     "candidatos": [
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 14139178,
+       "pct": 53.85,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 12119274,
+       "pct": 46.15,
+       "eleito": true,
+       "situacao": "Eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "to": {
+     "gerado": "25/10/2026 23:26:58",
+     "final": true,
+     "secoesTotal": 4384,
+     "secoesTotalizadas": 4384,
+     "eleitorado": 1182041,
+     "comparecimento": 954763,
+     "pctComparecimento": 80.77,
+     "abstencao": 227278,
+     "pctAbstencao": 19.23,
+     "validos": 910878,
+     "anulados": 0,
+     "brancos": 8059,
+     "pctBrancos": 0.84,
+     "nulos": 35826,
+     "pctNulos": 3.75,
+     "candidatos": [
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 467916,
+       "pct": 51.37,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 442962,
+       "pct": 48.63,
+       "eleito": true,
+       "situacao": "Eleito",
+       "destino": "Válido"
+      }
+     ]
+    },
+    "zz": {
+     "gerado": "25/10/2026 23:26:57",
+     "final": true,
+     "secoesTotal": 1351,
+     "secoesTotalizadas": 1351,
+     "eleitorado": 916683,
+     "comparecimento": 381443,
+     "pctComparecimento": 41.63,
+     "abstencao": 534817,
+     "pctAbstencao": 58.37,
+     "validos": 371651,
+     "anulados": 0,
+     "brancos": 4675,
+     "pctBrancos": 1.23,
+     "nulos": 5117,
+     "pctNulos": 1.34,
+     "candidatos": [
+      {
+       "n": "13",
+       "nome": "LULA",
+       "partido": "PT",
+       "votos": 200154,
+       "pct": 53.86,
+       "eleito": true,
+       "situacao": "Eleito",
+       "destino": "Válido"
+      },
+      {
+       "n": "22",
+       "nome": "FLAVIO BOLSONARO",
+       "partido": "PL",
+       "votos": 171497,
+       "pct": 46.14,
+       "eleito": false,
+       "situacao": "Não eleito",
+       "destino": "Válido"
+      }
+     ]
+    }
+   }
+  }
+ },
+ "governador": {
+  "1": {
+   "ac": {
+    "gerado": "04/10/2026 21:08:18",
+    "final": true,
+    "secoesTotal": 2270,
+    "secoesTotalizadas": 2270,
+    "eleitorado": 613316,
+    "comparecimento": 487971,
+    "pctComparecimento": 79.56,
+    "abstencao": 125345,
+    "pctAbstencao": 20.44,
+    "validos": 439647,
+    "anulados": 0,
+    "brancos": 8926,
+    "pctBrancos": 1.83,
+    "nulos": 39398,
+    "pctNulos": 8.07,
+    "candidatos": [
+     {
+      "n": "11",
+      "nome": "MAILZA ASSIS",
+      "partido": "PP",
+      "votos": 218760,
+      "pct": 49.76,
+      "eleito": false,
+      "situacao": "2º turno",
+      "destino": "Válido"
+     },
+     {
+      "n": "10",
+      "nome": "ALAN RICK",
+      "partido": "REPUBLICANOS",
+      "votos": 141859,
+      "pct": 32.27,
+      "eleito": false,
+      "situacao": "2º turno",
+      "destino": "Válido"
+     },
+     {
+      "n": "45",
+      "nome": "TIÃO BOCALOM",
+      "partido": "PSDB",
+      "votos": 44946,
+      "pct": 10.22,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "40",
+      "nome": "THOR DANTAS",
+      "partido": "PSB",
+      "votos": 32963,
+      "pct": 7.5,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "21",
+      "nome": "EUDO RAFFAEL",
+      "partido": "PCB",
+      "votos": 715,
+      "pct": 0.16,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "36",
+      "nome": "DR.LUISINHO",
+      "partido": "AGIR",
+      "votos": 404,
+      "pct": 0.09,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     }
+    ]
+   },
+   "al": {
+    "gerado": "04/10/2026 22:54:50",
+    "final": true,
+    "secoesTotal": 7101,
+    "secoesTotalizadas": 7101,
+    "eleitorado": 2439190,
+    "comparecimento": 1935820,
+    "pctComparecimento": 79.36,
+    "abstencao": 503370,
+    "pctAbstencao": 20.64,
+    "validos": 1709614,
+    "anulados": 0,
+    "brancos": 56303,
+    "pctBrancos": 2.91,
+    "nulos": 169903,
+    "pctNulos": 8.78,
+    "candidatos": [
+     {
+      "n": "45",
+      "nome": "JHC",
+      "partido": "PSDB",
+      "votos": 892484,
+      "pct": 52.2,
+      "eleito": true,
+      "situacao": "Eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "15",
+      "nome": "RENAN FILHO",
+      "partido": "MDB",
+      "votos": 809796,
+      "pct": 47.37,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "80",
+      "nome": "LENILDA LUNA",
+      "partido": "UP",
+      "votos": 6454,
+      "pct": 0.38,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "35",
+      "nome": "MÁRCIO JAMBO",
+      "partido": "DEMOCRATA",
+      "votos": 880,
+      "pct": 0.05,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     }
+    ]
+   },
+   "ap": {
+    "gerado": "20/10/2026 18:27:15",
+    "final": true,
+    "secoesTotal": 1914,
+    "secoesTotalizadas": 1914,
+    "eleitorado": 576359,
+    "comparecimento": 476019,
+    "pctComparecimento": 82.59,
+    "abstencao": 100340,
+    "pctAbstencao": 17.41,
+    "validos": 448747,
+    "anulados": 0,
+    "brancos": 2964,
+    "pctBrancos": 0.62,
+    "nulos": 24308,
+    "pctNulos": 5.11,
+    "candidatos": [
+     {
+      "n": "55",
+      "nome": "DR. FURLAN",
+      "partido": "PSD",
+      "votos": 281595,
+      "pct": 62.75,
+      "eleito": true,
+      "situacao": "Eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "44",
+      "nome": "CLÉCIO",
+      "partido": "UNIÃO",
+      "votos": 165900,
+      "pct": 36.97,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "16",
+      "nome": "CARLOS CLEY",
+      "partido": "PSTU",
+      "votos": 561,
+      "pct": 0.13,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "27",
+      "nome": "DELEGADO MARCOS",
+      "partido": "DC",
+      "votos": 376,
+      "pct": 0.08,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "29",
+      "nome": "JAIRO PALHETA",
+      "partido": "PCO",
+      "votos": 315,
+      "pct": 0.07,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     }
+    ]
+   },
+   "am": {
+    "gerado": "10/10/2026 10:14:53",
+    "final": true,
+    "secoesTotal": 8157,
+    "secoesTotalizadas": 8157,
+    "eleitorado": 2796053,
+    "comparecimento": 2232271,
+    "pctComparecimento": 79.84,
+    "abstencao": 563782,
+    "pctAbstencao": 20.16,
+    "validos": 2071985,
+    "anulados": 0,
+    "brancos": 50340,
+    "pctBrancos": 2.26,
+    "nulos": 109946,
+    "pctNulos": 4.93,
+    "candidatos": [
+     {
+      "n": "55",
+      "nome": "OMAR AZIZ",
+      "partido": "PSD",
+      "votos": 841846,
+      "pct": 40.63,
+      "eleito": false,
+      "situacao": "2º turno",
+      "destino": "Válido"
+     },
+     {
+      "n": "22",
+      "nome": "PROFESSORA MARIA DO CARMO",
+      "partido": "PL",
+      "votos": 507335,
+      "pct": 24.49,
+      "eleito": false,
+      "situacao": "2º turno",
+      "destino": "Válido"
+     },
+     {
+      "n": "44",
+      "nome": "ROBERTO CIDADE",
+      "partido": "UNIÃO",
+      "votos": 453896,
+      "pct": 21.91,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "70",
+      "nome": "DAVID ALMEIDA",
+      "partido": "AVANTE",
+      "votos": 218490,
+      "pct": 10.54,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "33",
+      "nome": "CABO DACIOLO",
+      "partido": "MOBILIZA",
+      "votos": 36176,
+      "pct": 1.75,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "18",
+      "nome": "ISAEL MUNDURUKU",
+      "partido": "REDE",
+      "votos": 11459,
+      "pct": 0.55,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "16",
+      "nome": "GILBERTO VASCONCELOS",
+      "partido": "PSTU",
+      "votos": 2783,
+      "pct": 0.13,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     }
+    ]
+   },
+   "ba": {
+    "gerado": "05/10/2026 11:41:49",
+    "final": true,
+    "secoesTotal": 35476,
+    "secoesTotalizadas": 35476,
+    "eleitorado": 11304314,
+    "comparecimento": 9046179,
+    "pctComparecimento": 80.02,
+    "abstencao": 2258135,
+    "pctAbstencao": 19.98,
+    "validos": 8291090,
+    "anulados": 0,
+    "brancos": 233096,
+    "pctBrancos": 2.58,
+    "nulos": 521993,
+    "pctNulos": 5.77,
+    "candidatos": [
+     {
+      "n": "13",
+      "nome": "JERÔNIMO RODRIGUES",
+      "partido": "PT",
+      "votos": 4626509,
+      "pct": 55.8,
+      "eleito": true,
+      "situacao": "Eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "44",
+      "nome": "ACM NETO",
+      "partido": "UNIÃO",
+      "votos": 3625227,
+      "pct": 43.72,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "50",
+      "nome": "RONALDO MANSUR",
+      "partido": "PSOL",
+      "votos": 27243,
+      "pct": 0.33,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "80",
+      "nome": "AROLDO FELIX",
+      "partido": "UP",
+      "votos": 5238,
+      "pct": 0.06,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "29",
+      "nome": "MARIA BONA",
+      "partido": "PCO",
+      "votos": 4028,
+      "pct": 0.05,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "27",
+      "nome": "ARIEL CAPISTRANO",
+      "partido": "DC",
+      "votos": 2845,
+      "pct": 0.03,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     }
+    ]
+   },
+   "ce": {
+    "gerado": "04/10/2026 23:11:32",
+    "final": true,
+    "secoesTotal": 23765,
+    "secoesTotalizadas": 23765,
+    "eleitorado": 6991044,
+    "comparecimento": 5905522,
+    "pctComparecimento": 84.47,
+    "abstencao": 1085522,
+    "pctAbstencao": 15.53,
+    "validos": 5406095,
+    "anulados": 0,
+    "brancos": 170316,
+    "pctBrancos": 2.88,
+    "nulos": 329111,
+    "pctNulos": 5.57,
+    "candidatos": [
+     {
+      "n": "13",
+      "nome": "ELMANO DE FREITAS",
+      "partido": "PT",
+      "votos": 2875573,
+      "pct": 53.19,
+      "eleito": true,
+      "situacao": "Eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "45",
+      "nome": "CIRO GOMES",
+      "partido": "PSDB",
+      "votos": 2498891,
+      "pct": 46.22,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "14",
+      "nome": "DELEGADO HUGGO",
+      "partido": "MISSÃO",
+      "votos": 17219,
+      "pct": 0.32,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "30",
+      "nome": "VERA LÚCIA",
+      "partido": "NOVO",
+      "votos": 5701,
+      "pct": 0.11,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "80",
+      "nome": "SERLEY LEAL",
+      "partido": "UP",
+      "votos": 4344,
+      "pct": 0.08,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "16",
+      "nome": "ZÉ BATISTA",
+      "partido": "PSTU",
+      "votos": 2161,
+      "pct": 0.04,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "35",
+      "nome": "DANILO SOARES",
+      "partido": "DEMOCRATA",
+      "votos": 1743,
+      "pct": 0.03,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "29",
+      "nome": "IERI BRAGA",
+      "partido": "PCO",
+      "votos": 463,
+      "pct": 0.01,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     }
+    ]
+   },
+   "df": {
+    "gerado": "15/10/2026 09:08:09",
+    "final": true,
+    "secoesTotal": 6969,
+    "secoesTotalizadas": 6969,
+    "eleitorado": 2243988,
+    "comparecimento": 1817921,
+    "pctComparecimento": 81.01,
+    "abstencao": 426067,
+    "pctAbstencao": 18.99,
+    "validos": 1651394,
+    "anulados": 1843,
+    "brancos": 74774,
+    "pctBrancos": 4.11,
+    "nulos": 89910,
+    "pctNulos": 4.95,
+    "candidatos": [
+     {
+      "n": "11",
+      "nome": "CELINA LEÃO",
+      "partido": "PP",
+      "votos": 825530,
+      "pct": 49.93,
+      "eleito": false,
+      "situacao": "2º turno",
+      "destino": "Válido"
+     },
+     {
+      "n": "13",
+      "nome": "LEANDRO GRASS",
+      "partido": "PT",
+      "votos": 569930,
+      "pct": 34.47,
+      "eleito": false,
+      "situacao": "2º turno",
+      "destino": "Válido"
+     },
+     {
+      "n": "45",
+      "nome": "PAULA BELMONTE",
+      "partido": "PSDB",
+      "votos": 140765,
+      "pct": 8.51,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "30",
+      "nome": "KIKO CAPUTO",
+      "partido": "NOVO",
+      "votos": 72148,
+      "pct": 4.36,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "40",
+      "nome": "CAPPELLI",
+      "partido": "PSB",
+      "votos": 36828,
+      "pct": 2.23,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "80",
+      "nome": "PROFESSORA SAMARA MINEIRO",
+      "partido": "UP",
+      "votos": 3958,
+      "pct": 0.24,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "16",
+      "nome": "PROFESSOR ROBSON",
+      "partido": "PSTU",
+      "votos": 1640,
+      "pct": 0.1,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "36",
+      "nome": "ELISSON",
+      "partido": "AGIR",
+      "votos": 1172,
+      "pct": 0.07,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Anulado sub judice"
+     },
+     {
+      "n": "28",
+      "nome": "RICO PINHEIRO",
+      "partido": "PRTB",
+      "votos": 671,
+      "pct": 0.04,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Anulado sub judice"
+     },
+     {
+      "n": "29",
+      "nome": "EXPEDITO MENDONÇA",
+      "partido": "PCO",
+      "votos": 595,
+      "pct": 0.04,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     }
+    ]
+   },
+   "es": {
+    "gerado": "04/10/2026 20:57:08",
+    "final": true,
+    "secoesTotal": 9844,
+    "secoesTotalizadas": 9844,
+    "eleitorado": 2987584,
+    "comparecimento": 2348612,
+    "pctComparecimento": 78.61,
+    "abstencao": 638972,
+    "pctAbstencao": 21.39,
+    "validos": 2112171,
+    "anulados": 0,
+    "brancos": 110040,
+    "pctBrancos": 4.69,
+    "nulos": 126401,
+    "pctNulos": 5.38,
+    "candidatos": [
+     {
+      "n": "10",
+      "nome": "LORENZO PAZOLINI",
+      "partido": "REPUBLICANOS",
+      "votos": 1048633,
+      "pct": 49.65,
+      "eleito": false,
+      "situacao": "2º turno",
+      "destino": "Válido"
+     },
+     {
+      "n": "15",
+      "nome": "RICARDO FERRAÇO",
+      "partido": "MDB",
+      "votos": 719397,
+      "pct": 34.06,
+      "eleito": false,
+      "situacao": "2º turno",
+      "destino": "Válido"
+     },
+     {
+      "n": "13",
+      "nome": "HELDER SALOMÃO",
+      "partido": "PT",
+      "votos": 323483,
+      "pct": 15.32,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "14",
+      "nome": "BRENO BARCELOS",
+      "partido": "MISSÃO",
+      "votos": 17988,
+      "pct": 0.85,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "80",
+      "nome": "RAFAEL DEMUNER",
+      "partido": "UP",
+      "votos": 2670,
+      "pct": 0.13,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     }
+    ]
+   },
+   "go": {
+    "gerado": "04/10/2026 22:39:20",
+    "final": true,
+    "secoesTotal": 15686,
+    "secoesTotalizadas": 15686,
+    "eleitorado": 5074870,
+    "comparecimento": 3966488,
+    "pctComparecimento": 78.16,
+    "abstencao": 1108382,
+    "pctAbstencao": 21.84,
+    "validos": 3630576,
+    "anulados": 0,
+    "brancos": 170266,
+    "pctBrancos": 4.29,
+    "nulos": 165646,
+    "pctNulos": 4.18,
+    "candidatos": [
+     {
+      "n": "15",
+      "nome": "DANIEL VILELA",
+      "partido": "MDB",
+      "votos": 2148218,
+      "pct": 59.17,
+      "eleito": true,
+      "situacao": "Eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "22",
+      "nome": "WILDER MORAIS",
+      "partido": "PL",
+      "votos": 797141,
+      "pct": 21.96,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "13",
+      "nome": "LUIS CESAR BUENO",
+      "partido": "PT",
+      "votos": 356692,
+      "pct": 9.82,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "45",
+      "nome": "MARCONI PERILLO",
+      "partido": "PSDB",
+      "votos": 315676,
+      "pct": 8.69,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "80",
+      "nome": "LUCIANA AMORIM",
+      "partido": "UP",
+      "votos": 11632,
+      "pct": 0.32,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "29",
+      "nome": "DANILO DA SILVA",
+      "partido": "PCO",
+      "votos": 1217,
+      "pct": 0.03,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     }
+    ]
+   },
+   "ma": {
+    "gerado": "05/10/2026 02:01:55",
+    "final": true,
+    "secoesTotal": 18093,
+    "secoesTotalizadas": 18093,
+    "eleitorado": 5180851,
+    "comparecimento": 4158395,
+    "pctComparecimento": 80.26,
+    "abstencao": 1022456,
+    "pctAbstencao": 19.74,
+    "validos": 3846156,
+    "anulados": 48924,
+    "brancos": 93669,
+    "pctBrancos": 2.25,
+    "nulos": 169646,
+    "pctNulos": 4.08,
+    "candidatos": [
+     {
+      "n": "55",
+      "nome": "EDUARDO BRAIDE",
+      "partido": "PSD",
+      "votos": 2104122,
+      "pct": 54.02,
+      "eleito": true,
+      "situacao": "Eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "15",
+      "nome": "ORLEANS BRANDÃO",
+      "partido": "MDB",
+      "votos": 1354044,
+      "pct": 34.76,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "13",
+      "nome": "FELIPE CAMARÃO",
+      "partido": "PT",
+      "votos": 374039,
+      "pct": 9.6,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "28",
+      "nome": "ROBERTO ROCHA",
+      "partido": "PRTB",
+      "votos": 48924,
+      "pct": 1.26,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Anulado sub judice"
+     },
+     {
+      "n": "14",
+      "nome": "ANDRÉ LUIS",
+      "partido": "MISSÃO",
+      "votos": 7905,
+      "pct": 0.2,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "16",
+      "nome": "SAULO ARCANGELI",
+      "partido": "PSTU",
+      "votos": 4693,
+      "pct": 0.12,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "21",
+      "nome": "REGINALDO LIMA",
+      "partido": "PCB",
+      "votos": 1096,
+      "pct": 0.03,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "29",
+      "nome": "DIMAS CASSIMIRO",
+      "partido": "PCO",
+      "votos": 257,
+      "pct": 0.01,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     }
+    ]
+   },
+   "mt": {
+    "gerado": "04/10/2026 21:32:09",
+    "final": true,
+    "secoesTotal": 8287,
+    "secoesTotalizadas": 8287,
+    "eleitorado": 2634992,
+    "comparecimento": 2049718,
+    "pctComparecimento": 77.79,
+    "abstencao": 585274,
+    "pctAbstencao": 22.21,
+    "validos": 1856293,
+    "anulados": 0,
+    "brancos": 82690,
+    "pctBrancos": 4.03,
+    "nulos": 110735,
+    "pctNulos": 5.4,
+    "candidatos": [
+     {
+      "n": "10",
+      "nome": "OTAVIANO PIVETTA",
+      "partido": "REPUBLICANOS",
+      "votos": 1128099,
+      "pct": 60.77,
+      "eleito": true,
+      "situacao": "Eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "22",
+      "nome": "WELLINGTON FAGUNDES",
+      "partido": "PL",
+      "votos": 430442,
+      "pct": 23.19,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "55",
+      "nome": "DOUTORA NATASHA",
+      "partido": "PSD",
+      "votos": 281548,
+      "pct": 15.17,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "14",
+      "nome": "RAFAELL MILAS",
+      "partido": "MISSÃO",
+      "votos": 10300,
+      "pct": 0.55,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "36",
+      "nome": "SARGENTO LAUDICÉRIO",
+      "partido": "AGIR",
+      "votos": 3210,
+      "pct": 0.17,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "33",
+      "nome": "MAURICIO COELHO",
+      "partido": "MOBILIZA",
+      "votos": 2694,
+      "pct": 0.15,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     }
+    ]
+   },
+   "ms": {
+    "gerado": "21/10/2026 17:40:52",
+    "final": true,
+    "secoesTotal": 7106,
+    "secoesTotalizadas": 7106,
+    "eleitorado": 2021869,
+    "comparecimento": 1539009,
+    "pctComparecimento": 76.12,
+    "abstencao": 482860,
+    "pctAbstencao": 23.88,
+    "validos": 1363298,
+    "anulados": 0,
+    "brancos": 80522,
+    "pctBrancos": 5.23,
+    "nulos": 95189,
+    "pctNulos": 6.19,
+    "candidatos": [
+     {
+      "n": "11",
+      "nome": "EDUARDO RIEDEL",
+      "partido": "PP",
+      "votos": 914323,
+      "pct": 67.07,
+      "eleito": true,
+      "situacao": "Eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "13",
+      "nome": "FÁBIO TRAD",
+      "partido": "PT",
+      "votos": 322807,
+      "pct": 23.68,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "30",
+      "nome": "JOÃO HENRIQUE CATAN",
+      "partido": "NOVO",
+      "votos": 98677,
+      "pct": 7.24,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "25",
+      "nome": "DELCIDIO AMARAL",
+      "partido": "PRD",
+      "votos": 14431,
+      "pct": 1.06,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "27",
+      "nome": "ECONOMISTA RENATO GOMES",
+      "partido": "DC",
+      "votos": 5589,
+      "pct": 0.41,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "50",
+      "nome": "LUCIEN REZENDE",
+      "partido": "PSOL",
+      "votos": 4444,
+      "pct": 0.33,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "29",
+      "nome": "DANIEL LEMES",
+      "partido": "PCO",
+      "votos": 2115,
+      "pct": 0.16,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "36",
+      "nome": "JEFERSON BEZERRA",
+      "partido": "AGIR",
+      "votos": 912,
+      "pct": 0.07,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     }
+    ]
+   },
+   "mg": {
+    "gerado": "15/10/2026 19:11:12",
+    "final": true,
+    "secoesTotal": 52062,
+    "secoesTotalizadas": 52062,
+    "eleitorado": 16361188,
+    "comparecimento": 12627167,
+    "pctComparecimento": 77.18,
+    "abstencao": 3734021,
+    "pctAbstencao": 22.82,
+    "validos": 11410371,
+    "anulados": 1464,
+    "brancos": 658416,
+    "pctBrancos": 5.21,
+    "nulos": 556916,
+    "pctNulos": 4.41,
+    "candidatos": [
+     {
+      "n": "10",
+      "nome": "CLEITINHO AZEVEDO",
+      "partido": "REPUBLICANOS",
+      "votos": 6321590,
+      "pct": 55.4,
+      "eleito": true,
+      "situacao": "Eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "13",
+      "nome": "PATRUS ANANIAS",
+      "partido": "PT",
+      "votos": 3006088,
+      "pct": 26.34,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "22",
+      "nome": "FLÁVIO ROSCOE",
+      "partido": "PL",
+      "votos": 795193,
+      "pct": 6.97,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "55",
+      "nome": "MATEUS SIMÕES",
+      "partido": "PSD",
+      "votos": 530292,
+      "pct": 4.65,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "12",
+      "nome": "ALEXANDRE KALIL",
+      "partido": "PDT",
+      "votos": 403466,
+      "pct": 3.54,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "15",
+      "nome": "GABRIEL",
+      "partido": "MDB",
+      "votos": 237051,
+      "pct": 2.08,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "14",
+      "nome": "BEN MENDES",
+      "partido": "MISSÃO",
+      "votos": 80308,
+      "pct": 0.7,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "80",
+      "nome": "INDIRA XAVIER",
+      "partido": "UP",
+      "votos": 20662,
+      "pct": 0.18,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "21",
+      "nome": "PROFESSOR TÚLIO LOPES",
+      "partido": "PCB",
+      "votos": 10957,
+      "pct": 0.1,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "16",
+      "nome": "RAFAEL DUDA",
+      "partido": "PSTU",
+      "votos": 4764,
+      "pct": 0.04,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "29",
+      "nome": "HENRIQUE ÁREAS",
+      "partido": "PCO",
+      "votos": 1464,
+      "pct": 0.01,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Anulado"
+     }
+    ]
+   },
+   "pa": {
+    "gerado": "05/10/2026 11:42:28",
+    "final": true,
+    "secoesTotal": 20827,
+    "secoesTotalizadas": 20827,
+    "eleitorado": 6258162,
+    "comparecimento": 5062750,
+    "pctComparecimento": 80.9,
+    "abstencao": 1195412,
+    "pctAbstencao": 19.1,
+    "validos": 4564841,
+    "anulados": 1987,
+    "brancos": 106097,
+    "pctBrancos": 2.1,
+    "nulos": 389825,
+    "pctNulos": 7.7,
+    "candidatos": [
+     {
+      "n": "20",
+      "nome": "DR. DANIEL",
+      "partido": "PODE",
+      "votos": 2345721,
+      "pct": 51.36,
+      "eleito": true,
+      "situacao": "Eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "15",
+      "nome": "HANA GHASSAN",
+      "partido": "MDB",
+      "votos": 2125084,
+      "pct": 46.53,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "50",
+      "nome": "ARACELI",
+      "partido": "PSOL",
+      "votos": 85857,
+      "pct": 1.88,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "80",
+      "nome": "GAL LEITE",
+      "partido": "UP",
+      "votos": 5503,
+      "pct": 0.12,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "16",
+      "nome": "WELL MACEDO",
+      "partido": "PSTU",
+      "votos": 2676,
+      "pct": 0.06,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "35",
+      "nome": "RUTH REIS",
+      "partido": "DEMOCRATA",
+      "votos": 1987,
+      "pct": 0.04,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Anulado sub judice"
+     }
+    ]
+   },
+   "pb": {
+    "gerado": "22/10/2026 12:49:43",
+    "final": true,
+    "secoesTotal": 10712,
+    "secoesTotalizadas": 10712,
+    "eleitorado": 3241966,
+    "comparecimento": 2677904,
+    "pctComparecimento": 82.6,
+    "abstencao": 564062,
+    "pctAbstencao": 17.4,
+    "validos": 2286622,
+    "anulados": 0,
+    "brancos": 127816,
+    "pctBrancos": 4.77,
+    "nulos": 263466,
+    "pctNulos": 9.84,
+    "candidatos": [
+     {
+      "n": "11",
+      "nome": "LUCAS RIBEIRO",
+      "partido": "PP",
+      "votos": 1470252,
+      "pct": 64.3,
+      "eleito": true,
+      "situacao": "Eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "22",
+      "nome": "EFRAIM FILHO",
+      "partido": "PL",
+      "votos": 552836,
+      "pct": 24.18,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "15",
+      "nome": "CÍCERO LUCENA",
+      "partido": "MDB",
+      "votos": 252884,
+      "pct": 11.06,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "80",
+      "nome": "YURI EZEQUIEL",
+      "partido": "UP",
+      "votos": 8272,
+      "pct": 0.36,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "29",
+      "nome": "CAMILO DUARTE",
+      "partido": "PCO",
+      "votos": 2378,
+      "pct": 0.1,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     }
+    ]
+   },
+   "pr": {
+    "gerado": "05/10/2026 11:46:40",
+    "final": true,
+    "secoesTotal": 27142,
+    "secoesTotalizadas": 27142,
+    "eleitorado": 8600624,
+    "comparecimento": 6829615,
+    "pctComparecimento": 79.41,
+    "abstencao": 1771009,
+    "pctAbstencao": 20.59,
+    "validos": 6242274,
+    "anulados": 1525,
+    "brancos": 278322,
+    "pctBrancos": 4.08,
+    "nulos": 307494,
+    "pctNulos": 4.5,
+    "candidatos": [
+     {
+      "n": "22",
+      "nome": "SERGIO MORO",
+      "partido": "PL",
+      "votos": 3127911,
+      "pct": 50.1,
+      "eleito": true,
+      "situacao": "Eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "55",
+      "nome": "SANDRO ALEX",
+      "partido": "PSD",
+      "votos": 1583764,
+      "pct": 25.37,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "12",
+      "nome": "REQUIÃO FILHO",
+      "partido": "PDT",
+      "votos": 1465601,
+      "pct": 23.47,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "14",
+      "nome": "LUIZ FRANÇA",
+      "partido": "MISSÃO",
+      "votos": 44581,
+      "pct": 0.71,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "80",
+      "nome": "TAYNÁ MIESSA",
+      "partido": "UP",
+      "votos": 14193,
+      "pct": 0.23,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "33",
+      "nome": "DOUTOR ALEXANDRE SALOMÃO",
+      "partido": "MOBILIZA",
+      "votos": 4144,
+      "pct": 0.07,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "16",
+      "nome": "SAMUEL DE MATTOS",
+      "partido": "PSTU",
+      "votos": 2080,
+      "pct": 0.03,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "29",
+      "nome": "ADRIANO FUNILEIRO",
+      "partido": "PCO",
+      "votos": 1525,
+      "pct": 0.02,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Anulado sub judice"
+     }
+    ]
+   },
+   "pe": {
+    "gerado": "24/10/2026 12:42:07",
+    "final": true,
+    "secoesTotal": 21418,
+    "secoesTotalizadas": 21418,
+    "eleitorado": 7216989,
+    "comparecimento": 5905236,
+    "pctComparecimento": 81.82,
+    "abstencao": 1311753,
+    "pctAbstencao": 18.18,
+    "validos": 5266852,
+    "anulados": 0,
+    "brancos": 156481,
+    "pctBrancos": 2.65,
+    "nulos": 481903,
+    "pctNulos": 8.16,
+    "candidatos": [
+     {
+      "n": "55",
+      "nome": "RAQUEL LYRA",
+      "partido": "PSD",
+      "votos": 2805438,
+      "pct": 53.27,
+      "eleito": true,
+      "situacao": "Eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "40",
+      "nome": "JOÃO CAMPOS",
+      "partido": "PSB",
+      "votos": 2360469,
+      "pct": 44.82,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "50",
+      "nome": "IVAN MORAES",
+      "partido": "PSOL",
+      "votos": 77699,
+      "pct": 1.48,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "14",
+      "nome": "RENAN",
+      "partido": "MISSÃO",
+      "votos": 18340,
+      "pct": 0.35,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "80",
+      "nome": "PROFESSORA CAMILA",
+      "partido": "UP",
+      "votos": 3495,
+      "pct": 0.07,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "16",
+      "nome": "GUILHERME FONSECA",
+      "partido": "PSTU",
+      "votos": 987,
+      "pct": 0.02,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "29",
+      "nome": "VICTOR ASSIS",
+      "partido": "PCO",
+      "votos": 424,
+      "pct": 0.01,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     }
+    ]
+   },
+   "pi": {
+    "gerado": "22/10/2026 15:05:52",
+    "final": true,
+    "secoesTotal": 10225,
+    "secoesTotalizadas": 10225,
+    "eleitorado": 2703064,
+    "comparecimento": 2239386,
+    "pctComparecimento": 82.85,
+    "abstencao": 463678,
+    "pctAbstencao": 17.15,
+    "validos": 2021200,
+    "anulados": 5075,
+    "brancos": 76589,
+    "pctBrancos": 3.42,
+    "nulos": 136522,
+    "pctNulos": 6.1,
+    "candidatos": [
+     {
+      "n": "13",
+      "nome": "RAFAEL FONTELES",
+      "partido": "PT",
+      "votos": 1436697,
+      "pct": 70.9,
+      "eleito": true,
+      "situacao": "Eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "11",
+      "nome": "JOEL RODRIGUES",
+      "partido": "PP",
+      "votos": 557972,
+      "pct": 27.54,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "50",
+      "nome": "PROFESSOR GISVALDO",
+      "partido": "PSOL",
+      "votos": 10002,
+      "pct": 0.49,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "45",
+      "nome": "DRA. LÚCIA SANTOS",
+      "partido": "PSDB",
+      "votos": 9611,
+      "pct": 0.47,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "30",
+      "nome": "ELIZEU AGUIAR",
+      "partido": "NOVO",
+      "votos": 5141,
+      "pct": 0.25,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "16",
+      "nome": "GERALDO CARVALHO",
+      "partido": "PSTU",
+      "votos": 1858,
+      "pct": 0.09,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Anulado sub judice"
+     },
+     {
+      "n": "80",
+      "nome": "SANTIAGO BELIZÁRIO",
+      "partido": "UP",
+      "votos": 1777,
+      "pct": 0.09,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "29",
+      "nome": "LOURDES MELO",
+      "partido": "PCO",
+      "votos": 1296,
+      "pct": 0.06,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Anulado"
+     },
+     {
+      "n": "27",
+      "nome": "PROFESSOR JURITY",
+      "partido": "DC",
+      "votos": 1102,
+      "pct": 0.05,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Anulado"
+     },
+     {
+      "n": "35",
+      "nome": "RAVENNA DA INCLUSÃO",
+      "partido": "DEMOCRATA",
+      "votos": 819,
+      "pct": 0.04,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Anulado"
+     }
+    ]
+   },
+   "rj": {
+    "gerado": "10/10/2026 15:09:50",
+    "final": true,
+    "secoesTotal": 37675,
+    "secoesTotalizadas": 37675,
+    "eleitorado": 12842517,
+    "comparecimento": 9845867,
+    "pctComparecimento": 76.67,
+    "abstencao": 2996650,
+    "pctAbstencao": 23.33,
+    "validos": 8394627,
+    "anulados": 0,
+    "brancos": 501537,
+    "pctBrancos": 5.09,
+    "nulos": 949703,
+    "pctNulos": 9.65,
+    "candidatos": [
+     {
+      "n": "22",
+      "nome": "DOUGLAS RUAS",
+      "partido": "PL",
+      "votos": 4271199,
+      "pct": 50.88,
+      "eleito": true,
+      "situacao": "Eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "55",
+      "nome": "EDUARDO PAES",
+      "partido": "PSD",
+      "votos": 3706984,
+      "pct": 44.16,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "50",
+      "nome": "WILLIAM SIRI",
+      "partido": "PSOL",
+      "votos": 235347,
+      "pct": 2.8,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "14",
+      "nome": "CORONEL BUSNELLO",
+      "partido": "MISSÃO",
+      "votos": 84889,
+      "pct": 1.01,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "30",
+      "nome": "ANDRÉ MARINHO",
+      "partido": "NOVO",
+      "votos": 45359,
+      "pct": 0.54,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "80",
+      "nome": "JULIETE",
+      "partido": "UP",
+      "votos": 33430,
+      "pct": 0.4,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "16",
+      "nome": "CYRO GARCIA",
+      "partido": "PSTU",
+      "votos": 14642,
+      "pct": 0.17,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "29",
+      "nome": "LUAN MONTEIRO",
+      "partido": "PCO",
+      "votos": 2777,
+      "pct": 0.03,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     }
+    ]
+   },
+   "rn": {
+    "gerado": "24/10/2026 12:06:47",
+    "final": true,
+    "secoesTotal": 8115,
+    "secoesTotalizadas": 8115,
+    "eleitorado": 2656207,
+    "comparecimento": 2167714,
+    "pctComparecimento": 81.61,
+    "abstencao": 488493,
+    "pctAbstencao": 18.39,
+    "validos": 1986441,
+    "anulados": 0,
+    "brancos": 76524,
+    "pctBrancos": 3.53,
+    "nulos": 104749,
+    "pctNulos": 4.83,
+    "candidatos": [
+     {
+      "n": "44",
+      "nome": "ALLYSON",
+      "partido": "UNIÃO",
+      "votos": 733809,
+      "pct": 36.94,
+      "eleito": false,
+      "situacao": "2º turno",
+      "destino": "Válido"
+     },
+     {
+      "n": "13",
+      "nome": "CADU DE LULA",
+      "partido": "PT",
+      "votos": 718300,
+      "pct": 36.16,
+      "eleito": false,
+      "situacao": "2º turno",
+      "destino": "Válido"
+     },
+     {
+      "n": "22",
+      "nome": "ÁLVARO DIAS",
+      "partido": "PL",
+      "votos": 530580,
+      "pct": 26.71,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "80",
+      "nome": "ARINALDA DO MLB",
+      "partido": "UP",
+      "votos": 1466,
+      "pct": 0.07,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "16",
+      "nome": "DÁRIO BARBOSA",
+      "partido": "PSTU",
+      "votos": 1388,
+      "pct": 0.07,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "27",
+      "nome": "GODEIRO LINHARESS",
+      "partido": "DC",
+      "votos": 464,
+      "pct": 0.02,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "36",
+      "nome": "RODRIGO DE BOLSONARO",
+      "partido": "AGIR",
+      "votos": 434,
+      "pct": 0.02,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     }
+    ]
+   },
+   "rs": {
+    "gerado": "16/10/2026 11:46:19",
+    "final": true,
+    "secoesTotal": 27547,
+    "secoesTotalizadas": 27547,
+    "eleitorado": 8516465,
+    "comparecimento": 6697424,
+    "pctComparecimento": 78.64,
+    "abstencao": 1819041,
+    "pctAbstencao": 21.36,
+    "validos": 6055306,
+    "anulados": 2137,
+    "brancos": 324123,
+    "pctBrancos": 4.84,
+    "nulos": 315858,
+    "pctNulos": 4.72,
+    "candidatos": [
+     {
+      "n": "22",
+      "nome": "ZUCCO",
+      "partido": "PL",
+      "votos": 3516048,
+      "pct": 58.05,
+      "eleito": true,
+      "situacao": "Eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "12",
+      "nome": "JULIANA BRIZOLA",
+      "partido": "PDT",
+      "votos": 1917374,
+      "pct": 31.65,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "15",
+      "nome": "GABRIEL SOUZA",
+      "partido": "MDB",
+      "votos": 510698,
+      "pct": 8.43,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "45",
+      "nome": "MARCELO MARANATA",
+      "partido": "PSDB",
+      "votos": 101978,
+      "pct": 1.68,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "80",
+      "nome": "PRISCILA VOIGT",
+      "partido": "UP",
+      "votos": 5716,
+      "pct": 0.09,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "16",
+      "nome": "REJANE DE OLIVEIRA",
+      "partido": "PSTU",
+      "votos": 3492,
+      "pct": 0.06,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "29",
+      "nome": "CESAR PONTES",
+      "partido": "PCO",
+      "votos": 2137,
+      "pct": 0.04,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Anulado sub judice"
+     }
+    ]
+   },
+   "ro": {
+    "gerado": "23/10/2026 19:32:24",
+    "final": true,
+    "secoesTotal": 4698,
+    "secoesTotalizadas": 4698,
+    "eleitorado": 1265008,
+    "comparecimento": 990313,
+    "pctComparecimento": 78.29,
+    "abstencao": 274695,
+    "pctAbstencao": 21.71,
+    "validos": 945058,
+    "anulados": 0,
+    "brancos": 23607,
+    "pctBrancos": 2.38,
+    "nulos": 21648,
+    "pctNulos": 2.19,
+    "candidatos": [
+     {
+      "n": "22",
+      "nome": "MARCOS ROGÉRIO",
+      "partido": "PL",
+      "votos": 537370,
+      "pct": 56.86,
+      "eleito": true,
+      "situacao": "Eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "55",
+      "nome": "ADAILTON FURIA",
+      "partido": "PSD",
+      "votos": 189547,
+      "pct": 20.06,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "44",
+      "nome": "HILDON CHAVES",
+      "partido": "UNIÃO",
+      "votos": 134355,
+      "pct": 14.22,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "13",
+      "nome": "EXPEDITO NETTO",
+      "partido": "PT",
+      "votos": 72851,
+      "pct": 7.71,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "15",
+      "nome": "PEDRO ABIB",
+      "partido": "MDB",
+      "votos": 6591,
+      "pct": 0.7,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "40",
+      "nome": "SAMUEL COSTA",
+      "partido": "PSB",
+      "votos": 4344,
+      "pct": 0.46,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     }
+    ]
+   },
+   "rr": {
+    "gerado": "04/10/2026 21:09:58",
+    "final": true,
+    "secoesTotal": 1519,
+    "secoesTotalizadas": 1519,
+    "eleitorado": 400603,
+    "comparecimento": 331959,
+    "pctComparecimento": 82.86,
+    "abstencao": 68644,
+    "pctAbstencao": 17.14,
+    "validos": 319336,
+    "anulados": 77,
+    "brancos": 3677,
+    "pctBrancos": 1.11,
+    "nulos": 8869,
+    "pctNulos": 2.67,
+    "candidatos": [
+     {
+      "n": "22",
+      "nome": "ARTHUR HENRIQUE",
+      "partido": "PL",
+      "votos": 220809,
+      "pct": 69.13,
+      "eleito": true,
+      "situacao": "Eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "10",
+      "nome": "SOLDADO SAMPAIO",
+      "partido": "REPUBLICANOS",
+      "votos": 93434,
+      "pct": 29.25,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "50",
+      "nome": "ROSI AIRES",
+      "partido": "PSOL",
+      "votos": 4880,
+      "pct": 1.53,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "77",
+      "nome": "FARAH MESQUITA",
+      "partido": "SOLIDARIEDADE",
+      "votos": 213,
+      "pct": 0.07,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "29",
+      "nome": "CLÉBIO GENUÍNO",
+      "partido": "PCO",
+      "votos": 77,
+      "pct": 0.02,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Anulado sub judice"
+     }
+    ]
+   },
+   "sc": {
+    "gerado": "24/10/2026 11:26:57",
+    "final": true,
+    "secoesTotal": 17326,
+    "secoesTotalizadas": 17326,
+    "eleitorado": 5719541,
+    "comparecimento": 4634550,
+    "pctComparecimento": 81.03,
+    "abstencao": 1084991,
+    "pctAbstencao": 18.97,
+    "validos": 4265641,
+    "anulados": 0,
+    "brancos": 169920,
+    "pctBrancos": 3.67,
+    "nulos": 198989,
+    "pctNulos": 4.29,
+    "candidatos": [
+     {
+      "n": "22",
+      "nome": "JORGINHO MELLO",
+      "partido": "PL",
+      "votos": 2942386,
+      "pct": 68.98,
+      "eleito": true,
+      "situacao": "Eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "40",
+      "nome": "GELSON MERÍSIO",
+      "partido": "PSB",
+      "votos": 668021,
+      "pct": 15.66,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "55",
+      "nome": "JOÃO RODRIGUES",
+      "partido": "PSD",
+      "votos": 569263,
+      "pct": 13.35,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "14",
+      "nome": "MARCELO BRIGADEIRO",
+      "partido": "MISSÃO",
+      "votos": 46624,
+      "pct": 1.09,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "80",
+      "nome": "LAÍS CHAUD",
+      "partido": "UP",
+      "votos": 21252,
+      "pct": 0.5,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "25",
+      "nome": "RALF ZIMMER",
+      "partido": "PRD",
+      "votos": 9000,
+      "pct": 0.21,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "16",
+      "nome": "PROFESSOR MARCUS SODRÉ",
+      "partido": "PSTU",
+      "votos": 6682,
+      "pct": 0.16,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "29",
+      "nome": "BRUNO PEDREIRO DO PCO",
+      "partido": "PCO",
+      "votos": 2413,
+      "pct": 0.06,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     }
+    ]
+   },
+   "se": {
+    "gerado": "04/10/2026 22:08:19",
+    "final": true,
+    "secoesTotal": 5923,
+    "secoesTotalizadas": 5923,
+    "eleitorado": 1737460,
+    "comparecimento": 1436609,
+    "pctComparecimento": 82.68,
+    "abstencao": 300851,
+    "pctAbstencao": 17.32,
+    "validos": 1189927,
+    "anulados": 37081,
+    "brancos": 54754,
+    "pctBrancos": 3.81,
+    "nulos": 154847,
+    "pctNulos": 10.78,
+    "candidatos": [
+     {
+      "n": "55",
+      "nome": "FÁBIO",
+      "partido": "PSD",
+      "votos": 727291,
+      "pct": 59.27,
+      "eleito": true,
+      "situacao": "Eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "10",
+      "nome": "VALMIR DE FRANCISQUINHO",
+      "partido": "REPUBLICANOS",
+      "votos": 459908,
+      "pct": 37.48,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "50",
+      "nome": "DR. HELTON",
+      "partido": "PSOL",
+      "votos": 37081,
+      "pct": 3.02,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Anulado sub judice"
+     },
+     {
+      "n": "27",
+      "nome": "TATY  CRISTINA DE JESUS",
+      "partido": "DC",
+      "votos": 2728,
+      "pct": 0.22,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     }
+    ]
+   },
+   "sp": {
+    "gerado": "05/10/2026 11:44:29",
+    "final": true,
+    "secoesTotal": 103656,
+    "secoesTotalizadas": 103656,
+    "eleitorado": 34081699,
+    "comparecimento": 26394256,
+    "pctComparecimento": 77.44,
+    "abstencao": 7687443,
+    "pctAbstencao": 22.56,
+    "validos": 23130513,
+    "anulados": 0,
+    "brancos": 1348262,
+    "pctBrancos": 5.11,
+    "nulos": 1915481,
+    "pctNulos": 7.26,
+    "candidatos": [
+     {
+      "n": "10",
+      "nome": "TARCÍSIO",
+      "partido": "REPUBLICANOS",
+      "votos": 14491874,
+      "pct": 62.65,
+      "eleito": true,
+      "situacao": "Eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "13",
+      "nome": "FERNANDO HADDAD",
+      "partido": "PT",
+      "votos": 8423656,
+      "pct": 36.42,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "80",
+      "nome": "VIVIAN MENDES",
+      "partido": "UP",
+      "votos": 80480,
+      "pct": 0.35,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "16",
+      "nome": "VERA LÚCIA",
+      "partido": "PSTU",
+      "votos": 75641,
+      "pct": 0.33,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "21",
+      "nome": "CARLOS MACHADO",
+      "partido": "PCB",
+      "votos": 58862,
+      "pct": 0.25,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     }
+    ]
+   },
+   "to": {
+    "gerado": "04/10/2026 21:18:59",
+    "final": true,
+    "secoesTotal": 4384,
+    "secoesTotalizadas": 4384,
+    "eleitorado": 1180433,
+    "comparecimento": 963810,
+    "pctComparecimento": 81.65,
+    "abstencao": 216623,
+    "pctAbstencao": 18.35,
+    "validos": 848629,
+    "anulados": 0,
+    "brancos": 27085,
+    "pctBrancos": 2.81,
+    "nulos": 88096,
+    "pctNulos": 9.14,
+    "candidatos": [
+     {
+      "n": "44",
+      "nome": "PROFESSORA DORINHA",
+      "partido": "UNIÃO",
+      "votos": 386260,
+      "pct": 45.52,
+      "eleito": false,
+      "situacao": "2º turno",
+      "destino": "Válido"
+     },
+     {
+      "n": "45",
+      "nome": "VICENTINHO JÚNIOR",
+      "partido": "PSDB",
+      "votos": 372848,
+      "pct": 43.94,
+      "eleito": false,
+      "situacao": "2º turno",
+      "destino": "Válido"
+     },
+     {
+      "n": "55",
+      "nome": "LAUREZ MOREIRA",
+      "partido": "PSD",
+      "votos": 69967,
+      "pct": 8.24,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "30",
+      "nome": "ATAIDES DE OLIVEIRA",
+      "partido": "NOVO",
+      "votos": 13173,
+      "pct": 1.55,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "50",
+      "nome": "PROF WITER NAVES",
+      "partido": "PSOL",
+      "votos": 5109,
+      "pct": 0.6,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "27",
+      "nome": "DU PEREIRA",
+      "partido": "DC",
+      "votos": 1272,
+      "pct": 0.15,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     }
+    ]
+   }
+  },
+  "2": {
+   "ac": {
+    "gerado": "25/10/2026 21:26:35",
+    "final": true,
+    "secoesTotal": 2270,
+    "secoesTotalizadas": 2270,
+    "eleitorado": 613336,
+    "comparecimento": 453334,
+    "pctComparecimento": 73.91,
+    "abstencao": 160002,
+    "pctAbstencao": 26.09,
+    "validos": 411743,
+    "anulados": 0,
+    "brancos": 11979,
+    "pctBrancos": 2.64,
+    "nulos": 29612,
+    "pctNulos": 6.53,
+    "candidatos": [
+     {
+      "n": "11",
+      "nome": "MAILZA ASSIS",
+      "partido": "PP",
+      "votos": 272635,
+      "pct": 66.21,
+      "eleito": true,
+      "situacao": "Eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "10",
+      "nome": "ALAN RICK",
+      "partido": "REPUBLICANOS",
+      "votos": 139108,
+      "pct": 33.79,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     }
+    ]
+   },
+   "am": {
+    "gerado": "25/10/2026 22:10:45",
+    "final": true,
+    "secoesTotal": 8157,
+    "secoesTotalizadas": 8157,
+    "eleitorado": 2796187,
+    "comparecimento": 2189860,
+    "pctComparecimento": 78.32,
+    "abstencao": 606327,
+    "pctAbstencao": 21.68,
+    "validos": 2074303,
+    "anulados": 0,
+    "brancos": 39610,
+    "pctBrancos": 1.81,
+    "nulos": 75947,
+    "pctNulos": 3.47,
+    "candidatos": [
+     {
+      "n": "55",
+      "nome": "OMAR AZIZ",
+      "partido": "PSD",
+      "votos": 1273975,
+      "pct": 61.42,
+      "eleito": true,
+      "situacao": "Eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "22",
+      "nome": "PROFESSORA MARIA DO CARMO",
+      "partido": "PL",
+      "votos": 800328,
+      "pct": 38.58,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     }
+    ]
+   },
+   "df": {
+    "gerado": "25/10/2026 21:28:25",
+    "final": true,
+    "secoesTotal": 6969,
+    "secoesTotalizadas": 6969,
+    "eleitorado": 2244176,
+    "comparecimento": 1854323,
+    "pctComparecimento": 82.63,
+    "abstencao": 389853,
+    "pctAbstencao": 17.37,
+    "validos": 1726272,
+    "anulados": 0,
+    "brancos": 55771,
+    "pctBrancos": 3.01,
+    "nulos": 72280,
+    "pctNulos": 3.9,
+    "candidatos": [
+     {
+      "n": "11",
+      "nome": "CELINA LEÃO",
+      "partido": "PP",
+      "votos": 987142,
+      "pct": 57.18,
+      "eleito": true,
+      "situacao": "Eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "13",
+      "nome": "LEANDRO GRASS",
+      "partido": "PT",
+      "votos": 739130,
+      "pct": 42.82,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     }
+    ]
+   },
+   "es": {
+    "gerado": "25/10/2026 21:32:45",
+    "final": true,
+    "secoesTotal": 9844,
+    "secoesTotalizadas": 9844,
+    "eleitorado": 2987603,
+    "comparecimento": 2405654,
+    "pctComparecimento": 80.52,
+    "abstencao": 581949,
+    "pctAbstencao": 19.48,
+    "validos": 2207937,
+    "anulados": 0,
+    "brancos": 64871,
+    "pctBrancos": 2.7,
+    "nulos": 132846,
+    "pctNulos": 5.52,
+    "candidatos": [
+     {
+      "n": "10",
+      "nome": "LORENZO PAZOLINI",
+      "partido": "REPUBLICANOS",
+      "votos": 1151818,
+      "pct": 52.17,
+      "eleito": true,
+      "situacao": "Eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "15",
+      "nome": "RICARDO FERRAÇO",
+      "partido": "MDB",
+      "votos": 1056119,
+      "pct": 47.83,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     }
+    ]
+   },
+   "rn": {
+    "gerado": "25/10/2026 21:24:45",
+    "final": true,
+    "secoesTotal": 8115,
+    "secoesTotalizadas": 8115,
+    "eleitorado": 2656286,
+    "comparecimento": 2229510,
+    "pctComparecimento": 83.93,
+    "abstencao": 426776,
+    "pctAbstencao": 16.07,
+    "validos": 2113423,
+    "anulados": 0,
+    "brancos": 35873,
+    "pctBrancos": 1.61,
+    "nulos": 80214,
+    "pctNulos": 3.6,
+    "candidatos": [
+     {
+      "n": "13",
+      "nome": "CADU DE LULA",
+      "partido": "PT",
+      "votos": 1073024,
+      "pct": 50.77,
+      "eleito": true,
+      "situacao": "Eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "44",
+      "nome": "ALLYSON",
+      "partido": "UNIÃO",
+      "votos": 1040399,
+      "pct": 49.23,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     }
+    ]
+   },
+   "to": {
+    "gerado": "25/10/2026 21:45:15",
+    "final": true,
+    "secoesTotal": 4384,
+    "secoesTotalizadas": 4384,
+    "eleitorado": 1180466,
+    "comparecimento": 953385,
+    "pctComparecimento": 80.76,
+    "abstencao": 227081,
+    "pctAbstencao": 19.24,
+    "validos": 871159,
+    "anulados": 0,
+    "brancos": 20323,
+    "pctBrancos": 2.13,
+    "nulos": 61903,
+    "pctNulos": 6.49,
+    "candidatos": [
+     {
+      "n": "45",
+      "nome": "VICENTINHO JÚNIOR",
+      "partido": "PSDB",
+      "votos": 562083,
+      "pct": 64.52,
+      "eleito": true,
+      "situacao": "Eleito",
+      "destino": "Válido"
+     },
+     {
+      "n": "44",
+      "nome": "PROFESSORA DORINHA",
+      "partido": "UNIÃO",
+      "votos": 309076,
+      "pct": 35.48,
+      "eleito": false,
+      "situacao": "Não eleito",
+      "destino": "Válido"
+     }
+    ]
+   }
+  }
+ },
+ "municipios": {
+  "campos": [
+   "eleitorado",
+   "comparecimento",
+   "abstencao",
+   "brancos",
+   "nulos",
+   "secoesTotalizadas",
+   "secoesTotal"
+  ],
+  "total": 5571,
+  "gerado": {
+   "g1": [
+    "2026-10-04T20:57:26",
+    "2026-10-24T12:42:03"
+   ],
+   "g2": [
+    "2026-10-25T21:25:01",
+    "2026-10-25T22:11:04"
+   ],
+   "p1": [
+    "2026-10-05T12:52:11",
+    "2026-10-05T12:53:07"
+   ],
+   "p2": [
+    "2026-10-25T23:27:24",
+    "2026-10-25T23:27:44"
+   ]
+  },
+  "semPar": []
+ }
+}

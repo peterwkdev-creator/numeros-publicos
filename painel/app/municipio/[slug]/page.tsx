@@ -43,6 +43,8 @@ import SecaoEducacao from "./secao-educacao";
 import SecaoTrabalho from "./secao-trabalho";
 import SecaoVizinhos from "./secao-vizinhos";
 import SecaoBaixar from "./secao-baixar";
+import SecaoEleicoes from "./secao-eleicoes";
+import { eleicaoDoMunicipio, lerEleicoes, lerEleicoesMunicipios } from "../../../lib/eleicoes";
 
 /**
  * Uma página por município — 5.571 delas, geradas no build.
@@ -138,6 +140,8 @@ export default async function PaginaMunicipio(
   const { snapshot } = dados;
   const m = dados.municipios.find((x) => x.slug === slug);
   if (!m) notFound();
+  const [eleicoes, eleicoesMun] = await Promise.all([lerEleicoes(), lerEleicoesMunicipios()]);
+  const ele = eleicaoDoMunicipio(eleicoes, eleicoesMun, m.codigo);
   const c: Contexto = {
     ...montarContexto(dados, m),
     // O ano de cada número vem do snapshot, que o recebe da própria fonte (ver
@@ -177,6 +181,7 @@ export default async function PaginaMunicipio(
           { id: "como-se-vive", titulo: "Como se vive" },
         (temCensoTrabalho || temEmpresas || cagedM !== null) &&
           { id: "trabalho-e-renda", titulo: "Trabalho e renda" },
+        { id: "eleicoes-2026", titulo: "Eleições 2026" },
         vizinhos.length > 0 && {
           id: "outros-municipios",
           titulo: pelaRegiao ? "Municípios da região" : "Outros municípios",
@@ -246,6 +251,8 @@ export default async function PaginaMunicipio(
       <VoltaSumario />
 
       <SecaoTrabalho c={c} />
+      <VoltaSumario />
+      <SecaoEleicoes c={c} ele={ele} coleta={dataCurta(eleicoes.fonte.coletadoEm)} />
       <VoltaSumario />
       <SecaoVizinhos c={c} />
       <VoltaSumario />

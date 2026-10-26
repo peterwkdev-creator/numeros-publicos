@@ -36,3 +36,6 @@ out/
 
 # Motores: o export fica no disco (o site versiona a copia em painel/dados/)
 motores/*/painel/dados/
+
+# Cache da coleta das eleicoes (numeros_publicos/eleicoes.py)
+.cache/

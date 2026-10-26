@@ -325,6 +325,17 @@ export default async function Pagina() {
               <Link href="/brasil/" prefetch={false}>O Brasil ao longo do tempo</Link>
             </p>
           </li>
+          <li className={s.porta}>
+            <h3>Eleições 2026</h3>
+            <p>
+              O resultado oficial do TSE para presidente e governador, por
+              estado, com comparecimento, abstenção e a consulta de qualquer
+              seção eleitoral.
+            </p>
+            <p className={s.portaLinks}>
+              <Link href="/eleicoes-2026/" prefetch={false}>Eleições 2026</Link>
+            </p>
+          </li>
           {/* `id="rankings"`: o item "Rankings" da barra do topo apontava para
               cá até 17/10/2026, quando `/ranking/` ganhou página-índice; a
               âncora fica para quem a guardou. */}

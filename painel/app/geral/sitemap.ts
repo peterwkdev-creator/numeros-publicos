@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 
 import { caminhoDaSerie } from "../../lib/brasil";
+import { lerEleicoes } from "../../lib/eleicoes";
 import { slugUf } from "../../lib/estado";
 import { atualizadoEm } from "../../lib/sitemap";
 import { lerBrasil, lerCaged, lerFiscal, lerSnapshot, SITE } from "../../lib/servidor";
@@ -24,8 +25,8 @@ import { lerBrasil, lerCaged, lerFiscal, lerSnapshot, SITE } from "../../lib/ser
 export const dynamic = "force-static";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [snapshot, fiscal, brasil, caged] = await Promise.all([
-    lerSnapshot(), lerFiscal(), lerBrasil(), lerCaged(),
+  const [snapshot, fiscal, brasil, caged, eleicoes] = await Promise.all([
+    lerSnapshot(), lerFiscal(), lerBrasil(), lerCaged(), lerEleicoes(),
   ]);
   const atualizado = atualizadoEm(snapshot, fiscal);
   // A coleta das séries do país tem ritmo próprio: a data é a dela, e não a
@@ -97,6 +98,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(coletaBrasil),
       changeFrequency: "monthly",
       priority: 0.8,
+    },
+    {
+      url: `${SITE}/eleicoes-2026/`,
+      lastModified: new Date(eleicoes.fonte.coletadoEm),
+      changeFrequency: "daily",
+      priority: 0.9,
     },
   ];
 

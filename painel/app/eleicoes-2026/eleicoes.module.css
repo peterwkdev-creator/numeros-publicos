@@ -1,0 +1,70 @@
+/* A mesma linguagem da /brasil/: largura, trilha, título e chamada iguais. */
+.pagina { max-width: 64rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+.trilha { font-size: var(--texto-sm); color: var(--tinta-fraca); margin-bottom: 1rem; }
+.trilha a { color: var(--tinta-fraca); display: inline-flex; align-items: center; min-height: var(--alvo); }
+.titulo { font-size: var(--texto-2xl); line-height: 1.15; margin: 0 0 .5rem; }
+.chamada { font-size: var(--texto-base); color: var(--tinta-fraca); margin: 0 0 1.25rem; max-width: 46rem; }
+.texto { max-width: 46rem; }
+.texto p, p.texto { margin: 0 0 1rem; }
+.texto ul { margin: 0 0 1rem; padding-left: 1.2rem; }
+.texto li { margin: 0 0 .5rem; }
+.secao { font-size: var(--texto-lg); margin: 2.5rem 0 1rem; }
+.tema { font-size: var(--texto-base); font-weight: 600; margin: 1.75rem 0 .75rem; }
+.subtitulo { font-size: var(--texto-sm); font-weight: 600; margin: 1rem 0 .5rem; }
+.ressalva { font-size: var(--texto-sm); color: var(--tinta-fraca); max-width: 46rem; margin: .5rem 0 1rem; }
+
+.nota {
+  max-width: 46rem;
+  border-left: 3px solid var(--borda-forte);
+  padding: .1rem 0 .1rem 1rem;
+  margin: 1rem 0;
+}
+.nota p { margin: 0 0 .6rem; }
+
+.rolagem { overflow-x: auto; }
+.tabela, .barras { width: 100%; border-collapse: collapse; font-size: var(--texto-sm); font-variant-numeric: tabular-nums; }
+.tabela th, .tabela td, .barras th, .barras td {
+  padding: .45rem .6rem; border-bottom: 1px solid var(--borda); text-align: left; vertical-align: top;
+}
+.tabela th[scope="col"], .barras th[scope="col"] {
+  font-size: var(--texto-xs); text-transform: uppercase; letter-spacing: .03em; color: var(--tinta-fraca);
+}
+.num { text-align: right !important; white-space: nowrap; }
+.pct { color: var(--tinta-fraca); }
+.partido { color: var(--tinta-fraca); font-weight: 400; }
+.eleito, .marca { font-size: var(--texto-xs); font-weight: 600; color: var(--tinta-suave); text-transform: uppercase; letter-spacing: .03em; }
+.barras { max-width: 52rem; }
+.barras th[scope="row"] { font-weight: 600; }
+
+/* A barra: uma cor só para todos os candidatos (sem cor de partido), escala
+   pela maior fatia, repete o número ao lado (aria-hidden) e sobrevive ao
+   alto contraste forçado (`numeros-publicos-desenho.md`, "Barra em tabela"). */
+.colBarra { width: 40%; }
+.barra {
+  display: block; height: .9rem; min-width: 1px; border-radius: var(--raio-xs);
+  background: var(--acento); forced-color-adjust: none; margin-top: .2rem;
+}
+@media (max-width: 34rem) { .colBarra { display: none; } }
+
+.gov { max-width: 52rem; border-bottom: 1px solid var(--borda); padding: .35rem 0; }
+.gov summary { cursor: pointer; min-height: var(--alvo); display: list-item; padding: .2rem 0; }
+
+/* A consulta de seção. */
+.consulta { display: flex; flex-wrap: wrap; gap: .75rem 1rem; align-items: flex-end; max-width: 52rem; }
+.campo { display: flex; flex-direction: column; gap: .25rem; min-width: 9rem; }
+.campo label { font-size: var(--texto-sm); font-weight: 600; }
+.campo select, .campo button {
+  font: inherit; min-height: 2.5rem; padding: .3rem .5rem;
+  border: 1px solid var(--borda-forte); border-radius: var(--raio-sm);
+  background: var(--superficie); color: var(--tinta);
+}
+.campo button { background: var(--acento); color: var(--superficie); border-color: var(--acento); cursor: pointer; }
+.campo button:disabled, .campo select:disabled { opacity: .6; cursor: not-allowed; }
+.status { min-height: 1.5rem; font-size: var(--texto-sm); margin: .75rem 0; }
+.resultado { max-width: 52rem; }
+.resultado table { width: 100%; border-collapse: collapse; font-size: var(--texto-sm); font-variant-numeric: tabular-nums; }
+.resultado th, .resultado td { padding: .3rem .5rem; border-bottom: 1px solid var(--borda); text-align: right; }
+.resultado th[scope="row"], .resultado th:first-child { text-align: left; }
+.resultado h3 { font-size: var(--texto-base); margin: 1rem 0 .5rem; }
+.resultado :global(.ressalva) { font-size: var(--texto-sm); color: var(--tinta-fraca); }
+.resultado :global(.barra-hora) { display: inline-block; height: .7rem; background: var(--acento); forced-color-adjust: none; border-radius: var(--raio-xs); }

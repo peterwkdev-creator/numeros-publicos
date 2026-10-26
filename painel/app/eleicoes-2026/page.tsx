@@ -57,7 +57,8 @@ export async function generateMetadata(): Promise<Metadata> {
 
 function Barras({ r, legenda, lados }: {
   r: Resultado; legenda: string;
-  /** Só no 2º turno de presidente: o lado (a cor) de cada um, pelo número. */
+  /** Presidente, nos dois turnos: o lado (a cor) de Lula e Flávio, pelo
+   *  número; os outros do 1º turno e o governador ficam cinza. */
   lados?: Record<string, "a" | "b">;
 }) {
   const validos = r.candidatos.filter((c) => c.destino.startsWith("V"));
@@ -163,17 +164,27 @@ function PlacarUf({ ufs, a, b }: { ufs: Record<string, Resultado>; a: Candidato;
             <th scope="col" className={estilos.num}><Amostra lado="a" />{a.nome}</th>
             <th scope="col" className={estilos.colDivisao}><span className="so-leitor">Barra</span></th>
             <th scope="col" className={estilos.num}><Amostra lado="b" />{b.nome}</th>
+            <th scope="col"><span className="so-leitor">Governador do estado</span></th>
           </tr>
         </thead>
         <tbody>
           {linhas.map((l) => (
-            <tr key={l.uf} data-uf={l.uf}>
+            <tr key={l.uf} data-uf={l.uf} id={"uf-" + l.uf}>
               <th scope="row">{UF_NOME[l.uf]}</th>
               <td className={estilos.num}>{br(l.pa, 2)}%</td>
               <td className={estilos.colDivisao} aria-hidden="true">
                 <Trilho a={l.pa} b={l.pb} meio fino />
               </td>
               <td className={estilos.num}>{br(l.pb, 2)}%</td>
+              {/* Célula própria: dentro do `th` o link entraria no cabeçalho
+                  lido em cada célula da linha. O nome visível abre o rótulo
+                  (WCAG 2.5.3). */}
+              <td>
+                {l.uf !== "zz" && (
+                  <a className={estilos.linkGov} href={"#gov-" + l.uf} data-link-gov
+                    aria-label={`Governador: ${UF_NOME[l.uf]}`}>governador</a>
+                )}
+              </td>
             </tr>
           ))}
         </tbody>
@@ -220,10 +231,14 @@ function MapaVencedor({ ufs, a, b }: { ufs: Record<string, Resultado>; a: Candid
   // empate: empate só com os dois votados e iguais.
   type Lado = "a" | "b" | "empate" | "sem";
   const lado: Record<string, Lado> = {};
+  const pcts: Record<string, [number, number]> = {};
   for (const [u, r] of Object.entries(ufs)) {
     if (u === "zz") continue;
     const pa = r.candidatos.find((c) => c.n === a.n)?.votos;
     const pb = r.candidatos.find((c) => c.n === b.n)?.votos;
+    const qa = r.candidatos.find((c) => c.n === a.n)?.pct;
+    const qb = r.candidatos.find((c) => c.n === b.n)?.pct;
+    if (qa !== undefined && qb !== undefined) pcts[u.toUpperCase()] = [qa, qb];
     lado[u.toUpperCase()] = pa === undefined || pb === undefined || pa + pb === 0 ? "sem"
       : pa > pb ? "a" : pb > pa ? "b" : "empate";
   }
@@ -236,15 +251,24 @@ function MapaVencedor({ ufs, a, b }: { ufs: Record<string, Resultado>; a: Candid
     .map(([l, nome]) => ({ l, nome, ufs: de(l) })).filter((g) => g.ufs.length > 0);
   const contar = (n: number) => `${n} ${n === 1 ? "estado" : "estados"}`;
   const classe = { a: estilos.ufA, b: estilos.ufB, empate: estilos.ufEmpate, sem: estilos.ufSem };
+  // A dica do mouse traz o placar do estado, não só o nome (26/10/2026).
+  const dica = (s: string) => {
+    const nome = UF_NOME[s.toLowerCase()] ?? s;
+    const p = pcts[s];
+    return p ? `${nome}: ${a.nome} ${br(p[0], 2)}%, ${b.nome} ${br(p[1], 2)}%` : `${nome}: sem dado`;
+  };
   return (
     <figure className={estilos.figuraMapa}>
-      <svg viewBox={malha.viewBox} className={estilos.mapaVenc} role="img"
+      {/* `data-mapa-vencedor`: o `public/eleicoes-pagina.js` torna cada estado
+          clicável (leva à linha dele no placar); sem `<a>` dentro do
+          `role="img"`, cujos filhos são apresentacionais. */}
+      <svg viewBox={malha.viewBox} className={estilos.mapaVenc} role="img" data-mapa-vencedor
         aria-label={"Mapa dos 27 estados pelo candidato com mais votos válidos no 2º turno. " +
           grupos.map((g) => `${g.nome}, ${contar(g.ufs.length)}: ${g.ufs.join(", ")}`).join(". ") + "."}>
         {Object.keys(caminhos).sort().map((s) => (
           <path key={s} d={caminhos[s]} data-uf={s}
             className={`${estilos.ufVenc} ${classe[ladoDe(s)]}`}>
-            <title>{UF_NOME[s.toLowerCase()] ?? s}</title>
+            <title>{dica(s)}</title>
           </path>
         ))}
       </svg>
@@ -256,6 +280,9 @@ function MapaVencedor({ ufs, a, b }: { ufs: Record<string, Resultado>; a: Candid
             <strong>{g.nome}: {contar(g.ufs.length)}</strong> ({g.ufs.join(", ")})
           </p>
         ))}
+        <p className={estilos.dicaMapa} data-dica-mapa hidden>
+          Toque ou clique num estado para ir à linha dele no placar.
+        </p>
       </figcaption>
     </figure>
   );
@@ -345,7 +372,7 @@ function PorUf({ turno, ufs, ordem }: {
 function Governador({ uf, r1, r2 }: { uf: string; r1: Resultado; r2?: Resultado }) {
   const eleito = (r2 ?? r1).candidatos.find((c) => c.eleito);
   return (
-    <details className={estilos.gov} data-gov={uf}>
+    <details className={estilos.gov} data-gov={uf} id={"gov-" + uf}>
       <summary>
         <strong>{UF_NOME[uf]}</strong>:{" "}
         {eleito ? <>{eleito.nome} ({eleito.partido}), eleito no {r2 ? "2º" : "1º"} turno</> : "sem eleito no arquivo"}
@@ -445,7 +472,9 @@ export default async function Pagina() {
             <Divisao meio titulo="Percentual dos votos válidos no Brasil"
               a={{ rotulo: a!.nome, pct: a!.pct }} b={{ rotulo: b!.nome, pct: b!.pct }} />
             <p className={estilos.diferenca}>
-              Diferença: <strong data-margem>{br(dif)} votos</strong>.
+              Diferença: <strong data-margem>{br(dif)} votos</strong>{" "}
+              ({br(a!.votos)} − {br(b!.votos)}), ou {br(a!.pct - b!.pct, 2)} pontos
+              percentuais dos válidos.
             </p>
             <Barras r={p2.brasil} lados={lados}
               legenda="Presidente, 2º turno, Brasil: votos e percentual dos válidos" />
@@ -515,7 +544,7 @@ export default async function Pagina() {
 
       <section aria-labelledby="presidente-1">
         <h2 id="presidente-1" className={estilos.secao}>Presidente: 1º turno, {dataDoTurno("1")}</h2>
-        <Barras r={p1.brasil} legenda="Presidente, 1º turno, Brasil: votos e percentual dos válidos" />
+        <Barras r={p1.brasil} lados={lados} legenda="Presidente, 1º turno, Brasil: votos e percentual dos válidos" />
         <details className={estilos.tabelaAberta}>
           <summary>Votos em cada estado no 1º turno (tabela)</summary>
           <PorUf turno="1" ufs={p1.ufs} ordem={ordem1} />
@@ -528,6 +557,10 @@ export default async function Pagina() {
           Houve 2º turno em {com2Turno.length} unidades da federação:{" "}
           {com2Turno.map((u) => UF_NOME[u]).join(", ")}. Abra cada estado para
           ver todos os candidatos.
+        </p>
+        <p className={estilos.govAcoes} data-gov-acoes hidden>
+          <button type="button" data-gov-abrir>Abrir todos</button>{" "}
+          <button type="button" data-gov-fechar>Fechar todos</button>
         </p>
         {ufsGov.map((uf) => (
           <Governador key={uf} uf={uf} r1={e.governador["1"][uf]!} r2={e.governador["2"][uf]} />
@@ -662,6 +695,7 @@ export default async function Pagina() {
         </div>
       </section>
       <script type="module" src="/eleicoes-secao.js" />
+      <script type="module" src="/eleicoes-pagina.js" />
     </main>
   );
 }

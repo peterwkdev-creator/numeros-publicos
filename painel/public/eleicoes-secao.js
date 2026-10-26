@@ -52,23 +52,30 @@ function iniciar(form) {
   let vez = 0;
 
   const avisar = (t) => { status.textContent = t; };
+  // Escolha nova: o `?secao=` da consulta anterior sai do endereço.
+  const esquecerLink = () => {
+    if (location.search) history.replaceState(null, "", location.pathname + location.hash);
+  };
   const opcoes = (sel, itens, vazio) => {
     sel.replaceChildren(new Option(vazio, ""), ...itens.map(([v, t]) => new Option(t, v)));
     sel.disabled = itens.length === 0;
   };
   const limparDe = (...sels) => { for (const s of sels) opcoes(s, [], "—"); botao.disabled = true; };
 
-  uf.addEventListener("change", async () => {
+  // Devolve `true` quando a lista de municípios chegou (o link da consulta
+  // espera por ela antes de escolher o município).
+  async function carregarUf() {
     limparDe(mun, zona, secao);
     saida.replaceChildren();
+    esquecerLink();
     config = null;
     const minha = ++vez;
     const u = uf.value;
-    if (!u) { avisar(""); return; }
+    if (!u) { avisar(""); return false; }
     avisar("Buscando os municípios no TSE…");
     try {
       const d = await json(`${BASE}/config/${u}/${u}-p003221-cs.json`);
-      if (minha !== vez) return;
+      if (minha !== vez) return false;
       const abr = (d.abr || []).find((a) => a.cd === u);
       if (!abr) throw new Error("estado não encontrado no arquivo");
       config = { uf: u, mu: abr.mu || [] };
@@ -77,15 +84,19 @@ function iniciar(form) {
         .sort((a, b) => a[1].localeCompare(b[1], "pt-BR"));
       opcoes(mun, lista, "Escolha o município");
       avisar(`${lista.length} municípios. Escolha o município.`);
+      return true;
     } catch (e) {
       if (minha === vez) avisar(`Não foi possível ler a lista do TSE (${e.message}). Tente de novo mais tarde.`);
+      return false;
     }
-  });
+  }
+  uf.addEventListener("change", carregarUf);
 
   mun.addEventListener("change", () => {
     vez++;
     limparDe(zona, secao);
     saida.replaceChildren();
+    esquecerLink();
     const m = config?.mu.find((x) => x.cd === mun.value);
     if (!m) return;
     const zonas = m.zon.map((z) => [z.cd, `Zona ${Number(z.cd)}`]).sort((a, b) => a[0].localeCompare(b[0]));
@@ -98,6 +109,7 @@ function iniciar(form) {
     vez++;
     limparDe(secao);
     saida.replaceChildren();
+    esquecerLink();
     const z = config?.mu.find((x) => x.cd === mun.value)?.zon.find((x) => x.cd === zona.value);
     if (!z) return;
     const secoes = z.sec
@@ -107,7 +119,7 @@ function iniciar(form) {
     avisar(`${secoes.length} seções. Escolha a seção.`);
   });
 
-  secao.addEventListener("change", () => { vez++; saida.replaceChildren(); botao.disabled = !secao.value; });
+  secao.addEventListener("change", () => { vez++; saida.replaceChildren(); esquecerLink(); botao.disabled = !secao.value; });
 
   form.addEventListener("submit", async (ev) => {
     ev.preventDefault();
@@ -145,6 +157,11 @@ function iniciar(form) {
         u, nomeMun, zo, se, agregada: s.nsp ? s.ns : null, arquivos,
         naoTotalizada: totalizadas.length === 0,
       });
+      // O endereço passa a ser o desta consulta, para guardar ou mandar.
+      const link = `?secao=${u}-${mu}-${zo}-${s.ns}#consulta`;
+      history.replaceState(null, "", link);
+      saida.append(el("p", { className: "ressalva" }, "Link desta consulta: ",
+        el("a", { href: link }, location.origin + location.pathname + link)));
       const t2 = r.get(DIAS[1].data);
       avisar(`Seção ${Number(se)} da zona ${Number(zo)}, ${nomeMun}: ` +
         `${fmt(t2.votos)} votos registrados em 25/10` +
@@ -156,6 +173,31 @@ function iniciar(form) {
       if (minha === vez) botao.disabled = !secao.value;
     }
   });
+
+  // O link da consulta (`?secao=rr-03085-0008-0001`) refaz a consulta ao
+  // abrir: escolhe cada seletor, conferindo que o valor existe na lista.
+  const pedido = /^([a-z]{2})-([0-9]{5})-([0-9]{4})-([0-9]{4})$/
+    .exec(new URLSearchParams(location.search).get("secao") || "");
+  if (pedido) (async () => {
+    const [, u, mu, zo, se] = pedido;
+    const tem = (sel, v) => [...sel.options].some((o) => o.value === v);
+    const falhou = () => avisar("O link pede uma seção que não está na lista do TSE. Escolha a seção nos campos acima.");
+    if (!tem(uf, u)) return falhou();
+    uf.value = u;
+    if (!(await carregarUf())) return;
+    if (!tem(mun, mu)) return falhou();
+    mun.value = mu;
+    mun.dispatchEvent(new Event("change"));
+    if (zona.value !== zo) {
+      if (!tem(zona, zo)) return falhou();
+      zona.value = zo;
+      zona.dispatchEvent(new Event("change"));
+    }
+    if (!tem(secao, se)) return falhou();
+    secao.value = se;
+    secao.dispatchEvent(new Event("change"));
+    form.requestSubmit();
+  })();
 }
 
 const fmt = (n) => n.toLocaleString("pt-BR");

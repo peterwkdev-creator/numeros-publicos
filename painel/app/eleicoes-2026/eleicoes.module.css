@@ -72,8 +72,8 @@
 .barras { max-width: 52rem; }
 .barras th[scope="row"] { font-weight: 600; }
 
-/* A barra: uma cor neutra para todos os candidatos (1º turno e governador,
-   cinza: o azul agora é de um candidato), ou a cor de cada um no 2º turno;
+/* A barra: a cor de Lula e Flávio nos dois turnos de presidente; os outros
+   do 1º turno e o governador, cinza (o azul agora é de um candidato);
    escala pela maior fatia, repete o número ao lado (aria-hidden) e sobrevive ao
    alto contraste forçado (`numeros-publicos-desenho.md`, "Barra em tabela"). */
 .colBarra { width: 40%; }
@@ -142,6 +142,24 @@
 .gov { max-width: 52rem; border-bottom: 1px solid var(--borda); padding: .35rem 0; }
 .gov summary { cursor: pointer; min-height: var(--alvo); display: list-item; padding: .2rem 0; }
 
+/* Os caminhos da página (26/10/2026, `public/eleicoes-pagina.js`): o estado
+   no mapa leva à linha dele no placar, a linha leva ao governador, e o
+   alvo do link ganha um fundo de realce. Sem JS, nada disso aparece. */
+.mapaVenc[data-clicavel] .ufVenc { cursor: pointer; }
+.mapaVenc[data-clicavel] .ufVenc:hover { opacity: .75; }
+.placarUf tr[id], .gov[id] { scroll-margin-top: 1rem; }
+.placarUf tr:target > * { background: var(--borda); }
+.gov:target { background: var(--borda); }
+.linkGov { display: inline-flex; align-items: center; min-height: var(--alvo); font-size: var(--texto-xs); }
+.dicaMapa { color: var(--tinta-fraca); }
+.govAcoes { margin: .5rem 0 .75rem; }
+.govAcoes button {
+  font: inherit; font-size: var(--texto-sm); min-height: var(--alvo); padding: .3rem .75rem;
+  border: 1px solid var(--borda-forte); border-radius: var(--raio-sm);
+  background: var(--superficie); color: var(--tinta); cursor: pointer;
+}
+@media print { .govAcoes, .dicaMapa, .linkGov { display: none; } }
+
 /* A consulta de seção. */
 .consulta { display: flex; flex-wrap: wrap; gap: .75rem 1rem; align-items: flex-end; max-width: 52rem; }
 .campo { display: flex; flex-direction: column; gap: .25rem; min-width: 9rem; }
@@ -160,4 +178,6 @@
 .resultado th[scope="row"], .resultado th:first-child { text-align: left; }
 .resultado h3 { font-size: var(--texto-base); margin: 1rem 0 .5rem; }
 .resultado :global(.ressalva) { font-size: var(--texto-sm); color: var(--tinta-fraca); }
+/* O link da consulta é uma URL longa: quebra em vez de rolar no celular. */
+.resultado :global(.ressalva) a { overflow-wrap: anywhere; }
 .resultado :global(.barra-hora) { display: inline-block; height: .7rem; background: var(--acento); forced-color-adjust: none; border-radius: var(--raio-xs); }

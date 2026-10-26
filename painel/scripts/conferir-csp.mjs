@@ -122,6 +122,17 @@ const ROTEIRO = [
     await p.waitForFunction(() => document.querySelector("#cs-resultado")?.children.length > 0, { timeout: 60000 }).catch(() => {});
     console.log(`  /eleicoes-2026/ consulta: ${await p.$eval("#cs-status", (e) => e.textContent)}`);
   }],
+  // O link da consulta (26/10/2026): `?secao=` refaz a consulta sozinho.
+  ["/eleicoes-2026/?secao=rr-03085-0008-0001", async (p) => {
+    await p.waitForFunction(() => document.querySelector("#cs-resultado")?.children.length > 0, { timeout: 60000 }).catch(() => {});
+    const s = await p.$eval("#cs-status", (e) => e.textContent);
+    console.log(`  /eleicoes-2026/?secao= consulta: ${s}`);
+    // Sem rede o status diz que falhou; o que não pode é o link ser ignorado.
+    if (await p.$eval("#cs-uf", (e) => e.value) !== "rr" || !s) {
+      console.log("✗ /eleicoes-2026/?secao=: o link da consulta foi ignorado");
+      falhas++;
+    }
+  }],
   ["/municipio/imperatriz-ma/", async (p) => {
     await p.waitForFunction(() => /ao vivo/.test(document.querySelector("[data-eleicao-status]")?.textContent), { timeout: 30000 }).catch(() => {});
     console.log(`  /municipio/imperatriz-ma/ eleições: ${await p.$eval("[data-eleicao-status]", (e) => e.textContent)}`);

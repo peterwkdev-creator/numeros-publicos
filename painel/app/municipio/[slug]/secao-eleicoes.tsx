@@ -7,6 +7,16 @@ import type { Contexto } from "./contexto";
 import est from "./secao-eleicoes.module.css";
 
 /**
+ * A cor da barra: em presidente (chaves `p1`, `p2`), Lula (PT) em vermelho e
+ * Flávio (PL) em azul, como na página das eleições (26/10/2026); os outros e
+ * o governador ficam cinza, sem cor de partido entre vários partidos.
+ */
+function corDe(chave: string, partido: string): string {
+  if (chave[0] !== "p") return "";
+  return (partido === "PT" ? est.pt : partido === "PL" ? est.pl : "") ?? "";
+}
+
+/**
  * Eleições 2026 no município: presidente nos dois turnos e governador, do
  * resultado oficial do TSE gravado no build (`lib/eleicoes.ts`). O
  * `public/eleicoes-municipio.js` pede o mesmo arquivo ao TSE no navegador e,
@@ -67,7 +77,7 @@ export default function SecaoEleicoes(
                   <td data-p>{l.pct === null ? "anulado" : `${br(l.pct, 2)}%`}</td>
                   <td className={est.colBarra} aria-hidden="true">
                     {/* Anulado não tem barra: um filete diria 0%. */}
-                    {l.pct !== null && <span className={est.barra} data-b
+                    {l.pct !== null && <span className={`${est.barra} ${corDe(g.chave, l.partido)}`} data-b
                       style={{ width: `${maior > 0 ? (l.pct / maior) * 100 : 0}%` }} />}
                   </td>
                 </tr>

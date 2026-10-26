@@ -20,8 +20,10 @@ import estilos from "./eleicoes.module.css";
  * (`public/eleicoes-secao.js`). A espec é
  * `especs/numeros-publicos-eleicoes-2026.md`, no repositório de trabalho.
  *
- * Texto neutro: nenhum adjetivo sobre candidato, partido ou decisão. A cor
- * das barras é uma só para todos (sem cor de partido, sem verde-amarelo:
+ * Texto neutro: nenhum adjetivo sobre candidato, partido ou decisão. Os dois
+ * do 2º turno de presidente levam vermelho (PT) e azul (PL), a convenção da
+ * imprensa aplicada igual aos dois (decisão do Peter, 26/10/2026); as outras
+ * barras são cinza, uma cor só para todos (sem verde-amarelo:
  * `numeros-publicos-desenho.md`).
  */
 
@@ -53,7 +55,11 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-function Barras({ r, legenda }: { r: Resultado; legenda: string }) {
+function Barras({ r, legenda, lados }: {
+  r: Resultado; legenda: string;
+  /** Só no 2º turno de presidente: o lado (a cor) de cada um, pelo número. */
+  lados?: Record<string, "a" | "b">;
+}) {
   const validos = r.candidatos.filter((c) => c.destino.startsWith("V"));
   const maior = Math.max(...validos.map((c) => c.pct), 1);
   return (
@@ -79,7 +85,8 @@ function Barras({ r, legenda }: { r: Resultado; legenda: string }) {
               <td className={estilos.num}>{br(c.votos)}</td>
               <td className={estilos.num}>{br(c.pct, 2)}%</td>
               <td className={estilos.colBarra} aria-hidden="true">
-                <span className={estilos.barra} style={{ width: `${(c.pct / maior) * 100}%` }} />
+                <span className={`${estilos.barra} ${lados?.[c.n] === "a" ? estilos.ladoA : lados?.[c.n] === "b" ? estilos.ladoB : ""}`}
+                  style={{ width: `${(c.pct / maior) * 100}%` }} />
               </td>
             </tr>
           ))}
@@ -93,7 +100,8 @@ function Barras({ r, legenda }: { r: Resultado; legenda: string }) {
  * A barra de um todo em dois lados (26/10/2026): o placar do 2º turno, uma
  * linha por estado e o comparecimento. A barra só repete o texto que vem ao
  * lado (aria-hidden); o traço marca a metade. Cores em `--lado-a` e
- * `--lado-b` (`eleicoes.module.css`), sem cor de partido.
+ * `--lado-b` (`eleicoes.module.css`): vermelho e azul para os candidatos,
+ * cinza e hachura para comparecimento e abstenção.
  */
 function Trilho({ a, b, meio, fino }: { a: number; b: number; meio?: boolean; fino?: boolean }) {
   return (
@@ -175,31 +183,29 @@ function PlacarUf({ ufs, a, b }: { ufs: Record<string, Resultado>; a: Candidato;
 }
 
 /**
- * As camadas do mapa do 2º turno: o percentual de cada candidato (a mesma
- * rampa azul para os dois, com a régua espelhada: 30–70 de um é 70–30 do
- * outro) e o comparecimento. O exterior não tem forma no mapa.
+ * As camadas do mapa de participação no 2º turno: comparecimento, brancos e
+ * nulos, na rampa azul do site. O percentual de cada candidato saiu do mapa
+ * de camadas em 26/10/2026: com o azul de um dos dois, a rampa azul para o
+ * percentual do outro leria como o lado errado; o placar por estado e o mapa
+ * por vencedor já o mostram. O exterior não tem forma no mapa.
  */
-function camadasDoMapa(ufs: Record<string, Resultado>, a: Candidato, b: Candidato): CamadaMapa[] {
+function camadasDoMapa(ufs: Record<string, Resultado>): CamadaMapa[] {
   const lugares = Object.entries(ufs).filter(([u]) => u !== "zz");
   const de = (f: (r: Resultado) => number | null) =>
     Object.fromEntries(lugares.map(([u, r]) => [u.toUpperCase(), f(r)]));
-  const pct = (n: string) => de((r) => r.candidatos.find((c) => c.n === n)?.pct ?? null);
-  const va = pct(a.n);
-  const vb = pct(b.n);
   const comp = de((r) => r.pctComparecimento);
-  const da = dominio(va, 10);
-  const doCandidato = (c: Candidato, valores: Record<string, number | null>) =>
-    legendaCom(`Percentual dos votos válidos de ${c.nome} no 2º turno.`, valores);
-  // O comparecimento abre o mapa: abrir num dos candidatos daria a ele o
-  // primeiro olhar (neutralidade, revisão de 26/10/2026).
+  const brancos = de((r) => r.pctBrancos);
+  const nulos = de((r) => r.pctNulos);
   return [
     { chave: "comparecimento", rotulo: "Comparecimento", valores: comp,
       legenda: legendaCom("Comparecimento no 2º turno, em percentual do eleitorado.", comp),
       formato: "pct", ...dominio(comp, 5) },
-    { chave: "pres-a", rotulo: `${a.nome} (% dos válidos)`, valores: va,
-      legenda: doCandidato(a, va), formato: "pct", ...da },
-    { chave: "pres-b", rotulo: `${b.nome} (% dos válidos)`, valores: vb,
-      legenda: doCandidato(b, vb), formato: "pct", min: 100 - da.max, max: 100 - da.min },
+    { chave: "brancos", rotulo: "Brancos", valores: brancos,
+      legenda: legendaCom("Votos brancos no 2º turno, em percentual do comparecimento.", brancos),
+      formato: "pct", ...dominio(brancos, 1) },
+    { chave: "nulos", rotulo: "Nulos", valores: nulos,
+      legenda: legendaCom("Votos nulos no 2º turno, em percentual do comparecimento.", nulos),
+      formato: "pct", ...dominio(nulos, 1) },
   ];
 }
 
@@ -373,6 +379,9 @@ export default async function Pagina() {
   const p2 = e.presidente["2"];
   const [a, b] = p2.brasil.candidatos;
   const dif = margem(p2.brasil);
+  // A cor segue o partido, não a posição no arquivo: vermelho no PT.
+  const trocado = a!.partido !== "PT" && b!.partido === "PT";
+  const lados: Record<string, "a" | "b"> = { [a!.n]: "a", [b!.n]: "b" };
   const ordem1 = p1.brasil.candidatos.map((c) => ({ n: c.n, nome: c.nome }));
   const ordem2 = p2.brasil.candidatos.map((c) => ({ n: c.n, nome: c.nome }));
   const ufsGov = ufsEmOrdem(Object.keys(e.governador["1"]));
@@ -401,7 +410,7 @@ export default async function Pagina() {
   };
 
   return (
-    <main className={estilos.pagina} id="conteudo">
+    <main className={estilos.pagina} id="conteudo" data-trocado={trocado ? "" : undefined}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdHtml(jsonLd) }} />
       <script
         type="application/ld+json"
@@ -423,36 +432,67 @@ export default async function Pagina() {
 
       <h1 className={estilos.titulo}>{TITULO}</h1>
       <p className={estilos.chamada}>
-        O resultado oficial de presidente e governador, como o Tribunal Superior
-        Eleitoral (TSE) o publica: 1º turno em {dataDoTurno("1")} e 2º turno em{" "}
-        {dataDoTurno("2")}. Arquivo do 2º turno de presidente gerado pelo TSE em{" "}
-        {geradoCurto(p2.brasil.gerado)}.
+        Resultado oficial do Tribunal Superior Eleitoral (TSE) para presidente
+        e governador: 1º turno em {dataDoTurno("1")} e 2º turno em{" "}
+        {dataDoTurno("2")}.
       </p>
 
       <section aria-labelledby="presidente">
         <h2 id="presidente" className={estilos.secao}>Presidente: 2º turno, {dataDoTurno("2")}</h2>
-        <Divisao meio
-          a={{ rotulo: a!.nome, pct: a!.pct }} b={{ rotulo: b!.nome, pct: b!.pct }} />
-        <p className={estilos.ressalva}>
-          Percentual dos votos válidos no país. O traço marca a metade. Nas
-          barras de divisão e no mapa por vencedor, as duas cores só separam
-          os dois candidatos, sem outro significado.
-        </p>
-        <Barras r={p2.brasil} legenda="Presidente, 2º turno, Brasil: votos e percentual dos válidos" />
-        <p className={estilos.texto}>
-          Diferença entre os dois: <strong data-margem>{br(dif)} votos</strong>{" "}
-          ({br(a!.votos)} − {br(b!.votos)}). Seções totalizadas:{" "}
-          {br(p2.brasil.secoesTotalizadas)} de {br(p2.brasil.secoesTotal)}.
-        </p>
+        <div className={estilos.abertura}>
+          <MapaVencedor ufs={p2.ufs} a={a!} b={b!} />
+          <div className={estilos.resumo}>
+            <Divisao meio titulo="Percentual dos votos válidos no Brasil"
+              a={{ rotulo: a!.nome, pct: a!.pct }} b={{ rotulo: b!.nome, pct: b!.pct }} />
+            <p className={estilos.diferenca}>
+              Diferença: <strong data-margem>{br(dif)} votos</strong>.
+            </p>
+            <Barras r={p2.brasil} lados={lados}
+              legenda="Presidente, 2º turno, Brasil: votos e percentual dos válidos" />
+            <p className={estilos.ressalva}>
+              {br(p2.brasil.secoesTotalizadas)} de {br(p2.brasil.secoesTotal)} seções
+              totalizadas; arquivo do TSE gerado em {geradoCurto(p2.brasil.gerado)}.
+              O traço marca a metade. Vermelho e azul só identificam os dois
+              candidatos, como na imprensa, sem outro significado.
+            </p>
+          </div>
+        </div>
+      </section>
 
-        <h2 id="presidente-1" className={estilos.secao}>Presidente: 1º turno, {dataDoTurno("1")}</h2>
-        <Barras r={p1.brasil} legenda="Presidente, 1º turno, Brasil: votos e percentual dos válidos" />
+      <nav className={estilos.sumario} aria-labelledby="sumario">
+        <h2 id="sumario">Nesta página</h2>
+        <ul>
+          <li><a href="#por-uf">Presidente por estado</a></li>
+          <li><a href="#participacao">Comparecimento, brancos e nulos</a></li>
+          <li><a href="#presidente-1">1º turno</a></li>
+          <li><a href="#governador">Governador</a></li>
+          <li><a href="#prorrogacao">A prorrogação</a></li>
+          <li><a href="#consulta">Consulte uma seção</a></li>
+          <li><a href="#metodo">De onde vêm os números</a></li>
+        </ul>
+      </nav>
+
+      <section aria-labelledby="por-uf">
+        <h2 id="por-uf" className={estilos.secao}>Presidente por estado e no exterior: 2º turno</h2>
+        <p className={estilos.texto}>
+          Percentual dos votos válidos de cada um em cada lugar, do maior para o
+          menor percentual de {a!.nome}.
+        </p>
+        <PlacarUf ufs={p2.ufs} a={a!} b={b!} />
+        <details className={estilos.tabelaAberta}>
+          <summary>Votos em cada estado, com comparecimento e abstenção (tabela)</summary>
+          <PorUf turno="2" ufs={p2.ufs} ordem={ordem2} />
+        </details>
+        <p className={estilos.ressalva}>
+          Conferido na coleta: a soma das 27 unidades da federação e do
+          exterior é igual ao total do Brasil, candidato a candidato.
+        </p>
       </section>
 
       <section aria-labelledby="participacao">
-        <h2 id="participacao" className={estilos.secao}>Comparecimento e abstenção no Brasil</h2>
+        <h2 id="participacao" className={estilos.secao}>Comparecimento, abstenção, brancos e nulos</h2>
         {([["2", p2.brasil], ["1", p1.brasil]] as const).map(([t, r]) => (
-          <Divisao key={t} neutro titulo={`${t}º turno, ${dataDoTurno(t)}: brancos ${br(r.pctBrancos, 2)}% e nulos ${br(r.pctNulos, 2)}%`}
+          <Divisao key={t} neutro titulo={`Brasil, ${t}º turno (${dataDoTurno(t)}): brancos ${br(r.pctBrancos, 2)}% e nulos ${br(r.pctNulos, 2)}% do comparecimento`}
             a={{ rotulo: "Comparecimento", pct: r.pctComparecimento }}
             b={{ rotulo: "Abstenção", pct: r.pctAbstencao }} />
         ))}
@@ -461,9 +501,37 @@ export default async function Pagina() {
           { rotulo: `1º turno (${dataDoTurno("1")})`, r: p1.brasil },
         ]} />
         <p className={estilos.ressalva}>
-          O percentual de comparecimento e o de abstenção são do TSE, sobre o
-          eleitorado das seções apuradas. Brancos e nulos, sobre o comparecimento.
+          Comparecimento e abstenção: percentuais do TSE sobre o eleitorado das
+          seções apuradas. Brancos e nulos: sobre o comparecimento.
         </p>
+        <h3 className={estilos.tema}>Em cada estado, no 2º turno</h3>
+        <MapaUf camadas={camadasDoMapa(p2.ufs)} nomes={nomesUf} />
+        <p className={estilos.ressalva}>
+          O azul deste mapa é a escala do site (mais escuro, maior percentual),
+          não a cor de um candidato. O exterior não tem forma no mapa: está na
+          tabela de votos por estado.
+        </p>
+      </section>
+
+      <section aria-labelledby="presidente-1">
+        <h2 id="presidente-1" className={estilos.secao}>Presidente: 1º turno, {dataDoTurno("1")}</h2>
+        <Barras r={p1.brasil} legenda="Presidente, 1º turno, Brasil: votos e percentual dos válidos" />
+        <details className={estilos.tabelaAberta}>
+          <summary>Votos em cada estado no 1º turno (tabela)</summary>
+          <PorUf turno="1" ufs={p1.ufs} ordem={ordem1} />
+        </details>
+      </section>
+
+      <section aria-labelledby="governador">
+        <h2 id="governador" className={estilos.secao}>Governador</h2>
+        <p className={estilos.texto}>
+          Houve 2º turno em {com2Turno.length} unidades da federação:{" "}
+          {com2Turno.map((u) => UF_NOME[u]).join(", ")}. Abra cada estado para
+          ver todos os candidatos.
+        </p>
+        {ufsGov.map((uf) => (
+          <Governador key={uf} uf={uf} r1={e.governador["1"][uf]!} r2={e.governador["2"][uf]} />
+        ))}
       </section>
 
       <section aria-labelledby="prorrogacao">
@@ -511,40 +579,6 @@ export default async function Pagina() {
             </p>
           </div>
         </div>
-      </section>
-
-      <section aria-labelledby="por-uf">
-        <h2 id="por-uf" className={estilos.secao}>Presidente por estado e no exterior</h2>
-        <h3 className={estilos.tema}>2º turno, {dataDoTurno("2")}: a divisão em cada lugar</h3>
-        <PlacarUf ufs={p2.ufs} a={a!} b={b!} />
-        <h3 className={estilos.tema}>2º turno: quem teve mais votos em cada estado</h3>
-        <MapaVencedor ufs={p2.ufs} a={a!} b={b!} />
-        <h3 className={estilos.tema}>2º turno no mapa: percentual e comparecimento</h3>
-        <MapaUf camadas={camadasDoMapa(p2.ufs, a!, b!)} nomes={nomesUf} />
-        <p className={estilos.ressalva}>
-          O exterior não tem forma no mapa: está na barra acima e na tabela abaixo.
-        </p>
-        <h3 className={estilos.tema}>2º turno, {dataDoTurno("2")}: votos</h3>
-        <PorUf turno="2" ufs={p2.ufs} ordem={ordem2} />
-        <h3 className={estilos.tema}>1º turno, {dataDoTurno("1")}</h3>
-        <PorUf turno="1" ufs={p1.ufs} ordem={ordem1} />
-        <p className={estilos.ressalva}>
-          Percentual sobre os votos válidos de cada lugar. Conferido na coleta:
-          a soma das 27 unidades da federação e do exterior é igual ao total do
-          Brasil, candidato a candidato.
-        </p>
-      </section>
-
-      <section aria-labelledby="governador">
-        <h2 id="governador" className={estilos.secao}>Governador</h2>
-        <p className={estilos.texto}>
-          Houve 2º turno em {com2Turno.length} unidades da federação:{" "}
-          {com2Turno.map((u) => UF_NOME[u]).join(", ")}. Abra cada estado para
-          ver todos os candidatos.
-        </p>
-        {ufsGov.map((uf) => (
-          <Governador key={uf} uf={uf} r1={e.governador["1"][uf]!} r2={e.governador["2"][uf]} />
-        ))}
       </section>
 
       <section aria-labelledby="consulta">

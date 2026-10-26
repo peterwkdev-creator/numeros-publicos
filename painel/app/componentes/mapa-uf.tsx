@@ -58,9 +58,9 @@ const FONTE_DA_CAMADA: Record<string, [fonte: string, periodo?: string]> = {
   "pib-habitante": ["IBGE, PIB dos Municípios e Censo Demográfico 2022"],
   entrega: ["Tesouro Nacional, SICONFI, Relatório de Gestão Fiscal"],
   pessoal: ["Tesouro Nacional, SICONFI, Relatório de Gestão Fiscal"],
-  "pres-a": ["TSE, resultado oficial de presidente", "2º turno, 25/10/2026"],
-  "pres-b": ["TSE, resultado oficial de presidente", "2º turno, 25/10/2026"],
   comparecimento: ["TSE, resultado oficial de presidente", "2º turno, 25/10/2026"],
+  brancos: ["TSE, resultado oficial de presidente", "2º turno, 25/10/2026"],
+  nulos: ["TSE, resultado oficial de presidente", "2º turno, 25/10/2026"],
 };
 
 export default function MapaUf({

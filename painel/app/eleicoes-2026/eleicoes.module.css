@@ -1,14 +1,41 @@
 /* A mesma linguagem da /brasil/: largura, trilha, título e chamada iguais. */
 .pagina {
   max-width: 64rem; margin: 0 auto; padding: 1.5rem 1rem 4rem;
-  /* Os dois lados das barras de divisão: azul e ocre, distintos no
-     daltonismo e na impressão, definidos nos três modos pelo globals.css.
-     Nenhuma cor de partido (`numeros-publicos-desenho.md`). O ocre aqui
-     não é alerta: a página não usa `--atencao` para mais nada, e a ressalva
-     do placar diz que as cores só separam os dois lados. */
-  --lado-a: var(--acento);
-  --lado-b: var(--atencao);
+  /* Os dois candidatos do 2º turno (decisão do Peter, 26/10/2026): vermelho
+     para Lula (PT) e azul para Flávio Bolsonaro (PL), a convenção da
+     imprensa aplicada igual aos dois. O vermelho não é o `--alerta` (que a
+     página não usa) nem o azul é o `--acento`. Medido em 26/10/2026: no claro,
+     4,39:1 e 8,39:1 sobre o branco e 1,91:1 entre os dois (separam-se também
+     no papel em preto); no escuro, 8,10:1 e 4,67:1 sobre o fundo. Em
+     deuteranopia e protanopia a distância simulada é 0,38 e 0,25 no claro
+     (o par vermelho-ferrugem do alerta daria 0,19 e 0,11). A página põe a
+     cor pelo partido (`data-trocado` quando o 1º do arquivo não é o PT). */
+  --cand-vermelho: #d64541;
+  --cand-azul: #1d4e89;
+  --lado-a: var(--cand-vermelho);
+  --lado-b: var(--cand-azul);
 }
+.pagina[data-trocado] { --lado-a: var(--cand-azul); --lado-b: var(--cand-vermelho); }
+@media (prefers-color-scheme: dark) {
+  .pagina { --cand-vermelho: #ff8a7a; --cand-azul: #4f7fd0; }
+}
+/* O papel volta aos tons do claro, mesmo com o sistema em escuro. */
+@media print {
+  .pagina { --cand-vermelho: #d64541; --cand-azul: #1d4e89; }
+}
+/* A abertura (26/10/2026, pedido do Peter: a página começa pelo mapa): o
+   mapa por vencedor ao lado do placar nacional; empilha no celular. */
+.abertura { display: grid; gap: 1rem 2rem; align-items: start; margin: 0 0 1rem; }
+@media (min-width: 52rem) { .abertura { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); } }
+.abertura .figuraMapa { margin: 0; }
+.resumo { min-width: 0; }
+.diferenca { font-size: var(--texto-base); margin: .75rem 0; }
+.sumario { max-width: 52rem; margin: 2rem 0 0; padding: .75rem 1rem; border: 1px solid var(--borda); border-radius: var(--raio-sm); }
+.sumario h2 { font-size: var(--texto-sm); margin: 0 0 .4rem; }
+.sumario ul { display: flex; flex-wrap: wrap; gap: 0 1.25rem; margin: 0; padding: 0; list-style: none; font-size: var(--texto-sm); }
+.sumario a { display: inline-flex; align-items: center; min-height: var(--alvo); }
+.tabelaAberta { max-width: 64rem; margin: .5rem 0 1rem; }
+.tabelaAberta summary { cursor: pointer; min-height: var(--alvo); display: list-item; padding: .2rem 0; font-weight: 600; font-size: var(--texto-sm); }
 .trilha { font-size: var(--texto-sm); color: var(--tinta-fraca); margin-bottom: 1rem; }
 .trilha a { color: var(--tinta-fraca); display: inline-flex; align-items: center; min-height: var(--alvo); }
 .titulo { font-size: var(--texto-2xl); line-height: 1.15; margin: 0 0 .5rem; }
@@ -45,21 +72,24 @@
 .barras { max-width: 52rem; }
 .barras th[scope="row"] { font-weight: 600; }
 
-/* A barra: uma cor só para todos os candidatos (sem cor de partido), escala
-   pela maior fatia, repete o número ao lado (aria-hidden) e sobrevive ao
+/* A barra: uma cor neutra para todos os candidatos (1º turno e governador,
+   cinza: o azul agora é de um candidato), ou a cor de cada um no 2º turno;
+   escala pela maior fatia, repete o número ao lado (aria-hidden) e sobrevive ao
    alto contraste forçado (`numeros-publicos-desenho.md`, "Barra em tabela"). */
 .colBarra { width: 40%; }
 .barra {
   display: block; height: .9rem; min-width: 1px; border-radius: var(--raio-xs);
-  background: var(--acento); forced-color-adjust: none; margin-top: .2rem;
+  background: var(--tinta-fraca); forced-color-adjust: none; margin-top: .2rem;
 }
+.barra.ladoA { background: var(--lado-a); }
+.barra.ladoB { background: var(--lado-b); }
 @media (max-width: 34rem) { .colBarra { display: none; } }
 
 /* As barras de divisão (26/10/2026): placar, estados e comparecimento. A
    abstenção é hachura, não cor: é ausência, e a hachura não se confunde com
-   o lado azul nem na impressão em preto. */
+   o lado de um candidato nem na impressão em preto. */
 .divisao { max-width: 52rem; margin: 0 0 1rem; }
-.neutro { --lado-b: repeating-linear-gradient(135deg, var(--tinta-fraca) 0 2px, transparent 2px 6px); }
+.neutro { --lado-a: var(--tinta-suave); --lado-b: repeating-linear-gradient(135deg, var(--tinta-fraca) 0 2px, transparent 2px 6px); }
 .tituloDivisao { font-size: var(--texto-sm); font-weight: 600; margin: 0 0 .3rem; }
 .pontas {
   display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
@@ -96,7 +126,7 @@
 /* O mapa por vencedor (26/10/2026): as mesmas duas cores das barras, por
    classe (atributo `fill` com `var()` sai literal). */
 .figuraMapa { margin: 0 0 1rem; max-width: 52rem; }
-.mapaVenc { display: block; width: 100%; max-width: 34rem; height: auto; margin: 0 auto; }
+.mapaVenc { display: block; width: 100%; max-width: 30rem; height: auto; margin: 0 auto; }
 .ufVenc { stroke: var(--fundo); stroke-width: 3; stroke-linejoin: round; forced-color-adjust: none; }
 .ufA { fill: var(--lado-a); }
 .ufB { fill: var(--lado-b); }
@@ -105,7 +135,7 @@
 .ufVenc.ufSem { fill: transparent; stroke: var(--tinta-fraca); stroke-width: 1.5; stroke-dasharray: 4 3; }
 .amostraEmpate { background: var(--borda); forced-color-adjust: none; }
 .amostraSem { border: 1px dashed var(--tinta-fraca); }
-.legendaMapa { font-size: var(--texto-sm); max-width: 46rem; margin: .75rem auto 0; }
+.legendaMapa { font-size: var(--texto-sm); max-width: 46rem; margin: .75rem 0 0; }
 .legendaMapa p { margin: 0 0 .4rem; }
 @media print { .ufVenc { stroke: #fff; stroke-width: 2; } }
 

@@ -1,0 +1,65 @@
+/* A paleta dos partidos (26/10/2026, pedido do Peter): a mesma cor para o
+   mesmo partido em todo cargo, nas páginas das eleições e no município. A
+   chave vem de `lib/partidos.ts` (`data-cor`); quem pinta lê `--cor`.
+
+   PT e PL são o vermelho e o azul de Lula e Flávio (a convenção da imprensa,
+   aplicada igual aos dois). Os outros cinco são uma paleta categórica neutra:
+   laranja, verde-petróleo, roxo, rosa e marrom, sem a dupla verde-amarelo nem
+   cor de bandeira (decisão de 25/10, `numeros-publicos-desenho.md`); o resto
+   dos partidos é "outros", em cinza, com o nome na legenda.
+
+   Medido em 26/10/2026 (contraste WCAG contra o `--fundo`; distância CIE76
+   entre as cores, a pior dupla): no claro, de 3,15:1 (outros) a 9,74:1 (MDB),
+   o vermelho 4,27:1, e a pior dupla a 28,5 (PT × PSD); no escuro, de 4,44:1
+   (outros) a 9,09:1 (UNIÃO), o vermelho #ef4444 a 4,93:1 (4,53:1 sobre a
+   `--superficie`), o azul #5686d6 a 5,11:1 (4,69:1), e a pior dupla a 28,6
+   (PL × PP). Em deuteranopia e protanopia simuladas a pior dupla fica em 5,6
+   (PL × PP, protanopia) e 5,7 (verde-petróleo × cinza, deuteranopia), no
+   escuro: por isso o cinza é "outros", sempre com o nome escrito. Um teste
+   (`tests/eleicoes-macro.test.mts`) refaz o contraste de cada cor nos dois temas. */
+.paleta {
+  --cor-pt: #d64541;
+  --cor-pl: #1d4e89;
+  --cor-psd: #b45309;
+  --cor-rep: #0b5f59;
+  --cor-pp: #7e3fa8;
+  --cor-uniao: #c0407a;
+  --cor-mdb: #5c3b1e;
+  --cor-outros: #87909a;
+}
+@media (prefers-color-scheme: dark) {
+  .paleta {
+    --cor-pt: #ef4444;
+    --cor-pl: #5686d6;
+    --cor-psd: #f59e3b;
+    --cor-rep: #1f9a8a;
+    --cor-pp: #b388e8;
+    --cor-uniao: #f49ac6;
+    --cor-mdb: #a8794c;
+    --cor-outros: #737d89;
+  }
+}
+/* O papel volta aos tons do claro, mesmo com o sistema em escuro. */
+@media print {
+  .paleta {
+    --cor-pt: #d64541;
+    --cor-pl: #1d4e89;
+    --cor-psd: #b45309;
+    --cor-rep: #0b5f59;
+    --cor-pp: #7e3fa8;
+    --cor-uniao: #c0407a;
+    --cor-mdb: #5c3b1e;
+    --cor-outros: #87909a;
+  }
+}
+.paleta [data-cor="pt"] { --cor: var(--cor-pt); }
+.paleta [data-cor="pl"] { --cor: var(--cor-pl); }
+.paleta [data-cor="psd"] { --cor: var(--cor-psd); }
+.paleta [data-cor="rep"] { --cor: var(--cor-rep); }
+.paleta [data-cor="pp"] { --cor: var(--cor-pp); }
+.paleta [data-cor="uniao"] { --cor: var(--cor-uniao); }
+.paleta [data-cor="mdb"] { --cor: var(--cor-mdb); }
+.paleta [data-cor="outros"] { --cor: var(--cor-outros); }
+/* Empate (em cadeiras ou votos) não é partido: o tom da borda, como no mapa
+   por vencedor desde 26/10. */
+.paleta [data-cor="empate"] { --cor: var(--borda-forte); }

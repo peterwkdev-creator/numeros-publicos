@@ -6,22 +6,16 @@
 .tabela th[scope="col"] { font-size: var(--texto-xs); text-transform: uppercase; letter-spacing: .03em; color: var(--tinta-fraca); }
 .partido { color: var(--tinta-fraca); font-weight: 400; }
 /* A barra é cinza; em presidente, Lula (PT) em vermelho e Flávio (PL) em
-   azul, com os tons de `app/eleicoes-2026/eleicoes.module.css` (o papel
-   volta aos do claro). O governador fica cinza (26/10/2026). */
+   azul, os tons do PT e do PL na paleta dos partidos
+   (`app/componentes/partidos.module.css`, classe `paleta` na seção), que já
+   traz o escuro (#ef4444, 4,93:1 sobre o fundo) e o papel. O governador fica
+   cinza (26/10/2026). */
 .colBarra { width: 35%; }
 .barra {
   display: block; height: .8rem; min-width: 0; border-radius: var(--raio-xs);
   background: var(--tinta-fraca); forced-color-adjust: none;
 }
-.barra.pt { background: #d64541; }
-.barra.pl { background: #1d4e89; }
-@media (prefers-color-scheme: dark) {
-  .barra.pt { background: #ff8a7a; }
-  .barra.pl { background: #4f7fd0; }
-}
-@media print {
-  .barra.pt { background: #d64541; }
-  .barra.pl { background: #1d4e89; }
-}
+.barra.pt { background: var(--cor-pt, #d64541); }
+.barra.pl { background: var(--cor-pl, #1d4e89); }
 @media (max-width: 30rem) { .colBarra { display: none; } }
 .rodape { font-size: var(--texto-sm); color: var(--tinta-fraca); margin: .4rem 0 .8rem; }

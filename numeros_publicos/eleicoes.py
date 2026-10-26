@@ -10,6 +10,8 @@ trabalho. A fonte é o JSON de resultado que o próprio TSE publica em
 - eleição 6257/6258: federal, 1º/2º turno (04/10 e 25/10/2026);
 - eleição 6259/6260: estadual, 1º/2º turno;
 - cargo `c0001` presidente, `c0003` governador;
+- na 6259, só no nível da UF: `c0005` senador, `c0006` deputado federal,
+  `c0007` deputado estadual e `c0008` distrital (DF), ver `coletar_cargos`;
 - `uf` minúsculo, `br` para o país e `zz` para o exterior.
 
 Os municípios e o código do IBGE vêm de `{eleição}/config/mun-e{eleição}-cm.json`
@@ -472,3 +474,205 @@ def gravar(caminho: str | Path, dados: dict, compacto_: bool = False) -> None:
     tmp = p.with_suffix(".tmp")
     tmp.write_bytes((texto + "\n").encode("utf-8"))
     os.replace(tmp, p)
+
+# --------------------------------------------------------------------------
+# Senador e deputados: só a UF (o arquivo `eleicoes-2026-cargos.json`)
+#
+# Mesmo `-u.json` da eleição estadual (6259, turno único), um por UF:
+# `c0005` senador, `c0006` deputado federal, `c0007` deputado estadual e,
+# no DF, `c0008` deputado distrital no lugar do estadual (o `c0007` do DF
+# responde 404). Lido em 26/10/2026, resultado final nas 81 respostas:
+#
+# - `carg[0].nv`: as vagas da UF; `qe`: o quociente eleitoral (só nos
+#   proporcionais); `fed`: as federações (`n`, `sg`, `npar`).
+# - `agr[]`: a coligação (`tp: "c"`, só senador), a federação (`"f"`) ou o
+#   partido isolado (`"i"`); nos proporcionais, `vag` = cadeiras que a
+#   agremiação ganhou.
+# - `par[]`: `tvtn` = votos nominais válidos dos candidatos do partido;
+#   `tvtl` = votos de legenda válidos (no número do partido); `dvt` do
+#   partido: "Válido (legenda)" ou, se a legenda foi anulada, "Anulado" /
+#   "Anulado sub judice" (aí o voto de legenda está em `tval` e não conta).
+# - `cand[].st`: "Eleito" (senador), "Eleito por QP", "Eleito por média",
+#   "Suplente", "Não eleito"; eleito é o que começa por "Eleito" (e só ele
+#   traz `e: "s"`).
+# - `cand[].dvt`: "Válido", "Anulado", "Anulado sub judice" e, uma vez (MS,
+#   estadual), "Válido (legenda)": o voto do candidato cassado que vai para
+#   a legenda, já somado no `tvtl` do partido.
+#
+# Assim: `vnom` = soma dos nominais "Válido"; `vl` = soma dos `tvtl` das
+# legendas válidas; `vv` = `vnom` + `vl`; `van` + `vansj` = nominais
+# anulados + legendas anuladas (`tval`). Tudo isso se confere em cada
+# arquivo antes de gravar.
+
+ELEICAO_UF = 6259
+SENADOR = "0005"
+DEP_FEDERAL = "0006"
+DEP_ESTADUAL = "0007"
+DEP_DISTRITAL = "0008"
+
+#: Chave do JSON → cargo do TSE; no DF o estadual é o distrital.
+CARGOS_UF = {"senador": SENADOR, "depFederal": DEP_FEDERAL,
+             "depEstadual": DEP_ESTADUAL}
+
+VALIDO = "Válido"
+LEGENDA = "Válido (legenda)"
+
+NOTA_CARGOS = (
+    "Votos de cada partido = votos nominais válidos dos seus candidatos + "
+    "votos de legenda válidos (no número do partido), como o TSE os separa "
+    "no arquivo da UF; a soma dos partidos é igual aos votos válidos. "
+    "Federação: cada partido conta à parte, pelos seus candidatos e pela sua "
+    "legenda (o TSE dá a legenda por partido), e a federação dele vem anotada "
+    "ao lado; as cadeiras, porém, são distribuídas à federação inteira. "
+    "Voto em candidato ou legenda anulados (inclusive sub judice) não entra "
+    "nos válidos nem nas porcentagens; o total desses votos e, para senador, "
+    "os candidatos anulados aparecem à parte. Senador não tem voto de legenda. "
+    "A porcentagem é sobre os votos válidos; o aplicativo do TSE divide pelos "
+    "válidos mais os anulados, e a diferença passa de 5 pontos onde houve "
+    "candidato anulado com muito voto (senador no AC, 26/10/2026). "
+    "Eleito: situação do TSE que começa por \"Eleito\" (\"Eleito\", "
+    "\"Eleito por QP\", \"Eleito por média\"); suplente não conta."
+)
+
+
+def cargo_uf(chave: str, abr: str) -> str:
+    return DEP_DISTRITAL if chave == "depEstadual" and abr == "df" else CARGOS_UF[chave]
+
+
+def url_cargo_uf(cargo: str, abr: str) -> str:
+    e = ELEICAO_UF
+    return f"{BASE}/{e}/dados/{abr}/{abr}-c{cargo}-e{e:06d}-u.json"
+
+
+def _pct_de(votos: int, validos: int) -> float:
+    return round(100 * votos / validos, 2) if validos else 0.0
+
+
+def ler_cargo_uf(dados: dict) -> dict:
+    """Um `-u.json` de senador ou deputado (UF) na forma da página. Confere
+    nominais, legenda, válidos, anulados e eleitos contra o próprio arquivo;
+    qualquer diferença levanta `ErroEleicoes`."""
+    cargos = dados.get("carg") or []
+    if len(cargos) != 1:
+        raise ErroEleicoes(f"esperava um cargo no arquivo, vieram {len(cargos)}")
+    carg = cargos[0]
+    majoritario = str(carg.get("cd")) == str(int(SENADOR))
+    rotulo = f"{dados.get('cdabr')} c{int(str(carg.get('cd') or 0)):04d}"
+    federacao = {str(f["n"]): f.get("sg", "") for f in carg.get("fed") or []}
+
+    nominais = legenda = anulados = 0
+    validos_cand, anulados_cand, eleitos = [], [], []
+    partidos: dict[str, dict] = {}
+    erros = []
+    for agr in carg.get("agr") or []:
+        eleitos_agr = 0
+        for par in agr.get("par") or []:
+            sg = par.get("sg", "")
+            reg = partidos.setdefault(sg, {"partido": sg, "eleitos": 0, "votos": 0})
+            if federacao.get(str(par.get("nfed") or "")):
+                reg["federacao"] = federacao[str(par["nfed"])]
+            nom_par = 0
+            for c in par.get("cand") or []:
+                votos = _int(c.get("vap"))
+                cand = {"n": str(c["n"]), "nome": c.get("nmu") or c.get("nm"),
+                        "partido": sg, "votos": votos}
+                if str(c.get("st", "")).startswith("Eleito"):
+                    eleitos.append(cand)
+                    eleitos_agr += 1
+                    reg["eleitos"] += 1
+                if c.get("dvt") == VALIDO:
+                    nom_par += votos
+                    validos_cand.append(cand)
+                elif c.get("dvt") == LEGENDA:
+                    pass  # já está no `tvtl` do partido
+                else:
+                    anulados += votos
+                    anulados_cand.append({**cand, "situacao": c.get("dvt", "")})
+            if par.get("tvtn") is not None and _int(par.get("tvtn")) != nom_par:
+                erros.append(f"{sg}: nominais {nom_par} ≠ tvtn {par.get('tvtn')}")
+            nominais += nom_par
+            reg["votos"] += nom_par
+            if par.get("dvt") == LEGENDA:
+                legenda += _int(par.get("tvtl"))
+                reg["votos"] += _int(par.get("tvtl"))
+            elif par.get("dvt"):
+                anulados += _int(par.get("tval"))
+        if not majoritario and _int(agr.get("vag")) != eleitos_agr:
+            erros.append(f"{agr.get('nm')}: {eleitos_agr} eleitos ≠ vag {agr.get('vag')}")
+
+    v = dados.get("v") or {}
+    validos = _int(v.get("vv"))
+    vagas = _int(carg.get("nv"))
+    for nome, achado, declarado in (
+            ("nominais", nominais, _int(v.get("vnom"))),
+            ("legenda", legenda, _int(v.get("vl"))),
+            ("válidos", nominais + legenda, validos),
+            ("anulados", anulados, _int(v.get("van")) + _int(v.get("vansj"))),
+            ("eleitos", len(eleitos), vagas)):
+        if achado != declarado:
+            erros.append(f"{nome} {achado} ≠ {declarado}")
+    if erros:
+        raise ErroEleicoes(f"{rotulo}: " + "; ".join(erros))
+
+    r = {
+        "gerado": f"{dados.get('dg')} {dados.get('hg')}",
+        "final": dados.get("tf") == "s",
+        "vagas": vagas,
+        "validos": validos,
+        "votosAnulados": anulados,
+    }
+    if majoritario:
+        eleitos_n = {c["n"] for c in eleitos}
+        validos_cand.sort(key=lambda c: (-c["votos"], c["n"]))
+        r["candidatos"] = [{**c, "pct": _pct_de(c["votos"], validos),
+                            "eleito": c["n"] in eleitos_n} for c in validos_cand]
+        anulados_cand.sort(key=lambda c: (-c["votos"], c["n"]))
+        r["candidatosAnulados"] = anulados_cand
+    else:
+        lista = [{**p, "pct": _pct_de(p["votos"], validos)}
+                 for p in partidos.values() if p["votos"] or p["eleitos"]]
+        lista.sort(key=lambda p: (-p["eleitos"], -p["votos"], p["partido"]))
+        r["partidos"] = lista
+        eleitos.sort(key=lambda c: (-c["votos"], c["nome"]))
+        r["eleitos"] = [{"nome": c["nome"], "partido": c["partido"],
+                         "votos": c["votos"]} for c in eleitos]
+    return r
+
+
+def coletar_cargos(pedir: Pedir, paralelos: int = PARALELOS,
+                   agora: Callable[[], str] | None = None) -> dict:
+    """Senador, deputado federal e deputado estadual/distrital das 27 UFs.
+    Levanta `ErroEleicoes` com a lista inteira do que faltou ou não bateu."""
+    alvos = [(chave, abr, url_cargo_uf(cargo_uf(chave, abr), abr))
+             for chave in CARGOS_UF for abr in UFS]
+    respostas, erros = _em_paralelo(pedir, [u for _, _, u in alvos], paralelos, None)
+    saida: dict = {chave: {} for chave in CARGOS_UF}
+    for chave, abr, url in alvos:
+        if url not in respostas:
+            continue
+        d = respostas[url]
+        if d is None:
+            erros.append(f"{url}: 404")
+            continue
+        try:
+            r = ler_cargo_uf(d)
+        except ErroEleicoes as e:
+            erros.append(f"{url}: {e}")
+            continue
+        if chave == "depEstadual" and abr == "df":
+            r = {"cargo": "Deputado distrital", **r}
+        saida[chave][abr] = r
+    if erros:
+        raise ErroEleicoes("\n".join(erros))
+    return {
+        "fonte": {
+            "orgao": "Tribunal Superior Eleitoral (TSE)",
+            "origem": BASE,
+            "eleicao": ELEICAO_UF,
+            "exemplo": url_cargo_uf(SENADOR, "sp"),
+            "coletadoEm": (agora or _agora)(),
+            "nota": NOTA_CARGOS,
+            "licenca": LICENCA,
+        },
+        **saida,
+    }

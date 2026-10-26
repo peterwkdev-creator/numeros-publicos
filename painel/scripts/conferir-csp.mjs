@@ -112,7 +112,28 @@ const ROTEIRO = [
   // As duas consultas ao TSE no navegador (connect-src): a seção, escolhida
   // nos seletores, e o bloco do município, que se atualiza sozinho. Sem
   // rede, o status diz que falhou e a CSP continua conferida.
+  // A visão macro (26/10/2026): trocar de cargo e abrir o cartão de um estado
+  // (CSSOM na dica e na barra do cartão, `fetch` do JSON do mapa).
   ["/eleicoes-2026/", async (p) => {
+    await p.click('label[for="cargo-gov"]');
+    await p.click('path[data-uf="ba"]');
+    await p.waitForFunction(() => document.querySelector("[data-cartao] .cartao-link"), { timeout: 10000 }).catch(() => {});
+    const r = await p.evaluate(() => ({
+      cor: document.querySelector('path[data-uf="ba"]')?.getAttribute("data-cor"),
+      cartao: document.querySelector("[data-cartao] h3")?.textContent ?? "",
+      linhas: document.querySelectorAll("[data-cartao] li").length,
+    }));
+    console.log(`  /eleicoes-2026/ governador, BA: cor ${r.cor}, cartão "${r.cartao}", ${r.linhas} linhas`);
+    if (!r.cartao || r.cor === "sem") { console.log("✗ /eleicoes-2026/: o cartão do estado não abriu"); falhas++; }
+  }],
+  // O link velho da página única vai para a página de dados.
+  ["/eleicoes-2026/#gov-ba", async (p) => {
+    await p.waitForFunction(() => location.pathname.endsWith("/dados/"), { timeout: 10000 }).catch(() => {});
+    const u = await p.evaluate(() => location.pathname + location.hash);
+    console.log(`  /eleicoes-2026/#gov-ba foi para ${u}`);
+    if (u !== "/eleicoes-2026/dados/#gov-ba") { console.log("✗ /eleicoes-2026/#gov-ba: o link velho não foi levado"); falhas++; }
+  }],
+  ["/eleicoes-2026/dados/", async (p) => {
     const opcao = (sel) => p.waitForFunction((s) => document.querySelector(s)?.options.length > 1, { timeout: 20000 }, sel);
     await p.select("#cs-uf", "rr");
     await opcao("#cs-mun"); await p.select("#cs-mun", "03085");
@@ -120,10 +141,12 @@ const ROTEIRO = [
     await opcao("#cs-secao"); await p.select("#cs-secao", "0001");
     await p.click('form[data-consulta-secao] button[type="submit"]');
     await p.waitForFunction(() => document.querySelector("#cs-resultado")?.children.length > 0, { timeout: 60000 }).catch(() => {});
-    console.log(`  /eleicoes-2026/ consulta: ${await p.$eval("#cs-status", (e) => e.textContent)}`);
+    console.log(`  /eleicoes-2026/dados/ consulta: ${await p.$eval("#cs-status", (e) => e.textContent)}`);
   }],
-  // O link da consulta (26/10/2026): `?secao=` refaz a consulta sozinho.
+  // O link da consulta (26/10/2026): `?secao=` refaz a consulta sozinho. O
+  // endereço velho, sem /dados/, passa pela macro e chega aqui igual.
   ["/eleicoes-2026/?secao=rr-03085-0008-0001", async (p) => {
+    await p.waitForFunction(() => location.pathname.endsWith("/dados/"), { timeout: 10000 }).catch(() => {});
     await p.waitForFunction(() => document.querySelector("#cs-resultado")?.children.length > 0, { timeout: 60000 }).catch(() => {});
     const s = await p.$eval("#cs-status", (e) => e.textContent);
     console.log(`  /eleicoes-2026/?secao= consulta: ${s}`);

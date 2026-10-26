@@ -105,6 +105,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "daily",
       priority: 0.9,
     },
+    {
+      url: `${SITE}/eleicoes-2026/dados/`,
+      lastModified: new Date(eleicoes.fonte.coletadoEm),
+      changeFrequency: "daily",
+      priority: 0.8,
+    },
   ];
 
   // Prioridade acima da do municipio: sao 27 paginas que concentram o link

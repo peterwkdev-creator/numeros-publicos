@@ -1,35 +1,27 @@
 /**
- * Os caminhos da página das eleições (26/10/2026). Sem este arquivo a página
- * fica igual, só sem eles:
- * - o estado no mapa por vencedor leva à linha dele no placar por estado;
- * - o link "governador" do placar abre o estado na seção do governador;
+ * Os caminhos de /eleicoes-2026/dados/ (26/10/2026). Sem este arquivo a
+ * página fica igual, só sem eles:
+ * - o link que chega com o alvo dentro de um `<details>` fechado
+ *   (`#gov-ba`, `#sen-ba`, `#depf-ba`, `#depe-df`, `#pres1-ba`, `#uf-ba`,
+ *   vindos do cartão do mapa em /eleicoes-2026/) abre o `<details>` e rola
+ *   até o alvo, na carga e depois;
  * - "Abrir todos" e "Fechar todos" nos governadores;
  * - a impressão sai com todo `<details>` aberto (as tabelas recolhidas
  *   também vão ao papel) e os fecha de novo depois.
  */
-const mapa = document.querySelector("svg[data-mapa-vencedor]");
-if (mapa) {
-  // O mapa é `role="img"`: os estados não viram links (filhos de img são
-  // apresentacionais); o placar, logo ao lado, é o caminho pelo teclado.
-  mapa.setAttribute("data-clicavel", "");
-  mapa.addEventListener("click", (ev) => {
-    const uf = ev.target.closest?.("path[data-uf]")?.getAttribute("data-uf");
-    if (!uf) return;
-    const id = "uf-" + uf.toLowerCase();
-    // O mesmo hash não dispara navegação: rola à mão.
-    if (location.hash === "#" + id) document.getElementById(id)?.scrollIntoView();
-    else location.hash = id;
-  });
-  const dica = document.querySelector("[data-dica-mapa]");
-  if (dica) dica.hidden = false;
-}
 
-// O governador pedido pelo link (`#gov-ba`) abre ao chegar, na carga ou depois.
+// Abre todo `<details>` que contém o alvo (ele mesmo, se for um): sem isso o
+// navegador não rola até uma linha escondida num `<details>` fechado.
 function abrirAlvo() {
   const id = decodeURIComponent(location.hash.slice(1));
-  if (!id.startsWith("gov-")) return;
-  const d = document.getElementById(id);
-  if (d instanceof HTMLDetailsElement) d.open = true;
+  if (!id) return;
+  const alvo = document.getElementById(id);
+  if (!alvo) return;
+  let fechado = false;
+  for (let d = alvo.closest("details"); d; d = d.parentElement?.closest("details")) {
+    if (!d.open) { d.open = true; fechado = true; }
+  }
+  if (fechado) alvo.scrollIntoView();
 }
 addEventListener("hashchange", abrirAlvo);
 // O mesmo link de novo (governador fechado à mão) não muda o hash: abre no clique.

@@ -906,6 +906,17 @@ def construir_parser() -> argparse.ArgumentParser:
                          "depois de falha parcial)")
     el.add_argument("--paralelos", type=int, default=8)
     el.set_defaults(func=eleicoes_2026)
+    ec = sub.add_parser("eleicoes-2026-cargos",
+                        help="baixa do TSE senador, deputado federal e "
+                             "deputado estadual/distrital das 27 UFs (81 "
+                             "arquivos, resultado final) e grava o JSON")
+    ec.add_argument("--saida", default="painel/dados/eleicoes-2026-cargos.json")
+    ec.add_argument("--cache", default=".cache/tse-2026",
+                    help="cópia em disco de cada resposta (ignorada pelo git)")
+    ec.add_argument("--reusar-cache", action="store_true",
+                    help="não pede de novo o que já está no cache")
+    ec.add_argument("--paralelos", type=int, default=8)
+    ec.set_defaults(func=eleicoes_2026_cargos)
     return p
 
 
@@ -935,6 +946,28 @@ def eleicoes_2026(args, pedir=None) -> int:
           f"{resumo['municipios']['total']} municípios, "
           f"{len(resumo['municipios']['semPar'])} do site sem par no TSE; "
           f"2º turno gerado {br['gerado']}")
+    return 0
+
+
+def eleicoes_2026_cargos(args, pedir=None) -> int:
+    """Senador e deputados por UF; arquivo que falte ou soma que não bata:
+    sai 1 e não grava."""
+    from . import eleicoes
+    pedir = pedir or eleicoes.pedir_http(Path_(args.cache), reusar=args.reusar_cache)
+    paralelos = max(1, min(args.paralelos, eleicoes.PARALELOS))
+    try:
+        dados = eleicoes.coletar_cargos(pedir, paralelos)
+    except eleicoes.ErroEleicoes as e:
+        linhas = str(e).splitlines()
+        print(f"ERRO: a coleta não fechou ({len(linhas)} problemas); nada gravado.",
+              file=sys.stderr)
+        for linha in linhas[:40]:
+            print(f"  {linha}", file=sys.stderr)
+        return 1
+    eleicoes.gravar(args.saida, dados)
+    vagas = {c: sum(r["vagas"] for r in dados[c].values()) for c in eleicoes.CARGOS_UF}
+    print(f"gravado {args.saida}: " + ", ".join(
+        f"{c} {len(dados[c])} UFs e {n} eleitos" for c, n in vagas.items()))
     return 0
 
 

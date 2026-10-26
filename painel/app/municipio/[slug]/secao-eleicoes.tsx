@@ -1,14 +1,16 @@
 import { br } from "../../../lib/dados";
 import {
-  CAMINHO, dataDoTurno, urlMunicipio,
+  CAMINHO, CAMINHO_DADOS, dataDoTurno, urlMunicipio,
   type EleicaoDoMunicipio,
 } from "../../../lib/eleicoes";
 import type { Contexto } from "./contexto";
+import paleta from "../../componentes/partidos.module.css";
 import est from "./secao-eleicoes.module.css";
 
 /**
  * A cor da barra: em presidente (chaves `p1`, `p2`), Lula (PT) em vermelho e
- * Flávio (PL) em azul, como na página das eleições (26/10/2026); os outros e
+ * Flávio (PL) em azul, os tons do PT e do PL na paleta dos partidos
+ * (`partidos.module.css`), como na página das eleições (26/10/2026); os outros e
  * o governador ficam cinza, sem cor de partido entre vários partidos.
  */
 function corDe(chave: string, partido: string): string {
@@ -43,12 +45,13 @@ export default function SecaoEleicoes(
     );
   }
   return (
-    <section className={estilos.texto} id="eleicoes-2026" data-eleicao-municipio>
+    <section className={`${estilos.texto} ${paleta.paleta}`} id="eleicoes-2026" data-eleicao-municipio>
       <h2>Eleições 2026 em {m.nome}</h2>
       <p>
         Resultado oficial do TSE no município, com o percentual como o TSE o
-        publica (sobre os votos de todos os candidatos). País, estados e a
-        prorrogação de 25/10 na <a href={CAMINHO}>página das eleições</a>.
+        publica (sobre os votos de todos os candidatos). País e estados na{" "}
+        <a href={CAMINHO}>página das eleições</a>; a prorrogação de 25/10 e a
+        consulta de seção em <a href={`${CAMINHO_DADOS}#prorrogacao`}>todos os dados</a>.
       </p>
       {ele.cargos.map((g) => {
         // A barra escala pela maior fatia do cargo (`numeros-publicos-desenho.md`,

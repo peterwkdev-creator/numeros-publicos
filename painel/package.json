@@ -15,7 +15,7 @@
     "conferir-xlsx": "node scripts/conferir-xlsx.mjs out/dados/municipios.xlsx out/dados/municipios.csv",
     "medir-inp": "node scripts/medir-inp.mjs http://127.0.0.1:8791/",
     "indexnow": "node scripts/indexnow.mjs",
-    "auditar": "node scripts/auditar.mjs http://127.0.0.1:8791 / /ajuda/ /ranking/ /estado/ /ranking/gasto-com-pessoal/ /ranking/gasto-com-pessoal/?uf=ce /ranking/emprego-com-carteira/ /ranking/emprego-com-carteira/?uf=pe /brasil/ /eleicoes-2026/ /brasil/ipca/ /brasil/desocupacao/ /inss/ /inss/aposentadoria-por-idade/ /estado/ce/ /estado/rs/ /estado/df/ /estado/mt/ /municipio/presidente-medici-ro/ /municipio/imperatriz-ma/ /municipio/guaratinga-ba/ /municipio/apiai-sp/ /municipio/aparecida-sp/ /municipio/volta-redonda-rj/ /municipio/brasilia-df/ /municipio/boa-esperanca-do-norte-mt/"
+    "auditar": "node scripts/auditar.mjs http://127.0.0.1:8791 / /ajuda/ /ranking/ /estado/ /ranking/gasto-com-pessoal/ /ranking/gasto-com-pessoal/?uf=ce /ranking/emprego-com-carteira/ /ranking/emprego-com-carteira/?uf=pe /brasil/ /eleicoes-2026/ /eleicoes-2026/dados/ /brasil/ipca/ /brasil/desocupacao/ /inss/ /inss/aposentadoria-por-idade/ /estado/ce/ /estado/rs/ /estado/df/ /estado/mt/ /municipio/presidente-medici-ro/ /municipio/imperatriz-ma/ /municipio/guaratinga-ba/ /municipio/apiai-sp/ /municipio/aparecida-sp/ /municipio/volta-redonda-rj/ /municipio/brasilia-df/ /municipio/boa-esperanca-do-norte-mt/"
   },
   "dependencies": {
     "next": "16.4.1",

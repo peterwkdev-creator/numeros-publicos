@@ -1,6 +1,7 @@
 /**
- * A consulta de seção da página /eleicoes-2026/, sem React: o comportamento
- * sobre o formulário que `app/eleicoes-2026/page.tsx` gera no servidor.
+ * A consulta de seção da página /eleicoes-2026/dados/, sem React: o
+ * comportamento sobre o formulário que `app/eleicoes-2026/dados/page.tsx`
+ * gera no servidor.
  *
  * O navegador do visitante busca no TSE (resultados.tse.jus.br, que responde
  * com CORS ao domínio do site; a CSP o tem no `connect-src`):

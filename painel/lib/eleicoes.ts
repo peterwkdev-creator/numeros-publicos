@@ -83,6 +83,8 @@ export interface MunicipiosEleicoes {
 }
 
 export const CAMINHO = "/eleicoes-2026/";
+/** A página de todos os dados (26/10/2026: a de cima virou a visão macro). */
+export const CAMINHO_DADOS = "/eleicoes-2026/dados/";
 export const TITULO = "Eleições 2026";
 
 /** A raiz dos arquivos do TSE, a mesma que o navegador consulta ao vivo. */

@@ -1,0 +1,114 @@
+/* A visão macro das eleições (26/10/2026): os botões de cargo, o mapa que
+   muda de cor com eles, a dica do cursor, o cartão do estado e o resumo do
+   Brasil. A cor de cada estado é a do partido (`partidos.module.css`, por
+   `data-cor`, que o `public/eleicoes-macro.js` troca a cada cargo); nada
+   aqui sabe de partido. O que o script cria no cartão leva classe sem hash,
+   estilizada por `:global` dentro de `.cartao`. */
+
+/* Os cargos: rádios nativos com cara de botão segmentado. O rádio fica
+   invisível mas focável; o foco aparece no rótulo. */
+.cargos { border: 0; margin: 0 0 1rem; padding: 0; display: flex; flex-wrap: wrap; gap: .4rem; max-width: 64rem; }
+.rotuloCargos { font-size: var(--texto-sm); font-weight: 600; padding: 0; margin: 0 0 .35rem; width: 100%; float: left; }
+.cargo { position: relative; display: inline-flex; }
+.cargo input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.cargo label {
+  display: inline-flex; align-items: center; min-height: var(--alvo); padding: .3rem .8rem;
+  border: 1px solid var(--borda-forte); border-radius: var(--raio-pilula);
+  background: var(--superficie); color: var(--tinta); font-size: var(--texto-sm); cursor: pointer;
+}
+.cargo input:checked + label { background: var(--tinta); color: var(--superficie); border-color: var(--tinta); font-weight: 600; }
+/* A marca escolhida não depende só da cor: o ✓ acompanha. */
+.cargo input:checked + label::before { content: "✓ "; white-space: pre; }
+.cargo input:focus-visible + label { outline: 3px solid var(--acento); outline-offset: 2px; }
+@media (forced-colors: active) {
+  .cargo input:checked + label { border: 2px solid Highlight; }
+}
+
+/* O mapa e a legenda à esquerda; o seletor de estado, o cartão e o resumo
+   à direita. No celular, na ordem do documento: mapa, seletor e cartão
+   (logo abaixo do mapa, à vista depois do toque), legenda e resumo. */
+.palco { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem 2rem; max-width: 64rem; }
+@media (min-width: 52rem) {
+  .palco {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); align-items: start;
+    grid-template-areas: "mapa lado" "mapa resumo" "leg resumo";
+  }
+  .figura { grid-area: mapa; }
+  .lado { grid-area: lado; }
+  .legendas { grid-area: leg; }
+  .resumo { grid-area: resumo; }
+}
+.figura { margin: 0; }
+.caixaMapa { position: relative; }
+.mapa { display: block; width: 100%; max-width: 32rem; height: auto; margin: 0 auto; }
+.uf {
+  fill: var(--cor, transparent); stroke: var(--fundo); stroke-width: 3; stroke-linejoin: round;
+  forced-color-adjust: none;
+}
+/* "Sem dado" é ausência: sem cor, só o contorno tracejado. */
+.uf[data-cor="sem"] { fill: transparent; stroke: var(--tinta-fraca); stroke-width: 1.5; stroke-dasharray: 4 3; }
+.mapa[data-clicavel] .uf { cursor: pointer; }
+.mapa[data-clicavel] .uf:hover { opacity: .8; }
+/* O estado aberto no cartão: contorno de tinta, desenhado por último (o
+   script o põe no fim do SVG) para a borda não sumir sob o vizinho. */
+.uf[data-ativo] { stroke: var(--tinta); stroke-width: 4; }
+
+.dica {
+  position: absolute; z-index: 2; max-width: 18rem; pointer-events: none;
+  padding: .45rem .6rem; border: 1px solid var(--borda-forte); border-radius: var(--raio-sm);
+  background: var(--superficie); color: var(--tinta); box-shadow: var(--sombra-alta);
+  font-size: var(--texto-sm); line-height: 1.35;
+}
+
+.legenda { font-size: var(--texto-sm); margin: 0; }
+.legenda p { margin: 0 0 .4rem; }
+.tituloLegenda { font-weight: 600; }
+.instrucao { font-size: var(--texto-sm); color: var(--tinta-fraca); margin: .5rem 0 0; }
+
+.lado { min-width: 0; }
+.escolha { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin: 0 0 .75rem; }
+.escolha label { font-size: var(--texto-sm); font-weight: 600; }
+/* Os dois nascem ocultos e só o script os mostra: o `display: flex` acima
+   venceria o `hidden`, e sem script ficariam controles que não fazem nada. */
+.cargos[hidden], .escolha[hidden] { display: none; }
+.escolha select {
+  font: inherit; min-height: var(--alvo); padding: .3rem .5rem;
+  border: 1px solid var(--borda-forte); border-radius: var(--raio-sm);
+  background: var(--superficie); color: var(--tinta);
+}
+
+/* O cartão do estado. Vazio, não ocupa espaço. */
+.cartao:empty { display: none; }
+.cartao {
+  border: 1px solid var(--borda-forte); border-radius: var(--raio); padding: .75rem 1rem;
+  background: var(--superficie); margin: 0 0 1rem; scroll-margin-top: 1rem;
+}
+.cartao :global(.cartao-topo) { display: flex; justify-content: space-between; align-items: flex-start; gap: .5rem; }
+.cartao :global(.cartao-uf) { font-size: var(--texto-lg); margin: 0; }
+.cartao :global(.cartao-sub) { font-size: var(--texto-sm); color: var(--tinta-fraca); margin: .15rem 0 .6rem; }
+.cartao :global(.cartao-fechar) {
+  font: inherit; font-size: var(--texto-sm); min-height: var(--alvo); min-width: var(--alvo);
+  padding: .2rem .6rem; border: 1px solid var(--borda-forte); border-radius: var(--raio-sm);
+  background: var(--superficie); color: var(--tinta); cursor: pointer;
+}
+.cartao :global(.cartao-linhas) { list-style: none; margin: 0; padding: 0; font-size: var(--texto-sm); }
+.cartao :global(.cartao-linhas li) { padding: .3rem 0; border-bottom: 1px solid var(--borda); }
+.cartao :global(.cartao-linha) { display: flex; justify-content: space-between; gap: .75rem; font-variant-numeric: tabular-nums; }
+.cartao :global(.cartao-valor) { text-align: right; white-space: nowrap; }
+.cartao :global(.cartao-eleito) { font-weight: 600; }
+.cartao :global(.cartao-trilho) { display: block; height: .5rem; margin-top: .2rem; background: var(--borda); border-radius: var(--raio-xs); forced-color-adjust: none; }
+.cartao :global(.cartao-barra) { display: block; height: 100%; background: var(--cor, var(--tinta-fraca)); border-radius: var(--raio-xs); forced-color-adjust: none; }
+.cartao :global(.cartao-nota) { font-size: var(--texto-sm); color: var(--tinta-fraca); margin: .6rem 0 0; }
+.cartao :global(.cartao-link) { display: inline-flex; align-items: center; min-height: var(--alvo); font-weight: 600; }
+
+.resumo { margin: 0; min-width: 0; }
+.tituloResumo { font-size: var(--texto-lg); margin: 0 0 .5rem; }
+.subResumo { font-weight: 600; margin: 0 0 .4rem; }
+
+.verTodos { margin: 1.5rem 0 .5rem; font-size: var(--texto-base); }
+.verTodos a { font-weight: 600; font-size: var(--texto-lg); }
+
+@media print {
+  .uf { stroke: #fff; stroke-width: 2; }
+  .cargos, .escolha, .instrucao, .dica, .cartao :global(.cartao-fechar) { display: none; }
+}

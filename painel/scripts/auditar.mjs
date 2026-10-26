@@ -497,9 +497,14 @@ for (const caminho of caminhos) {
       h1: document.querySelectorAll("h1").length,
       navSemRotulo: [...document.querySelectorAll("nav")]
         .filter((n) => !n.getAttribute("aria-label") && !n.getAttribute("aria-labelledby")).length,
-      svgSemNome: [...document.querySelectorAll("svg")]
-        .filter((s) => s.getAttribute("aria-hidden") !== "true"
-          && !s.getAttribute("aria-label") && !s.querySelector("title")).length,
+      // `aria-labelledby` dá nome quando todo id existe e tem texto (o mapa
+      // das eleições se nomeia pela legenda do cargo; o alvo pode estar oculto).
+      svgSemNome: [...document.querySelectorAll("svg")].filter((s) => {
+        const ids = (s.getAttribute("aria-labelledby") ?? "").split(/\s+/).filter(Boolean);
+        const porRef = ids.length > 0 && ids.every((id) => document.getElementById(id)?.textContent.trim());
+        return s.getAttribute("aria-hidden") !== "true" && !porRef
+          && !s.getAttribute("aria-label") && !s.querySelector("title");
+      }).length,
       imgSemAlt: [...document.querySelectorAll("img")]
         .filter((i) => i.getAttribute("alt") === null).length,
       tabelasSemScope: [...document.querySelectorAll("table")]

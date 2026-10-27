@@ -122,7 +122,7 @@ export const GLOSSARIO = {
   },
   "minimo-saude": {
     termo: "Mínimo constitucional em saúde",
-    curta: "A Constituição obriga o município a aplicar em saúde ao menos 15% da receita de impostos (Emenda Constitucional 29, de 2000, com a regra inteira desde 2004).",
+    curta: "A Constituição obriga o município a aplicar em saúde ao menos 15% da receita de impostos e transferências constitucionais, a base que a Lei Complementar 141/2012 define (Emenda Constitucional 29, de 2000, com a regra inteira desde 2004).",
     secao: "saude",
   },
   "nao-instalado": {
@@ -161,7 +161,7 @@ export const GLOSSARIO = {
   },
   rcl: {
     termo: "Receita corrente líquida (RCL) ajustada",
-    curta: "A arrecadação do município menos as transferências que ele é obrigado a repassar, com os ajustes que a Lei de Responsabilidade Fiscal manda fazer. É o denominador do percentual de gasto com pessoal.",
+    curta: "Toda a receita corrente do município (como os impostos dele e as transferências que recebe da União e do estado) menos as deduções da Lei de Responsabilidade Fiscal, como a contribuição dos servidores à previdência própria, e com os ajustes que ela manda fazer. No governo estadual, deduz-se também a parte dos impostos que vai aos municípios. É o denominador do percentual de gasto com pessoal.",
     secao: "pessoal",
   },
   "rede-municipal": {
@@ -171,7 +171,7 @@ export const GLOSSARIO = {
   },
   "resultado-primario": {
     termo: "Resultado primário",
-    curta: "O que o governo arrecada menos o que gasta, sem contar os juros da dívida. Sobra é superávit; falta, déficit.",
+    curta: "O que o setor público arrecada menos o que gasta, sem contar os juros da dívida. No site vem como o Banco Central publica (necessidade de financiamento, somada em 12 meses): acima de zero é déficit; abaixo, superávit.",
     secao: "brasil",
   },
   rgf: {
@@ -191,7 +191,7 @@ export const GLOSSARIO = {
   },
   saldo: {
     termo: "Saldo de empregos",
-    curta: "Admissões menos desligamentos no período. Positivo, abriram-se mais vagas com carteira do que se fecharam.",
+    curta: "Admissões menos desligamentos com carteira no período. Positivo: houve mais contratações que desligamentos.",
     secao: "caged",
   },
   "sem-relatorio": {

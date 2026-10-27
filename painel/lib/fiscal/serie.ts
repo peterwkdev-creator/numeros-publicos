@@ -66,6 +66,26 @@ export function nomeQuadrimestre(exercicio: number, periodo: number): string {
   return `${periodo}º quadrimestre de ${exercicio}`;
 }
 
+/** O mês em que cada bimestre termina. */
+const FIM_DO_BIMESTRE = ["fevereiro", "abril", "junho", "agosto", "outubro", "dezembro"];
+
+/** Abertura da frase do RREO, que acumula o ano desde janeiro: "No 6º
+ *  bimestre de 2025" se lia como "em novembro e dezembro" (auditoria de
+ *  termos, A5, 26/10/2026). */
+export function fraseBimestre(exercicio: number, periodo: number): string {
+  return periodo === 6
+    ? `Em ${exercicio} (o ano inteiro, no relatório do 6º bimestre)`
+    : `De janeiro a ${FIM_DO_BIMESTRE[periodo - 1]} de ${exercicio} (relatório do ${periodo}º bimestre)`;
+}
+
+/** Abertura da frase do RGF, cujo percentual cobre os 12 meses até o fim do
+ *  quadrimestre; o Simplificado do 2º semestre, os 12 meses até dezembro. */
+export function fraseDozeMeses(exercicio: number, periodo: number, simplificado = false): string {
+  const fim = simplificado ? "dezembro" : FIM_DO_BIMESTRE[2 * periodo - 1];
+  const relatorio = simplificado ? "2º semestre" : `${periodo}º quadrimestre`;
+  return `Nos 12 meses até ${fim} de ${exercicio} (relatório do ${relatorio})`;
+}
+
 /** O rótulo curto de um PONTO da série: o do RGF Simplificado é semestre. */
 export function rotuloPonto(p: PontoSerie): string {
   return p[4] === true ? `2º sem. ${p[0]}` : rotuloPeriodo(p[0], p[1]);

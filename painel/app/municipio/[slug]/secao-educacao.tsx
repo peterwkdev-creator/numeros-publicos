@@ -23,7 +23,7 @@ import FonteGrafico from "../../componentes/fonte-grafico";
  * caso específico.
  */
 export default function SecaoEducacao({ c }: { c: Contexto }) {
-  const { snapshot, ideb, m, bimestre, iniciais, finais, medianaIniciais, medianaFinais, educacao , estilos } = c;
+  const { snapshot, ideb, m, aberturaBimestre, iniciais, finais, medianaIniciais, medianaFinais, educacao , estilos } = c;
   if (!iniciais) {
     return (
       <section className={estilos.texto} id="educacao">
@@ -51,9 +51,9 @@ export default function SecaoEducacao({ c }: { c: Contexto }) {
       <p>
         {educacao && educacao.percentual !== null ? (
           <>
-            {m.nome} destinou{" "}
-            <strong>{br(educacao.percentual, 1)}%</strong> do orçamento à
-            educação no {bimestre}. O{" "}
+            {aberturaBimestre}, {m.nome} destinou{" "}
+            <strong>{br(educacao.percentual, 1)}%</strong> do que gastou (despesa liquidada) à
+            educação. O{" "}
             <Termo chave="ideb">
               IDEB
             </Termo>{" "}

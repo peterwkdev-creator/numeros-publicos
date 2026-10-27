@@ -94,6 +94,11 @@ export interface Apresentacao {
   /** Onde o zero divide a leitura (crescer e encolher, déficit e
    *  superávit): o nome de cada lado, escrito no próprio gráfico. */
   zero?: { acima: string; abaixo: string };
+  /** O período que cada ponto soma, quando não é o do rótulo ("nos 12
+   *  meses até"): o cartão de `/brasil/` escreve o lado do zero com ele,
+   *  "Déficit nos 12 meses até ago. 2026" (auditoria de termos, 26/10/2026:
+   *  "resultado primário de 0,62%" se lia como superávit). */
+  acumulado?: string;
   nota?: string;
 }
 
@@ -122,7 +127,8 @@ export const APRESENTACAO: Record<string, Apresentacao> = {
     titulo: "Taxa de desemprego",
     fiscal: false,
     como:
-      "De cada 100 pessoas que procuram trabalho, quantas não encontram.",
+      "De cada 100 pessoas de 14 anos ou mais que trabalham ou procuram " +
+      "trabalho, quantas estão sem trabalho e procurando.",
     melhor: "baixo",
     nota:
       "O IBGE chama de taxa de desocupação. A PNAD Contínua começa em 2012; " +
@@ -186,14 +192,16 @@ export const APRESENTACAO: Record<string, Apresentacao> = {
       "IBGE revisa o PIB, a série inteira muda.",
   },
   "nfsp-primario": {
-    titulo: "Resultado primário do setor público",
+    titulo: "Déficit ou superávit primário",
     fiscal: true,
     como:
+      "Cada ponto soma os 12 meses terminados ali, em proporção do PIB. " +
       "Acima de zero, o setor público gastou mais do que arrecadou (déficit); " +
       "abaixo de zero, arrecadou mais do que gastou (superávit). Sem contar " +
       "os juros da dívida.",
     melhor: "baixo",
     zero: { acima: "déficit", abaixo: "superávit" },
+    acumulado: "nos 12 meses até",
     nota:
       "O Banco Central publica a necessidade de financiamento do setor " +
       "público, e por isso o déficit fica acima de zero.",

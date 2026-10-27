@@ -8,13 +8,13 @@ import type { Contexto } from "./contexto";
  * Extraído de `page.tsx` em 16/10/2026 (item 10 da modernização): o HTML é o mesmo, byte a byte.
  */
 export default function SecaoParaOndeVai({ c }: { c: Contexto }) {
-  const { r, de, bimestre, estilos } = c;
+  const { r, de, aberturaBimestre, estilos } = c;
   if (!(r.funcoes)) return null;
   return (
     <section className={estilos.texto} id="para-onde-vai">
       <h2>Para onde vai o dinheiro {de}</h2>
       <p>
-        No {bimestre}, os <strong>{br(r.funcoes.municipios)}</strong>{" "}
+        {aberturaBimestre}, os <strong>{br(r.funcoes.municipios)}</strong>{" "}
         municípios que entregaram o relatório liquidaram{" "}
         <strong>{escala(r.funcoes.total).curto}</strong> de despesa. A soma
         é de valores absolutos, não a média das fatias: dar o mesmo peso a

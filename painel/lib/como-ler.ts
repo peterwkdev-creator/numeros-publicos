@@ -123,11 +123,11 @@ export const COMO_LER: Record<TipoDePagina, ItemComoLer[]> = {
     },
     {
       titulo: "Conta onde a empresa está",
-      texto: "A vaga entra no município do estabelecimento que contratou ou desligou, e não no de quem mora lá: quem trabalha na cidade vizinha conta na vizinha.",
+      texto: "O emprego entra no município do estabelecimento que contratou ou desligou, e não no de quem mora lá: quem trabalha na cidade vizinha conta na vizinha.",
     },
     {
       titulo: "Por mil habitantes, só nas cidades grandes",
-      texto: "Em número de vagas, cidades de tamanhos diferentes não se comparam. A última tabela divide o saldo pela população, e só nas cidades de 100 mil habitantes ou mais, onde uma empresa sozinha não decide a conta.",
+      texto: "Em número de empregos, cidades de tamanhos diferentes não se comparam. A última tabela divide o saldo pela população, e só nas cidades de 100 mil habitantes ou mais, onde uma empresa sozinha não decide a conta.",
     },
     {
       titulo: "Filtre pelo estado",

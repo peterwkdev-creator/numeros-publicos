@@ -28,11 +28,11 @@ import {
   indexarFiscal, saltoSobreAHistoria, type LinhaFiscal,
   funcoesRecentesDe, LETRA_FAIXA, parDeFuncoes,
   contiguos, indiceQuadrimestre, INSTALADO_EM, interrupcoes, naoInstaladosEm, nomePonto, pontoPlausivel, PRESTA_COMO_ESTADO, rotuloPonto,
-  nomeQuadrimestre, receitaDe, receitaRecenteDe, rotuloPeriodo, rotuloReceita, ROTULO_FAIXA, saudeDe,
+  nomeQuadrimestre, fraseBimestre, fraseDozeMeses, receitaDe, receitaRecenteDe, rotuloPeriodo, rotuloReceita, ROTULO_FAIXA, saudeDe,
   serieFuncoesDe, serieDePessoal, CODIGO_FAIXA, variacao, slugDe,
   type PontoSerie, type Receita,
 } from "../lib/fiscal.ts";
-import { posicaoEntre, posicaoNoEstado } from "../lib/posicao.ts";
+import { posicaoEntre, posicaoNoEstado, rotuloAbaixo } from "../lib/posicao.ts";
 import { daMesmaRegiao, deEstado, emContracao, type SnapshotRegioes } from "../lib/estado.ts";
 import { trilha } from "../lib/jsonld.ts";
 import {
@@ -3142,6 +3142,17 @@ test("período do RGF: nunca 2024/3, que se lê como março de 2024", () => {
   assert.doesNotMatch(rotuloPeriodo(2024, 3), /\d{4}\/\d/);
 });
 
+test("frase do período: o 6º bimestre é o ano inteiro, e o RGF, 12 meses", () => {
+  // 26/10/2026 (auditoria de termos, A5): "No 6º bimestre de 2025" se lia
+  // como novembro e dezembro, e o valor é o ano acumulado.
+  assert.equal(fraseBimestre(2025, 6), "Em 2025 (o ano inteiro, no relatório do 6º bimestre)");
+  assert.equal(fraseBimestre(2025, 3), "De janeiro a junho de 2025 (relatório do 3º bimestre)");
+  assert.equal(fraseBimestre(2025, 1), "De janeiro a fevereiro de 2025 (relatório do 1º bimestre)");
+  assert.equal(fraseDozeMeses(2025, 3), "Nos 12 meses até dezembro de 2025 (relatório do 3º quadrimestre)");
+  assert.equal(fraseDozeMeses(2025, 1), "Nos 12 meses até abril de 2025 (relatório do 1º quadrimestre)");
+  assert.equal(fraseDozeMeses(2025, 3, true), "Nos 12 meses até dezembro de 2025 (relatório do 2º semestre)");
+});
+
 test("todo download (CSV e XLSX) tem noindex no _headers da Cloudflare", () => {
   // 15/10/2026: dados.csv aparecia entre as "rastreadas, mas não indexadas"
   // do Search Console. A rota de download nova que nascer sem regra volta a
@@ -3294,4 +3305,12 @@ test("o desidratar apaga de _next/static só o que nenhum HTML nem CSS cita", as
     "out/_next/static/media/opengraph-image.x9.png",
     "out/_next/static/abc/_buildManifest.js",
   ]);
+});
+
+test("rotuloAbaixo troca 0% e 100% arredondados pela contagem (A8)", () => {
+  const valores = Array.from({ length: 1000 }, (_, i) => i / 10);
+  assert.equal(rotuloAbaixo(posicaoEntre(0.05, valores)!), "um");
+  assert.equal(rotuloAbaixo(posicaoEntre(0.15, valores)!), "2");
+  assert.equal(rotuloAbaixo(posicaoEntre(50, valores)!), "50%");
+  assert.equal(rotuloAbaixo(posicaoEntre(99.85, valores)!), "999");
 });

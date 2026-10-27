@@ -150,7 +150,7 @@ const cartoes = [
     arquivo: "ranking-emprego-com-carteira",
     tipo: "Ranking nacional",
     titulo: "Emprego com carteira",
-    linha: "Os municípios que mais abriram e mais fecharam vagas com carteira assinada em 12 meses.",
+    linha: "Os municípios que mais abriram e mais fecharam empregos com carteira assinada em 12 meses.",
     chips: ["Novo Caged", "Todos os municípios"],
     mapa: mapa(() => `${ACENTO}8c`),
   },

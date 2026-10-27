@@ -136,7 +136,7 @@ export default function SaudeSvg({
       {/* A unidade no topo do eixo: o percentual é da receita de impostos e
           transferências, não do orçamento inteiro. */}
       <text x={0} y={9} fontSize="8" fill="var(--tinta-fraca)">
-        % dos impostos
+        % da receita de impostos e transferências
       </text>
       {marcas.map((v) => (
         <g key={`m-${v}`}>

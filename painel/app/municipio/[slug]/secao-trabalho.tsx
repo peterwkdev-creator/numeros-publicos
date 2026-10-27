@@ -113,12 +113,12 @@ export default function SecaoTrabalho({ c }: { c: Contexto }) {
               {contagem(cagedM.desligamentos, "desligamento", "desligamentos")}
             </strong>
             : <Termo chave="saldo">saldo</Termo> de <strong>{comSinal(cagedM.saldo)}</strong>{" "}
-            {Math.abs(cagedM.saldo) === 1 ? "vaga" : "vagas"}. Só em{" "}
+            {Math.abs(cagedM.saldo) === 1 ? "emprego com carteira" : "empregos com carteira"}. Só em{" "}
             {nomeCompetencia(caged.competencia)}, o saldo foi de{" "}
             <strong>{comSinal(cagedM.ultimo.saldo)}</strong>{" "}
-            {Math.abs(cagedM.ultimo.saldo) === 1 ? "vaga" : "vagas"}.{" "}
+            {Math.abs(cagedM.ultimo.saldo) === 1 ? "emprego com carteira" : "empregos com carteira"}.{" "}
             <Link href="/ranking/emprego-com-carteira/" prefetch={false}>
-              Os municípios que mais abriram e mais fecharam vagas
+              Os municípios que mais abriram e mais fecharam empregos com carteira
             </Link>.
           </p>
           <TabelaCaged
@@ -135,7 +135,7 @@ export default function SecaoTrabalho({ c }: { c: Contexto }) {
             Zero admissões e zero desligamentos num mês querem dizer que
             nenhuma movimentação foi declarada, e não que falta o dado. No
             país, os mesmos 12 meses somam{" "}
-            <strong>{comSinal(caged.conferencia.doze.saldo)}</strong> vagas,
+            <strong>{comSinal(caged.conferencia.doze.saldo)}</strong> empregos com carteira,
             o número que o Ministério do Trabalho publica e que esta base
             reproduz exatamente.{" "}
             {/* Do dado conferido, e não do teclado: `caged-exportar` só
@@ -173,7 +173,7 @@ export default function SecaoTrabalho({ c }: { c: Contexto }) {
               <thead>
                 <tr>
                   <th scope="col">Ano</th>
-                  <th scope="col" className={estilos.num}>Saldo (vagas)</th>
+                  <th scope="col" className={estilos.num}>Saldo (empregos)</th>
                 </tr>
               </thead>
               <tbody>
@@ -192,7 +192,7 @@ export default function SecaoTrabalho({ c }: { c: Contexto }) {
             dezembro fechado, a série inteira é refeita. No país, os mesmos
             anos vão de{" "}
             <strong>{comSinal(cagedAnos.conferencia[String(cagedAnos.anos[0])]!.saldo)}</strong>{" "}
-            vagas em {cagedAnos.anos[0]} a{" "}
+            empregos em {cagedAnos.anos[0]} a{" "}
             <strong>
               {comSinal(cagedAnos.conferencia[String(cagedAnos.anos[cagedAnos.anos.length - 1])]!.saldo)}
             </strong>{" "}

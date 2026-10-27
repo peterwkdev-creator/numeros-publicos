@@ -38,8 +38,10 @@ export default function SecaoEmendas({ c }: { c: Contexto }) {
             </>
           ) : (
             <>
-              {" "}Em {emendasUf.parcial.ano}, até {mesDeCorte(emendas.ultimoMes)},
-              o saldo é de{" "}
+              {" "}Em {emendasUf.parcial.ano}, até {mesDeCorte(emendas.ultimoMes)},{" "}
+              {emendasUf.parcial.reais < 0
+                ? "os estornos superam os pagamentos: o saldo é de"
+                : "o total pago soma"}{" "}
               <strong title={escalaComSinal(emendasUf.parcial.reais).exato}>
                 {escalaComSinal(emendasUf.parcial.reais).curto}
               </strong>.

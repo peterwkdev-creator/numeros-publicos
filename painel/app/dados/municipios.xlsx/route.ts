@@ -135,7 +135,7 @@ export async function GET() {
        "O numerador do percentual ao lado, em reais, como o município declarou. É a despesa com pessoal do Executivo no período.",
        "R$", "SICONFI — RGF Anexo 01"],
       ["RCL ajustada (R$)",
-       "O denominador do percentual, em reais: a arrecadação do município menos as transferências que ele é obrigado a repassar, com os ajustes da Lei de Responsabilidade Fiscal. É a ajustada, não a bruta.",
+       "O denominador do percentual, em reais: toda a receita corrente do município (como os impostos dele e as transferências que recebe da União e do estado) menos as deduções da Lei de Responsabilidade Fiscal, como a contribuição dos servidores à previdência própria, e com os ajustes que ela manda fazer. É a ajustada, não a bruta.",
        "R$", "SICONFI — RGF Anexo 01"],
       ["Limite prudencial (%)",
        "95% do teto legal. Passar dele já proíbe criar cargo, conceder aumento e contratar.",

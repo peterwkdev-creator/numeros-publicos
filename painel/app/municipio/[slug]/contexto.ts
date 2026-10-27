@@ -3,7 +3,7 @@ import { atualizadoEm } from "../../../lib/sitemap";
 import { daMesmaRegiao, deEstado, vizinhosDe } from "../../../lib/estado";
 import { MINIMO_MEDIANA, medianasSaudeCache, rankingCache } from "../../../lib/nacional";
 import { posicaoEntre, posicaoNoEstado } from "../../../lib/posicao";
-import { compararFuncoes, DESLOCAMENTO_MINIMO, funcoesRecentesDe, INSTALADO_EM, interrupcoes, rclDesmentida, receitaDe, receitaRecenteDe, saltoSobreAHistoria, nomeQuadrimestre, saudeDe, serieDePessoal, variacao, atualDeFuncoes, serieFuncoesDe } from "../../../lib/fiscal";
+import { compararFuncoes, DESLOCAMENTO_MINIMO, funcoesRecentesDe, INSTALADO_EM, interrupcoes, rclDesmentida, receitaDe, receitaRecenteDe, saltoSobreAHistoria, nomeQuadrimestre, fraseBimestre, fraseDozeMeses, saudeDe, serieDePessoal, variacao, atualDeFuncoes, serieFuncoesDe } from "../../../lib/fiscal";
 import { medianaGeral, trajetoriaDe } from "../../../lib/ideb";
 import { linhasDaUf, medianasCache, medidasDe, taxasCache } from "../../../lib/censo";
 import { cagedAnosDe, cagedDe } from "../../../lib/caged";
@@ -177,6 +177,7 @@ export function montarContexto(dados: Dados, m: Municipio) {
   const periodoRgf = f?.simplificado
     ? `2º semestre de ${fiscal.exercicio}`
     : quadrimestre;
+  const aberturaRgf = fraseDozeMeses(fiscal.exercicio, fiscal.periodo, f?.simplificado === true);
   // `serieDePessoal`, e não a série crua: o ponto que o cartão condena pela
   // RCL desmentida não pode sustentar a variação nem o traço do gráfico.
   const { todos: serie, usaveis, condenado } =
@@ -245,6 +246,9 @@ export function montarContexto(dados: Dados, m: Municipio) {
   const bimestre = fiscal.funcoes && funcoes
     ? `${fiscal.funcoes.periodo}º bimestre de ${funcoes.exercicio}`
     : "";
+  const aberturaBimestre = fiscal.funcoes && funcoes
+    ? fraseBimestre(funcoes.exercicio, fiscal.funcoes.periodo)
+    : "";
   // O exercício mais novo da COLETA, só para saber se este município está
   // atrasado em relação a ela — e, estando, dizer isso em vez de calar.
   const exercicioColetado = fiscal.funcoes
@@ -283,7 +287,7 @@ export function montarContexto(dados: Dados, m: Municipio) {
     .slice(0, 5);
 
   return {
-    snapshot, fiscal, ideb, caged, cagedAnos, emendas, m, atualizado, uf, regiao, pelaRegiao, vizinhos, medidas, medianas, serieFuncoes, taxasPais, medidasTrabalho, medianasTrabalho, taxasTrabalho, renda, medianaRenda, salario, medianaSalario, comUf, medianasUf, medianasTrabalhoUf, medianaRendaUf, medianaSalarioUf, legendaMedianas, anoEmpresas, temCensoTrabalho, temEmpresas, cagedM, cagedAnosM, emendasM, pop, estimada, pibReais, perCapita, emendasPh, posEmendas, posPop, posPerCapita, naoEntregaramNoEstado, consultadosNoEstado, f, instaladoEm, receitaContraRcl, saltoRcl, posicao, quadrimestre, periodoRgf, serie, usaveis, condenado, delta, finalCondenado, vazios, semestral, umPeriodo, saude, funcoes, receita, bimestre, exercicioColetado, atrasado, maior, iniciais, finais, medianaIniciais, medianaFinais, educacao, nacional, comparacao, mudancas,
+    snapshot, fiscal, ideb, caged, cagedAnos, emendas, m, atualizado, uf, regiao, pelaRegiao, vizinhos, medidas, medianas, serieFuncoes, taxasPais, medidasTrabalho, medianasTrabalho, taxasTrabalho, renda, medianaRenda, salario, medianaSalario, comUf, medianasUf, medianasTrabalhoUf, medianaRendaUf, medianaSalarioUf, legendaMedianas, anoEmpresas, temCensoTrabalho, temEmpresas, cagedM, cagedAnosM, emendasM, pop, estimada, pibReais, perCapita, emendasPh, posEmendas, posPop, posPerCapita, naoEntregaramNoEstado, consultadosNoEstado, f, instaladoEm, receitaContraRcl, saltoRcl, posicao, quadrimestre, periodoRgf, aberturaRgf, serie, usaveis, condenado, delta, finalCondenado, vazios, semestral, umPeriodo, saude, funcoes, receita, bimestre, aberturaBimestre, exercicioColetado, atrasado, maior, iniciais, finais, medianaIniciais, medianaFinais, educacao, nacional, comparacao, mudancas,
   };
 }
 

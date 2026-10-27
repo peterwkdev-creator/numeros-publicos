@@ -1,6 +1,6 @@
 import { br } from "../../lib/dados";
 import { brLimite } from "../../lib/titulo";
-import type { Posicao } from "../../lib/posicao";
+import { rotuloAbaixo, type Posicao } from "../../lib/posicao";
 
 /**
  * Onde este município cai na distribuição do seu estado.
@@ -127,8 +127,10 @@ export default function DistribuicaoSvg({
   const rotulo =
     `Distribuição do gasto com pessoal ${conjunto}: ${base} municípios com ` +
     `relatório entregue e valor plausível. A mediana é ${br(mediana, 2)}% e ` +
-    `${municipio} está em ${br(percentual, 2)}%, acima de ${br(percentil, 0)}% ` +
-    `deles. O limite prudencial é ${brLimite(prudencial)}% e o teto legal ` +
+    `${municipio} está em ${br(percentual, 2)}%, ` +
+    (percentil === 0 ? "o menor do conjunto" : percentil === 100 ? "o maior do conjunto"
+      : `mais que ${rotuloAbaixo(posicao)} deles`) +
+    `. O limite prudencial é ${brLimite(prudencial)}% e o teto legal ` +
     `${brLimite(legal)}%.`;
 
   return (

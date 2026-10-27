@@ -48,6 +48,12 @@ export default function CartaoSerieBrasil({ serie }: { serie: SerieBrasil }) {
         {numero}
         {unidade && <span className={estilos.unidade}>{unidade}</span>}
       </p>
+      {ap?.zero && ap.acumulado && r.ultimo[1] !== 0 && (
+        <p className={estilos.periodo} data-lado-zero>
+          {(r.ultimo[1] > 0 ? ap.zero.acima : ap.zero.abaixo).replace(/^./, (c) => c.toUpperCase())}{" "}
+          {ap.acumulado} {rotuloPeriodo(r.ultimo[0])}.
+        </p>
+      )}
       <p className={estilos.periodo}>
         Último dado: {rotuloPeriodo(r.ultimo[0])}. Série desde{" "}
         {rotuloPeriodo(r.primeiro[0])}.

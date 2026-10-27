@@ -24,7 +24,8 @@ export default function SecaoSaude({ c }: { c: Contexto }) {
       <p>
         Em {saude.ultimo[0]}, {m.nome} aplicou{" "}
         <strong className="tabular">{br(saude.ultimo[1], 2)}%</strong> da
-        receita própria de impostos em ações e serviços de saúde
+        receita de impostos e transferências constitucionais (a base que a
+        lei define) em ações e serviços de saúde
         {saude.primeiro[0] < saude.ultimo[0] && (
           <>
             {" "}— em {saude.primeiro[0]} eram{" "}
@@ -102,7 +103,7 @@ export default function SecaoSaude({ c }: { c: Contexto }) {
         <table className={estilos.serie}>
           <caption className={estilos.legenda}>
             Recursos próprios aplicados em saúde por {m.nome}, em % da
-            receita própria de impostos, ano a ano.
+            receita de impostos e transferências constitucionais, ano a ano.
           </caption>
           <thead>
             <tr>

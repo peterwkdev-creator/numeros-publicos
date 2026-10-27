@@ -20,7 +20,7 @@ export default function SecaoCaged({ ctx }: { ctx: Contexto }) {
       <ul className={estilos.lista}>
         <li>
           <strong>Saldo</strong> é admissões menos desligamentos. Positivo,
-          abriram-se mais vagas com carteira do que se fecharam; negativo, o
+          houve mais contratações que desligamentos com carteira; negativo, o
           contrário.
         </li>
         <li>

@@ -29,10 +29,10 @@ export default function SecaoEmprego({ c }: { c: Contexto }) {
         </strong>
         : <Termo chave="saldo">saldo</Termo> de{" "}
         <strong>{comSinal(cagedUf.saldo)}</strong>{" "}
-        {Math.abs(cagedUf.saldo) === 1 ? "vaga" : "vagas"}. Só em{" "}
+        {Math.abs(cagedUf.saldo) === 1 ? "emprego com carteira" : "empregos com carteira"}. Só em{" "}
         {nomeCompetencia(caged.competencia)}, o saldo foi de{" "}
         <strong>{comSinal(cagedUf.ultimo.saldo)}</strong>{" "}
-        {Math.abs(cagedUf.ultimo.saldo) === 1 ? "vaga" : "vagas"}.
+        {Math.abs(cagedUf.ultimo.saldo) === 1 ? "emprego com carteira" : "empregos com carteira"}.
         {cagedUf.comDado > 1 && (
           <>
             {" "}
@@ -64,7 +64,7 @@ export default function SecaoEmprego({ c }: { c: Contexto }) {
         município nenhum entram só no total do país, e por isso o número
         que ele publica para o estado pode diferir um pouco. No país, os
         mesmos 12 meses somam{" "}
-        <strong>{comSinal(caged.conferencia.doze.saldo)}</strong> vagas.{" "}
+        <strong>{comSinal(caged.conferencia.doze.saldo)}</strong> empregos com carteira.{" "}
         <a href={caged.conferencia.sumario}>Sumário executivo do MTE</a>.
       </p>
     </section>

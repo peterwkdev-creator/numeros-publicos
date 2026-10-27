@@ -28,7 +28,7 @@ export default function TabelaCaged({
         <thead>
           <tr>
             <th scope="col">Mês</th>
-            <th scope="col" className={estilos.num}>Saldo (vagas)</th>
+            <th scope="col" className={estilos.num}>Saldo (empregos)</th>
             <th scope="col" className={estilos.num}>Admissões</th>
             <th scope="col" className={estilos.num}>Desligamentos</th>
           </tr>

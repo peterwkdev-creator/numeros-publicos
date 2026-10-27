@@ -12,9 +12,12 @@ export default function SecaoPessoal({ ctx }: { ctx: Contexto }) {
     <section className={estilos.bloco} id="pessoal">
       <h2>Gasto com pessoal, RCL e os dois limites</h2>
       <p>
-        <strong>Receita corrente líquida (RCL)</strong> é o que sobra da
-        arrecadação do município depois de descontar transferências que ele é
-        obrigado a repassar. A <strong>RCL ajustada</strong> é essa mesma
+        <strong>Receita corrente líquida (RCL)</strong> é toda a receita
+        corrente do município (como os impostos dele e as transferências que recebe
+        da União e do estado) menos as deduções da Lei de Responsabilidade
+        Fiscal, como a contribuição dos servidores à previdência própria. No
+        governo estadual, deduz-se também a parte dos impostos que vai aos
+        municípios. A <strong>RCL ajustada</strong> é essa mesma
         conta com os ajustes que a Lei de Responsabilidade Fiscal manda fazer
         — e é ela, não a bruta, o denominador do percentual publicado.
       </p>

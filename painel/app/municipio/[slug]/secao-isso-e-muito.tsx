@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { br } from "../../../lib/dados";
+import { rotuloAbaixo } from "../../../lib/posicao";
 import { deEstado } from "../../../lib/estado";
 import DistribuicaoSvg from "../../componentes/distribuicao-svg";
 import type { Contexto } from "./contexto";
@@ -24,11 +25,18 @@ export default function SecaoIssoEMuito({ c }: { c: Contexto }) {
       <p>
         Entre os <strong>{br(posicao.base)}</strong> municípios{" "}
         {deEstado(m.uf)} que entregaram o relatório com valor
-        plausível, {m.nome} está{" "}
-        <strong>
-          acima de {br(posicao.percentil, 0)}%
-        </strong>{" "}
-        deles. A mediana do estado é{" "}
+        plausível,{" "}
+        {posicao.percentil === 0 ? (
+          <>{m.nome} tem <strong>o menor percentual</strong> deles.</>
+        ) : posicao.percentil === 100 ? (
+          <>{m.nome} tem <strong>o maior percentual</strong> deles.</>
+        ) : (
+          <>
+            {m.nome} gasta com pessoal, em proporção da receita, mais que{" "}
+            <strong>{rotuloAbaixo(posicao)}</strong> deles.
+          </>
+        )}{" "}
+        A mediana do estado é{" "}
         <strong>{br(posicao.mediana, 2)}%</strong>.
       </p>
 

@@ -28,8 +28,8 @@ const PONTA = 50;
  * Responde a uma consulta comum ("cidades que mais geraram empregos") com o
  * dado que já está nas 5.571 páginas e que o `caged-exportar` só grava depois
  * de bater com o sumário do Ministério do Trabalho. É fato puro: quem abriu e
- * quem fechou vagas, sem cor de bom ou ruim, e com a conta por habitante ao
- * lado, porque em número de vagas a cidade grande sempre aparece.
+ * quem fechou empregos, sem cor de bom ou ruim, e com a conta por habitante ao
+ * lado, porque em número de empregos a cidade grande sempre aparece.
  */
 export async function generateMetadata(): Promise<Metadata> {
   const caged = await lerCaged();
@@ -37,7 +37,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const descricao =
     `Saldo de empregos com carteira de ${competenciaCurta(caged.competencias[0]!)} ` +
     `a ${competenciaCurta(caged.competencia)} em cada município: quem mais abriu ` +
-    `e quem mais fechou vagas, pelo Novo Caged.`;
+    `e quem mais fechou empregos, pelo Novo Caged.`;
   return {
     title: titulo,
     description: descricao,
@@ -200,7 +200,7 @@ export default async function Pagina() {
         Municípios que mais geraram empregos com carteira
       </h1>
       <p className={estilos.chamada}>
-        Quantas vagas com carteira assinada cada município abriu ou fechou de{" "}
+        Quantos empregos com carteira assinada cada município abriu ou fechou de{" "}
         {de} a {ate}: as admissões menos os desligamentos, o{" "}
         <Termo chave="saldo">saldo</Termo>, pelo{" "}
         <Termo chave="caged">Novo Caged</Termo> do Ministério do Trabalho.
@@ -230,7 +230,7 @@ export default async function Pagina() {
         <p>
           No país, os 12 meses somam <strong>{br(doze.admissoes)}</strong>{" "}
           admissões e <strong>{br(doze.desligamentos)}</strong> desligamentos:
-          saldo de <strong>{comSinal(doze.saldo)}</strong> vagas, o número que o
+          saldo de <strong>{comSinal(doze.saldo)}</strong> empregos com carteira, o número que o
           Ministério do Trabalho publica e que esta base reproduz exatamente. Dos{" "}
           <strong>{br(r.ordem.length)}</strong> municípios,{" "}
           <strong>{br(r.positivos)}</strong> terminaram a janela com mais
@@ -267,7 +267,7 @@ export default async function Pagina() {
       <section className={estilos.texto}>
         <h2>Por mil habitantes, nas cidades de {br(POPULACAO_MINIMA_POR_MIL)} habitantes ou mais</h2>
         <p>
-          Em número de vagas, cidades de tamanhos diferentes não se comparam.
+          Em número de empregos, cidades de tamanhos diferentes não se comparam.
           Aqui o saldo é dividido pela população estimada pelo IBGE
           {anoPopulacao ? ` para ${anoPopulacao}` : ""}, nas{" "}
           <strong>{br(r.porMil.length)}</strong> cidades com{" "}

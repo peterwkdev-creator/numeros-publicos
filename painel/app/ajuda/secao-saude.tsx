@@ -11,7 +11,10 @@ export default function SecaoSaude({ ctx }: { ctx: Contexto }) {
       <h2>Saúde: o mínimo da Constituição e o SIOPS</h2>
       <p>
         A Constituição obriga o município a aplicar em ações e serviços
-        públicos de saúde <strong>ao menos 15% da receita de impostos</strong>.
+        públicos de saúde <strong>ao menos 15% da receita de impostos e
+        transferências constitucionais</strong> (a base que a Lei
+        Complementar 141/2012 define: os impostos do município e transferências como o FPM e a
+        cota do ICMS, do IPVA e do ITR).
         Quanto cada um aplicou é ele mesmo que declara, ano a ano, ao{" "}
         <strong>SIOPS</strong>, o sistema do Ministério da Saúde. É de lá o
         percentual da seção de saúde, com a série de cada município desde

@@ -10,7 +10,7 @@ import type { Contexto } from "./contexto";
  * Extraído de `page.tsx` em 15/10/2026 (item 19 da revisão de 11/10/2026): o HTML é o mesmo, byte a byte.
  */
 export default function SecaoParaOndeVai({ c }: { c: Contexto }) {
-  const { fiscal, m, funcoes, bimestre, exercicioColetado, atrasado, maior , estilos } = c;
+  const { fiscal, m, funcoes, aberturaBimestre, exercicioColetado, atrasado, maior , estilos } = c;
   if (!(funcoes && funcoes.fatias.length > 0)) return null;
   return (
     <section className={estilos.texto} id="para-onde-vai">
@@ -29,7 +29,7 @@ export default function SecaoParaOndeVai({ c }: { c: Contexto }) {
           medido no mesmo dia perde justamente por não ter voz nenhuma. */}
       <h2>Para onde vai o dinheiro: quanto {m.nome} gasta com cada área</h2>
       <p>
-        No {bimestre}, {m.nome} liquidou{" "}
+        {aberturaBimestre}, {m.nome} liquidou{" "}
         <strong>{escala(funcoes.total).curto}</strong> de despesa
         {maior && maior.percentual !== null && (
           <>

@@ -46,7 +46,7 @@ GRUPOS: tuple[Grupo, ...] = (
           frozenset({17437, 5474, 5473, 13995, 6266, 4612, 5832, 5852}),
           frozenset({31, 91, 32, 92}), 45, False),
     Grupo("bpc-deficiencia", "Benefício assistencial à pessoa com deficiência",
-          "BPC LOAS", frozenset({1655}), frozenset({87}), 90, False),
+          "BPC LOAS da pessoa com deficiência", frozenset({1655}), frozenset({87}), 90, False),
     Grupo("bpc-idoso", "Benefício assistencial ao idoso", "BPC LOAS do idoso",
           frozenset({1657}), frozenset({88}), 90, False),
     Grupo("auxilio-acidente", "Auxílio-acidente", "auxílio-acidente",

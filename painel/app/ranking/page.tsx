@@ -94,7 +94,7 @@ export default async function IndiceRankings() {
         </h2>
         <p>
           O saldo de empregos com carteira de {deCaged} a {ateCaged} em cada
-          município: quem mais abriu e quem mais fechou vagas, no total e por
+          município: quem mais abriu e quem mais fechou empregos com carteira, no total e por
           mil habitantes. Fonte: Novo Caged (Ministério do Trabalho e Emprego).
         </p>
       </section>

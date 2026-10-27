@@ -11,7 +11,7 @@ import type { Contexto } from "./contexto";
  * Extraído de `page.tsx` em 15/10/2026 (item 19 da revisão de 11/10/2026): o HTML é o mesmo, byte a byte.
  */
 export default function SecaoPessoal({ c }: { c: Contexto }) {
-  const { fiscal, m, uf, naoEntregaramNoEstado, consultadosNoEstado, f, instaladoEm, receitaContraRcl, saltoRcl, quadrimestre, periodoRgf , estilos } = c;
+  const { fiscal, m, uf, naoEntregaramNoEstado, consultadosNoEstado, f, instaladoEm, receitaContraRcl, saltoRcl, quadrimestre, periodoRgf, aberturaRgf , estilos } = c;
   return (
     <section className={estilos.texto} id="gasto-com-pessoal">
       <h2>O que o gasto com pessoal significa aqui</h2>
@@ -70,7 +70,7 @@ export default function SecaoPessoal({ c }: { c: Contexto }) {
         </p>
       ) : f?.percentual !== null && f?.percentual !== undefined ? (
         <p>
-          No {periodoRgf}, {m.nome} declarou{" "}
+          {aberturaRgf}, {m.nome} declarou{" "}
           <strong>{br(f.percentual, 2)}%</strong> da sua receita corrente líquida
           ajustada comprometidos com pessoal.
           {f.simplificado && (

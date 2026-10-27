@@ -35,8 +35,9 @@ export default function SecaoBrasil({ ctx }: { ctx: Contexto }) {
         </li>
         <li>
           <strong>Resultado primário</strong> é o que o setor público
-          arrecada menos o que gasta, sem contar os juros da dívida. Sobra é
-          superávit; falta, déficit.
+          arrecada menos o que gasta, sem contar os juros da dívida. No site
+          ele vem como o Banco Central publica (necessidade de financiamento),
+          somado em 12 meses: acima de zero é déficit; abaixo, superávit.
         </li>
       </ul>
     </section>

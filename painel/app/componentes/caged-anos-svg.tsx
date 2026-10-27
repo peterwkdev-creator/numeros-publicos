@@ -63,7 +63,7 @@ export default function CagedAnosSvg({
     >
       {/* A unidade do número escrito em cada barra. */}
       <text x={M.esq} y={9} fontSize="8" fill="var(--tinta-fraca)">
-        saldo, em vagas
+        saldo, em empregos
       </text>
       {anos.map((a, i) => {
         const topo = Math.min(y(a.saldo), y(0));

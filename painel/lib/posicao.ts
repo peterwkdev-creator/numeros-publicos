@@ -53,6 +53,18 @@ function comparavel(p: number | null | undefined): p is number {
  * municípios" descreve dois vizinhos e soa como uma estatística. Dez é o
  * mínimo em que a frase não engana mais do que informa.
  */
+/** O "X" de "mais que X deles": o percentil, ou a contagem quando ele
+ *  arredondaria para 0% ou 100% sem ser nenhum dos dois. "Mais que 0% deles"
+ *  se lia como "mais que nenhum" num município com um só abaixo (Salvador,
+ *  auditoria de termos, A8, 26/10/2026). */
+export function rotuloAbaixo(p: Posicao): string {
+  const pct = Math.round(p.percentil);
+  if (pct === 0 || pct === 100) {
+    return p.abaixo === 1 ? "um" : p.abaixo.toLocaleString("pt-BR");
+  }
+  return `${pct}%`;
+}
+
 export function posicaoEntre(
   percentual: number | null | undefined,
   doConjunto: (number | null | undefined)[],

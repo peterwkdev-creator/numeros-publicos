@@ -4,7 +4,7 @@ import { milReaisParaReais, periodoDe } from "../../../lib/dados";
 import { emendasDeVarios, porHabitante, porHabitanteDaUf } from "../../../lib/emendas";
 import { slugUf, deEstado } from "../../../lib/estado";
 import { governoDe } from "../../../lib/estados-fiscal";
-import { nomeQuadrimestre, atualDeFuncoes } from "../../../lib/fiscal";
+import { nomeQuadrimestre, fraseBimestre, atualDeFuncoes } from "../../../lib/fiscal";
 import { medianaUltimaEdicao } from "../../../lib/ideb";
 import { inssDaUf } from "../../../lib/inss";
 import { FONTES, VARIAVEIS, catalogoDe, coberturaTemporal, palavrasChave, LICENCA_DADOS } from "../../../lib/jsonld";
@@ -135,6 +135,10 @@ export function montarContexto(dados: Dados, r: ResumoEstado) {
   const bimestre = fiscal.funcoes
     ? `${fiscal.funcoes.periodo}º bimestre de ${atualDeFuncoes(fiscal.funcoes)?.exercicio ?? "?"}`
     : "";
+  const exercicioFuncoes = fiscal.funcoes ? atualDeFuncoes(fiscal.funcoes)?.exercicio : undefined;
+  const aberturaBimestre = fiscal.funcoes && exercicioFuncoes !== undefined
+    ? fraseBimestre(exercicioFuncoes, fiscal.funcoes.periodo)
+    : `No ${bimestre}`;
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -178,7 +182,7 @@ export function montarContexto(dados: Dados, r: ResumoEstado) {
   };
 
   return {
-    anoEstimada, atualizado, ausentes, ba, bimestre, brasilMediana, brasilTaxa, caged, cagedUf, contraste, de, emendas, emendasPh, emendasUf, esperaUf, estadosFiscal, fiscal, governo, inss, inssUf, jsonLd, ma, medIdeb, medianaPh, medianas, medidasCenso, meu, panorama, phMunicipios, pibReais, pop, posMediana, posTaxa, quadrimestre, r, rs, sc, semMunicipio, semRede, semRedeFinais, snapshot, taxasPais,
+    anoEstimada, atualizado, ausentes, aberturaBimestre, ba, bimestre, brasilMediana, brasilTaxa, caged, cagedUf, contraste, de, emendas, emendasPh, emendasUf, esperaUf, estadosFiscal, fiscal, governo, inss, inssUf, jsonLd, ma, medIdeb, medianaPh, medianas, medidasCenso, meu, panorama, phMunicipios, pibReais, pop, posMediana, posTaxa, quadrimestre, r, rs, sc, semMunicipio, semRede, semRedeFinais, snapshot, taxasPais,
   };
 }
 

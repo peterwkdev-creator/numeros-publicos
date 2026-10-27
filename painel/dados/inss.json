@@ -551,7 +551,7 @@
   {
    "chave": "bpc-deficiencia",
    "nome": "Benefício assistencial à pessoa com deficiência",
-   "nomePopular": "BPC LOAS",
+   "nomePopular": "BPC LOAS da pessoa com deficiência",
    "prazoAcordo": 90,
    "prazoContaDoPedido": false,
    "fila": {

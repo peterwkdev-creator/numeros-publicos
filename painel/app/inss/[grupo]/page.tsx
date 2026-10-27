@@ -231,7 +231,7 @@ export default async function Pagina({ params }: Params) {
                 </strong>{" "}
               </>
             )}
-            Quando o INSS pede documentos ao segurado, a contagem fica suspensa,
+            Quando o INSS pede documentos a quem fez o pedido, a contagem fica suspensa,
             e os dados abertos não dizem quais pedidos estão nessa situação.
           </p>
         ) : (
@@ -249,10 +249,21 @@ export default async function Pagina({ params }: Params) {
         {g.prazoAcordo !== null && (
           <p className={estilos.ressalva}>
             O acordo (Recurso Extraordinário 1.171.152, Tema 1066) tinha
-            vigência de dois anos, e não encontramos renovação. O que está em
-            lei é o prazo do primeiro pagamento: até 45 dias depois de o
-            segurado entregar toda a documentação (Lei 8.213/1991, art. 41-A,
-            §5º).
+            vigência de dois anos, e não encontramos renovação.{" "}
+            {g.chave.startsWith("bpc-") ? (
+              <>
+                O BPC é assistencial (Lei 8.742/1993), não da Previdência:
+                quem pede não precisa ter contribuído ao INSS. O prazo de 45
+                dias para o primeiro pagamento da Lei 8.213/1991 (art. 41-A,
+                §5º) é dos benefícios da Previdência, não dele.
+              </>
+            ) : (
+              <>
+                O que está em lei é o prazo do primeiro pagamento: até 45 dias
+                depois de o segurado entregar toda a documentação (Lei
+                8.213/1991, art. 41-A, §5º).
+              </>
+            )}
           </p>
         )}
       </section>

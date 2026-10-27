@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { br, dataCurta } from "../../../lib/dados";
 import { rankingPessoal } from "../../../lib/nacional";
-import { deEstado } from "../../../lib/estado";
+import { deEstado, slugUf } from "../../../lib/estado";
 import { LIMITE_PLAUSIVEL, nomeQuadrimestre } from "../../../lib/fiscal";
 import {
   catalogoDe, coberturaTemporal, FONTES, palavrasChave, trilha, LICENCA_DADOS,
@@ -320,7 +320,9 @@ export default async function Pagina() {
                     </Link>
                   )}
                 </th>
-                <td>{m.uf}</td>
+                <td>
+                  <Link href={`/estado/${slugUf(m.uf)}/`} prefetch={false}>{m.uf}</Link>
+                </td>
                 <td className={estilos.acima}>
                   {br(m.percentual, 2)}%
                 </td>

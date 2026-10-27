@@ -7,7 +7,7 @@ import {
   comSinal, competenciaCurta, type LinhaRankingCaged, nomeCompetencia,
   POPULACAO_MINIMA_POR_MIL, rankingCaged,
 } from "../../../lib/caged";
-import { deEstado } from "../../../lib/estado";
+import { deEstado, slugUf } from "../../../lib/estado";
 import { slugDe } from "../../../lib/fiscal";
 import {
   catalogoDe, FONTES_DA_BASE, palavrasChave, trilha, LICENCA_DADOS,
@@ -87,7 +87,9 @@ function TabelaSaldo({
             <tr key={m.codigo}>
               <td>{br(posicao.get(m.codigo)!)}</td>
               <th scope="row"><Nome m={m} /></th>
-              <td>{m.uf}</td>
+              <td>
+                <Link href={`/estado/${slugUf(m.uf)}/`} prefetch={false}>{m.uf}</Link>
+              </td>
               <td>{comSinal(m.saldo)}</td>
               <td>{br(m.admissoes)}</td>
               <td>{br(m.desligamentos)}</td>
@@ -320,7 +322,9 @@ export default async function Pagina() {
               <tr key={m.codigo}>
                 <td>{br(porMilPos.get(m.codigo)!)}</td>
                 <th scope="row"><Nome m={m} /></th>
-                <td>{m.uf}</td>
+                <td>
+                  <Link href={`/estado/${slugUf(m.uf)}/`} prefetch={false}>{m.uf}</Link>
+                </td>
                 <td>{porMilComSinal(m.porMil!)}</td>
                 <td>{comSinal(m.saldo)}</td>
                 <td>{br(m.populacao!)}</td>

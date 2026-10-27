@@ -66,6 +66,11 @@ export default function SecaoEmprego({ c }: { c: Contexto }) {
         mesmos 12 meses somam{" "}
         <strong>{comSinal(caged.conferencia.doze.saldo)}</strong> empregos com carteira.{" "}
         <a href={caged.conferencia.sumario}>Sumário executivo do MTE</a>.
+        A taxa de desemprego é outra medida, a da PNAD Contínua, do IBGE:{" "}
+        <Link href="/brasil/desemprego/" prefetch={false}>
+          o desemprego no Brasil desde 2012
+        </Link>
+        .
       </p>
     </section>
   );

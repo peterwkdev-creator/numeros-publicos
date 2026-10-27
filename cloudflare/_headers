@@ -57,6 +57,17 @@
 /dados/explorar/:indicador/dados.json
   X-Robots-Tag: noindex
 
+# Os JSON que as páginas leem pelo script (a busca, a capa e o mapa das
+# eleições): dado para o navegador, não página (27/10/2026).
+/dados/indice.json
+  X-Robots-Tag: noindex
+
+/dados/capa.json
+  X-Robots-Tag: noindex
+
+/dados/eleicoes-2026-mapa.json
+  X-Robots-Tag: noindex
+
 # O endereço *.pages.dev serve o site inteiro, e sem isto o Google o indexaria
 # como cópia do www. O canonical já aponta para o www, mas noindex no host da
 # plataforma é o que a própria Cloudflare recomenda. Não afeta o domínio próprio.

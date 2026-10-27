@@ -162,7 +162,11 @@ export default function SecaoOQueMudou({ c }: { c: Contexto }) {
           </>
         )}
         Os valores são <strong><Termo chave="nominal">nominais</Termo></strong>: parte do crescimento é
-        inflação, e este painel não deflaciona nada.{" "}
+        inflação, e este painel não deflaciona nada (a do país:{" "}
+        <Link href="/brasil/ipca/" prefetch={false}>
+          o IPCA em 12 meses
+        </Link>
+        ).{" "}
         {serieFuncoes.length >= 3 && (
           <>
             É também por isso que a série acima é em porcentagem:{" "}

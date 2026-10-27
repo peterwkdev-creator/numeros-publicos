@@ -54,7 +54,12 @@ export default function SecaoTrabalho({ c }: { c: Contexto }) {
                 </>
               )}
               . É a média que o IBGE publica, e uma média se move com
-              poucos rendimentos altos.
+              poucos rendimentos altos. A do país, por outra pesquisa (a
+              PNAD Contínua) e descontada a inflação:{" "}
+              <Link href="/brasil/rendimento/" prefetch={false}>
+                a renda média do trabalho no Brasil
+              </Link>
+              .
               {/* NÃO dizer "a maioria recebe menos que a média": medido
                   em 29/09/2026, em 92 municípios a mediana é igual ou
                   maior (é o salário mínimo, R$ 1.212, e a média fica logo
@@ -216,8 +221,12 @@ export default function SecaoTrabalho({ c }: { c: Contexto }) {
         em nenhuma fonte oficial. A do Censo é de 2022; a{" "}
         <Termo chave="pnad">PNAD Contínua</Termo>,
         que o IBGE publica a cada trimestre, vai só até os estados e as
-        capitais, e mede de outro jeito — as duas não se comparam. No
-        Censo, o desemprego do país inteiro foi de{" "}
+        capitais, e mede de outro jeito — as duas não se comparam. A do
+        país, desde 2012:{" "}
+        <Link href="/brasil/desemprego/" prefetch={false}>
+          a taxa de desemprego no Brasil
+        </Link>
+        . No Censo, o desemprego do país inteiro foi de{" "}
         <strong>{br(taxasTrabalho["desocupacao"] ?? 0, 1)}%</strong>.{" "}
         {/* Do dado, e não do teclado: é a regra que o teste de
             percentual literal cobra desta página. */}

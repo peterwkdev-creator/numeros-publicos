@@ -21,7 +21,7 @@
  * 31/12, e o índice de dezembro do mesmo ano é o que o corrige.
  */
 
-import type { SerieBrasil } from "./brasil";
+import type { Mandato, SerieBrasil } from "./brasil";
 
 /** A ordem das colunas de cada ano, a mesma de `colunas` no arquivo. */
 export const COLUNAS = [
@@ -201,17 +201,51 @@ export function fatorIpca(ipca: SerieBrasil | null, ano: number, ate: number): n
   return de && para ? para / de : null;
 }
 
+/** Como a data da troca foi conferida (`estados_mandatos.csv`, espec §6.3). */
+export type Conferido = "tse" | "lida" | "imprensa-publica" | "data-aproximada";
+
+export interface MandatoEstado extends Mandato {
+  conferido: Conferido;
+}
+
+/** O `estados-governadores.json` (`python -m numeros_publicos governadores-exportar`). */
+export interface SnapshotGovernadores {
+  inicio: string;
+  fonte: string;
+  estados: Record<string, MandatoEstado[]>;
+}
+
+export interface FaixaGoverno {
+  rotulo: string;
+  nome: string;
+  /** Anos `[de, ate)`: cada ano é a coluna do ponto de 31/12. */
+  de: number;
+  ate: number;
+  tom: 0 | 1;
+}
+
 /**
- * As faixas dos mandatos de governador pelo calendário constitucional
- * (1999–2002, 2003–2006, …), sem nome, recortadas a `[de, ate)` em anos:
- * cada ponto de 31/12 cai inteiro num mandato (espec §6.2). Os nomes entram
- * quando `mandatos.json` existir, sem mudar o desenho.
+ * Quem governava em 31/12 de cada ano de `[de, ate)`, o dia do ponto da
+ * dívida: anos seguidos da mesma pessoa viram uma faixa só, com o tom
+ * alternado. O ponto nunca cai na faixa de quem já tinha saído; quem passou
+ * pelo cargo sem estar nele num 31/12 fica só na tabela "Quem governava"
+ * (decisão de 27/10/2026). O ano sem governador na tabela fica sem faixa.
  */
-export function faixasDoCalendario(de: number, ate: number): { de: number; ate: number; tom: 0 | 1 }[] {
-  const faixas: { de: number; ate: number; tom: 0 | 1 }[] = [];
-  const primeiro = 1999 + Math.floor((de - 1999) / 4) * 4;
-  for (let ini = primeiro, i = 0; ini < ate; ini += 4, i++) {
-    faixas.push({ de: Math.max(ini, de), ate: Math.min(ini + 4, ate), tom: (i % 2) as 0 | 1 });
+export function governoEm31(mandatos: Mandato[], de: number, ate: number): FaixaGoverno[] {
+  const faixas: FaixaGoverno[] = [];
+  for (let ano = de; ano < ate; ano++) {
+    const dia = `${ano}-12-31`;
+    const m = mandatos.find((x) => x.inicio <= dia && (x.fim === null || dia < x.fim));
+    const ultima = faixas[faixas.length - 1];
+    if (!m) continue;
+    if (ultima && ultima.nome === m.nome && ultima.ate === ano) {
+      ultima.ate = ano + 1;
+    } else {
+      faixas.push({
+        rotulo: m.rotulo, nome: m.nome, de: ano, ate: ano + 1,
+        tom: (faixas.length % 2) as 0 | 1,
+      });
+    }
   }
   return faixas;
 }

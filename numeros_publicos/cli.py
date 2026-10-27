@@ -883,6 +883,11 @@ def construir_parser() -> argparse.ArgumentParser:
                          "brasil.json atual, como está (o banco do runner "
                          "começa vazio)")
     be.set_defaults(func=brasil_exportar)
+    ge = sub.add_parser("governadores-exportar",
+                        help="valida o estados_mandatos.csv e gera o "
+                             "estados-governadores.json da seção #divida")
+    ge.add_argument("--saida", default="painel/dados/estados-governadores.json")
+    ge.set_defaults(func=governadores_exportar)
     rx = sub.add_parser("regioes-exportar",
                         help="gera o regioes.json (regiões imediatas do IBGE) "
                              "que a página do município lê")
@@ -1300,6 +1305,21 @@ def brasil_exportar(args) -> int:
     if mantidas:
         print("sem coleta nova, mantidas do brasil.json anterior: "
               + ", ".join(mantidas))
+    return 0
+
+
+def governadores_exportar(args) -> int:
+    """Escreve o `estados-governadores.json` a partir do
+    `estados_mandatos.csv`, que só passa validado por UF."""
+    from . import brasil
+    try:
+        estado = brasil.gravar_governadores(saida=args.saida)
+        por_uf = brasil.carregar_mandatos_estados()
+    except brasil.ErroBrasil as e:
+        print(f"[!] {e}", file=sys.stderr)
+        return 1
+    print(f"{args.saida}: {estado} · {len(por_uf)} UFs · "
+          f"{sum(map(len, por_uf.values()))} períodos")
     return 0
 
 

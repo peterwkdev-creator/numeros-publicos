@@ -4,7 +4,7 @@ import path from "node:path";
 import type { Snapshot } from "./dados";
 import type { SnapshotFiscal } from "./fiscal";
 import type { SnapshotEstadosFiscal } from "./estados-fiscal";
-import type { SnapshotDivida } from "./divida";
+import type { SnapshotDivida, SnapshotGovernadores } from "./divida";
 import type { SnapshotIdeb } from "./ideb";
 import type { SnapshotInss } from "./inss";
 import type { SnapshotCaged, SnapshotCagedAnos } from "./caged";
@@ -71,6 +71,20 @@ export async function lerDivida(): Promise<SnapshotDivida> {
   const arquivo = path.join(process.cwd(), "dados", "estados-divida.json");
   cacheDivida = JSON.parse(await readFile(arquivo, "utf-8")) as SnapshotDivida;
   return cacheDivida;
+}
+
+/**
+ * Quem governava cada estado desde 2015 (`dados/estados-governadores.json`,
+ * de `python -m numeros_publicos governadores-exportar`): as faixas e a
+ * tabela da seção `#divida`.
+ */
+let cacheGovernadores: SnapshotGovernadores | null = null;
+
+export async function lerGovernadores(): Promise<SnapshotGovernadores> {
+  if (cacheGovernadores) return cacheGovernadores;
+  const arquivo = path.join(process.cwd(), "dados", "estados-governadores.json");
+  cacheGovernadores = JSON.parse(await readFile(arquivo, "utf-8")) as SnapshotGovernadores;
+  return cacheGovernadores;
 }
 
 /**

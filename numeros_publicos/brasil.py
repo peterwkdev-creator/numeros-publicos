@@ -1448,6 +1448,19 @@ def ingerir(banco: str | Path, transporte: Transporte,
 DOMINIOS_OFICIAIS = ("gov.br", "tse.jus.br", "senado.leg.br", "camara.leg.br",
                      "congressonacional.leg.br")
 COLUNAS_MANDATOS = ("nome", "inicio", "fim", "como", "fonte", "rotulo")
+#: Nos estados a data vem também da Assembleia (`leg.br`), do tribunal que
+#: cassou ou afastou (`jus.br`) e, sem ato oficial publicado na rede, da
+#: Agência Brasil (`ebc.com.br`, imprensa pública; decisão de 27/10/2026),
+#: marcada na coluna `conferido`.
+DOMINIOS_ESTADOS = ("gov.br", "leg.br", "jus.br", "ebc.com.br")
+COLUNAS_MANDATOS_ESTADOS = ("uf",) + COLUNAS_MANDATOS + ("conferido",)
+#: `tse`: o eleito, do `consulta_cand`; `lida`: o ato ou a notícia oficial
+#: lidos; `imprensa-publica`: só a Agência Brasil; `data-aproximada`: a troca
+#: é certa, mas o dia não está em ato publicado (decisão de 27/10/2026).
+CONFERIDO_ESTADOS = ("tse", "lida", "imprensa-publica", "data-aproximada")
+MANDATOS_ESTADOS = Path(__file__).with_name("estados_mandatos.csv")
+#: O primeiro ano da dívida dos estados (`painel/lib/divida.ts`).
+INICIO_ESTADOS = "2015-01-01"
 #: O rótulo vai dentro da faixa do gráfico, onde o nome inteiro não cabe.
 ROTULO_MAX = 20
 
@@ -1464,11 +1477,11 @@ class Mandato(NamedTuple):
     rotulo: str
 
 
-def _oficial(url: str) -> bool:
+def _oficial(url: str, dominios: tuple[str, ...] = DOMINIOS_OFICIAIS) -> bool:
     u = urlparse(url)
     host = u.hostname or ""
     return u.scheme == "https" and any(
-        host == d or host.endswith("." + d) for d in DOMINIOS_OFICIAIS)
+        host == d or host.endswith("." + d) for d in dominios)
 
 
 def _data_valida(d: str) -> bool:
@@ -1483,7 +1496,8 @@ def _data_valida(d: str) -> bool:
     return True
 
 
-def validar_mandatos(mandatos: list[Mandato]) -> None:
+def validar_mandatos(mandatos: list[Mandato],
+                     dominios: tuple[str, ...] = DOMINIOS_OFICIAIS) -> None:
     """Fonte oficial em toda linha, datas válidas, e cada período começa no
     dia em que o anterior termina: nem sobreposição, nem buraco. O último, e
     só ele, está em aberto: alguém ocupa o cargo hoje. Junta todos os erros
@@ -1497,7 +1511,7 @@ def validar_mandatos(mandatos: list[Mandato]) -> None:
         if not m.rotulo.strip() or len(m.rotulo) > ROTULO_MAX:
             erros.append(f"linha {i} ({m.nome}): rótulo {m.rotulo!r} vazio ou "
                          f"com mais de {ROTULO_MAX} caracteres")
-        if not _oficial(m.fonte):
+        if not _oficial(m.fonte, dominios):
             erros.append(f"linha {i} ({m.nome}): fonte {m.fonte!r} não é "
                          "link https de domínio oficial")
         for d in (m.inicio, m.fim):
@@ -1536,6 +1550,72 @@ def carregar_mandatos(caminho: str | Path = MANDATOS) -> list[Mandato]:
                             r["como"], r["fonte"], r["rotulo"]) for r in leitor]
     validar_mandatos(mandatos)
     return mandatos
+
+
+def carregar_mandatos_estados(caminho: str | Path = MANDATOS_ESTADOS
+                              ) -> dict[str, list[Mandato]]:
+    """Os governadores, por UF: cada estado passa por `validar_mandatos` (com
+    `DOMINIOS_ESTADOS`), começa em `INICIO_ESTADOS` e estão os 27."""
+    with open(caminho, encoding="utf-8", newline="") as f:
+        leitor = csv.DictReader(f)
+        if tuple(leitor.fieldnames or ()) != COLUNAS_MANDATOS_ESTADOS:
+            raise ErroBrasil(f"{caminho}: colunas {leitor.fieldnames}, "
+                             f"esperadas {list(COLUNAS_MANDATOS_ESTADOS)}")
+        linhas = list(leitor)
+    erros = []
+    por_uf: dict[str, list[Mandato]] = {}
+    for i, r in enumerate(linhas, start=2):
+        if r["conferido"] not in CONFERIDO_ESTADOS:
+            erros.append(f"linha {i} ({r['nome']}): conferido "
+                         f"{r['conferido']!r} fora de {list(CONFERIDO_ESTADOS)}")
+        por_uf.setdefault(r["uf"], []).append(Mandato(
+            r["nome"], r["inicio"], r["fim"] or None, r["como"], r["fonte"],
+            r["rotulo"]))
+    if len(por_uf) != 27:
+        erros.append(f"{len(por_uf)} UFs, esperadas 27")
+    for uf, mandatos in sorted(por_uf.items()):
+        if mandatos[0].inicio != INICIO_ESTADOS:
+            erros.append(f"{uf}: começa em {mandatos[0].inicio}, não em "
+                         f"{INICIO_ESTADOS}")
+        try:
+            validar_mandatos(mandatos, DOMINIOS_ESTADOS)
+        except ErroBrasil as e:
+            erros.append(f"{uf}: {e}")
+    if erros:
+        raise ErroBrasil("tabela dos governadores inválida: " + "; ".join(erros))
+    return por_uf
+
+
+def governadores(caminho: str | Path = MANDATOS_ESTADOS) -> dict:
+    """O `estados-governadores.json` que a seção `#divida` lê: a tabela já
+    validada por `carregar_mandatos_estados`, por UF, com o `conferido` de
+    cada linha (a página marca o dia aproximado e a imprensa pública)."""
+    por_uf = carregar_mandatos_estados(caminho)
+    with open(caminho, encoding="utf-8", newline="") as f:
+        conferido = {(r["uf"], r["inicio"]): r["conferido"]
+                     for r in csv.DictReader(f)}
+    return {
+        "inicio": INICIO_ESTADOS,
+        "fonte": "TSE, candidatos eleitos em 2014, 2018 e 2022; nas trocas "
+                 "durante o mandato, o ato ou a página oficial de cada estado",
+        "estados": {uf: [m._asdict() | {"conferido": conferido[(uf, m.inicio)]}
+                         for m in ms]
+                    for uf, ms in sorted(por_uf.items())},
+    }
+
+
+def gravar_governadores(caminho: str | Path = MANDATOS_ESTADOS,
+                        saida: str | Path = "painel/dados/estados-governadores.json"
+                        ) -> str:
+    """Grava o JSON compacto; "inalterado" quando o conteúdo já é o mesmo."""
+    texto = json.dumps(governadores(caminho), ensure_ascii=False,
+                       separators=(",", ":")) + "\n"
+    saida = Path(saida)
+    if saida.exists() and saida.read_text(encoding="utf-8") == texto:
+        return "inalterado"
+    saida.parent.mkdir(parents=True, exist_ok=True)
+    saida.write_text(texto, encoding="utf-8")
+    return "gravado"
 
 
 # ---------------------------------------------------------- meta de inflação

@@ -19,7 +19,8 @@ from unittest import mock
 from numeros_publicos import brasil, cli
 from numeros_publicos.brasil import (
     ArmazemBrasil, ErroBrasil, Leitura, LeituraMetas, Mandato, Meta,
-    SerieBrasil, buracos, carregar_mandatos, carregar_metas, coletar,
+    SerieBrasil, buracos, carregar_mandatos, carregar_mandatos_estados,
+    carregar_metas, coletar,
     coletar_metas, conferir_metas, ler_tabela_metas, periodo_ibge,
     periodo_sgs, validar_mandatos,
 )
@@ -961,6 +962,57 @@ class TestMandatos(unittest.TestCase):
         # Só o último está em aberto, e quem ocupa hoje está nele.
         self.assertTrue(all(m.fim for m in mandatos[:-1]))
         self.assertIsNone(mandatos[-1].fim)
+
+    def test_a_tabela_dos_governadores_e_valida(self):
+        por_uf = carregar_mandatos_estados()
+        self.assertEqual(len(por_uf), 27)
+        self.assertTrue(all(m[0].inicio == "2015-01-01" and m[-1].fim is None
+                            for m in por_uf.values()))
+
+    def test_o_json_dos_governadores_e_o_da_tabela(self):
+        g = brasil.governadores()
+        self.assertEqual(g["inicio"], "2015-01-01")
+        self.assertEqual(len(g["estados"]), 27)
+        linhas = [m for ms in g["estados"].values() for m in ms]
+        self.assertTrue(all(m["conferido"] in brasil.CONFERIDO_ESTADOS
+                            for m in linhas))
+        # O versionado é o que o comando grava hoje; a 2ª vez não regrava.
+        versionado = Path(__file__).parent.parent / "painel/dados/estados-governadores.json"
+        with tempfile.TemporaryDirectory() as d:
+            saida = Path(d) / "g.json"
+            out = io.StringIO()
+            with redirect_stdout(out):
+                self.assertEqual(cli.governadores_exportar(
+                    argparse.Namespace(saida=str(saida))), 0)
+            self.assertIn(f"gravado · 27 UFs · {len(linhas)} períodos",
+                          out.getvalue())
+            self.assertEqual(saida.read_bytes(), versionado.read_bytes())
+            self.assertEqual(brasil.gravar_governadores(saida=saida),
+                             "inalterado")
+
+    def test_governadores_recusas(self):
+        cab = ",".join(brasil.COLUNAS_MANDATOS_ESTADOS)
+        boa = ("AC,A,2015-01-01,,Eleito,"
+               "https://dadosabertos.tse.jus.br/dataset/candidatos-2014,A,tse")
+        outras = [boa.replace("AC,", f"{uf},", 1) for uf in (
+            "AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO "
+            "RR SC SP SE TO").split()]
+        casos = {
+            "26 UFs": [boa] + outras[:-1],
+            "conferido fora": [boa.replace(",tse", ",achismo")] + outras,
+            "imprensa privada": [boa.replace("dadosabertos.tse.jus.br",
+                                             "vermelho.org.br")] + outras,
+            "começa depois": [boa.replace("2015-01-01", "2016-01-01")] + outras,
+        }
+        self.assertEqual(len(outras), 26)
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / "e.csv"
+            p.write_text("\n".join([cab, boa] + outras) + "\n", "utf-8")
+            self.assertEqual(len(carregar_mandatos_estados(p)), 27)
+            for caso, linhas in casos.items():
+                p.write_text("\n".join([cab] + linhas) + "\n", "utf-8")
+                with self.subTest(caso), self.assertRaises(ErroBrasil):
+                    carregar_mandatos_estados(p)
 
     def test_sequencia_certa_passa(self):
         validar_mandatos([self.m("A", "1995-01-01", "1999-01-01"),

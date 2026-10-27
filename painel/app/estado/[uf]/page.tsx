@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { br, dataCurta, descricaoDe, expandir } from "../../../lib/dados";
 import { deEstado, resumirEstado, slugUf } from "../../../lib/estado";
 import {
-  lerBrasil, lerCaged, lerDivida, lerEmendas, lerEstadosFiscal, lerFiscal, lerIdeb, lerInss, lerSnapshot, SITE, cartaoSocial, imagemDoEstado,
+  lerBrasil, lerCaged, lerDivida, lerEmendas, lerGovernadores, lerEstadosFiscal, lerFiscal, lerIdeb, lerInss, lerSnapshot, SITE, cartaoSocial, imagemDoEstado,
 } from "../../../lib/servidor";
 // A ORDEM destes imports de CSS é a que o `page.tsx` tinha antes da divisão em
 // seções (item 10 da modernização, 16/10/2026). O bundler decide em que chunk
@@ -60,15 +60,15 @@ import SecaoOutrosEstados from "./secao-outros-estados";
  */
 
 async function carregar() {
-  const [snapshot, fiscal, estadosFiscal, ideb, idebFinais, caged, emendas, inss, divida, brasil] = await Promise.all([
+  const [snapshot, fiscal, estadosFiscal, ideb, idebFinais, caged, emendas, inss, divida, brasil, governadores] = await Promise.all([
     lerSnapshot(), lerFiscal(), lerEstadosFiscal(), lerIdeb("anos_iniciais"), lerIdeb("anos_finais"),
-    lerCaged(), lerEmendas(), lerInss(), lerDivida(), lerBrasil(),
+    lerCaged(), lerEmendas(), lerInss(), lerDivida(), lerBrasil(), lerGovernadores(),
   ]);
   return {
     snapshot, fiscal, estadosFiscal, ideb, idebFinais, caged, emendas, inss,
     // A dívida do governo estadual e o IPCA que a corrige: só a seção `#divida`
     // os lê, por props, e o `contexto.ts` não muda.
-    divida, ipca: serieIpca(brasil.auxiliares),
+    divida, ipca: serieIpca(brasil.auxiliares), governadores,
     expandidos: expandir(snapshot),
   };
 }
@@ -187,7 +187,8 @@ export default async function PaginaEstado(
       <VoltaSumario />
       <SecaoGovernoEstadual c={c} />
       <VoltaSumario />
-      <SecaoDivida c={c} snap={dados.divida} estado={dividaUf} ipca={dados.ipca} />
+      <SecaoDivida c={c} snap={dados.divida} estado={dividaUf} ipca={dados.ipca}
+        governadores={dados.governadores.estados[r.uf.sigla] ?? []} />
       <VoltaSumario />
       <SecaoLimiteDePessoal c={c} />
       <VoltaSumario />

@@ -70,8 +70,8 @@ export default async function IndiceInss() {
       <section className={estilos.resposta} aria-label="A resposta curta">
         <p>
           Em <strong>{ref}</strong>, estes eram os pedidos esperando resposta
-          do INSS, por tipo de benefício. A coluna do meio é a{" "}
-          <strong>espera típica</strong>: metade dos pedidos esperava havia
+          do INSS, por tipo de benefício. A coluna do meio,{" "}
+          <strong>metade espera há mais de</strong>, é o meio da fila: metade dos pedidos esperava havia
           mais do que isso. Clique no benefício para ver o detalhe.
         </p>
       </section>
@@ -80,8 +80,8 @@ export default async function IndiceInss() {
         <div className={`${estilos.rolagem} rola-x`}>
           <table className={estilos.lista}>
             <caption>
-              Pedidos em espera no INSS em {ref}, do benefício com a maior
-              espera típica para o de menor.
+              Pedidos em espera no INSS em {ref}, do benefício em que metade espera
+              há mais tempo para o de menos.
             </caption>
             <thead>
               <tr>

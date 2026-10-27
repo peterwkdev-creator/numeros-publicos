@@ -33,7 +33,7 @@ import {
   type PontoSerie, type Receita,
 } from "../lib/fiscal.ts";
 import { posicaoEntre, posicaoNoEstado, rotuloAbaixo } from "../lib/posicao.ts";
-import { daMesmaRegiao, deEstado, emContracao, type SnapshotRegioes } from "../lib/estado.ts";
+import { daMesmaRegiao, deEstado, emContracao, medianaDePessoal, type SnapshotRegioes } from "../lib/estado.ts";
 import { trilha } from "../lib/jsonld.ts";
 import {
   atualizadoEm, caminhosDosFilhos, escaparXml, indiceDeSitemaps, maisRecente,
@@ -386,6 +386,14 @@ test("o implausível não entra na mediana do estado", () => {
   assert.equal(semErro.mediana, comErro.mediana,
     "371% deslocou a mediana do estado — é erro de preenchimento, não gasto");
   assert.equal(comErro.base, semErro.base);
+});
+
+test("cartão do estado: abaixo de 10 valores a mediana é null, e com 10 sai", () => {
+  // A mesma régua do panorama (`MINIMO_MEDIANA`): o cartão diz "base
+  // insuficiente" em vez de uma mediana de 3 municípios.
+  assert.equal(medianaDePessoal([40, 41, 42, 43, 44, 45, 46, 47, 48]), null);
+  assert.equal(medianaDePessoal([]), null);
+  assert.equal(medianaDePessoal([40, 41, 42, 43, 44, 45, 46, 47, 48, 49]), 44.5);
 });
 
 test("abaixo de 10 comparáveis o estado não ganha mediana", () => {
@@ -2553,7 +2561,7 @@ test("abertura fiscal cita o limite do veredito, não outro", async () => {
   assert.match(aberturaFiscalDe("Adolfo", "SP", "acima-prudencial", 52.1, lim, UFS_TESTE)!,
     /acima do limite prudencial de 51,3%$/);
   assert.match(aberturaFiscalDe("Adolfo", "SP", "acima-legal", 60, lim, UFS_TESTE)!,
-    /acima do limite legal de 54%$/);
+    /acima do teto legal de 54%$/);
   assert.equal(aberturaFiscalDe("Adolfo", "SP", "implausivel", 99, lim, UFS_TESTE), null);
   assert.equal(aberturaFiscalDe("Imperatriz", "MA", "acima-legal", 60, lim, UFS_TESTE), null);
   // Fora da lista publicada (vazia desde 09/10), nenhuma abertura fiscal.

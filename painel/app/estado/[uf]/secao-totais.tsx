@@ -28,18 +28,20 @@ export default function SecaoTotais({ c }: { c: Contexto }) {
 
       <article className={estilos.cartao}>
         <h2 className={estilos.rotulo}>
-          Média de{" "}
+          <Termo chave="mediana">Mediana</Termo> do{" "}
           <Termo chave="gasto-com-pessoal">
             gasto com pessoal
           </Termo>
         </h2>
         <p className={`${estilos.valor} tabular`}>
-          {r.mediaPessoal === null ? "—" : `${br(r.mediaPessoal, 2)}%`}
+          {r.medianaPessoal === null ? "—" : `${br(r.medianaPessoal, 2)}%`}
         </p>
         <p className={estilos.fonte}>
           {r.baseMedia === 0
             ? "sem base para calcular"
-            : `média de ${br(r.baseMedia)} ${r.baseMedia === 1 ? "município" : "municípios"} com valor plausível`}{" "}
+            : r.medianaPessoal === null
+            ? `base insuficiente (${br(r.baseMedia)} ${r.baseMedia === 1 ? "município" : "municípios"})`
+            : `mediana de ${br(r.baseMedia)} ${r.baseMedia === 1 ? "município" : "municípios"} com valor possível`}{" "}
           · {quadrimestre} · SICONFI
         </p>
       </article>

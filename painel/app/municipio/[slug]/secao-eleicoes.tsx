@@ -50,7 +50,7 @@ export default function SecaoEleicoes(
       <p>
         Resultado oficial do TSE no município, com o percentual como o TSE o
         publica (sobre os votos de todos os candidatos). País e estados na{" "}
-        <a href={CAMINHO}>página das eleições</a>; a prorrogação de 25/10 e a
+        <a href={CAMINHO}>página das eleições</a>; a votação estendida até as 19h em 25/10 e a
         consulta de seção em <a href={`${CAMINHO_DADOS}#prorrogacao`}>todos os dados</a>.
       </p>
       {ele.cargos.map((g) => {

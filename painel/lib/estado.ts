@@ -21,6 +21,7 @@ import {
   faixaDaLinha, funcoesDe, slugDe,
   type FatiaFuncao, type Faixa, type Fiscal, type SnapshotFiscal,
 } from "./fiscal";
+import { mediana, MINIMO_MEDIANA } from "./nacional";
 
 /** A sigla como aparece na URL: `/estado/ma/`. */
 export function slugUf(sigla: string): string {
@@ -45,7 +46,15 @@ export type ResumoEstado = {
    * quando não sobra nenhum valor plausível — média de nada não é zero.
    */
   mediaPessoal: number | null;
-  /** Quantos entraram na média acima. Sem isto ela é um número sem lastro. */
+  /**
+   * A mediana do mesmo conjunto (os plausíveis), a que o cartão e a meta
+   * mostram: o site compara municípios pela mediana, e a média ao lado dela
+   * eram dois números parecidos para o mesmo indicador (auditoria de termos,
+   * M3, 26/10/2026). `null` sem base, e também abaixo de `MINIMO_MEDIANA`
+   * (a mesma régua do panorama dos estados): o cartão diz "base insuficiente".
+   */
+  medianaPessoal: number | null;
+  /** Quantos entraram na média e na mediana acima. Sem isto ela é um número sem lastro. */
   baseMedia: number;
   /**
    * Quantos municípios do estado **entregaram** o relatório fiscal.
@@ -88,6 +97,15 @@ const FAIXAS_ZERADAS = (): Record<Faixa, number> => ({
   "como-estado": 0,
   "nao-instalado": 0,
 });
+
+/**
+ * A mediana do gasto com pessoal do estado, sobre os valores plausíveis.
+ * Abaixo de `MINIMO_MEDIANA` é `null`, como no panorama dos estados: com
+ * poucos municípios, a mediana não descreve o estado.
+ */
+export function medianaDePessoal(plausiveis: number[]): number | null {
+  return plausiveis.length >= MINIMO_MEDIANA ? mediana(plausiveis) : null;
+}
 
 export function resumirEstado(
   snapshot: Snapshot,
@@ -138,12 +156,14 @@ export function resumirEstado(
   const mediaPessoal = plausiveis.length
     ? plausiveis.reduce((s, v) => s + v, 0) / plausiveis.length
     : null;
+  const medianaPessoal = medianaDePessoal(plausiveis);
 
   return {
     uf,
     municipios,
     porFaixa,
     mediaPessoal,
+    medianaPessoal,
     baseMedia: plausiveis.length,
     publicaram: municipios.filter((m) => m.fiscal?.publicou).length,
     comoEstado: municipios.filter(

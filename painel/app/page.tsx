@@ -347,7 +347,7 @@ export default async function Pagina() {
             </p>
             <p className={s.portaLinks}>
               <Link href="/ranking/gasto-com-pessoal/" prefetch={false}>
-                Gasto com pessoal acima do limite
+                Gasto com pessoal acima do teto
               </Link>
               <Link href="/ranking/emprego-com-carteira/" prefetch={false}>
                 Emprego com carteira
@@ -457,7 +457,7 @@ export default async function Pagina() {
               sem link de lugar nenhum, invisiveis para o rastreador. */}
           <p className={s.secaoNota}>
             <Link href="/ranking/gasto-com-pessoal/" prefetch={false}>
-              Quais municípios estão acima do limite de gasto com pessoal
+              Quais municípios estão acima do teto de gasto com pessoal
             </Link>{" "}
             — a lista nacional, com a fonte e a ressalva de quem não entregou.
           </p>

@@ -15,7 +15,7 @@ export default function Sumario({ ctx }: { ctx: Contexto }) {
         <li><a href="#mediana">Média, mediana e pontos percentuais</a></li>
         <li><a href="#relatorios">Os relatórios fiscais: RGF, RREO e o SICONFI</a></li>
         <li><a href="#pessoal">Gasto com pessoal, RCL e os dois limites</a></li>
-        <li><a href="#implausivel">O que quer dizer “valor implausível”</a></li>
+        <li><a href="#implausivel">O que quer dizer “valor impossível”</a></li>
         <li><a href="#funcao">Despesa por função, e o que é “liquidada”</a></li>
         <li><a href="#comparacao">Por que a comparação é entre anos</a></li>
         <li><a href="#saude">Saúde: o mínimo da Constituição e o SIOPS</a></li>

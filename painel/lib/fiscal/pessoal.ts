@@ -18,14 +18,31 @@ import { LIMITE_PLAUSIVEL, MINIMO_PLAUSIVEL, pontoPlausivel } from "./serie";
  * 3.777 municípios ainda não varridos sendo acusados de não prestar contas.
  */
 export const ROTULO_FAIXA: Record<Faixa, string> = {
-  implausivel: "Valor implausível — provável erro de preenchimento",
+  // Auditoria de termos (M4, M6, 26/10/2026): "acima do limite prudencial"
+  // parecia incluir quem passou do teto, "dentro do limite" não dizia de
+  // qual, e "implausível" é palavra de estatístico. A planilha segue com o
+  // rótulo antigo (`ROTULO_FAIXA_ARQUIVO`): quem filtra por ele não quebra.
+  implausivel: "Valor impossível — provável erro de preenchimento",
   "acima-legal": "Acima do teto legal",
-  "acima-prudencial": "Acima do limite prudencial",
-  abaixo: "Dentro do limite",
+  "acima-prudencial": "Entre o limite prudencial e o teto",
+  abaixo: "Abaixo do limite prudencial",
   "sem-dado": "Sem relatório entregue",
   "nao-consultado": "Ainda não consultado",
   "como-estado": "Presta contas como estado, não como município",
   "nao-instalado": "Ainda não instalado no período",
+};
+
+/**
+ * O rótulo da faixa como sai na planilha (`municipios.xlsx`): o de antes da
+ * auditoria de termos de 26/10/2026, congelado. A página fala com o leitor
+ * (`ROTULO_FAIXA`); a planilha é filtrada por quem já a usa, e valor de
+ * coluna trocado quebra o filtro dele.
+ */
+export const ROTULO_FAIXA_ARQUIVO: Record<Faixa, string> = {
+  ...ROTULO_FAIXA,
+  implausivel: "Valor implausível — provável erro de preenchimento",
+  "acima-prudencial": "Acima do limite prudencial",
+  abaixo: "Dentro do limite",
 };
 
 /**

@@ -36,17 +36,17 @@ export const UFS_TITULO_FISCAL: ReadonlySet<string> = new Set();
 export const LIMITE_TITULO = 60;
 
 const VEREDITO: Partial<Record<Faixa, string>> = {
-  "acima-legal": "acima do limite legal",
+  "acima-legal": "acima do teto legal",
   "acima-prudencial": "acima do limite prudencial",
-  abaixo: "dentro do limite",
+  abaixo: "abaixo do limite prudencial",
 };
 
 const VEREDITO_CURTO: Partial<Record<Faixa, string>> = {
-  "acima-legal": "acima do limite",
+  "acima-legal": "acima do teto",
   // NUNCA "em alerta": a LRF tem um limite de ALERTA próprio (48,6%), e
   // chamar o prudencial (51,3%) assim afirmaria outra coisa sobre a prefeitura.
   "acima-prudencial": "acima do prudencial",
-  abaixo: "dentro do limite",
+  abaixo: "abaixo do prudencial",
 };
 
 /**

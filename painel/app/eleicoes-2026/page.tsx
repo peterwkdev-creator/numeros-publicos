@@ -245,7 +245,7 @@ export default async function Pagina() {
         <Link href={CAMINHO_DADOS} prefetch={false}>Ver todos os dados</Link>
         <span className={m.verTodosTexto}>
           : placar por estado, comparecimento, 1º turno, governadores
-          {c ? ", senadores, deputados" : ""}, a prorrogação de 25/10, a
+          {c ? ", senadores, deputados" : ""}, a votação estendida até as 19h em 25/10, a
           consulta de seção e as fontes.
         </span>
       </p>

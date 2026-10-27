@@ -33,7 +33,7 @@ const PONTA = 50;
  */
 export async function generateMetadata(): Promise<Metadata> {
   const caged = await lerCaged();
-  const titulo = "Municípios que mais geraram empregos com carteira";
+  const titulo = "Onde mais cresceu o emprego com carteira";
   const descricao =
     `Saldo de empregos com carteira de ${competenciaCurta(caged.competencias[0]!)} ` +
     `a ${competenciaCurta(caged.competencia)} em cada município: quem mais abriu ` +
@@ -128,7 +128,7 @@ export default async function Pagina() {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Dataset",
-    name: "Municípios que mais geraram empregos com carteira",
+    name: "Municípios com maior saldo de emprego com carteira",
     description:
       `Saldo de empregos com carteira (admissões menos desligamentos) de ` +
       `${de} a ${ate} em ${r.ordem.length} municípios brasileiros, pelo Novo ` +
@@ -197,7 +197,7 @@ export default async function Pagina() {
       </nav>
 
       <h1 className={estilos.titulo}>
-        Municípios que mais geraram empregos com carteira
+        Onde mais cresceu o emprego com carteira
       </h1>
       <p className={estilos.chamada}>
         Quantos empregos com carteira assinada cada município abriu ou fechou de{" "}

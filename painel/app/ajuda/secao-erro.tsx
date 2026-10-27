@@ -29,7 +29,7 @@ export default function SecaoErro({ ctx }: { ctx: Contexto }) {
           estranha.</strong> Aí o erro é da declaração, e nós não podemos
           corrigi-lo — seria inventar um valor. O caminho é a prefeitura ou o
           tribunal de contas do estado. Os casos mais gritantes já aparecem
-          marcados como <a href="#implausivel">implausíveis</a>.
+          marcados como <a href="#implausivel">impossíveis</a>.
         </li>
       </ul>
       <p>

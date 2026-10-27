@@ -47,7 +47,7 @@ export default function SecaoEducacao({ c }: { c: Contexto }) {
   }
   return (
     <section className={estilos.texto} id="educacao">
-      <h2>Educação: o que o dinheiro encontrou pela frente</h2>
+      <h2>Educação: gasto e IDEB</h2>
       <p>
         {educacao && educacao.percentual !== null ? (
           <>
@@ -57,8 +57,8 @@ export default function SecaoEducacao({ c }: { c: Contexto }) {
             <Termo chave="ideb">
               IDEB
             </Termo>{" "}
-            mede o outro lado da mesma conta: aprendizado e fluxo escolar,
-            numa escala de 0 a 10.
+            mede outra coisa: o aprendizado e a aprovação dos alunos, de 0
+            a 10.
           </>
         ) : (
           <>

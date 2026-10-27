@@ -10,7 +10,7 @@ export default function SecaoImplausivel({ ctx }: { ctx: Contexto }) {
   const { declarados, plausiveis, implausiveis, desmentidos, medi, deslocamento, estilos } = ctx;
   return (
     <section className={estilos.bloco} id="implausivel">
-      <h2>O que quer dizer “valor implausível”</h2>
+      <h2>O que quer dizer “valor impossível” (ou implausível)</h2>
       <p>
         É a marca que aparece quando o município declarou um percentual que
         nenhuma prefeitura pode ter: acima de {LIMITE_PLAUSIVEL}% (gastaria
@@ -48,7 +48,7 @@ export default function SecaoImplausivel({ ctx }: { ctx: Contexto }) {
         número; esconder seria escolher quais declarações você pode ver. Mas
         eles <strong>ficam fora das médias</strong>, do ranking e das frases
         de tendência, e o motivo é medido: são{" "}
-        <strong>{br(implausiveis)}</strong> declarações implausíveis entre as{" "}
+        <strong>{br(implausiveis)}</strong> declarações com valor impossível entre as{" "}
         {br(declarados.length)} entregues, e juntas elas puxam
         a média nacional em <strong>{br(deslocamento, 2)} ponto</strong>
         {inteiroImpresso(deslocamento, 2) >= 2 ? "s" : ""} — de{" "}

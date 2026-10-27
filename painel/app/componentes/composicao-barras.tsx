@@ -1,5 +1,7 @@
 import { br, escalaComSinal } from "../../lib/dados";
 import type { FatiaFuncao } from "../../lib/fiscal";
+import { termoDoRotulo } from "../../lib/glossario";
+import Termo from "./termo";
 import estilos from "./composicao-barras.module.css";
 
 /**
@@ -89,7 +91,11 @@ export default function ComposicaoBarras({
           <span className={estilos.amostra} aria-hidden="true"
             data-funcao={Math.min(funcao ?? NOMEADAS, NOMEADAS)} />
         )}
-        {nome}
+        {(() => {
+          // O nome vem do dado; o que tem verbete ganha a explicação no lugar.
+          const chave = termoDoRotulo(nome);
+          return chave ? <Termo chave={chave}>{nome}</Termo> : nome;
+        })()}
       </th>
       <td className={`${estilos.num} tabular`}>
         {pct === null ? "—" : `${br(pct, 1).replace("-", "−")}%`}

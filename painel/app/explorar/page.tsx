@@ -38,9 +38,9 @@ const RANKING = 10;
 const NOTAS = {
   mediana: "Valor do recorte: a mediana dos municípios com dado.",
   soma: "Valor do recorte: a soma dos municípios.",
-  razao: "Valor do recorte: a soma do que se conta sobre a soma do total, " +
-    "dos municípios do recorte. Não é a média das taxas: a cidade " +
-    "grande pesa o que pesa a população dela.",
+  razao: "Valor do recorte: o total do recorte dividido pela base do " +
+    "recorte (ex.: domicílios com esgoto ÷ todos os domicílios). Não é a " +
+    "média das taxas: cidade grande pesa pela população.",
 } as const;
 
 /** Igual a `legendaDoMapa` em `public/explorar-conta.js`. */

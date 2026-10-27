@@ -44,10 +44,10 @@ export const PARES_TRABALHO: ParCenso[] = [
   },
   {
     chave: "previdencia",
-    rotulo: "Contribuem para a previdência",
+    rotulo: "Das pessoas que trabalham, quantas contribuem para a previdência",
     numerador: "ocupados-contribuintes",
     denominador: "ocupados-14-mais",
-    contagem: "pessoas ocupadas",
+    contagem: "pessoas de 14 anos ou mais trabalhando",
     criterio: "contribuíam para instituto de previdência oficial",
   },
 ];
@@ -84,9 +84,9 @@ export const EMPRESAS: ValorTrabalho[] = [
   },
   {
     chave: "ocupadas",
-    rotulo: "Pessoas ocupadas",
+    rotulo: "Pessoas trabalhando",
     codigo: "pessoal-ocupado-empresas",
-    criterio: "assalariados, sócios e proprietários, em 31 de dezembro",
+    criterio: "assalariados, sócios e donos, em 31 de dezembro",
     formato: "inteiro",
   },
   {

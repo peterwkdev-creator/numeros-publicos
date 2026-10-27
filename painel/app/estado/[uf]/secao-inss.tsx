@@ -18,7 +18,7 @@ export default function SecaoInss({ c }: { c: Contexto }) {
         Do Portal de Dados Abertos do INSS. Em{" "}
         <strong>{dataBr(inss.fila.referencia)}</strong>, as agências {de}{" "}
         tinham <strong>{br(esperaUf)}</strong> pedidos esperando decisão nos
-        benefícios abaixo. A <strong>espera típica</strong> é o meio da
+        benefícios abaixo. A coluna <strong>metade espera há mais de</strong> é o meio da
         fila: metade dos pedidos esperava havia mais do que isso. Ao lado,
         a mesma conta no país, e quanto tempo levaram as negativas.
       </p>
@@ -36,7 +36,7 @@ export default function SecaoInss({ c }: { c: Contexto }) {
               <th scope="col" className={estilos.num}>Metade espera há mais de</th>
               <th scope="col" className={estilos.num}>No país</th>
               <th scope="col" className={estilos.num}>Há mais de 90 dias (% dos pedidos)</th>
-              <th scope="col" className={estilos.num}>Metade negada em até</th>
+              <th scope="col" className={estilos.num}>Metade das negativas saiu em até</th>
             </tr>
           </thead>
           <tbody>

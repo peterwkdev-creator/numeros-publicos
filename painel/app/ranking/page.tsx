@@ -23,7 +23,7 @@ const TITULO = "Rankings dos municípios";
 
 export async function generateMetadata(): Promise<Metadata> {
   const descricao = comCauda(
-    "Listas nacionais dos municípios: gasto com pessoal acima do limite da " +
+    "Listas nacionais dos municípios: gasto com pessoal acima do teto da " +
     "LRF e saldo de empregos com carteira.",
     "Com a fonte e a data de coleta de cada uma.");
   return {
@@ -73,7 +73,7 @@ export default async function IndiceRankings() {
       <section className={estilos.texto}>
         <h2>
           <Link href="/ranking/gasto-com-pessoal/" prefetch={false}>
-            Municípios acima do limite de gasto com pessoal
+            Municípios acima do teto de gasto com pessoal
           </Link>
         </h2>
         <p>
@@ -89,7 +89,7 @@ export default async function IndiceRankings() {
       <section className={estilos.texto}>
         <h2>
           <Link href="/ranking/emprego-com-carteira/" prefetch={false}>
-            Municípios que mais geraram empregos com carteira
+            Onde mais cresceu o emprego com carteira
           </Link>
         </h2>
         <p>

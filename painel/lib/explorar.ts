@@ -190,7 +190,7 @@ export const INDICADORES_EXPLORAR: IndicadorExplorar[] = [
     formato: "indice", casas: 2, tipo: "mediana", coluna: "ideb-anos-finais",
   },
   {
-    chave: "pessoal", rotulo: "Gasto com pessoal (% da RCL)", tema: "Contas públicas",
+    chave: "pessoal", rotulo: "Gasto com pessoal (% da receita)", tema: "Contas públicas",
     formato: "pct", casas: 2, tipo: "mediana", coluna: "pessoal-rcl",
   },
   {

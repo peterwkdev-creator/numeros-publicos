@@ -48,7 +48,7 @@ export default function SecaoLimiteDePessoal({ c }: { c: Contexto }) {
       {r.porFaixa["acima-legal"] > 0 && (
         <p className={estilos.ressalva}>
           <Link href="/ranking/gasto-com-pessoal/" prefetch={false}>
-            Quais municípios do país estão acima do limite
+            Quais municípios do país estão acima do teto
           </Link>{" "}
           — a lista nacional, na mesma coleta.
         </p>
@@ -60,17 +60,17 @@ export default function SecaoLimiteDePessoal({ c }: { c: Contexto }) {
         <p className={estilos.ressalva}>
           {/* Sem número de exemplo digitado: o texto dizia "371%" e "quase
               dois pontos", verdade num caso e repetido nos 27 estados. */}
-          A média acima <strong>deixa de fora {r.porFaixa.implausivel === 1
+          A mediana do cartão no topo <strong>deixa de fora {r.porFaixa.implausivel === 1
             ? "o município" : `os ${br(r.porFaixa.implausivel)} municípios`}</strong>{" "}
           com percentual impossível: fora da faixa de 0 a 100% da receita, ou
           calculado sobre uma receita corrente líquida que a declaração de
-          receita do próprio município desmente. É erro de preenchimento, e um
-          só pode mover a média do estado inteiro.
+          receita do próprio município desmente. É erro de preenchimento, e por isso
+          fica fora da conta.
         </p>
       ) : r.baseMedia > 0 ? (
         <p className={estilos.ressalva}>
-          Nenhum município {de} declarou percentual implausível, então a
-          média acima usa {r.baseMedia === 1 ? "o único" : `todos os ${br(r.baseMedia)}`}{" "}
+          Nenhum município {de} declarou percentual impossível, então a
+          mediana do cartão no topo usa {r.baseMedia === 1 ? "o único" : `todos os ${br(r.baseMedia)}`}{" "}
           que {r.baseMedia === 1 ? "entregou" : "entregaram"} o relatório.
         </p>
       ) : null}

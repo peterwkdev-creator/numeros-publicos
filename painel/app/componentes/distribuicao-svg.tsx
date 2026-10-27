@@ -126,7 +126,7 @@ export default function DistribuicaoSvg({
 
   const rotulo =
     `Distribuição do gasto com pessoal ${conjunto}: ${base} municípios com ` +
-    `relatório entregue e valor plausível. A mediana é ${br(mediana, 2)}% e ` +
+    `relatório entregue e valor possível. A mediana é ${br(mediana, 2)}% e ` +
     `${municipio} está em ${br(percentual, 2)}%, ` +
     (percentil === 0 ? "o menor do conjunto" : percentil === 100 ? "o maior do conjunto"
       : `mais que ${rotuloAbaixo(posicao)} deles`) +

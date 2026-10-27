@@ -19,7 +19,7 @@ export default function SecaoAoLongoDoTempo({ c }: { c: Contexto }) {
       <p>
         {delta === null ? (
           <>
-            Não há dois {semestral ? "relatórios" : "quadrimestres"} com valor plausível o bastante para
+            Não há dois {semestral ? "relatórios" : "quadrimestres"} com valor possível o bastante para
             falar em tendência — a tabela abaixo mostra o que foi publicado.
           </>
         ) : delta > 0 ? (
@@ -27,14 +27,14 @@ export default function SecaoAoLongoDoTempo({ c }: { c: Contexto }) {
             O comprometimento com pessoal <strong>subiu {br(delta, 2)} ponto
             {Math.abs(delta) >= 2 ? "s" : ""} percentua
             {Math.abs(delta) >= 2 ? "is" : "l"}</strong> entre o primeiro e o
-            último {umPeriodo} {finalCondenado ? "com valor plausível" : "publicado"}.
+            último {umPeriodo} {finalCondenado ? "com valor possível" : "publicado"}.
           </>
         ) : delta < 0 ? (
           <>
             O comprometimento com pessoal <strong>caiu {br(Math.abs(delta), 2)}{" "}
             ponto{Math.abs(delta) >= 2 ? "s" : ""} percentua
             {Math.abs(delta) >= 2 ? "is" : "l"}</strong> entre o primeiro e o
-            último {umPeriodo} {finalCondenado ? "com valor plausível" : "publicado"}.
+            último {umPeriodo} {finalCondenado ? "com valor possível" : "publicado"}.
           </>
         ) : (
           <>O comprometimento com pessoal ficou <strong>estável</strong>.</>
@@ -109,7 +109,7 @@ export default function SecaoAoLongoDoTempo({ c }: { c: Contexto }) {
                   >
                     {br(pct, 2)}%
                     {fora && (
-                      <span className={estilos.marca}> implausível</span>
+                      <span className={estilos.marca}> impossível</span>
                     )}
                   </td>
                 </tr>

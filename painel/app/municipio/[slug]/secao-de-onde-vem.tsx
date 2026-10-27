@@ -1,5 +1,6 @@
 import { br, escala, escalaComSinal } from "../../../lib/dados";
 import ComposicaoBarras from "../../componentes/composicao-barras";
+import Termo from "../../componentes/termo";
 import type { Contexto } from "./contexto";
 
 /**
@@ -28,10 +29,11 @@ export default function SecaoDeOndeVem({ c }: { c: Contexto }) {
         <p>
           No {receita.periodo}º bimestre de {receita.exercicio},{" "}
           {m.nome} arrecadou{" "}
-          <strong>{escala(receita.total).curto}</strong> de receita corrente.
+          <strong>{escala(receita.total).curto}</strong> de{" "}
+          <Termo chave="receita-corrente">receita corrente</Termo>.
           {" "}
           <strong>{br(((receita.transferida ?? 0) / receita.total) * 100, 1)}%</strong>{" "}
-          veio de <strong>transferências</strong> — dinheiro que a União,
+          veio de <strong><Termo chave="transferencias">transferências</Termo></strong> — dinheiro que a União,
           o estado e os fundos repassam
           {receita.tributaria !== null && (
             <>

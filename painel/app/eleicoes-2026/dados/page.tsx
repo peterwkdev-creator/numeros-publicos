@@ -582,11 +582,6 @@ export default async function Pagina() {
               <a href={TSE_NOTA} rel="noopener">nota de esclarecimento sobre a
               prorrogação</a>.
             </li>
-            <li>
-              <strong>A diferença no 2º turno:</strong> {br(dif)} votos entre{" "}
-              {a!.nome} ({br(a!.votos)}) e {b!.nome} ({br(b!.votos)}), do arquivo
-              oficial do TSE.
-            </li>
           </ul>
           <div className={estilos.nota} role="note">
             <p>

@@ -1,5 +1,5 @@
 import { dataCurta, expandir } from "../../../lib/dados";
-import { funcoesDe, indexarFiscal, naoInstaladosEm, nomeQuadrimestre, receitaDe, ROTULO_FAIXA } from "../../../lib/fiscal";
+import { funcoesDe, indexarFiscal, naoInstaladosEm, nomeQuadrimestre, receitaDe, ROTULO_FAIXA_ARQUIVO } from "../../../lib/fiscal";
 import { trajetoriaDe } from "../../../lib/ideb";
 import {
   lerCaged, lerEmendas, lerFiscal, lerIdeb, lerSnapshot, SITE,
@@ -93,7 +93,7 @@ export async function GET() {
       f?.limitePrudencial ?? null,
       // A situação vai por extenso, e não como código: quem abre a planilha
       // não tem a legenda ao lado, e "sem-dado" não se explica sozinho.
-      ROTULO_FAIXA[f?.faixa ?? "nao-consultado"],
+      ROTULO_FAIXA_ARQUIVO[f?.faixa ?? "nao-consultado"],
       fn?.total ?? null,
       acha("Educação"),
       acha("Saúde"),

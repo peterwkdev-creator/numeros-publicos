@@ -101,15 +101,20 @@ export async function generateMetadata(
       (r.uf.municipios === 1
         ? `${r.uf.nome}: `
         : `Os ${r.uf.municipios} municípios ${deEstado(r.uf.sigla)}: `) +
-        (r.mediaPessoal !== null
+        (r.medianaPessoal !== null
           ? `${r.publicaram} entregaram relatório fiscal, ` +
-            `média de ${br(r.mediaPessoal, 2)}% da receita em pessoal e ` +
-            `${acima} acima do limite legal.`
-          // Sem média há dois motivos MUITO diferentes, e escrever o errado é
+            `mediana de ${br(r.medianaPessoal, 2)}% da receita em pessoal e ` +
+            `${acima} acima do teto (${br(fiscal.limites.legal, 0)}%).`
+          // Sem mediana há dois motivos MUITO diferentes, e escrever o errado é
           // acusar quem presta contas: o DF entrega o RGF na esfera estadual,
           // porque não é município. Ver `PRESTA_COMO_ESTADO`.
           : r.comoEstado === r.uf.municipios
             ? "presta contas como estado, e não como município."
+          // Base abaixo de 10: há relatório, mas não mediana que descreva o
+          // estado. Diferente do DF (acima) e de "nenhum entregou" (abaixo).
+          : r.baseMedia > 0
+            ? `${r.publicaram} entregaram relatório fiscal, base insuficiente para a mediana do ` +
+              `gasto com pessoal e ${acima} acima do teto (${br(fiscal.limites.legal, 0)}%).`
             : `${r.publicaram === 0 ? "nenhum município entregou" : `${r.publicaram} entregaram`} relatório fiscal.`),
       "Dados oficiais, com a fonte.",
     ),

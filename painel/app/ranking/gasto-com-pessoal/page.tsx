@@ -32,7 +32,7 @@ const CAMINHO = "/ranking/gasto-com-pessoal/";
 export async function generateMetadata(): Promise<Metadata> {
   const [fiscal, snapshot] = await Promise.all([lerFiscal(), lerSnapshot()]);
   const r = rankingPessoal(fiscal, snapshot);
-  const titulo = "Municípios acima do limite de gasto com pessoal";
+  const titulo = `Municípios acima do teto de gasto com pessoal (${br(fiscal.limites.legal, 0)}%)`;
   const descricao =
     `${br(r.acimaDoTeto.length)} municípios declararam gasto com pessoal ` +
     `acima do teto de ${br(fiscal.limites.legal, 0)}% da receita corrente ` +
@@ -77,7 +77,7 @@ export default async function Pagina() {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Dataset",
-    name: "Municípios acima do limite de gasto com pessoal",
+    name: `Municípios acima do teto de gasto com pessoal (${br(legal, 0)}%)`,
     description:
       `Lista nacional dos ${r.acimaDoTeto.length} municípios brasileiros que ` +
       `declararam despesa com pessoal do Executivo acima de ${legal}% da ` +
@@ -160,7 +160,7 @@ export default async function Pagina() {
       </nav>
 
       <h1 className={estilos.titulo}>
-        Municípios acima do limite de gasto com pessoal
+        Municípios acima do teto de gasto com pessoal ({br(legal, 0)}%)
       </h1>
       <p className={estilos.chamada}>
         Quanto cada prefeitura gasta com a folha de pagamento, em proporção da

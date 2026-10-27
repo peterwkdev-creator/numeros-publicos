@@ -315,7 +315,7 @@ export default async function Pagina({ params }: Params) {
                 <tr>
                   <th scope="col">Segurado</th>
                   <th scope="col" className={estilos.num}>Negados</th>
-                  <th scope="col" className={estilos.num}>Metade negada em até</th>
+                  <th scope="col" className={estilos.num}>Metade das negativas saiu em até</th>
                 </tr>
               </thead>
               <tbody>
@@ -354,7 +354,7 @@ export default async function Pagina({ params }: Params) {
                   <th scope="col" className={estilos.num}>Pedidos em espera</th>
                   <th scope="col" className={estilos.num}>Metade espera há mais de</th>
                   <th scope="col" className={estilos.num}>Há mais de 90 dias (% dos pedidos)</th>
-                  <th scope="col" className={estilos.num}>Metade negada em até</th>
+                  <th scope="col" className={estilos.num}>Metade das negativas saiu em até</th>
                 </tr>
               </thead>
               <tbody>

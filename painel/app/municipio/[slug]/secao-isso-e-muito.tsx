@@ -25,7 +25,7 @@ export default function SecaoIssoEMuito({ c }: { c: Contexto }) {
       <p>
         Entre os <strong>{br(posicao.base)}</strong> municípios{" "}
         {deEstado(m.uf)} que entregaram o relatório com valor
-        plausível,{" "}
+        possível,{" "}
         {posicao.percentil === 0 ? (
           <>{m.nome} tem <strong>o menor percentual</strong> deles.</>
         ) : posicao.percentil === 100 ? (

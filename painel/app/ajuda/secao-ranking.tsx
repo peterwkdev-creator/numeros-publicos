@@ -24,9 +24,9 @@ export default function SecaoRanking({ ctx }: { ctx: Contexto }) {
           e ficar fora não quer dizer estar dentro do limite.
         </li>
         <li>
-          <strong>As declarações implausíveis</strong> ficam numa lista à
+          <strong>As declarações com valor impossível</strong> ficam numa lista à
           parte, abaixo: nem escondidas, nem misturadas à conta (veja{" "}
-          <a href="#implausivel">valor implausível</a>).
+          <a href="#implausivel">valor impossível</a>).
         </li>
         <li>
           O filtro acima da tabela mostra só os municípios de um estado, e o

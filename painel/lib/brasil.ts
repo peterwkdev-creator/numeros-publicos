@@ -112,7 +112,7 @@ export interface Apresentacao {
  */
 export const APRESENTACAO: Record<string, Apresentacao> = {
   pib: {
-    titulo: "PIB: variação em quatro trimestres",
+    titulo: "PIB: crescimento em 12 meses",
     fiscal: false,
     como:
       "Acima de zero, a economia cresceu em relação ao ano anterior; abaixo " +
@@ -120,8 +120,8 @@ export const APRESENTACAO: Record<string, Apresentacao> = {
     melhor: "alto",
     zero: { acima: "cresceu", abaixo: "encolheu" },
     nota:
-      "Cada ponto compara os quatro trimestres terminados ali com os quatro " +
-      "do ano anterior.",
+      "Cada ponto soma os últimos quatro trimestres, terminados ali, e os " +
+      "compara com os quatro anteriores.",
   },
   desocupacao: {
     titulo: "Taxa de desemprego",
@@ -135,13 +135,13 @@ export const APRESENTACAO: Record<string, Apresentacao> = {
       "antes disso a pesquisa era outra.",
   },
   rendimento: {
-    titulo: "Rendimento médio real do trabalho",
+    titulo: "Renda média do trabalho, descontada a inflação",
     fiscal: false,
     como: "Quanto ganha por mês, em média, quem trabalha.",
     melhor: "alto",
     nota:
-      "Valor real: o IBGE desconta a inflação antes de publicar, então um " +
-      "ano se compara com outro.",
+      "O IBGE desconta a inflação antes de publicar (o chamado valor real), " +
+      "então um ano se compara com outro.",
   },
   "extrema-pobreza": {
     titulo: "Pessoas em extrema pobreza",
@@ -152,7 +152,8 @@ export const APRESENTACAO: Record<string, Apresentacao> = {
     melhor: "baixo",
     nota:
       "Pela PNAD Contínua, que começa em 2012, um valor por ano. O dólar é " +
-      "convertido em reais pela paridade de poder de compra de 2021 e " +
+      "convertido em reais pelo custo de vida comparado entre países " +
+      "(paridade de poder de compra), em preços de 2021, e " +
       "corrigido pela inflação. Outras publicações do IBGE usam outra linha " +
       "e dão outro percentual; quando o Banco Mundial troca a linha, o IBGE " +
       "refaz a série inteira.",
@@ -263,7 +264,7 @@ export const APRESENTACAO: Record<string, Apresentacao> = {
       "do mês. Desde março de 1999, quando a meta começou.",
   },
   "salario-minimo": {
-    titulo: "Salário mínimo real",
+    titulo: "Salário mínimo, descontada a inflação",
     fiscal: false,
     como:
       "Quanto vale o salário mínimo, descontada a inflação. Mínimo mais alto " +
@@ -284,7 +285,8 @@ export const APRESENTACAO: Record<string, Apresentacao> = {
       "pelas declarações de óbito.",
     melhor: "baixo",
     nota:
-      "Segurança pública é competência dos estados. Número de óbitos, e não " +
+      "As polícias civil e militar são dos estados (Constituição, art. 144). " +
+      "O gráfico não separa o efeito de cada governo. Número de óbitos, e não " +
       "taxa por habitante: a população também cresceu no período. Só os " +
       "anos que o Ministério da Saúde dá como finais; o ano seguinte ainda é " +
       "preliminar e entra quando fechar. Desde 2019 cresceram os óbitos de " +
@@ -635,10 +637,15 @@ export function tituloDaSerie(s: SerieBrasil): string {
  */
 export function descricaoDaSerie(s: SerieBrasil): string {
   const t = APRESENTACAO[s.codigo]?.titulo ?? s.nome;
-  return `${t}, de ${rotuloPeriodo(s.pontos[0]![0])} a ` +
-    `${rotuloPeriodo(s.pontos.at(-1)![0])}, dado oficial ` +
+  // "dado oficial" cai para "dado" só quando a frase passaria dos 160: o
+  // título longo de 26/10/2026 ("Renda média do trabalho, descontada a
+  // inflação") deu 163, e o título é o que o leitor precisa entender.
+  const montar = (qual: string) => `${t}, de ${rotuloPeriodo(s.pontos[0]![0])} a ` +
+    `${rotuloPeriodo(s.pontos.at(-1)![0])}, ${qual} ` +
     `${FONTE_COM_ARTIGO[s.fonte] ?? s.fonte}, com quem ocupava a Presidência. ` +
     `Gráfico, os ${br(s.pontos.length)} valores e CSV.`;
+  const longa = montar("dado oficial");
+  return longa.length <= 160 ? longa : montar("dado");
 }
 
 /**

@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { br, dataCurta, descricaoDe, expandir } from "../../../lib/dados";
 import { deEstado, resumirEstado, slugUf } from "../../../lib/estado";
 import {
-  lerCaged, lerEmendas, lerEstadosFiscal, lerFiscal, lerIdeb, lerInss, lerSnapshot, SITE, cartaoSocial, imagemDoEstado,
+  lerBrasil, lerCaged, lerDivida, lerEmendas, lerEstadosFiscal, lerFiscal, lerIdeb, lerInss, lerSnapshot, SITE, cartaoSocial, imagemDoEstado,
 } from "../../../lib/servidor";
 // A ORDEM destes imports de CSS é a que o `page.tsx` tinha antes da divisão em
 // seções (item 10 da modernização, 16/10/2026). O bundler decide em que chunk
@@ -29,6 +29,8 @@ import SecaoComoSeVive from "./secao-como-se-vive";
 import SecaoEmprego from "./secao-emprego";
 import SecaoEmendas from "./secao-emendas";
 import SecaoGovernoEstadual from "./secao-governo-estadual";
+import SecaoDivida from "./secao-divida";
+import { dividaDe, serieIpca } from "../../../lib/divida";
 import SecaoInss from "./secao-inss";
 import SecaoLimiteDePessoal from "./secao-limite-de-pessoal";
 import SecaoParaOndeVai from "./secao-para-onde-vai";
@@ -58,12 +60,15 @@ import SecaoOutrosEstados from "./secao-outros-estados";
  */
 
 async function carregar() {
-  const [snapshot, fiscal, estadosFiscal, ideb, idebFinais, caged, emendas, inss] = await Promise.all([
+  const [snapshot, fiscal, estadosFiscal, ideb, idebFinais, caged, emendas, inss, divida, brasil] = await Promise.all([
     lerSnapshot(), lerFiscal(), lerEstadosFiscal(), lerIdeb("anos_iniciais"), lerIdeb("anos_finais"),
-    lerCaged(), lerEmendas(), lerInss(),
+    lerCaged(), lerEmendas(), lerInss(), lerDivida(), lerBrasil(),
   ]);
   return {
     snapshot, fiscal, estadosFiscal, ideb, idebFinais, caged, emendas, inss,
+    // A dívida do governo estadual e o IPCA que a corrige: só a seção `#divida`
+    // os lê, por props, e o `contexto.ts` não muda.
+    divida, ipca: serieIpca(brasil.auxiliares),
     expandidos: expandir(snapshot),
   };
 }
@@ -138,6 +143,7 @@ export default async function PaginaEstado(
   const r = resumirEstado(snapshot, fiscal, expandidos, uf.toUpperCase());
   if (!r) notFound();
   const c: Contexto = { ...montarContexto(dados, r), estilos };
+  const dividaUf = dividaDe(dados.divida, r.uf.sigla);
   const { medidasCenso, cagedUf, emendasUf, governo, inssUf, semRede, semRedeFinais, meu, posTaxa } = c;
 
   return (
@@ -159,6 +165,7 @@ export default async function PaginaEstado(
           id: "governo-estadual",
           titulo: r.comoEstado > 0 ? "O governo distrital" : "O governo estadual",
         },
+        !!dividaUf && { id: "divida", titulo: "A dívida do governo" },
         { id: "limite-de-pessoal", titulo: "Limite de pessoal" },
         !!r.funcoes && { id: "para-onde-vai", titulo: "Para onde vai o dinheiro" },
         (semRede > 0 || semRedeFinais > 0) && { id: "ideb", titulo: "IDEB" },
@@ -179,6 +186,8 @@ export default async function PaginaEstado(
       <SecaoInss c={c} />
       <VoltaSumario />
       <SecaoGovernoEstadual c={c} />
+      <VoltaSumario />
+      <SecaoDivida c={c} snap={dados.divida} estado={dividaUf} ipca={dados.ipca} />
       <VoltaSumario />
       <SecaoLimiteDePessoal c={c} />
       <VoltaSumario />

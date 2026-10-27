@@ -98,6 +98,14 @@ export const GLOSSARIO = {
     curta: "A bruta é o que os governos federal, estaduais e municipais devem. A líquida é a do setor público (inclui o Banco Central e as estatais): o que ele deve menos o que tem a receber, como as reservas internacionais.",
     secao: "brasil",
   },
+  "divida-consolidada": {
+    termo: "Dívida consolidada",
+    curta: "Tudo o que o governo deve com prazo acima de um ano: empréstimos, renegociações, parcelamentos e precatórios vencidos e não pagos. É a dívida total que o Relatório de Gestão Fiscal declara.",
+  },
+  "divida-liquida": {
+    termo: "Dívida consolidada líquida",
+    curta: "A dívida consolidada menos o dinheiro em caixa e os valores a receber que a lei manda descontar. É a dívida que a lei limita. Fica negativa quando o que o governo tem e tem a receber passa do que ele deve.",
+  },
   dotacao: {
     termo: "Dotação",
     curta: "O valor que o orçamento aprovado autoriza gastar numa despesa: o orçado, antes do empenho e da liquidação.",
@@ -172,6 +180,10 @@ export const GLOSSARIO = {
     termo: "IPCA",
     curta: "O índice oficial de inflação do país, medido pelo IBGE: quanto subiram os preços do que as famílias compram. É por ele que se mede a meta de inflação.",
     secao: "brasil",
+  },
+  "limite-do-senado": {
+    termo: "Limite da dívida (Senado)",
+    curta: "A dívida consolidada líquida de um estado não pode passar de 2 vezes a receita corrente líquida (Resolução do Senado Federal nº 40/2001). A Lei de Responsabilidade Fiscal manda o Tribunal de Contas alertar o governo quando ela passa de 90% desse limite (art. 59, § 1º, III).",
   },
   "limite-prudencial": {
     termo: "Limite prudencial",
@@ -253,7 +265,7 @@ export const GLOSSARIO = {
   },
   rcl: {
     termo: "Receita corrente líquida (RCL) ajustada",
-    curta: "Toda a receita corrente do município (como os impostos dele e as transferências que recebe da União e do estado) menos as deduções da Lei de Responsabilidade Fiscal, como a contribuição dos servidores à previdência própria, e com os ajustes que ela manda fazer. No governo estadual, deduz-se também a parte dos impostos que vai aos municípios. É o denominador do percentual de gasto com pessoal.",
+    curta: "Toda a receita corrente do município ou do estado (como os impostos dele e as transferências que recebe da União e, no caso do município, do estado) menos as deduções da Lei de Responsabilidade Fiscal, como a contribuição dos servidores à previdência própria, e com os ajustes que ela manda fazer. No governo estadual, deduz-se também a parte dos impostos que vai aos municípios. É o denominador do percentual de gasto com pessoal.",
     secao: "pessoal",
   },
   "receita-corrente": {

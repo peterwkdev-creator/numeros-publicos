@@ -1084,6 +1084,32 @@ class TestRetrato(unittest.TestCase):
         r["series"][0]["pontos"][0][1] = 9.0
         self.assertEqual(brasil.gravar_retrato(r, self.saida), "gravado")
 
+    def test_auxiliar_fora_da_pagina_e_com_a_mesma_trava(self):
+        indice = IPCA._replace(codigo="ipca-indice", variavel=2266,
+                               pagina=False)
+        r = self.retrato(leitura(PIB, {"1996T1": 1.0}),
+                         leitura(IPCA, {"1995-07": 1.0}),
+                         leitura(indice, {"1995-07": 1.0, "1995-08": 2.0}),
+                         series=(PIB, IPCA, indice))
+        self.assertEqual([s["codigo"] for s in r["series"]], ["pib", "ipca"])
+        self.assertEqual([s["codigo"] for s in r["auxiliares"]],
+                         ["ipca-indice"])
+        self.assertEqual(brasil.gravar_retrato(r, self.saida), "gravado")
+        r["auxiliares"][0]["coletadoEm"] = "2099-01-01T00:00:00+00:00"
+        self.assertEqual(brasil.gravar_retrato(r, self.saida), "inalterado")
+        r["auxiliares"][0]["pontos"].pop()
+        with self.assertRaisesRegex(ErroBrasil, "ipca-indice: 2 pontos para 1"):
+            brasil.gravar_retrato(r, self.saida)
+        # Banco sem a auxiliar: o retrato anterior a mantém, em `auxiliares`.
+        anterior = json.loads(self.saida.read_text(encoding="utf-8"))
+        with ArmazemBrasil(self.banco) as db:
+            db.con.execute("DELETE FROM observacao WHERE serie = ?",
+                           ("ipca-indice",))
+            r2 = brasil.retrato(db, self.MANDATOS, (PIB, IPCA, indice),
+                                anterior=anterior)
+        self.assertEqual(r2["auxiliares"], anterior["auxiliares"])
+        self.assertEqual(len(r2["series"]), 2)
+
 
 class TestIngerirPorSerie(unittest.TestCase):
     """Uma fonte que falha não segura as outras: a série é tentada de novo uma

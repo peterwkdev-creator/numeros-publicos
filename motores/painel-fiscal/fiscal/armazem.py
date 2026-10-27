@@ -12,7 +12,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterator
 
-from .siconfi import Ente, Pessoal
+from .siconfi import (
+    CAMPOS_DIVIDA, COLUNA_SALDO_ANTERIOR, CONTAS_DIVIDA, LIMITES_DIVIDA,
+    TETO_PONTOS_PERCENTUAIS, Divida, Ente, Pessoal,
+)
 
 ESQUEMA = """
 CREATE TABLE IF NOT EXISTS ente (
@@ -151,6 +154,44 @@ CREATE TABLE IF NOT EXISTS coleta (
     lidos        INTEGER NOT NULL DEFAULT 0,
     publicaram   INTEGER NOT NULL DEFAULT 0,
     falhou_com   TEXT
+);
+
+-- Divida consolidada dos estados (RGF Anexo 02, so no estados.db). Uma linha
+-- por UF/exercicio/periodo, a posicao da coluna "Ate o 3o Quadrimestre".
+-- `publicou` como em `pessoal`: 0 = nao entregou (todos os valores NULL).
+CREATE TABLE IF NOT EXISTS divida (
+    codigo_ibge   INTEGER NOT NULL,
+    exercicio     INTEGER NOT NULL,
+    periodo       INTEGER NOT NULL,
+    publicou      INTEGER NOT NULL,
+    dc            REAL,
+    deducoes      REAL,
+    dcl           REAL,
+    rcl           REAL,
+    rcl_ajustada  REAL,
+    percentual    REAL,
+    limite_senado REAL,
+    limite_alerta REAL,
+    fonte         TEXT NOT NULL,
+    coletado_em   TEXT NOT NULL,
+    PRIMARY KEY (codigo_ibge, exercicio, periodo)
+);
+
+-- Todas as linhas cruas do RGF 02, para o detalhe que muda de nome entre
+-- anos. A chave e `cod_conta` + `coluna` + `ordem`, nunca o nome (`conta` so
+-- se guarda para leitura humana). `ordem` e 0 em toda conta, menos nas que a
+-- fonte entrega como tabela (`siconfi.CONTAS_EM_TABELA`, a trajetoria de
+-- ajuste): ali e a posicao da linha na resposta, 0, 1, 2...
+CREATE TABLE IF NOT EXISTS divida_conta (
+    codigo_ibge INTEGER NOT NULL,
+    exercicio   INTEGER NOT NULL,
+    periodo     INTEGER NOT NULL,
+    cod_conta   TEXT    NOT NULL,
+    coluna      TEXT    NOT NULL,
+    ordem       INTEGER NOT NULL DEFAULT 0,
+    conta       TEXT,
+    valor       REAL,
+    PRIMARY KEY (codigo_ibge, exercicio, periodo, cod_conta, coluna, ordem)
 );
 """
 
@@ -420,3 +461,142 @@ def ja_consultados_receita(con: sqlite3.Connection, exercicio: int,
         "SELECT codigo_ibge FROM receita_consulta WHERE exercicio=? AND periodo=?"
         + (" AND publicou=1" if so_publicados else ""),
         (exercicio, periodo))}
+
+
+# --- Dívida dos estados (RGF Anexo 02) ---------------------------------------
+
+FONTE_DIVIDA = "SICONFI/Tesouro Nacional — RGF Anexo 02"
+
+
+class ReguaDivida(ValueError):
+    """A fatia não fecha a régua do §9.1: não se grava, e a anterior fica."""
+
+
+def gravar_divida(con: sqlite3.Connection, codigo_ibge: int, exercicio: int,
+                  periodo: int, d: Divida | None) -> None:
+    """Substitui a fatia UF x exercício x período, nas duas tabelas, numa transação.
+
+    1. A régua vem antes de tudo: fatia que não fecha levanta `ReguaDivida`
+       sem apagar nada (a leitura anterior, que fechou, continua).
+    2. `DELETE` das duas tabelas **antes** do desvio de "não veio nada"
+       (`stack-ingestao.md`, "Releitura substitui a fatia"): a UF que deixou
+       de publicar fica só com a linha `publicou=0`, sem valor ao lado.
+    3. `INSERT` pela chave `cod_conta` + `coluna`, nunca pelo nome.
+    """
+    if d is not None:
+        if (d.codigo_ibge, d.exercicio, d.periodo) != (codigo_ibge, exercicio, periodo):
+            raise ValueError("a leitura é de outra fatia")
+        problemas = d.regua()
+        if problemas:
+            raise ReguaDivida(f"{codigo_ibge} {exercicio}/{periodo}: " + "; ".join(problemas))
+    agora_ = agora()
+    with con:  # uma transação: ou a fatia inteira nova, ou a antiga intacta
+        chave = (codigo_ibge, exercicio, periodo)
+        con.execute("DELETE FROM divida WHERE codigo_ibge=? AND exercicio=? AND periodo=?", chave)
+        con.execute("DELETE FROM divida_conta WHERE codigo_ibge=? AND exercicio=? AND periodo=?", chave)
+        c = d.campos() if d is not None else dict.fromkeys(CAMPOS_DIVIDA)
+        con.execute(
+            "INSERT INTO divida (codigo_ibge, exercicio, periodo, publicou, "
+            + ", ".join(CAMPOS_DIVIDA) + ", fonte, coletado_em) VALUES ("
+            + ",".join("?" * (6 + len(CAMPOS_DIVIDA))) + ")",
+            (*chave, 0 if d is None else 1, *(c[n] for n in CAMPOS_DIVIDA),
+             FONTE_DIVIDA, agora_))
+        if d is None:
+            return
+        con.executemany(
+            "INSERT INTO divida_conta (codigo_ibge, exercicio, periodo, cod_conta,"
+            " coluna, ordem, conta, valor) VALUES (?,?,?,?,?,?,?,?)",
+            [(*chave, cod, col, ordem, conta, valor)
+             for (cod, col, ordem), (conta, valor) in sorted(d.linhas.items())])
+
+
+def ler_divida(con: sqlite3.Connection, codigo_ibge: int, exercicio: int,
+               periodo: int = 3) -> Divida | None:
+    """A fatia gravada de volta como `Divida`, das linhas cruas da `divida_conta`.
+
+    É o que deixa o export refazer `avisos()` sem perguntar de novo à fonte.
+    None quando a fatia não existe ou a UF não publicou.
+    """
+    linhas = {(r["cod_conta"], r["coluna"], r["ordem"]): (r["conta"], r["valor"])
+              for r in con.execute(
+                  "SELECT cod_conta, coluna, ordem, conta, valor FROM divida_conta"
+                  " WHERE codigo_ibge=? AND exercicio=? AND periodo=?",
+                  (codigo_ibge, exercicio, periodo))}
+    if not linhas:
+        return None
+    return Divida(codigo_ibge, exercicio, periodo, None, linhas)
+
+
+def ja_coletados_divida(con: sqlite3.Connection, periodo: int = 3) -> set[tuple[int, int]]:
+    """(UF, exercício) já gravados com `publicou=1`: a retomada pula estes."""
+    return {(r[0], r[1]) for r in con.execute(
+        "SELECT codigo_ibge, exercicio FROM divida WHERE periodo=? AND publicou=1",
+        (periodo,))}
+
+
+def retrato_divida(con: sqlite3.Connection) -> dict:
+    """Cobertura em todas as dimensões (lições 3b e 3c do `stack-ingestao.md`).
+
+    UFs que publicaram por ano, anos publicados por UF, campos não nulos por
+    coluna e linhas cruas por ano. É o "antes" contra o qual a coleta se mede.
+    """
+    r: dict = {"ufs_por_ano": {}, "anos_por_uf": {}, "nao_nulos": {}, "linhas_por_ano": {}}
+    for ano, n in con.execute(
+            "SELECT exercicio, SUM(publicou) FROM divida GROUP BY exercicio"):
+        r["ufs_por_ano"][str(ano)] = n
+    for uf, n in con.execute(
+            "SELECT e.uf, SUM(d.publicou) FROM divida d JOIN ente e USING (codigo_ibge)"
+            " GROUP BY e.uf"):
+        r["anos_por_uf"][uf] = n
+    for campo in CAMPOS_DIVIDA:  # nome vem da tupla do código, nunca de fora
+        r["nao_nulos"][campo] = con.execute(
+            f"SELECT COUNT({campo}) FROM divida").fetchone()[0]
+    for ano, n in con.execute(
+            "SELECT exercicio, COUNT(*) FROM divida_conta GROUP BY exercicio"):
+        r["linhas_por_ano"][str(ano)] = n
+    return r
+
+
+def comparar_retratos(antes: dict, depois: dict) -> list[str]:
+    """O que encolheu, dimensão por dimensão. Relata; não falha (§9.2)."""
+    saida = []
+    for dim, valores in antes.items():
+        for chave, n in sorted(valores.items()):
+            m = depois.get(dim, {}).get(chave, 0)
+            if m < n:
+                saida.append(f"{dim} {chave}: {n} -> {m}")
+    return saida
+
+
+def encadeamento_divida(con: sqlite3.Connection, periodo: int = 3,
+                        tolerancia: float = 0.005) -> tuple[int, list[tuple]]:
+    """O "saldo do exercício anterior" de N+1 contra o gravado de N, por UF (§9.3).
+
+    Devolve `(pares conferidos, diferenças)`, cada diferença
+    `(codigo_ibge, N, campo, valor em N, saldo em N+1)`. Diferença é
+    retificação do estado: relata, não falha. Limite com o saldo cru em
+    pontos percentuais (CE até 2022) não se compara: a `divida` o tem em reais.
+    """
+    cod_para_campo = {v: k for k, v in CONTAS_DIVIDA.items()}
+    pares = 0
+    difs = []
+    linhas = con.execute(
+        "SELECT d.*, c.cod_conta, c.valor AS saldo FROM divida d"
+        " JOIN divida_conta c ON c.codigo_ibge=d.codigo_ibge"
+        "  AND c.exercicio=d.exercicio+1 AND c.periodo=d.periodo AND c.coluna=?"
+        "  AND c.ordem=0"
+        " WHERE d.publicou=1 AND d.periodo=? ORDER BY d.codigo_ibge, d.exercicio",
+        (COLUNA_SALDO_ANTERIOR, periodo)).fetchall()
+    for r in linhas:
+        campo = cod_para_campo.get(r["cod_conta"])
+        if campo is None:
+            continue
+        a, b = r[campo], r["saldo"]
+        if a is None and b is None:
+            continue
+        if campo in LIMITES_DIVIDA and b is not None and abs(b) < TETO_PONTOS_PERCENTUAIS:
+            continue
+        pares += 1
+        if a is None or b is None or abs(a - b) > tolerancia:
+            difs.append((r["codigo_ibge"], r["exercicio"], campo, a, b))
+    return pares, difs

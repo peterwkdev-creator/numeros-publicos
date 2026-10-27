@@ -1294,7 +1294,7 @@ def brasil_exportar(args) -> int:
         return 1
     print(f"{args.saida}: {estado} · " + " · ".join(
         f"{s['codigo']} {len(s['pontos'])} ({s['pontos'][0][0]} a "
-        f"{s['pontos'][-1][0]})" for s in r["series"])
+        f"{s['pontos'][-1][0]})" for s in brasil.series_do_retrato(r))
         + f" · {len(r['mandatos'])} períodos na Presidência"
         + f" · meta de inflação de {len(r['metaInflacao']['anos'])} anos")
     if mantidas:

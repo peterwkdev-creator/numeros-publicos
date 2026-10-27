@@ -1,0 +1,115 @@
+/* A dívida do governo estadual (`secao-divida.tsx`). Toda cor do desenho mora
+   aqui, em classe, e não em atributo do SVG: variável ausente num atributo
+   vira `none` e some sem rastro (`numeros-publicos-desenho.md`). Uma cor só
+   para a série, sem semáforo: o "acima do limite" vai escrito. */
+
+.figura {
+  max-width: 40rem;
+  margin: 0 0 var(--e-4);
+  padding: 0;
+}
+
+.grafico {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Em alto contraste forçado o `fill` é descartado e as faixas sumiriam. */
+.faixa {
+  forced-color-adjust: none;
+}
+.faixa[data-faixa="0"] { fill: var(--faixa-0); }
+.faixa[data-faixa="1"] { fill: var(--faixa-1); }
+
+.grade {
+  stroke: var(--borda);
+  stroke-width: 0.8;
+}
+
+.zero {
+  stroke: var(--tinta-fraca);
+  stroke-width: 1.2;
+}
+
+.marca {
+  stroke: var(--tinta-fraca);
+  stroke-width: 1;
+}
+
+.eixo {
+  fill: var(--tinta-suave);
+}
+
+.linha {
+  fill: none;
+  stroke: var(--acento);
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.ponto {
+  fill: var(--acento);
+}
+
+/* O limite do Senado, tracejado; o alerta, mais fino. Na cor do texto, e não
+   na da série: são régua, não dado do governo. */
+.limite {
+  fill: none;
+  stroke: var(--tinta);
+  stroke-width: 1.2;
+  stroke-dasharray: 5 3;
+}
+
+.alerta {
+  fill: none;
+  stroke: var(--tinta-suave);
+  stroke-width: 0.8;
+  stroke-dasharray: 2 2;
+}
+
+/* Os rótulos das duas linhas, com halo da cor do fundo: leem mesmo quando a
+   série passa por eles. */
+.rotulo {
+  fill: var(--tinta);
+  stroke: var(--fundo);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+  paint-order: stroke;
+}
+
+.legenda {
+  margin: 0.3rem 0 0;
+  font-size: var(--texto-sm);
+  line-height: 1.45;
+}
+
+.legenda p {
+  margin: 0 0 0.3rem;
+}
+
+.rotulos {
+  margin: 0 0 var(--e-4);
+  font-size: var(--texto-sm);
+  line-height: 1.45;
+}
+
+.rotulos dt {
+  font-weight: 600;
+}
+
+.rotulos dd {
+  margin: 0 0 0.4rem;
+}
+
+.semDado {
+  color: var(--tinta-fraca);
+  font-style: italic;
+}
+
+@media print {
+  .figura {
+    break-inside: avoid;
+  }
+}

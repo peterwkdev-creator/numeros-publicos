@@ -4,6 +4,7 @@ import path from "node:path";
 import type { Snapshot } from "./dados";
 import type { SnapshotFiscal } from "./fiscal";
 import type { SnapshotEstadosFiscal } from "./estados-fiscal";
+import type { SnapshotDivida } from "./divida";
 import type { SnapshotIdeb } from "./ideb";
 import type { SnapshotInss } from "./inss";
 import type { SnapshotCaged, SnapshotCagedAnos } from "./caged";
@@ -57,6 +58,19 @@ export async function lerEstadosFiscal(): Promise<SnapshotEstadosFiscal> {
   const arquivo = path.join(process.cwd(), "dados", "estados-fiscal.json");
   cacheEstadosFiscal = JSON.parse(await readFile(arquivo, "utf-8")) as SnapshotEstadosFiscal;
   return cacheEstadosFiscal;
+}
+
+/**
+ * A dívida dos 26 governos estaduais e do DF (`dados/estados-divida.json`,
+ * RGF Anexo 02), entregue pelo motor fiscal. Ver o topo de `lib/divida.ts`.
+ */
+let cacheDivida: SnapshotDivida | null = null;
+
+export async function lerDivida(): Promise<SnapshotDivida> {
+  if (cacheDivida) return cacheDivida;
+  const arquivo = path.join(process.cwd(), "dados", "estados-divida.json");
+  cacheDivida = JSON.parse(await readFile(arquivo, "utf-8")) as SnapshotDivida;
+  return cacheDivida;
 }
 
 /**

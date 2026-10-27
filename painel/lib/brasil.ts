@@ -75,6 +75,9 @@ export interface SnapshotBrasil {
   series: SerieBrasil[];
   mandatos: Mandato[];
   metaInflacao: MetaInflacao;
+  /** Séries que outras páginas usam e a `/brasil/` não mostra (o índice do
+   *  IPCA, para pôr valores em reais de um mesmo mês). */
+  auxiliares: SerieBrasil[];
 }
 
 /**

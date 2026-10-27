@@ -195,6 +195,10 @@ class SerieBrasil(NamedTuple):
     dividir_por: int = 1
     #: As duas tabelas do TabNet que dão a série, a gravada e a que a confere.
     tabnet: tuple[TabelaTabNet, TabelaTabNet] | None = None
+    #: Fora da página `/brasil/`: série que só serve de insumo a outra conta
+    #: (o número-índice do IPCA, que corrige a dívida dos estados). Coleta e
+    #: confere como as outras e sai em `auxiliares` no `brasil.json`.
+    pagina: bool = True
     #: Fora da atualização semanal: série anual de fonte sem API, coletada à
     #: mão quando sai o ano final (`brasil-ingerir` sem `--semanal`).
     semanal: bool = True
@@ -232,6 +236,14 @@ SERIES: tuple[SerieBrasil, ...] = (
     SerieBrasil(
         "ipca", "IPCA: variação acumulada em 12 meses", "%", "IBGE", "mensal",
         agregado=1737, variavel=2265, desde="1995-07"),
+    # O número-índice que corrige valores em R$ (a dívida dos estados, espec
+    # §4): fator = índice(dez/último) ÷ índice(dez/ano), sem encadear a
+    # variação mensal. Medido em 26/10/2026: dez/2014 4.059,86; dez/2024
+    # 7.100,50.
+    SerieBrasil(
+        "ipca-indice", "IPCA: número-índice (base: dezembro de 1993 = 100)",
+        "índice", "IBGE", "mensal", agregado=1737, variavel=2266,
+        desde="1995-07", pagina=False),
     # Nome no SGS: "Dívida bruta do governo geral (% PIB) - Metodologia
     # utilizada a partir de 2008" (a série começa em 12/2006 mesmo assim).
     SerieBrasil(
@@ -1726,21 +1738,22 @@ def retrato(db: ArmazemBrasil, mandatos: list[Mandato],
     faltar no banco sai dele como está, com a data de coleta antiga: é a
     atualização semanal depois de uma fonte falhar, porque o banco do runner
     começa vazio. Ausente dos dois, continua erro."""
-    velhas = {s["codigo"]: s for s in (anterior or {}).get("series", [])}
-    saida = []
+    velhas = {s["codigo"]: s for s in series_do_retrato(anterior or {})}
+    saida, auxiliares = [], []
     for s in series:
+        destino = saida if s.pagina else auxiliares
         linha = db.con.execute(
             "SELECT origem, conferida, coletado_em FROM serie WHERE codigo = ?",
             (s.codigo,)).fetchone()
         pontos = db.pontos(s.codigo)
         if (linha is None or not pontos) and s.codigo in velhas:
-            saida.append(velhas[s.codigo])
+            destino.append(velhas[s.codigo])
             continue
         if linha is None or not pontos:
             raise ErroBrasil(f"{s.codigo}: série ausente do banco; rode "
                              "brasil-ingerir antes de exportar")
         origem, conferida, coletado = linha
-        saida.append({
+        destino.append({
             "codigo": s.codigo, "nome": s.nome,
             "unidade": unidade_exportada(s, max(pontos)),
             "fonte": s.fonte, "periodicidade": s.periodicidade,
@@ -1751,13 +1764,20 @@ def retrato(db: ArmazemBrasil, mandatos: list[Mandato],
     if meta is None:
         raise ErroBrasil("meta de inflação ausente do banco; rode "
                          "brasil-ingerir antes de exportar")
-    return {"series": saida, "mandatos": [m._asdict() for m in mandatos],
+    return {"series": saida, "auxiliares": auxiliares,
+            "mandatos": [m._asdict() for m in mandatos],
             "metaInflacao": meta}
+
+
+def series_do_retrato(r: dict) -> list[dict]:
+    """As séries da página e as auxiliares, juntas: a trava contra encolher
+    e a cópia da série ausente valem para as duas."""
+    return [*r.get("series", []), *r.get("auxiliares", [])]
 
 
 def _cobertura_retrato(r: dict) -> dict[str, tuple[int, str, str]]:
     return {s["codigo"]: (len(s["pontos"]), s["pontos"][0][0],
-                          s["pontos"][-1][0]) for s in r["series"]}
+                          s["pontos"][-1][0]) for s in series_do_retrato(r)}
 
 
 def gravar_retrato(r: dict, saida: str | Path,
@@ -1803,9 +1823,10 @@ def gravar_retrato(r: dict, saida: str | Path,
         def sem_carimbo(x: dict) -> dict:
             meta = {k: v for k, v in x.get("metaInflacao", {}).items()
                     if k != "coletadoEm"}
-            return {**x, "metaInflacao": meta,
-                    "series": [{k: v for k, v in s.items()
-                                if k != "coletadoEm"} for s in x["series"]]}
+            return {**x, "metaInflacao": meta, **{
+                chave: [{k: v for k, v in s.items() if k != "coletadoEm"}
+                        for s in x.get(chave, [])]
+                for chave in ("series", "auxiliares")}}
         if sem_carimbo(velho) == sem_carimbo(r):
             return "inalterado"
     saida.parent.mkdir(parents=True, exist_ok=True)

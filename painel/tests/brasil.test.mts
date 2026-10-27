@@ -37,7 +37,7 @@ const serie = (codigo: string, pontos: [string, number][]): SerieBrasil => ({
 // ------------------------------------------------------------- contrato
 
 test("brasil: o JSON real tem as chaves que o tipo declara", () => {
-  assert.deepEqual(Object.keys(real).sort(), ["mandatos", "metaInflacao", "series"]);
+  assert.deepEqual(Object.keys(real).sort(), ["auxiliares", "mandatos", "metaInflacao", "series"]);
   assert.deepEqual(Object.keys(real.metaInflacao).sort(),
     ["anos", "coletadoEm", "conferida", "fonte", "origem"]);
   for (const a of real.metaInflacao.anos) assert.equal(a.length, 3, String(a));

@@ -19,7 +19,7 @@ from . import armazem, siops
 from .siconfi import (
     NORDESTE, PAUSA_PADRAO, RECEITAS_CORRENTES, RECEITAS_DETALHE,
     FUNCOES, Dormir, ErroSiconfi, Transporte,
-    entes, estados, funcoes, pessoal, receita, transporte_http,
+    divida, entes, estados, funcoes, pessoal, receita, transporte_http,
 )
 
 BANCO_PADRAO = os.environ.get("PAINEL_FISCAL_BANCO", "painel.db")
@@ -120,6 +120,94 @@ def cmd_ingerir(args, transporte: Transporte, dormir: Dormir) -> int:
             armazem.fechar_coleta(con, coleta, lidos, publicaram, falha)
     print(f"{lidos} lidos, {publicaram} publicaram.")
     return 1 if falha else 0
+
+
+def cmd_ingerir_divida(args, transporte: Transporte, dormir: Dormir) -> int:
+    """A dívida dos estados (RGF 02), UF x exercício, 3º quadrimestre.
+
+    Retomável: pula o (UF, ano) já gravado com `publicou=1`, salvo
+    `--recomecar` (que relê tudo: é como uma retificação entra). Fatia que não
+    fecha a régua não se grava e faz o comando sair 1 no fim, com a lista;
+    cobertura e encadeamento relatam e não falham (§9 da espec).
+    """
+    if args.esfera != "E":
+        print("erro: ingerir-divida é dos estados: --banco estados.db --esfera E",
+              file=sys.stderr)
+        return 2
+    if args.de > args.ate:
+        print(f"erro: --de {args.de} depois de --ate {args.ate}", file=sys.stderr)
+        return 2
+    with armazem.abrir(args.banco) as con:
+        alvos = [(r[0], r[1]) for r in con.execute(
+            "SELECT codigo_ibge, uf FROM ente WHERE esfera='E' ORDER BY codigo_ibge")]
+        feitos = set() if args.recomecar else armazem.ja_coletados_divida(con)
+        antes = armazem.retrato_divida(con)
+    if args.uf:
+        pedidas = {u.upper() for u in args.uf}
+        faltam = pedidas - {uf for _, uf in alvos}
+        if faltam:
+            print(f"erro: UF fora do banco: {sorted(faltam)}", file=sys.stderr)
+            return 2
+        alvos = [a for a in alvos if a[1] in pedidas]
+    if not alvos:
+        print("Nenhum estado no banco. Rode `--banco estados.db --esfera E"
+              " ingerir-entes` primeiro.", file=sys.stderr)
+        return 2
+    anos = range(args.de, args.ate + 1)
+    pendentes = [(c, uf, a) for a in anos for c, uf in alvos if (c, a) not in feitos]
+    print(f"{len(alvos)} UFs x {len(anos)} anos; {len(alvos) * len(anos) - len(pendentes)}"
+          f" já gravados; {len(pendentes)} pedidos.")
+    lidos = publicaram = 0
+    reprovadas: list[str] = []
+    falha: str | None = None
+    try:
+        for codigo, uf, ano in pendentes:
+            d = divida(codigo, ano, transporte, dormir=dormir)
+            try:
+                with armazem.abrir(args.banco) as con:
+                    armazem.gravar_divida(con, codigo, ano, 3, d)
+                for a in d.avisos() if d else ():
+                    print(f"  limite como a fonte declara: {uf} {ano}: {a}")
+            except armazem.ReguaDivida as e:
+                reprovadas.append(f"{uf} {e}")
+                print(f"  RÉGUA: {uf} {e}", file=sys.stderr)
+            lidos += 1
+            publicaram += 1 if d else 0
+            if lidos % 27 == 0:
+                print(f"  ... {lidos} lidos, {publicaram} publicaram")
+            dormir(args.pausa)
+    except (Exception, KeyboardInterrupt) as e:
+        falha = f"{type(e).__name__}: {e}"
+        print(f"\n>>> interrompida: {falha}", file=sys.stderr)
+        print(f">>> {lidos} fatias gravadas; rodar de novo continua daqui.",
+              file=sys.stderr)
+    print(f"{lidos} lidos, {publicaram} publicaram, {len(reprovadas)} reprovados na régua.")
+
+    with armazem.abrir(args.banco) as con:
+        depois = armazem.retrato_divida(con)
+        pares, difs = armazem.encadeamento_divida(con)
+        por_ano = con.execute(
+            "SELECT exercicio, SUM(publicou), COUNT(*) FROM divida WHERE periodo=3"
+            " GROUP BY exercicio ORDER BY exercicio").fetchall()
+        n_ufs = con.execute("SELECT COUNT(*) FROM ente WHERE esfera='E'").fetchone()[0]
+        nomes = dict(con.execute("SELECT codigo_ibge, uf FROM ente WHERE esfera='E'"))
+    print("Cobertura (UFs que publicaram / consultadas):")
+    for ano, pub, tot in por_ano:
+        print(f"  {ano}: {pub}/{tot}")
+    completos = [ano for ano, pub, _ in por_ano if pub == n_ufs]
+    print(f"Ano mais recente com as {n_ufs} UFs: {max(completos) if completos else 'nenhum'}")
+    encolheu = armazem.comparar_retratos(antes, depois)
+    print("Contra o retrato anterior: "
+          + ("nada encolheu." if not encolheu else f"{len(encolheu)} encolheram:"))
+    for x in encolheu:
+        print(f"  ENCOLHEU {x}")
+    print(f"Encadeamento (saldo anterior de N+1 x gravado de N): {pares} pares,"
+          f" {len(difs)} diferenças.")
+    for cod, ano, campo, a, b in difs[:args.mostrar]:
+        print(f"  {nomes.get(cod, cod)} {ano} {campo}: {_br(a)} x {_br(b)} em {ano + 1}")
+    if len(difs) > args.mostrar:
+        print(f"  ... e mais {len(difs) - args.mostrar}")
+    return 1 if (falha or reprovadas) else 0
 
 
 def cmd_resumo(args, *_) -> int:
@@ -1212,6 +1300,113 @@ def cmd_exportar_estados(args, *_) -> int:
     return 0
 
 
+SAIDA_DIVIDA = SAIDA_ESTADOS.with_name("estados-divida.json")
+
+#: A ordem das colunas de cada ano no `estados-divida.json`; o teste de
+#: contrato do site a compara com o tipo do TypeScript.
+COLUNAS_DIVIDA = ("dc", "deducoes", "dcl", "rcl", "rclAjustada", "percentual",
+                  "limiteSenado", "limiteAlerta")
+
+
+def cmd_exportar_divida(args, *_) -> int:
+    """A dívida dos 26 governos estaduais e do DF (RGF 02), para o site.
+
+    Arquivo próprio (espec da dívida, §8): não mexe no `estados-fiscal.json`.
+    Uma linha por UF e ano, os 8 números como a fonte declara (limite e
+    alerta já em reais), a base do % (`rcl` ou `rclAjustada`) e os avisos do
+    limite fora do padrão, refeitos das linhas cruas (`armazem.ler_divida`).
+
+    Travas, todas antes de gravar: os 27 entes no banco; cada fatia passa de
+    novo na régua (banco mexido à mão não sai); o ano que nem todas as UFs
+    publicaram vai em `faltam`, com quem faltou; e o arquivo não encolhe sem
+    `--permitir-encolher`, nem se reescreve só pelo carimbo.
+    """
+    with armazem.abrir(args.banco) as con:
+        entes_e = con.execute(
+            "SELECT codigo_ibge, uf, nome FROM ente WHERE esfera='E'"
+            " ORDER BY codigo_ibge").fetchall()
+        if len(entes_e) != 27:
+            print(f"erro: {len(entes_e)} entes estaduais em {args.banco}, esperados 27."
+                  " Rodar `--banco estados.db --esfera E ingerir-entes` antes.",
+                  file=sys.stderr)
+            return 1
+        estados_: dict[str, dict] = {}
+        publicaram: dict[int, set[str]] = {}
+        consultados: set[int] = set()
+        for e in entes_e:
+            cod, uf = e["codigo_ibge"], e["uf"]
+            anos_e: dict[str, list] = {}
+            bases: dict[str, str] = {}
+            avisos_e: dict[str, list[str]] = {}
+            for r in con.execute(
+                    "SELECT * FROM divida WHERE codigo_ibge=? AND periodo=3"
+                    " ORDER BY exercicio", (cod,)):
+                ano = r["exercicio"]
+                consultados.add(ano)
+                if not r["publicou"]:
+                    continue
+                d = armazem.ler_divida(con, cod, ano)
+                problemas = d.regua() if d else ["sem as linhas cruas na divida_conta"]
+                if problemas:
+                    print(f"erro: {uf} {ano} não fecha a régua: {'; '.join(problemas)}."
+                          " Recoletar antes de publicar.", file=sys.stderr)
+                    return 1
+                anos_e[str(ano)] = [r["dc"], r["deducoes"], r["dcl"], r["rcl"],
+                                    r["rcl_ajustada"], r["percentual"],
+                                    r["limite_senado"], r["limite_alerta"]]
+                bases[str(ano)] = "rcl" if r["rcl_ajustada"] is None else "rclAjustada"
+                if d.avisos():
+                    avisos_e[str(ano)] = d.avisos()
+                publicaram.setdefault(ano, set()).add(uf)
+            estados_[str(cod)] = {"uf": uf, "nome": e["nome"], "anos": anos_e,
+                                  "base": bases, "avisos": avisos_e}
+        coletado = con.execute(
+            "SELECT MAX(coletado_em) FROM divida WHERE periodo=3").fetchone()[0]
+
+    todas = {e["uf"] for e in entes_e}
+    exercicios = sorted(publicaram, reverse=True)
+    faltam = {str(a): sorted(todas - publicaram.get(a, set()))
+              for a in sorted(consultados) if a in publicaram and publicaram[a] != todas}
+    saida = {
+        "geradoEm": armazem.agora(),
+        "coletadoEm": coletado,
+        "fonte": armazem.FONTE_DIVIDA + ", 3º quadrimestre (posição em 31/12)",
+        "exercicios": exercicios,
+        "colunas": list(COLUNAS_DIVIDA),
+        "estados": estados_,
+        "faltam": faltam,
+    }
+    destino = Path(args.saida)
+    velho = None
+    if destino.exists():
+        try:
+            velho = json.loads(destino.read_text(encoding="utf-8"))
+        except ValueError:
+            velho = None
+    if velho is not None:
+        def pares(s):
+            return {(c, a) for c, x in s.get("estados", {}).items()
+                    for a in x.get("anos", {})}
+        sumiram = pares(velho) - pares(saida)
+        if sumiram and not args.permitir_encolher:
+            print(f"erro: {len(sumiram)} (estado, ano) que estavam em {destino}"
+                  f" sumiriam, ex.: {sorted(sumiram)[:3]}."
+                  " --permitir-encolher se for a intenção.", file=sys.stderr)
+            return 1
+        if _sem_carimbos(velho) == _sem_carimbos(saida):
+            print(f"{destino} · NADA MUDOU no dado — arquivo intacto.")
+            return 0
+    destino.parent.mkdir(parents=True, exist_ok=True)
+    destino.write_text(json.dumps(saida, ensure_ascii=False, separators=(",", ":"))
+                       + "\n", encoding="utf-8")
+    n = sum(len(x["anos"]) for x in estados_.values())
+    n_av = sum(len(x["avisos"]) for x in estados_.values())
+    print(f"27 entes em {destino} ({destino.stat().st_size // 1024} KB): {n} anos"
+          f" de {min(exercicios, default='-')} a {max(exercicios, default='-')},"
+          f" {n_av} com aviso do limite; faltam: {faltam or 'ninguém'}.")
+    return 0
+
+
 def montar() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="fiscal", description="Painel Fiscal: o RGF dos municípios no SICONFI")
     p.add_argument("--banco", default=BANCO_PADRAO)
@@ -1264,6 +1459,10 @@ def montar() -> argparse.ArgumentParser:
                                 help="gera o arquivo dos governos estaduais que a página de estado lê")
             se.add_argument("--saida", default=str(SAIDA_ESTADOS))
             se.add_argument("--permitir-encolher", action="store_true")
+            sd = sub.add_parser("exportar-divida",
+                                help="gera o arquivo da dívida dos estados (RGF 02)")
+            sd.add_argument("--saida", default=str(SAIDA_DIVIDA))
+            sd.add_argument("--permitir-encolher", action="store_true")
         if nome == "ingerir":
             s.add_argument("--pausa", type=float, default=PAUSA_PADRAO)
             s.add_argument("--recomecar", action="store_true")
@@ -1295,6 +1494,22 @@ def montar() -> argparse.ArgumentParser:
                            help="repetir para varrer só algumas; padrão: todas")
             s.add_argument("--permitir-encolher", action="store_true",
                            help="grava UF com menos municípios que a anterior")
+
+    # A dívida dos estados (RGF 02): um pedido por UF e ano, sempre o 3º
+    # quadrimestre (a posição em 31/12). Sem padrão para `--ate`: o último
+    # ano vem de quem chama, nunca de literal (lição 3e).
+    s = sub.add_parser("ingerir-divida",
+                       help="a dívida consolidada dos estados, RGF Anexo 02")
+    s.add_argument("--de", type=int, default=2015,
+                   help="1º exercício (o RGF 02 começa em 2015 no SICONFI)")
+    s.add_argument("--ate", type=int, required=True, help="último exercício")
+    s.add_argument("--uf", action="append",
+                   help="repetir para só algumas UFs; padrão: as 27")
+    s.add_argument("--pausa", type=float, default=PAUSA_PADRAO)
+    s.add_argument("--recomecar", action="store_true",
+                   help="relê também o que já foi gravado (retificação)")
+    s.add_argument("--mostrar", type=int, default=30,
+                   help="quantas diferenças do encadeamento imprimir")
     return p
 
 
@@ -1317,10 +1532,12 @@ def principal(argv=None, transporte: Transporte | None = None,
           "resumo": cmd_resumo, "listar": cmd_listar,
           "conferir": cmd_conferir, "exportar": cmd_exportar,
           "exportar-estados": cmd_exportar_estados,
+          "exportar-divida": cmd_exportar_divida,
           "ingerir-funcoes": cmd_ingerir_funcoes, "funcoes": cmd_funcoes,
           "ingerir-receita": cmd_ingerir_receita,
           "conferir-receita": cmd_conferir_receita,
-          "ingerir-saude": cmd_ingerir_saude, "saude": cmd_saude}[args.comando]
+          "ingerir-saude": cmd_ingerir_saude, "saude": cmd_saude,
+          "ingerir-divida": cmd_ingerir_divida}[args.comando]
     try:
         return fn(args, t, dormir)
     except ErroSiconfi as e:

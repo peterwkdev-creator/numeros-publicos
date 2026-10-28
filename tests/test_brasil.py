@@ -1178,16 +1178,22 @@ class TestIngerirPorSerie(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
-    def ingerir(self, falhas, custo=None, **k):
+    def ingerir(self, falhas, custo=None, rede=(), series=(PIB, IPCA), **k):
         """`falhas`: quantas vezes cada código falha antes de ler; `custo`:
-        quantos segundos do relógio falso cada coleta gasta."""
+        quantos segundos do relógio falso cada coleta gasta; `rede`: os
+        códigos cuja falha é de rede, como a do servicodados em 28/10/2026."""
         restam = dict(falhas)
         self.agora = 0.0
+        self.pedidas = []
 
         def tentar(codigo):
+            self.pedidas.append(codigo)
             self.agora += (custo or {}).get(codigo, 0)
             if restam.get(codigo, 0):
                 restam[codigo] -= 1
+                if codigo in rede:
+                    raise ErroBrasil(f"{codigo}: 599 depois de 4 tentativas "
+                                     "em https://x (URLError: timed out)")
                 raise ErroBrasil("200 com corpo que não é JSON")
 
         def coletar(s, transporte, dormir):
@@ -1201,7 +1207,7 @@ class TestIngerirPorSerie(unittest.TestCase):
         with mock.patch.object(brasil, "coletar", coletar), \
                 mock.patch.object(brasil, "coletar_metas", coletar_metas):
             return brasil.ingerir(self.banco, object(), self.pausas.append,
-                                  series=(PIB, IPCA),
+                                  series=series,
                                   relogio=lambda: self.agora, **k)
 
     def gravado(self):
@@ -1237,6 +1243,29 @@ class TestIngerirPorSerie(unittest.TestCase):
                          ["meta de inflação: 200 com corpo que não é JSON"])
         self.assertEqual(self.gravado(),
                          ({"2020T1": 2.0}, {"2020-01": 2.0}, 1))
+
+    def test_fonte_sem_rede_pula_as_series_seguintes_dela(self):
+        # 28/10/2026: o servicodados não respondeu ao runner e as séries do
+        # IBGE gastaram o prazo; as do Banco Central nem começaram.
+        r = self.ingerir({"pib": 2}, custo={"pib": 135, "ipca": 135},
+                         rede=("pib",), series=(PIB, IPCA, DIVIDA), prazo=600)
+        self.assertEqual(self.pedidas,
+                         ["pib", "divida-bruta", brasil.META, "pib"])
+        self.assertEqual([x.serie.codigo for x in r.leituras], ["divida-bruta"])
+        self.assertEqual(r.falhas, [
+            "pib: 599 depois de 4 tentativas em https://x (URLError: timed out)",
+            "ipca: não coletada, a fonte IBGE não respondeu em pib"])
+        self.assertEqual(self.agora, 270)
+
+    def test_na_nova_tentativa_a_fonte_ganha_outra_chance(self):
+        r = self.ingerir({"pib": 1}, rede=("pib",))
+        self.assertEqual(self.pedidas, ["pib", brasil.META, "pib", "ipca"])
+        self.assertEqual(r.falhas, [])
+
+    def test_falha_que_nao_e_de_rede_nao_pula_a_fonte(self):
+        r = self.ingerir({"pib": 2})
+        self.assertEqual(self.pedidas, ["pib", "ipca", brasil.META, "pib"])
+        self.assertEqual([x.serie.codigo for x in r.leituras], ["ipca"])
 
     def test_prazo_esgotado_deixa_de_fora_o_que_nao_comecou(self):
         r = self.ingerir({}, custo={"pib": 700}, prazo=600)

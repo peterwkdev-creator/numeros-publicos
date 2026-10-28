@@ -1399,19 +1399,34 @@ def ingerir(banco: str | Path, transporte: Transporte,
     Com `prazo` (segundos desde o início), a coleta que ainda não começou
     quando ele passa vira falha, e a nova tentativa só acontece se couber.
     `ao_ler(código, segundos, motivo ou None)` vem ao fim de cada coleta,
-    para quem chama mostrar o andamento."""
+    para quem chama mostrar o andamento.
+
+    A série cuja fonte já deu falha de rede (`FALHA_DE_REDE` depois de todas
+    as tentativas) na mesma rodada fica de fora na hora, sem pedido: em
+    28/10/2026 o servicodados do IBGE não respondeu ao runner, as 5 séries
+    dele gastaram 11 min em timeouts e as do Banco Central, que vêm depois,
+    nem começaram antes do prazo. Na nova tentativa a fonte ganha outra
+    chance, com a primeira série dela."""
     coletas: dict[str, Callable[[], Leitura | LeituraMetas]] = {
         s.codigo: (lambda s=s: coletar(s, transporte, dormir)) for s in series}
     coletas[META] = lambda: coletar_metas(transporte, dormir)
+    fontes = {s.codigo: s.fonte for s in series}
+    fontes[META] = META
 
     inicio = relogio()
 
     def tentar(codigos: list[str]) -> tuple[dict, dict[str, str]]:
         lidas, falhas = {}, {}
+        sem_rede: dict[str, str] = {}  # fonte → a série em que ela não respondeu
         for codigo in codigos:
             if prazo is not None and relogio() - inicio > prazo:
                 falhas[codigo] = (f"{codigo}: não coletada, a coleta passou "
                                   f"do prazo de {prazo / 60:g} min")
+                continue
+            if fontes[codigo] in sem_rede:
+                falhas[codigo] = (f"{codigo}: não coletada, a fonte "
+                                  f"{fontes[codigo]} não respondeu em "
+                                  f"{sem_rede[fontes[codigo]]}")
                 continue
             comeco = relogio()
             try:
@@ -1420,6 +1435,8 @@ def ingerir(banco: str | Path, transporte: Transporte,
                 motivo = str(e)
                 falhas[codigo] = (motivo if motivo.startswith(f"{codigo}:")
                                   else f"{codigo}: {motivo}")
+                if f"{FALHA_DE_REDE} depois de" in motivo:
+                    sem_rede[fontes[codigo]] = codigo
             if ao_ler is not None:
                 ao_ler(codigo, relogio() - comeco, falhas.get(codigo))
         return lidas, falhas

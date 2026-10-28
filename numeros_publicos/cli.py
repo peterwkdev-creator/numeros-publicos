@@ -797,6 +797,19 @@ def construir_parser() -> argparse.ArgumentParser:
                          "os anos fechados do caged-anos (~3,6 GB, uma vez)")
     cg.add_argument("--banco-caged", default=banco_caged)
     cg.set_defaults(func=caged_ingerir)
+    # --- MEI optantes pelo SIMEI (27/10/2026). Banco próprio, como o Caged.
+    sm = sub.add_parser("simei-ingerir",
+                        help="MEI optantes pelo SIMEI por município (Receita): "
+                             "31/12 de 2009 a 2025 e a posição mais recente")
+    sm.add_argument("--so-atual", action="store_true",
+                    help="só a posição consolidada mais recente")
+    sm.add_argument("--datas", nargs="+", metavar="DD/MM/AAAA",
+                    help="estas datas, e não a série inteira")
+    sm.add_argument("--pausa", type=float, default=1.0,
+                    help="segundos entre pedidos (padrão: 1)")
+    sm.add_argument("--banco-simei",
+                    default=os.environ.get("SIMEI_BANCO", "simei.db"))
+    sm.set_defaults(func=simei_ingerir)
 
     ce = sub.add_parser("caged-exportar",
                         help="confere contra o sumário do MTE e gera o "
@@ -1096,6 +1109,37 @@ def caged_ingerir(args, listar=_listar_ftp, baixar=None) -> int:
         # OSError: a rede, já repetida em `_com_tentativas`. Os meses gravados
         # ficam no banco e não se baixam de novo na próxima rodada.
         print(f"[!] {e}", file=sys.stderr)
+        return 1
+    return 0
+
+
+def simei_ingerir(args, pedir=None, dormir=None) -> int:
+    """As UFs do `observatorio.db` nas datas pedidas, uma fatia (data, UF) de
+    cada vez, conferida antes de gravar. Fatia que falha não se grava e a
+    coleta termina com código 1, depois de tentar as outras."""
+    from . import simei
+    try:
+        banco = simei.municipios_do_banco(args.banco)
+        de_para = simei.ler_de_para()
+        with simei.ArmazemSimei(args.banco_simei) as db:
+            falhas, repeticoes = simei.coletar(
+                pedir or simei.abrir_pedir(), db, banco, de_para,
+                datas=args.datas, so_atual=args.so_atual, pausa=args.pausa,
+                dormir=dormir, reabrir=None if pedir else simei.abrir_pedir)
+            print(f"repetições por data recusada: {repeticoes}")
+            print("total do país por data (UFs, municípios com linha, MEI):")
+            for data, ufs, linhas, total in db.totais_por_data():
+                aviso = "" if ufs == len(simei.UFS) else "  INCOMPLETA"
+                mei = f"{total:,}".replace(",", ".")
+                print(f"  {data}: {ufs} UFs, {linhas} municípios, {mei}{aviso}")
+    except (simei.ErroSimei, OSError) as e:
+        print(f"[!] {e}", file=sys.stderr)
+        return 1
+    if falhas:
+        print(f"[!] {len(falhas)} fatias falharam (coleta parcial):",
+              file=sys.stderr)
+        for f in falhas:
+            print(f"    {f}", file=sys.stderr)
         return 1
     return 0
 

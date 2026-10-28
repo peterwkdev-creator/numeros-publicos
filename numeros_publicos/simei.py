@@ -322,6 +322,7 @@ class Fatia:
     total: int
     posicao: str
     tentativas: int = 1
+    recusas: int = 0          # das tentativas, as de data recusada (armadilha 1)
 
 
 def coletar_fatia(pedir: Pedir, form: Formulario, uf: str, data: str,
@@ -333,7 +334,7 @@ def coletar_fatia(pedir: Pedir, form: Formulario, uf: str, data: str,
     Esgotado o teto, `DataRecusada` sobe: nada se grava."""
     import time
     dormir = dormir or time.sleep
-    vazias = 0
+    vazias = recusas = 0
     for n in range(1, tentativas + 1):
         try:
             pagina = consultar(pedir, form, uf, data, lista)
@@ -343,12 +344,13 @@ def coletar_fatia(pedir: Pedir, form: Formulario, uf: str, data: str,
             if vazias == 2:      # a mesma resposta duas vezes: UF sem optante
                 valores = conferir({}, 0, lista, uf, data, esperados)
                 return Fatia(uf, data, valores, 0,
-                             posicao_consolidada(pagina), n)
+                             posicao_consolidada(pagina), n, recusas)
             dormir(PAUSA * 2 * n)
             if reabrir is not None:
                 form = reabrir()
             continue
         except DataRecusada:
+            recusas += 1
             if n == tentativas:
                 raise DataRecusada(f"{uf} {data}: data recusada {n} vezes")
             dormir(PAUSA * 2 * n)
@@ -356,7 +358,7 @@ def coletar_fatia(pedir: Pedir, form: Formulario, uf: str, data: str,
                 form = reabrir()
             continue
         valores = conferir(linhas, total, lista, uf, data, esperados)
-        return Fatia(uf, data, valores, total, posicao, n)
+        return Fatia(uf, data, valores, total, posicao, n, recusas)
     raise ErroSimei(f"{uf} {data}: sem resposta conclusiva em {tentativas} "
                     "tentativas")
 
@@ -453,10 +455,12 @@ def coletar(pedir: Pedir, db: ArmazemSimei, banco_municipios: dict[str, set[int]
             so_atual: bool = False, pausa: float = PAUSA,
             dormir: Callable[[float], None] | None = None,
             reabrir: Callable[[], Pedir] | None = None,
-            saida=print) -> tuple[list[str], int]:
+            saida=print) -> tuple[list[str], int, int]:
     """Todas as UFs do banco nas datas, em série, com pausa. Devolve
-    `(falhas, repetições da data recusada)`: falha não impede as outras
-    fatias, mas a coleta termina vermelha."""
+    `(falhas, repetições por data recusada, releituras de resposta sem
+    registros)`: as duas contas são de armadilhas diferentes (1 e 9) e não
+    se somam. Falha não impede as outras fatias, mas a coleta termina
+    vermelha."""
     import time
     dormir = dormir or time.sleep
     estado = {"pedir": pedir, "form": abrir_formulario(pedir)}
@@ -474,7 +478,7 @@ def coletar(pedir: Pedir, db: ArmazemSimei, banco_municipios: dict[str, set[int]
         return estado["form"]
 
     falhas: list[str] = []
-    repeticoes = 0
+    recusas = vazias = 0
     for uf in sorted(banco_municipios):
         try:
             lista = lista_tom(estado["pedir"], uf)
@@ -494,7 +498,8 @@ def coletar(pedir: Pedir, db: ArmazemSimei, banco_municipios: dict[str, set[int]
                 falhas.append(f"{uf} {data}: {e}")
                 saida(f"  [!] {uf} {data}: {e}")
                 continue
-            repeticoes += f.tentativas - 1
+            recusas += f.recusas
+            vazias += f.tentativas - 1 - f.recusas
             if f.posicao != posicao:
                 falhas.append(f"{uf} {data}: posição {f.posicao}, esperava {posicao}")
                 saida(f"  [!] {uf} {data}: a posição mudou durante a coleta "
@@ -505,4 +510,4 @@ def coletar(pedir: Pedir, db: ArmazemSimei, banco_municipios: dict[str, set[int]
                   f"{len(banco_municipios[uf])} municípios, total {f.total}"
                   f"{f' ({f.tentativas} tentativas)' if f.tentativas > 1 else ''}"
                   f"; {m.resumo()}")
-    return falhas, repeticoes
+    return falhas, recusas, vazias

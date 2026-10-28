@@ -1122,11 +1122,12 @@ def simei_ingerir(args, pedir=None, dormir=None) -> int:
         banco = simei.municipios_do_banco(args.banco)
         de_para = simei.ler_de_para()
         with simei.ArmazemSimei(args.banco_simei) as db:
-            falhas, repeticoes = simei.coletar(
+            falhas, recusas, vazias = simei.coletar(
                 pedir or simei.abrir_pedir(), db, banco, de_para,
                 datas=args.datas, so_atual=args.so_atual, pausa=args.pausa,
                 dormir=dormir, reabrir=None if pedir else simei.abrir_pedir)
-            print(f"repetições por data recusada: {repeticoes}")
+            print(f"repetições por data recusada: {recusas}")
+            print(f"releituras de resposta sem registros: {vazias}")
             print("total do país por data (UFs, municípios com linha, MEI):")
             for data, ufs, linhas, total in db.totais_por_data():
                 aviso = "" if ufs == len(simei.UFS) else "  INCOMPLETA"

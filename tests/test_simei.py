@@ -91,10 +91,10 @@ class TestCaminhoFeliz(unittest.TestCase):
         fonte = Fonte({("PB", "24/10/2026"): [PB_ATUAL]}, {"PB": LISTA_PB})
         with tempfile.TemporaryDirectory() as d:
             with ArmazemSimei(Path(d) / "s.db") as db:
-                falhas, rep = simei.coletar(fonte, db, banco_de("PB"), DE_PARA,
-                                            so_atual=True, dormir=lambda s: None,
-                                            saida=lambda *a: None)
-                self.assertEqual((falhas, rep), ([], 0))
+                falhas, rec, vaz = simei.coletar(fonte, db, banco_de("PB"), DE_PARA,
+                                                 so_atual=True, dormir=lambda s: None,
+                                                 saida=lambda *a: None)
+                self.assertEqual((falhas, rec, vaz), ([], 0, 0))
                 l = db.con.execute(
                     "SELECT COUNT(*), SUM(valor), MIN(posicao), MIN(coletado_em)"
                     " FROM simei WHERE data = '2026-10-24'").fetchone()
@@ -114,19 +114,19 @@ class TestArmadilha1DataRecusada(unittest.TestCase):
         fonte = Fonte({("PB", "24/10/2026"): [RECUSA, RECUSA, PB_ATUAL]},
                       {"PB": LISTA_PB})
         with tempfile.TemporaryDirectory() as d, ArmazemSimei(Path(d) / "s.db") as db:
-            falhas, rep = simei.coletar(fonte, db, banco_de("PB"), DE_PARA,
-                                        so_atual=True, dormir=lambda s: None,
-                                        saida=lambda *a: None)
-            self.assertEqual((falhas, rep), ([], 2))
+            falhas, rec, vaz = simei.coletar(fonte, db, banco_de("PB"), DE_PARA,
+                                             so_atual=True, dormir=lambda s: None,
+                                             saida=lambda *a: None)
+            self.assertEqual((falhas, rec, vaz), ([], 2, 0))
             self.assertEqual(db.con.execute(
                 "SELECT tentativas FROM fatia").fetchone()[0], 3)
 
     def test_teto_esgotado_nao_grava_a_uf_e_termina_vermelha(self):
         fonte = Fonte({("PB", "24/10/2026"): [RECUSA]}, {"PB": LISTA_PB})
         with tempfile.TemporaryDirectory() as d, ArmazemSimei(Path(d) / "s.db") as db:
-            falhas, _ = simei.coletar(fonte, db, banco_de("PB"), DE_PARA,
-                                      so_atual=True, dormir=lambda s: None,
-                                      saida=lambda *a: None)
+            falhas, _, _ = simei.coletar(fonte, db, banco_de("PB"), DE_PARA,
+                                         so_atual=True, dormir=lambda s: None,
+                                         saida=lambda *a: None)
             self.assertEqual(len(falhas), 1)
             self.assertIn("recusada", falhas[0])
             self.assertEqual(db.con.execute("SELECT COUNT(*) FROM simei").fetchone()[0], 0)
@@ -273,10 +273,10 @@ class TestArmadilha9UFSemOptante(unittest.TestCase):
         self.addCleanup(d.cleanup)
         db = ArmazemSimei(Path(d.name) / "s.db")
         self.addCleanup(db.con.close)
-        falhas, _ = simei.coletar(fonte, db, banco_de("AC"), DE_PARA,
-                                  datas=None if so_atual else ["31/12/2009"],
-                                  so_atual=so_atual, dormir=lambda s: None,
-                                  saida=lambda *a: None)
+        falhas, self.recusas, self.vazias = simei.coletar(
+            fonte, db, banco_de("AC"), DE_PARA,
+            datas=None if so_atual else ["31/12/2009"],
+            so_atual=so_atual, dormir=lambda s: None, saida=lambda *a: None)
         return falhas, db
 
     def test_sem_registros_duas_vezes_grava_fatia_vazia(self):
@@ -284,6 +284,8 @@ class TestArmadilha9UFSemOptante(unittest.TestCase):
         self.assertEqual(falhas, [])
         self.assertEqual(db.con.execute(
             "SELECT linhas, total, tentativas FROM fatia").fetchone(), (0, 0, 2))
+        # a 2ª leitura confirma a fatia vazia: não é data recusada
+        self.assertEqual((self.recusas, self.vazias), (0, 1))
         self.assertEqual(db.con.execute("SELECT COUNT(*) FROM simei").fetchone()[0], 0)
 
     def test_sem_registros_e_depois_tabela_fica_a_tabela(self):
@@ -291,6 +293,7 @@ class TestArmadilha9UFSemOptante(unittest.TestCase):
             [SEM_REGISTROS, AC_2010.replace("31/12/2010", "31/12/2009")])
         self.assertEqual(falhas, [])
         self.assertEqual(db.con.execute("SELECT total FROM fatia").fetchone()[0], 3433)
+        self.assertEqual((self.recusas, self.vazias), (0, 1))
 
     def test_sem_registros_na_posicao_atual_termina_vermelha(self):
         falhas, db = self._coletar([SEM_REGISTROS], so_atual=True)

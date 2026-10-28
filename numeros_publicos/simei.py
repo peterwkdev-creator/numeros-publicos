@@ -44,6 +44,7 @@ from __future__ import annotations
 import csv
 import datetime as dt
 import html
+import json
 import re
 import sqlite3
 from dataclasses import dataclass, field
@@ -511,3 +512,89 @@ def coletar(pedir: Pedir, db: ArmazemSimei, banco_municipios: dict[str, set[int]
                   f"{f' ({f.tentativas} tentativas)' if f.tentativas > 1 else ''}"
                   f"; {m.resumo()}")
     return falhas, recusas, vazias
+
+
+# ------------------------------------------------------------------ exportação
+
+MUNICIPIOS = 5571
+FONTE = ("Receita Federal, Estatísticas do Simples Nacional: optantes pelo "
+         "SIMEI por município")
+
+
+def retrato(db: ArmazemSimei, esperados: Iterable[int]) -> dict:
+    """O `simei.json` que o painel lê: as datas, a posição consolidada e, por
+    município IBGE, um valor por data, com `None` onde a fonte não trouxe a
+    linha (armadilha 3: ausência não é zero, e o zero nunca se escreve aqui).
+
+    Recusa (`ErroSimei`) se: o snapshot não tem 5.571 municípios; alguma data
+    não tem as 27 fatias (a ausência ficaria ambígua entre "nenhum optante" e
+    "não coletado"); as linhas de uma data não somam o TOTAL das fatias; há
+    mais de uma posição consolidada no banco; a posição atual não tem todos os
+    5.571 do snapshot; ou aparece município fora dele."""
+    esperados = sorted(set(int(c) for c in esperados))
+    if len(esperados) != MUNICIPIOS:
+        raise ErroSimei(f"o snapshot tem {len(esperados)} municípios, e não "
+                        f"{MUNICIPIOS}: nada exportado")
+    con = db.con
+    fatias = list(con.execute(
+        "SELECT data, COUNT(*), SUM(total), SUM(linhas) FROM fatia "
+        "GROUP BY data ORDER BY data"))
+    if not fatias:
+        raise ErroSimei("banco do SIMEI vazio: rode simei-ingerir")
+    for data, ufs, total, linhas in fatias:
+        if ufs != len(UFS):
+            raise ErroSimei(f"{data}: {ufs} de {len(UFS)} UFs coletadas")
+        soma, n = con.execute("SELECT COALESCE(SUM(valor), 0), COUNT(*) "
+                              "FROM simei WHERE data = ?", (data,)).fetchone()
+        if (soma, n) != (total, linhas):
+            raise ErroSimei(f"{data}: as linhas somam {soma} em {n} municípios, "
+                            f"as fatias dizem {total} em {linhas}")
+    posicoes = [p for (p,) in con.execute(
+        "SELECT DISTINCT posicao FROM fatia UNION SELECT DISTINCT posicao FROM simei")]
+    if len(posicoes) != 1:
+        raise ErroSimei(f"mais de uma posição consolidada no banco ({', '.join(posicoes)}): "
+                        "recolete a série inteira para ela ser de uma só posição")
+    datas = [d for d, *_ in fatias]
+    posicao = posicoes[0]
+    if datas[-1] != posicao:
+        raise ErroSimei(f"a data mais recente ({datas[-1]}) não é a posição "
+                        f"consolidada ({posicao}): rode simei-ingerir --so-atual")
+    indice = {d: i for i, d in enumerate(datas)}
+    serie: dict[int, list[int | None]] = {}
+    for data, municipio, valor in con.execute(
+            "SELECT data, municipio, valor FROM simei"):
+        serie.setdefault(int(municipio), [None] * len(datas))[indice[data]] = int(valor)
+    fora = sorted(set(serie) - set(esperados))
+    if fora:
+        raise ErroSimei(f"{len(fora)} municípios fora do snapshot ({fora[:5]})")
+    atual = {m for m, v in serie.items() if v[-1] is not None}
+    if len(atual) != MUNICIPIOS:
+        faltam = sorted(set(esperados) - atual)
+        raise ErroSimei(f"a posição de {posicao} tem {len(atual)} municípios, e "
+                        f"não {MUNICIPIOS} (faltam {faltam[:5]}): nada exportado")
+    origem, licenca = con.execute(
+        "SELECT origem, licenca FROM fatia ORDER BY data DESC, uf LIMIT 1").fetchone()
+    return {
+        "fonte": FONTE,
+        "origem": origem,
+        "licenca": licenca,
+        "posicao": posicao,
+        "datas": datas,
+        "coletadoEm": con.execute("SELECT MAX(coletado_em) FROM fatia").fetchone()[0],
+        "totais": [t for _, _, t, _ in fatias],
+        "municipios": [[m, serie[m]] for m in esperados],
+    }
+
+
+def gravar_retrato(r: dict, saida: str | Path) -> str:
+    """Escreve o `simei.json` compacto; não reescreve se só o carimbo mudou."""
+    saida = Path(saida)
+    if saida.exists():
+        velho = json.loads(saida.read_text(encoding="utf-8"))
+        sem_carimbo = lambda x: {k: v for k, v in x.items() if k != "coletadoEm"}
+        if sem_carimbo(velho) == sem_carimbo(r):
+            return "inalterado"
+    saida.parent.mkdir(parents=True, exist_ok=True)
+    saida.write_text(json.dumps(r, ensure_ascii=False, separators=(",", ":")) + "\n",
+                     encoding="utf-8")
+    return "gravado"

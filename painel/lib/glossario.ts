@@ -71,6 +71,10 @@ export const GLOSSARIO = {
     curta: "O cadastro do IBGE que conta empresas, órgãos públicos e entidades, e os empregos formais deles, no município onde estão.",
     secao: "censo",
   },
+  simei: {
+    termo: "SIMEI (MEI)",
+    curta: "O Sistema de Recolhimento em Valores Fixos Mensais do Simples Nacional: o enquadramento em que o microempreendedor individual (MEI) paga um valor fixo por mês. A Receita Federal publica quantos optantes há em cada município, numa data, com a posição consolidada até a data da consulta.",
+  },
   censo: {
     termo: "Censo Demográfico",
     curta: "A contagem de toda a população e de todos os domicílios do país, feita pelo IBGE; a mais recente é a de 2022.",

@@ -54,6 +54,12 @@
 /dados/municipios.xlsx
   X-Robots-Tag: noindex
 
+/dados/mei.csv
+  X-Robots-Tag: noindex
+
+/dados/mei.xlsx
+  X-Robots-Tag: noindex
+
 /dados/explorar/:indicador/dados.json
   X-Robots-Tag: noindex
 

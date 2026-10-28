@@ -5,8 +5,9 @@ import {
 } from "../../../../lib/fiscal";
 import { trajetoriaDe } from "../../../../lib/ideb";
 import {
-  lerCaged, lerCagedAnos, lerEmendas, lerFiscal, lerIdeb, lerSnapshot,
+  lerCaged, lerCagedAnos, lerEmendas, lerFiscal, lerIdeb, lerSimei, lerSnapshot,
 } from "../../../../lib/servidor";
+import { NOTA_AUSENCIA, simeiDe } from "../../../../lib/simei";
 import { cagedAnosDe, cagedDe } from "../../../../lib/caged";
 import { emendasDe, ULTIMO_ANO_VIA_BB } from "../../../../lib/emendas";
 import { rotuloDownload } from "../../../../lib/censo";
@@ -34,9 +35,9 @@ export async function GET(
   { params }: { params: Promise<{ slug: string }> },
 ) {
   const { slug } = await params;
-  const [snapshot, fiscal, ideb, idebFinais, caged, cagedAnos, emendas] = await Promise.all([
+  const [snapshot, fiscal, ideb, idebFinais, caged, cagedAnos, emendas, simei] = await Promise.all([
     lerSnapshot(), lerFiscal(), lerIdeb("anos_iniciais"), lerIdeb("anos_finais"),
-    lerCaged(), lerCagedAnos(), lerEmendas(),
+    lerCaged(), lerCagedAnos(), lerEmendas(), lerSimei(),
   ]);
   const m = expandir(snapshot).find((x) => slugDe(x.nome, x.uf) === slug);
   if (!m) return new Response("não encontrado", { status: 404 });
@@ -196,6 +197,16 @@ export async function GET(
     linhas.push([...comum,
       `Novo Caged — saldo do ano, admissões menos desligamentos (com ajustes até ${ate})`,
       String(a.ano), a.saldo, "vínculos", "MTE", cagedAnos.coletadoEm ?? ""]);
+  }
+
+  // Os MEI optantes pelo SIMEI, 31/12 de cada ano desde 2009 e a posição
+  // atual. O vazio é o município fora da tabela da Receita naquela data, e o
+  // nome do indicador diz isso e a posição consolidada (o arquivo viaja sem
+  // a página).
+  for (const p of simeiDe(simei, m.codigo) ?? []) {
+    linhas.push([...comum,
+      `MEI optantes pelo SIMEI (${NOTA_AUSENCIA}; posição consolidada até ${simei.posicao})`,
+      p.data, p.valor, "MEI", "Receita Federal", simei.coletadoEm.slice(0, 10)]);
   }
 
   // As emendas parlamentares, ano a ano desde 2015: a série que a página NÃO

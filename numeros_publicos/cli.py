@@ -810,6 +810,15 @@ def construir_parser() -> argparse.ArgumentParser:
     sm.add_argument("--banco-simei",
                     default=os.environ.get("SIMEI_BANCO", "simei.db"))
     sm.set_defaults(func=simei_ingerir)
+    se = sub.add_parser("simei-exportar",
+                        help="gera o simei.json que o painel lê (recusa se a "
+                             "posição atual não tiver os 5.571 municípios)")
+    se.add_argument("--saida", default="painel/dados/simei.json")
+    se.add_argument("--snapshot", default="painel/dados/snapshot.json",
+                    help="de onde vêm os 5.571 códigos do IBGE")
+    se.add_argument("--banco-simei",
+                    default=os.environ.get("SIMEI_BANCO", "simei.db"))
+    se.set_defaults(func=simei_exportar)
 
     ce = sub.add_parser("caged-exportar",
                         help="confere contra o sumário do MTE e gera o "
@@ -1142,6 +1151,27 @@ def simei_ingerir(args, pedir=None, dormir=None) -> int:
         for f in falhas:
             print(f"    {f}", file=sys.stderr)
         return 1
+    return 0
+
+
+def simei_exportar(args) -> int:
+    """O `simei.json` do painel, a partir do `simei.db` (conferências em
+    `simei.retrato`). Município sem linha numa data sai `null`, nunca zero."""
+    import json as _json
+    from . import simei
+    try:
+        if not Path_(args.banco_simei).exists():
+            raise simei.ErroSimei(f"banco {args.banco_simei} não existe")
+        snap = _json.loads(Path_(args.snapshot).read_text(encoding="utf-8"))
+        with simei.ArmazemSimei(args.banco_simei) as db:
+            r = simei.retrato(db, (l[0] for l in snap["municipios"]))
+        estado = simei.gravar_retrato(r, args.saida)
+    except (simei.ErroSimei, OSError) as e:
+        print(f"[!] {e}", file=sys.stderr)
+        return 1
+    print(f"{args.saida}: {estado} · {r['datas'][0]} a {r['posicao']} · "
+          f"{len(r['municipios'])} municípios · "
+          f"{r['totais'][-1]:,} MEI na posição atual".replace(",", "."))
     return 0
 
 

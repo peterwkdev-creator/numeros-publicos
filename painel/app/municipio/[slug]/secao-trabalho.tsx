@@ -10,14 +10,28 @@ import CagedAnosSvg from "../../componentes/caged-anos-svg";
 import Termo from "../../componentes/termo";
 import type { Contexto } from "./contexto";
 import FonteGrafico from "../../componentes/fonte-grafico";
+import SimeiAnosSvg from "../../componentes/simei-anos-svg";
+import { dataBr, milhoes } from "../../../lib/simei";
+
+/**
+ * O total de MEI ATIVOS do Mapa de Empresas (gov.br/empresas-e-negocios),
+ * que só existe para o país: vem da página do Mapa, e não do `simei.json`.
+ * Revisar junto com a coleta do SIMEI (espec do MEI, §6, item 5).
+ */
+const MAPA_EMPRESAS = { ativos: "13,7 milhões", em: "31/08/2026" };
 
 /**
  * Trabalho e renda: Censo, cadastro de empresas e Novo Caged.
  * Extraído de `page.tsx` em 15/10/2026 (item 19 da revisão de 11/10/2026): o HTML é o mesmo, byte a byte.
  */
 export default function SecaoTrabalho({ c }: { c: Contexto }) {
-  const { caged, m, medidasTrabalho, medianasTrabalho, taxasTrabalho, renda, medianaRenda, salario, medianaSalario, medianasTrabalhoUf, medianaRendaUf, medianaSalarioUf, legendaMedianas, anoEmpresas, temCensoTrabalho, temEmpresas, cagedM, cagedAnos, cagedAnosM, estilos } = c;
-  if (!(temCensoTrabalho || temEmpresas || cagedM !== null || cagedAnosM !== null)) return null;
+  const { caged, m, medidasTrabalho, medianasTrabalho, taxasTrabalho, renda, medianaRenda, salario, medianaSalario, medianasTrabalhoUf, medianaRendaUf, medianaSalarioUf, legendaMedianas, anoEmpresas, temCensoTrabalho, temEmpresas, cagedM, cagedAnos, cagedAnosM, simei, simeiM, simeiPos, simeiTaxaPais, estilos } = c;
+  if (!(temCensoTrabalho || temEmpresas || cagedM !== null || cagedAnosM !== null || simeiM !== null)) return null;
+  // O MEI na posição atual (os 5.571 têm linha nela: o exportador recusa sem
+  // isso) e a série do gráfico, de 2010 em diante: 2009 é meio ano e fica só
+  // nos downloads (espec do MEI, §6, item 2).
+  const meiAtual = simeiM?.[simeiM.length - 1]?.valor ?? null;
+  const meiGrafico = simeiM?.filter((p) => p.data >= "2010") ?? [];
   return (
     <section className={estilos.texto} id="trabalho-e-renda">
       <h2>Trabalho e renda em {m.nome}</h2>
@@ -100,6 +114,78 @@ export default function SecaoTrabalho({ c }: { c: Contexto }) {
               )}
             </p>
           )}
+        </>
+      )}
+      {simeiM && meiAtual !== null && (
+        <>
+          <h3 className={estilos.subtitulo}>
+            Microempreendedores individuais (MEI)
+          </h3>
+          <p>
+            Da Receita Federal, nas Estatísticas do Simples Nacional: em{" "}
+            {dataBr(simei.posicao)}, {m.nome} tinha{" "}
+            <strong>{br(meiAtual)} MEI</strong> optantes pelo{" "}
+            <Termo chave="simei">SIMEI</Termo>
+            {simeiPos && (
+              <>
+                , <strong>{br(simeiPos.porMil, 1)} por mil habitantes</strong>
+                {simeiPos.de >= 2 && (
+                  <>
+                    , o {simeiPos.posicao === 1 ? "" : `${simeiPos.posicao}º `}maior
+                    número por habitante entre os {br(simeiPos.de)} municípios{" "}
+                    {deEstado(m.uf)}
+                  </>
+                )}
+                {simeiTaxaPais !== null && <> (no país, {br(simeiTaxaPais, 1)} por mil)</>}
+              </>
+            )}
+            .
+          </p>
+          <div className={estilos.grafico}>
+            <SimeiAnosSvg pontos={meiGrafico} municipio={`${m.nome} (${m.uf})`} />
+            <FonteGrafico
+              fonte="Receita Federal, Estatísticas do Simples Nacional (optantes pelo SIMEI)"
+              periodo={`31/12/${meiGrafico[0]?.data.slice(0, 4)} a ${dataBr(simei.posicao)}, posição consolidada até ${dataBr(simei.posicao)}`}
+            />
+          </div>
+          <div className={`${estilos.rolagem} rola-x`}>
+            <table className={estilos.serie}>
+              <caption className={estilos.legenda}>
+                {m.nome} ({m.uf}): MEI optantes pelo SIMEI
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Data</th>
+                  <th scope="col" className={estilos.num}>MEI optantes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {meiGrafico.map((p) => (
+                  <tr key={p.data}>
+                    <th scope="row">{dataBr(p.data)}</th>
+                    <td className={`${estilos.num} tabular`}>
+                      {p.valor === null ? "nenhum optante registrado" : br(p.valor)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className={estilos.ressalva}>
+            Conta quem está enquadrado no SIMEI (o sistema de valores fixos
+            mensais do Simples Nacional) na data da posição consolidada. O
+            Mapa de Empresas conta só os MEI ativos, e só no total do país:{" "}
+            {MAPA_EMPRESAS.ativos} em {MAPA_EMPRESAS.em}, contra{" "}
+            {/* Do dado, e não do teclado: o total do país na posição atual,
+                que o exportador confere contra as 27 linhas TOTAL. */}
+            {milhoes(simei.totais[simei.totais.length - 1]!)} no SIMEI em{" "}
+            {dataBr(simei.posicao)}. Ano sem barra: nenhum optante registrado
+            na fonte. População: a estimativa do IBGE que a página já usa.
+            Baixar a série:{" "}
+            <a href="/dados/mei.csv">CSV</a> ·{" "}
+            <a href="/dados/mei.xlsx">XLSX</a> (desde{" "}
+            {dataBr(simei.datas[0]!)}).
+          </p>
         </>
       )}
       {cagedM && (

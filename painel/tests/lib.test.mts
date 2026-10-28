@@ -60,6 +60,10 @@ import {
 import { xlsx } from "../lib/xlsx.ts";
 import { ancoraDe, glossarioAZ, idDoVerbete } from "../lib/glossario.ts";
 import { COMO_LER } from "../lib/como-ler.ts";
+import {
+  cabecalhoMei, dataBr, indiceSimei, linhasMei, milhoes, porMil, simeiDe,
+  type SnapshotSimei,
+} from "../lib/simei.ts";
 
 // A página do município foi dividida em módulos (item 19 da revisão de
 // 11/10/2026). Os testes que leem o TEXTO dela leem o conjunto: o `page.tsx`
@@ -3321,4 +3325,87 @@ test("rotuloAbaixo troca 0% e 100% arredondados pela contagem (A8)", () => {
   assert.equal(rotuloAbaixo(posicaoEntre(0.15, valores)!), "2");
   assert.equal(rotuloAbaixo(posicaoEntre(50, valores)!), "50%");
   assert.equal(rotuloAbaixo(posicaoEntre(99.85, valores)!), "999");
+});
+
+// ---------------------------------------------------------------- SIMEI (MEI)
+
+const SIMEI = (): SnapshotSimei => JSON.parse(
+  fs.readFileSync(new URL("../dados/simei.json", import.meta.url), "utf-8"));
+
+test("simei.json: a soma dos municípios É o total do país em cada data, e nenhum zero inventado", () => {
+  // O exportador confere as linhas contra o TOTAL das 27 fatias. Este teste
+  // confere o ARQUIVO: município perdido ou duplicado desfaz a soma; e a
+  // fonte nunca escreve zero (omite), então um 0 aqui seria ausência virada
+  // em número.
+  const s = SIMEI();
+  assert.equal(s.datas.at(-1), s.posicao);
+  assert.equal(s.totais.length, s.datas.length);
+  s.datas.forEach((data, i) => {
+    let soma = 0;
+    for (const [codigo, vs] of s.municipios) {
+      assert.equal(vs.length, s.datas.length, `${codigo} com ${vs.length} datas`);
+      assert.notEqual(vs[i], 0, `${codigo} em ${data}: zero`);
+      soma += vs[i] ?? 0;
+    }
+    assert.equal(soma, s.totais[i], `total de ${data}`);
+  });
+  // A posição atual tem os 5.571, e são os do snapshot do IBGE.
+  const snapshot = JSON.parse(
+    fs.readFileSync(new URL("../dados/snapshot.json", import.meta.url), "utf-8"));
+  const ibge = new Set(snapshot.municipios.map((l: number[]) => l[0]));
+  assert.equal(s.municipios.length, ibge.size);
+  for (const [codigo, vs] of s.municipios) {
+    assert.ok(ibge.has(codigo), `${codigo} não está no IBGE`);
+    assert.notEqual(vs.at(-1), null, `${codigo} sem a posição atual`);
+  }
+});
+
+const SIMEI_FALSO = (): SnapshotSimei => ({
+  ...SIMEI(),
+  datas: ["2009-12-31", "2010-12-31", "2026-10-24"],
+  posicao: "2026-10-24",
+  totais: [5, 30, 260],
+  municipios: [[1, [5, 10, 100]], [2, [null, 20, 150]], [3, [null, null, 10]]],
+});
+
+test("simeiDe: a ausência continua null, nunca zero, e código fora do arquivo é null", () => {
+  const s = SIMEI_FALSO();
+  assert.deepEqual(simeiDe(s, 2), [
+    { data: "2009-12-31", valor: null },
+    { data: "2010-12-31", valor: 20 },
+    { data: "2026-10-24", valor: 150 },
+  ]);
+  assert.equal(simeiDe(s, 9), null);
+  assert.equal(dataBr("2026-10-24"), "24/10/2026");
+  assert.equal(milhoes(17_730_861), "17,7 milhões");
+});
+
+test("indiceSimei: por mil habitantes, a posição no estado e a taxa do país pela soma", () => {
+  const s = SIMEI_FALSO();
+  const mun = [
+    { codigo: 1, uf: "PB", valores: { "populacao-estimada": 1000 } },   // 100 por mil
+    { codigo: 2, uf: "PB", valores: { "populacao-estimada": 1000 } },   // 150 por mil
+    { codigo: 3, uf: "AC", valores: { "populacao-estimada": 1000 } },   // 10 por mil
+  ];
+  const r = indiceSimei(s, mun);
+  assert.deepEqual(r.porCodigo.get(2), { porMil: 150, posicao: 1, de: 2 });
+  assert.deepEqual(r.porCodigo.get(1), { porMil: 100, posicao: 2, de: 2 });
+  assert.deepEqual(r.porCodigo.get(3), { porMil: 10, posicao: 1, de: 1 });
+  // (100 + 150 + 10) / 3000 × 1000, e não a média das taxas
+  assert.ok(Math.abs(r.taxaPais! - 260 / 3) < 1e-9);
+  assert.equal(porMil(5, 0), null);
+  assert.equal(porMil(null, 10), null);
+});
+
+test("download do MEI: célula vazia onde a fonte omite, e a nota viaja no cabeçalho do CSV", () => {
+  const s = SIMEI_FALSO();
+  const mun = [{ codigo: 2, nome: "B", uf: "PB" }, { codigo: 7, nome: "Fora", uf: "AC" }];
+  assert.deepEqual(linhasMei(s, mun, "csv"),
+                   [[2, "B", "PB", null, 20, 150, null], [7, "Fora", "AC", null, null, null, null]]);
+  assert.deepEqual(linhasMei(s, mun, "xlsx")[0], [2, "B", "PB", null, 20, 150]);
+  const csv = cabecalhoMei(s, "csv");
+  assert.equal(csv.length, 3 + s.datas.length + 1);
+  assert.equal(csv[3], "mei_simei_2009_12_31");
+  assert.match(csv.at(-1)!, /nunca zero/);
+  assert.equal(cabecalhoMei(s, "xlsx").at(-1), "MEI em 24/10/2026 (posição atual)");
 });

@@ -309,5 +309,88 @@ class TestDePara(unittest.TestCase):
         self.assertEqual(DE_PARA["1182"], (5101837, "MT"))
 
 
+class TestExportar(unittest.TestCase):
+    """`simei-exportar`: banco temporário com 5.571 códigos inventados, duas
+    datas (31/12/2009 com ausências e a posição atual completa), sem rede."""
+
+    UFS_ORD = sorted(simei.UFS)
+    CODIGOS = list(range(1000001, 1000001 + simei.MUNICIPIOS))
+    POS = "2026-10-24"
+
+    def setUp(self):
+        self.dir = tempfile.TemporaryDirectory()
+        d = Path(self.dir.name)
+        self.banco, self.saida, self.snap = d / "s.db", d / "simei.json", d / "snap.json"
+        self.snap.write_text(
+            '{"municipios":[' + ",".join(f"[{c}]" for c in self.CODIGOS) + "]}",
+            encoding="utf-8")
+        # 2009: só os códigos pares têm linha (a fonte omite os outros).
+        self._gravar({"2009-12-31": {c: 3 for c in self.CODIGOS if c % 2 == 0},
+                      self.POS: {c: c % 100 + 1 for c in self.CODIGOS}})
+
+    def tearDown(self):
+        self.dir.cleanup()
+
+    def uf(self, codigo: int) -> str:
+        return self.UFS_ORD[codigo % len(self.UFS_ORD)]
+
+    def _gravar(self, por_data: dict[str, dict[int, int]]) -> None:
+        with ArmazemSimei(self.banco) as db, db.con:
+            db.con.execute("DELETE FROM simei")
+            db.con.execute("DELETE FROM fatia")
+            for data, valores in por_data.items():
+                db.con.executemany(
+                    "INSERT INTO simei VALUES (?, ?, ?, ?, ?, ?)",
+                    [(data, self.uf(c), c, v, self.POS, "2026-10-28T00:00:00+00:00")
+                     for c, v in valores.items()])
+                for uf in self.UFS_ORD:
+                    vs = [v for c, v in valores.items() if self.uf(c) == uf]
+                    db.con.execute(
+                        "INSERT INTO fatia VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        (data, uf, len(vs), sum(vs), self.POS, 1,
+                         simei.URL_CONSULTA, simei.LICENCA, "2026-10-28T00:00:00+00:00"))
+
+    def _rodar(self) -> tuple[int, str]:
+        args = construir_parser().parse_args(
+            ["simei-exportar", "--saida", str(self.saida), "--snapshot",
+             str(self.snap), "--banco-simei", str(self.banco)])
+        err = io.StringIO()
+        with redirect_stdout(io.StringIO()), redirect_stderr(err):
+            return args.func(args), err.getvalue()
+
+    def test_caminho_feliz_e_ausencia_que_nao_vira_zero(self):
+        codigo, err = self._rodar()
+        self.assertEqual(codigo, 0, err)
+        import json
+        r = json.loads(self.saida.read_text(encoding="utf-8"))
+        self.assertEqual(r["datas"], ["2009-12-31", self.POS])
+        self.assertEqual(r["posicao"], self.POS)
+        self.assertEqual((r["origem"], r["licenca"]), (simei.URL_CONSULTA, simei.LICENCA))
+        self.assertEqual(len(r["municipios"]), simei.MUNICIPIOS)
+        serie = dict((c, v) for c, v in r["municipios"])
+        impar, par = self.CODIGOS[0], self.CODIGOS[1]
+        # sem linha na fonte em 2009: null, e nunca o zero inventado
+        self.assertIsNone(serie[impar][0])
+        self.assertEqual(serie[par], [3, par % 100 + 1])
+        self.assertNotIn(0, [v for vs in serie.values() for v in vs])
+        self.assertEqual(r["totais"][0], 3 * (simei.MUNICIPIOS // 2))
+
+    def test_recusa_posicao_atual_sem_os_5571(self):
+        menos = {c: 1 for c in self.CODIGOS[:-1]}
+        self._gravar({"2009-12-31": {self.CODIGOS[0]: 1}, self.POS: menos})
+        codigo, err = self._rodar()
+        self.assertEqual(codigo, 1)
+        self.assertIn("5570", err)
+        self.assertFalse(self.saida.exists())
+
+    def test_recusa_data_sem_as_27_UFs(self):
+        with ArmazemSimei(self.banco) as db, db.con:
+            db.con.execute("DELETE FROM fatia WHERE data = '2009-12-31' AND uf = 'RN'")
+        codigo, err = self._rodar()
+        self.assertEqual(codigo, 1)
+        self.assertIn("26 de 27 UFs", err)
+        self.assertFalse(self.saida.exists())
+
+
 if __name__ == "__main__":
     unittest.main()

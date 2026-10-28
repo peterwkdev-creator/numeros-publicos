@@ -9,6 +9,7 @@ import type { SnapshotIdeb } from "./ideb";
 import type { SnapshotInss } from "./inss";
 import type { SnapshotCaged, SnapshotCagedAnos } from "./caged";
 import type { SnapshotEmendas } from "./emendas";
+import type { SnapshotSimei } from "./simei";
 import type { SnapshotRegioes } from "./estado";
 import type { SnapshotBrasil } from "./brasil";
 
@@ -156,6 +157,19 @@ export async function lerCagedAnos(): Promise<SnapshotCagedAnos> {
   const arquivo = path.join(process.cwd(), "dados", "caged-anos.json");
   cacheCagedAnos = JSON.parse(await readFile(arquivo, "utf-8")) as SnapshotCagedAnos;
   return cacheCagedAnos;
+}
+
+/**
+ * Lê `dados/simei.json` (os MEI optantes pelo SIMEI por município e data) uma
+ * vez por build. Mesmo arranjo de `lerCagedAnos`.
+ */
+let cacheSimei: SnapshotSimei | null = null;
+
+export async function lerSimei(): Promise<SnapshotSimei> {
+  if (cacheSimei) return cacheSimei;
+  const arquivo = path.join(process.cwd(), "dados", "simei.json");
+  cacheSimei = JSON.parse(await readFile(arquivo, "utf-8")) as SnapshotSimei;
+  return cacheSimei;
 }
 
 /**

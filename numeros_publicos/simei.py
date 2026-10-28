@@ -50,6 +50,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, Iterable
 
+#: HTTPS medido em 27/10/2026 (10 pedidos cada): HTTPS 10 de 10 com 200; o
+#: HTTP responde 303 para o HTTPS. Não trocar.
 BASE = ("https://www8.receita.fazenda.gov.br/SimplesNacional/Aplicacoes/"
         "ATBHE/estatisticasSinac.app")
 #: `anoConsulta` fica VAZIO (armadilha 2): com o ano, a página dá "erro
@@ -58,8 +60,8 @@ URL_CONSULTA = (f"{BASE}/EstatisticasOptantesPorDataMunicipio.aspx"
                 "?tipoConsulta=2&optanteSimei=&anoConsulta=")
 URL_LISTA = f"{BASE}/ConsultaMunicipios.aspx"
 URL_INICIO = f"{BASE}/Default.aspx"
-#: Licença da fonte: ainda NÃO lida (espec, §2). Sem ela lida e gravada aqui,
-#: o dado não se publica (`stack-ingestao.md`).
+#: Licença da fonte: lida em 27/10/2026 (espec, §2); decisão do Peter: não
+#: declarada, publicar com a fonte (`stack-ingestao.md`).
 LICENCA = ("não declarada na fonte (página das Estatísticas sem licença nem termo "
            "de uso, e conjunto ausente do dados.gov.br, lidos em 27/10/2026); dado "
            "público da Receita Federal, citado com o endereço e a data da posição")

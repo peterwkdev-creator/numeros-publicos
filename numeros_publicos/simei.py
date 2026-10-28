@@ -230,6 +230,18 @@ def municipios_do_banco(banco: str | Path) -> dict[str, set[int]]:
     return conferir_ufs(por_uf)
 
 
+def municipios_do_snapshot(caminho: str | Path) -> dict[str, set[int]]:
+    """`{UF: {IBGE}}` do `painel/dados/snapshot.json` (linhas `[codigo, nome,
+    uf, ...]`): no runner não há `observatorio.db`. Faltar UF para (armadilha 5)."""
+    if not Path(caminho).exists():
+        raise ErroSimei(f"snapshot {caminho} não existe")
+    snap = json.loads(Path(caminho).read_text(encoding="utf-8"))
+    por_uf: dict[str, set[int]] = {}
+    for linha in snap["municipios"]:
+        por_uf.setdefault(linha[2], set()).add(int(linha[0]))
+    return conferir_ufs(por_uf)
+
+
 def conferir_ufs(por_uf: dict[str, set[int]]) -> dict[str, set[int]]:
     faltam = sorted(UFS - set(por_uf))
     sobram = sorted(set(por_uf) - UFS)
@@ -294,6 +306,11 @@ def abrir_formulario(pedir: Pedir) -> Formulario:
     if f"{_P}AntesTabela$txtDtIni" not in pagina:
         raise ErroSimei("o formulário não abriu o campo de data 'Por Município'")
     return Formulario(campos_ocultos(pagina), posicao_consolidada(pagina))
+
+
+def posicao_da_fonte(pedir: Pedir) -> str:
+    """A "Posição Consolidada até" do formulário, em aaaa-mm-dd."""
+    return iso(abrir_formulario(pedir).posicao)
 
 
 def lista_tom(pedir: Pedir, uf: str) -> dict[str, str]:

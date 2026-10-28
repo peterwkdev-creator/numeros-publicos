@@ -807,6 +807,9 @@ def construir_parser() -> argparse.ArgumentParser:
                     help="estas datas, e não a série inteira")
     sm.add_argument("--pausa", type=float, default=1.0,
                     help="segundos entre pedidos (padrão: 1)")
+    sm.add_argument("--snapshot", metavar="JSON",
+                    help="os municípios por UF deste snapshot.json, e não do "
+                         "--banco (no runner não há observatorio.db)")
     sm.add_argument("--banco-simei",
                     default=os.environ.get("SIMEI_BANCO", "simei.db"))
     sm.set_defaults(func=simei_ingerir)
@@ -819,6 +822,11 @@ def construir_parser() -> argparse.ArgumentParser:
     se.add_argument("--banco-simei",
                     default=os.environ.get("SIMEI_BANCO", "simei.db"))
     se.set_defaults(func=simei_exportar)
+    sn = sub.add_parser("simei-novo",
+                        help="diz se a Receita tem posição mais recente que a "
+                             "do simei.json publicado")
+    sn.add_argument("--publicado", default="painel/dados/simei.json")
+    sn.set_defaults(func=simei_novo)
 
     ce = sub.add_parser("caged-exportar",
                         help="confere contra o sumário do MTE e gera o "
@@ -1128,7 +1136,8 @@ def simei_ingerir(args, pedir=None, dormir=None) -> int:
     coleta termina com código 1, depois de tentar as outras."""
     from . import simei
     try:
-        banco = simei.municipios_do_banco(args.banco)
+        banco = (simei.municipios_do_snapshot(args.snapshot) if args.snapshot
+                 else simei.municipios_do_banco(args.banco))
         de_para = simei.ler_de_para()
         with simei.ArmazemSimei(args.banco_simei) as db:
             falhas, recusas, vazias = simei.coletar(
@@ -1172,6 +1181,33 @@ def simei_exportar(args) -> int:
     print(f"{args.saida}: {estado} · {r['datas'][0]} a {r['posicao']} · "
           f"{len(r['municipios'])} municípios · "
           f"{r['totais'][-1]:,} MEI na posição atual".replace(",", "."))
+    return 0
+
+
+def simei_novo(args, pedir=None) -> int:
+    """`novo` quando a "Posição Consolidada até" do formulário é mais recente
+    que a `posicao` do `simei.json` publicado (ou ele não existe); senão
+    `nada`. Escreve `novo=true|false` em `$GITHUB_OUTPUT` quando existir."""
+    import json as _json
+    from . import simei
+    publicado = None
+    if Path_(args.publicado).exists():
+        publicado = _json.loads(
+            Path_(args.publicado).read_text(encoding="utf-8")).get("posicao")
+    try:
+        fonte = simei.posicao_da_fonte(pedir or simei.abrir_pedir())
+    except (simei.ErroSimei, OSError) as e:
+        print(f"[!] {e}", file=sys.stderr)
+        return 1
+    novo = publicado is None or fonte > publicado
+    if novo:
+        print(f"novo: a Receita está em {fonte} (publicado: {publicado})")
+    else:
+        print(f"nada: a Receita está em {fonte}, e o publicado é {publicado}")
+    saida = os.environ.get("GITHUB_OUTPUT")
+    if saida:
+        with open(saida, "a", encoding="utf-8") as fh:
+            fh.write(f"novo={'true' if novo else 'false'}\n")
     return 0
 
 

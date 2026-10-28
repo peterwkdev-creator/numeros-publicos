@@ -1,0 +1,161 @@
+# Traz a posição nova dos MEI (optantes pelo SIMEI por município, Receita
+# Federal), confere e publica. Escrito em 28/10/2026.
+#
+# ## Por que todo mês, no dia 5
+#
+# A "Posição Consolidada até" das Estatísticas do Simples Nacional anda sem
+# calendário publicado. O primeiro passo (`simei-novo`) só LÊ essa data no
+# formulário, em segundos, e a compara com a `posicao` do simei.json
+# publicado; se for a mesma, o job termina ali.
+#
+# ## Por que coleta a série inteira, e não só a posição nova
+#
+# O banco não é versionado e o runner começa limpo, como no Caged. As 486
+# fatias (18 datas × 27 UFs) levaram 20 min na última coleta local; a série
+# inteira refeita pega também o que a Receita corrigir nos 31/12 antigos.
+#
+# ## Por que --snapshot
+#
+# O runner não tem o observatorio.db; os 5.571 municípios por UF vêm do
+# painel/dados/snapshot.json, que é versionado. A Receita foi alcançada do
+# runner em 28/10/2026 (diagnosticar-receita.yml, run 40744430454).
+#
+# A publicação é pedida no job `publicar`, como no workflow do Caged.
+name: Atualizar dados do MEI
+
+on:
+  schedule:
+    # Dia 5, 12:00 UTC (9h em Brasília).
+    - cron: "0 12 5 * *"
+  workflow_dispatch:
+    inputs:
+      forcar:
+        description: "Coletar mesmo sem posição nova (prova a coleta inteira; o simei.json só muda se o dado mudar)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+# O mesmo grupo do IBGE e do Caged: os três commitam no main.
+concurrency:
+  group: ingestao
+  cancel-in-progress: false
+
+jobs:
+  mei:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      commitou: ${{ steps.commit.outputs.commitou }}
+    # 20 min medidos localmente; o teto folgado é para a Receita num dia lento
+    # (seis tentativas por data recusada).
+    timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Há posição nova na Receita?
+        id: novo
+        env:
+          FORCAR: ${{ inputs.forcar }}
+        run: |
+          if [ "$FORCAR" = "true" ]; then
+            GITHUB_OUTPUT= python -m numeros_publicos simei-novo
+            echo "Forçado pelo workflow_dispatch: coleta a série inteira."
+            echo "novo=true" >> "$GITHUB_OUTPUT"
+          else
+            python -m numeros_publicos simei-novo
+          fi
+
+      - name: Testes
+        if: steps.novo.outputs.novo == 'true'
+        run: python -m unittest discover -s tests -t .
+
+      # Cada fatia (data, UF) é conferida antes de gravar; fatia que falha
+      # deixa o passo vermelho, e o workflow para ANTES de exportar.
+      - name: Ingerir a série inteira
+        if: steps.novo.outputs.novo == 'true'
+        run: python -m numeros_publicos simei-ingerir --snapshot painel/dados/snapshot.json
+
+      # Recusa posição sem os 5.571, data sem as 27 UFs e soma diferente do
+      # TOTAL da fonte.
+      - name: Conferir e exportar
+        if: steps.novo.outputs.novo == 'true'
+        run: python -m numeros_publicos simei-exportar
+
+      # O banco fica 30 dias para conferir à mão o que a exportação publicou.
+      - name: Guardar o simei.db
+        if: always() && steps.novo.outputs.novo == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: simei-db
+          path: simei.db
+          retention-days: 30
+          if-no-files-found: ignore
+
+      - name: Commitar apenas se o dado mudou
+        id: commit
+        if: steps.novo.outputs.novo == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet -- painel/dados/simei.json; then
+            echo "O simei.json não mudou. Nada a commitar."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add painel/dados/simei.json
+          git commit -m "atualiza os MEI do SIMEI (posição $(python -c "import json;print(json.load(open('painel/dados/simei.json', encoding='utf-8'))['posicao'])"))"
+          git pull --rebase
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:main
+          echo "commitou=true" >> "$GITHUB_OUTPUT"
+
+  # Como no Caged: quem pede a publicação espera o resultado.
+  publicar:
+    needs: mei
+    if: needs.mei.outputs.commitou == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+    timeout-minutes: 120
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Pedir a publicação e esperar o resultado
+        run: |
+          desde=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          gh workflow run publicar-cloudflare.yml --ref main
+          id=
+          for _ in $(seq 1 30); do
+            id=$(gh run list --workflow publicar-cloudflare.yml --event workflow_dispatch \
+                 --created ">=$desde" -L 1 --json databaseId -q '.[0].databaseId')
+            [ -n "$id" ] && break
+            sleep 10
+          done
+          if [ -z "$id" ]; then
+            echo "::error::a publicação pedida não apareceu em 5 min"
+            exit 1
+          fi
+          echo "Publicação: $GITHUB_SERVER_URL/$GH_REPO/actions/runs/$id"
+          prazo=$((SECONDS + 105 * 60))
+          while [ "$(gh run view "$id" --json status -q .status)" != "completed" ]; do
+            if [ "$SECONDS" -ge "$prazo" ]; then
+              echo "::error::a publicação não terminou em 105 min: $GITHUB_SERVER_URL/$GH_REPO/actions/runs/$id"
+              exit 1
+            fi
+            sleep 60
+          done
+          conclusao=$(gh run view "$id" --json conclusion -q .conclusion)
+          echo "Publicação terminou: $conclusao"
+          [ "$conclusao" = "success" ]

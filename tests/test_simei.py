@@ -392,5 +392,77 @@ class TestExportar(unittest.TestCase):
         self.assertFalse(self.saida.exists())
 
 
+
+def _snapshot(caminho: Path, sem: str = "") -> None:
+    """Um snapshot.json com os 5.571 do de-para (`[codigo, nome, uf]`)."""
+    import json
+    linhas = [[i, "x", u] for i, u in sorted(DE_PARA.values()) if u != sem]
+    caminho.write_text(json.dumps({"municipios": linhas}), encoding="utf-8")
+
+
+class TestSnapshot(unittest.TestCase):
+    """`simei-ingerir --snapshot`: no runner não há `observatorio.db`."""
+
+    def test_snapshot_da_os_municipios_por_uf(self):
+        with tempfile.TemporaryDirectory() as d:
+            snap = Path(d) / "snap.json"
+            _snapshot(snap)
+            por_uf = simei.municipios_do_snapshot(snap)
+        self.assertEqual(set(por_uf), set(simei.UFS))
+        self.assertEqual(sum(len(v) for v in por_uf.values()), simei.MUNICIPIOS)
+        self.assertEqual(por_uf["PB"], banco_de("PB")["PB"])
+
+    def test_faltar_uf_no_snapshot_termina_vermelho_sem_pedir_nada(self):
+        with tempfile.TemporaryDirectory() as d:
+            snap = Path(d) / "snap.json"
+            _snapshot(snap, sem="RN")
+            args = construir_parser().parse_args(
+                ["--banco", str(Path(d) / "nao-existe.db"), "simei-ingerir",
+                 "--snapshot", str(snap), "--banco-simei", str(Path(d) / "s.db")])
+            pedidos = []
+            err = io.StringIO()
+            with redirect_stdout(io.StringIO()), redirect_stderr(err):
+                codigo = args.func(args, pedir=lambda *a: pedidos.append(a) or "")
+            self.assertEqual(codigo, 1)
+            self.assertIn("faltam ['RN']", err.getvalue())
+            self.assertEqual(pedidos, [])
+
+    def test_snapshot_ausente_para(self):
+        with self.assertRaisesRegex(ErroSimei, "não existe"):
+            simei.municipios_do_snapshot("nao-existe.json")
+
+
+class TestNovo(unittest.TestCase):
+    """`simei-novo`: a posição do formulário (FORM: 24/10/2026) contra a
+    `posicao` do `simei.json` publicado, escrita no `$GITHUB_OUTPUT`."""
+
+    def _rodar(self, publicado: str | None, pagina: str = FORM) -> tuple[int, str]:
+        import json
+        import os
+        from unittest import mock
+        with tempfile.TemporaryDirectory() as d:
+            pub, saida = Path(d) / "simei.json", Path(d) / "saida"
+            if publicado:
+                pub.write_text(json.dumps({"posicao": publicado}), encoding="utf-8")
+            args = construir_parser().parse_args(
+                ["simei-novo", "--publicado", str(pub)])
+            with mock.patch.dict(os.environ, {"GITHUB_OUTPUT": str(saida)}), \
+                    redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
+                codigo = args.func(args, pedir=lambda *a: pagina)
+            return codigo, saida.read_text(encoding="utf-8") if saida.exists() else ""
+
+    def test_mesma_posicao_e_nada(self):
+        self.assertEqual(self._rodar("2026-10-24"), (0, "novo=false\n"))
+
+    def test_posicao_mais_recente_e_novo(self):
+        self.assertEqual(self._rodar("2026-09-26"), (0, "novo=true\n"))
+
+    def test_sem_publicado_e_novo(self):
+        self.assertEqual(self._rodar(None), (0, "novo=true\n"))
+
+    def test_pagina_sem_posicao_termina_vermelho_sem_saida(self):
+        sem = FORM.replace("Posição Consolidada até 24/10/2026", "")
+        self.assertEqual(self._rodar("2026-10-24", sem), (1, ""))
+
 if __name__ == "__main__":
     unittest.main()

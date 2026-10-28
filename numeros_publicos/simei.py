@@ -60,7 +60,9 @@ URL_LISTA = f"{BASE}/ConsultaMunicipios.aspx"
 URL_INICIO = f"{BASE}/Default.aspx"
 #: Licença da fonte: ainda NÃO lida (espec, §2). Sem ela lida e gravada aqui,
 #: o dado não se publica (`stack-ingestao.md`).
-LICENCA = "não lida (página da Receita sem termo de uso conferido em 27/10/2026)"
+LICENCA = ("não declarada na fonte (página das Estatísticas sem licença nem termo "
+           "de uso, e conjunto ausente do dados.gov.br, lidos em 27/10/2026); dado "
+           "público da Receita Federal, citado com o endereço e a data da posição")
 
 DE_PARA = Path(__file__).with_name("simei_tom.csv")
 UFS = frozenset("AC AL AM AP BA CE DF ES GO MA MG MS MT PA PB PE PI PR RJ RN "

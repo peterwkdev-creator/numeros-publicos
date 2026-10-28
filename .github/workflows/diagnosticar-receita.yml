@@ -1,0 +1,71 @@
+# Diagnóstico da rede do runner até as Estatísticas do Simples Nacional
+# (Receita Federal), a fonte do MEI. Só leitura, só à mão.
+#
+# A coleta do MEI (Fase 1, 27/10/2026) rodou na máquina do projeto. Antes de
+# levá-la ao CI (coleta mensal), este job mede, a partir do runner, se a
+# Receita responde como responde daqui: DNS, IPv4 ou IPv6, tempo por fase e
+# o caminho do código (`simei.abrir_pedir` + `coletar_fatia`) numa fatia
+# real, o Acre na posição atual. O IBGE recusa o runner (26/10/2026); este
+# job diz se a Receita faz o mesmo.
+#
+# Não grava banco, não commita, não publica e não toca em segredo.
+
+name: Diagnosticar rede até a Receita
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  medir:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: DNS
+        run: |
+          getent ahosts www8.receita.fazenda.gov.br || echo "sem resposta do DNS"
+
+      - name: curl com tempo por fase (IPv4 e IPv6)
+        run: |
+          base=$(python -c "from numeros_publicos import simei; print(simei.BASE)")
+          for ip in -4 -6; do
+            echo "== $ip GET Default.aspx"
+            curl $ip -sSL -o /dev/null --connect-timeout 20 --max-time 40 \
+              -w "http=%{http_code} ip=%{remote_ip} dns=%{time_namelookup} conexao=%{time_connect} tls=%{time_appconnect} primeiro_byte=%{time_starttransfer} total=%{time_total}\n" \
+              "$base/Default.aspx" || echo "curl falhou (saída $?)"
+            echo "== $ip POST ConsultaMunicipios.aspx (uf=AC)"
+            curl $ip -sSL -o /dev/null --connect-timeout 20 --max-time 40 -d "uf=AC" \
+              -w "http=%{http_code} ip=%{remote_ip} dns=%{time_namelookup} conexao=%{time_connect} tls=%{time_appconnect} primeiro_byte=%{time_starttransfer} total=%{time_total}\n" \
+              "$base/ConsultaMunicipios.aspx" || echo "curl falhou (saída $?)"
+          done
+
+      - name: Uma fatia real pelo simei.py (Acre, posição atual)
+        run: |
+          python - <<'FIM'
+          import time
+          from numeros_publicos import simei
+          t = time.monotonic()
+          pedir = simei.abrir_pedir()
+          form = simei.abrir_formulario(pedir)
+          print(f"formulário aberto, posição {form.posicao}, {time.monotonic() - t:.2f} s")
+          lista = simei.lista_tom(pedir, "AC")
+          print(f"lista do AC: {len(lista)} municípios, {time.monotonic() - t:.2f} s")
+          fatia = simei.coletar_fatia(pedir, form, "AC", form.posicao, lista,
+                                      reabrir=lambda: simei.abrir_formulario(pedir))
+          print(f"fatia AC {fatia.data}: total {fatia.total}, {len(fatia.valores)} municípios, "
+                f"{fatia.tentativas} tentativa(s), {fatia.recusas} recusa(s), "
+                f"{time.monotonic() - t:.2f} s")
+          tom = lista.get("SENA MADUREIRA")
+          print(f"Sena Madureira (TOM {tom}): {fatia.valores.get(tom)}")
+          FIM

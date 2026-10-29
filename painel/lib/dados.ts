@@ -396,6 +396,52 @@ export function escalaComSinal(reais: number | null | undefined): {
 }
 
 /**
+ * Uma escala só para a tabela inteira, com a unidade no cabeçalho: a coluna
+ * fica de números puros, alinhados, e comparáveis de olho. Por célula,
+ * `escala` repetia "R$ … bilhões" em cada uma (a tabela da dívida do estado
+ * chegava a 1.199 px numa coluna de 705, 28/10/2026) e podia misturar milhões
+ * e bilhões na mesma coluna, que é justamente a conta de cabeça que ela
+ * existe para evitar.
+ *
+ * A escala sai do maior valor absoluto, com a mesma regra de fronteira de
+ * `escala` (o arredondado que chega a 1.000 sobe de escala). Abaixo de um
+ * milhão não escala: `unidade` é "R$". Casas como em `escala`: 0 se o número
+ * impresso passa de 100, senão 2. Negativo com o sinal tipográfico (U+2212).
+ */
+export function escalaDaTabela(valores: readonly (number | null | undefined)[]): {
+  unidade: string;
+  numero: (reais: number | null | undefined) => string;
+} {
+  const ESCALAS: readonly (readonly [number, string])[] = [
+    [1e12, "trilhões"],
+    [1e9, "bilhões"],
+    [1e6, "milhões"],
+  ];
+  const casasDe = (n: number) => (Math.abs(n) >= 100 ? 0 : 2);
+  const maior = Math.max(
+    0,
+    ...valores.filter((v): v is number => typeof v === "number" && Number.isFinite(v)).map(Math.abs),
+  );
+
+  let i = ESCALAS.findIndex(([divisor]) => maior >= divisor);
+  if (i > 0) {
+    const n = maior / ESCALAS[i]![0];
+    if (inteiroImpresso(n, casasDe(n)) >= 1000) i -= 1;
+  }
+  const [divisor, nome] = i < 0 ? [1, ""] : ESCALAS[i]!;
+
+  return {
+    unidade: nome ? `R$ ${nome}` : "R$",
+    numero: (reais) => {
+      if (reais === null || reais === undefined || !Number.isFinite(reais)) return "—";
+      const n = Math.abs(reais) / divisor;
+      const texto = br(n, divisor === 1 ? 0 : casasDe(n));
+      return reais < 0 && /[1-9]/.test(texto) ? `−${texto}` : texto;
+    },
+  };
+}
+
+/**
  * O valor de um indicador na forma em que uma pessoa o lê, **decidindo pela
  * unidade que a própria fonte declara**.
  *

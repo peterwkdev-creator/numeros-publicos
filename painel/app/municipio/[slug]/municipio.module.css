@@ -240,6 +240,8 @@
   color: var(--tinta-suave);
 }
 
+/* .serie .num vence .serie td (text-align: left). */
+.serie .num,
 .num {
   text-align: right;
 }

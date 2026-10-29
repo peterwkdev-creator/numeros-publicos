@@ -14,7 +14,7 @@ import fs from "node:fs";
 import { inflateRawSync } from "node:zlib";
 
 import {
-  concorda, descricaoDe, escala, escalaComSinal, fracaoDe, INDICADORES_DA_CAPA,
+  concorda, descricaoDe, escala, escalaComSinal, escalaDaTabela, fracaoDe, INDICADORES_DA_CAPA,
   maiuscula, periodoDe,
   br, dataCurta, dataPorExtenso, inteiroImpresso, projetar,
   COLUNA_DA_CAPA, rotuloCurto, unidadeDaColuna, type Snapshot,
@@ -3408,4 +3408,27 @@ test("download do MEI: célula vazia onde a fonte omite, e a nota viaja no cabe�
   assert.equal(csv[3], "mei_simei_2009_12_31");
   assert.match(csv.at(-1)!, /nunca zero/);
   assert.equal(cabecalhoMei(s, "xlsx").at(-1), "MEI em 24/10/2026 (posição atual)");
+});
+
+test("`escalaDaTabela`: uma escala para a coluna inteira, pelo maior valor", () => {
+  // A tabela da dívida do estado (28/10/2026) repetia "R$ … bilhões" por
+  // célula e podia misturar milhões e bilhões na mesma coluna.
+  const e = escalaDaTabela([350_000_000, 12_345_000_000, null, -2_000_000_000]);
+  assert.equal(e.unidade, "R$ bilhões");
+  assert.equal(e.numero(350_000_000), "0,35");
+  assert.equal(e.numero(12_345_000_000), "12,35");
+  assert.equal(e.numero(123_456_000_000), "123");
+  assert.equal(e.numero(-2_000_000_000), "−2,00");
+  assert.equal(e.numero(null), "—");
+  // Sem sinal no zero arredondado.
+  assert.equal(e.numero(-1_000), "0,00");
+
+  // A fronteira pelo ARREDONDADO, como em `escala`: 999,7 bi sai em trilhões.
+  assert.equal(escalaDaTabela([999_700_000_000]).unidade, "R$ trilhões");
+  assert.equal(escalaDaTabela([999_000_000_000]).unidade, "R$ bilhões");
+  // Abaixo de um milhão, reais inteiros.
+  const r = escalaDaTabela([28_168.4, null]);
+  assert.equal(r.unidade, "R$");
+  assert.equal(r.numero(28_168.4), "28.168");
+  assert.equal(escalaDaTabela([]).unidade, "R$");
 });

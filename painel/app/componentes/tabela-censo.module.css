@@ -36,6 +36,8 @@
   color: var(--tinta-suave);
 }
 
+/* .tabela .num vence .tabela td (text-align: left). */
+.tabela .num,
 .num {
   text-align: right;
 }

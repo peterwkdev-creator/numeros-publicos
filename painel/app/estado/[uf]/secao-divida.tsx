@@ -1,6 +1,6 @@
 import FonteGrafico from "../../componentes/fonte-grafico";
 import Termo from "../../componentes/termo";
-import { br, dataCurta, escalaComSinal } from "../../../lib/dados";
+import { br, dataCurta, escalaComSinal, escalaDaTabela } from "../../../lib/dados";
 import { anosDoEixo, escala, type SerieBrasil } from "../../../lib/brasil";
 import {
   anosEmTexto, emAnos, fatorIpca, governoEm31, linhasDe, notaDoLimite, temDado,
@@ -61,6 +61,11 @@ export default function SecaoDivida({
   // Reais de dezembro do último ano da série, e não do último deste estado:
   // a coluna tem o mesmo poder de compra nas 27 páginas.
   const ate = Math.max(...snap.exercicios);
+  // Uma unidade para a tabela inteira, no cabeçalho (`escalaDaTabela`).
+  const reais = escalaDaTabela(comDado.flatMap((l) => {
+    const f = fatorIpca(ipca, l.ano, ate);
+    return [l.dc, l.deducoes, l.dcl, l.receita, f === null ? null : l.dcl * f];
+  }));
   const nota = notaDoLimite(linhas);
   const acima = comDado.filter((l) => l.percentual > l.limite);
   const semDado = linhas.filter((l) => !temDado(l)).map((l) => l.ano);
@@ -151,12 +156,12 @@ export default function SecaoDivida({
           <thead>
             <tr>
               <th scope="col">Ano</th>
-              <th scope="col" className={estilos.num}>Dívida total</th>
-              <th scope="col" className={estilos.num}>Descontos (caixa e créditos)</th>
-              <th scope="col" className={estilos.num}>Dívida líquida</th>
-              <th scope="col" className={estilos.num}>Receita corrente líquida</th>
+              <th scope="col" className={estilos.num}>Dívida total ({reais.unidade})</th>
+              <th scope="col" className={estilos.num}>Descontos (caixa e créditos, {reais.unidade})</th>
+              <th scope="col" className={estilos.num}>Dívida líquida ({reais.unidade})</th>
+              <th scope="col" className={estilos.num}>Receita corrente líquida ({reais.unidade})</th>
               <th scope="col" className={estilos.num}>Dívida líquida ÷ receita</th>
-              <th scope="col" className={estilos.num}>Dívida líquida em reais de dez/{ate}</th>
+              <th scope="col" className={estilos.num}>Dívida líquida em {reais.unidade} de dez/{ate}</th>
             </tr>
           </thead>
           <tbody>
@@ -173,12 +178,12 @@ export default function SecaoDivida({
               return (
                 <tr key={l.ano}>
                   <th scope="row">{l.ano}</th>
-                  <td>{escalaComSinal(l.dc).curto}</td>
-                  <td>{escalaComSinal(l.deducoes).curto}</td>
-                  <td>{escalaComSinal(l.dcl).curto}</td>
-                  <td>{escalaComSinal(l.receita).curto}</td>
+                  <td title={escalaComSinal(l.dc).exato}>{reais.numero(l.dc)}</td>
+                  <td title={escalaComSinal(l.deducoes).exato}>{reais.numero(l.deducoes)}</td>
+                  <td title={escalaComSinal(l.dcl).exato}>{reais.numero(l.dcl)}</td>
+                  <td title={escalaComSinal(l.receita).exato}>{reais.numero(l.receita)}</td>
                   <td>{pct(l.percentual)}</td>
-                  <td>{fator === null ? "—" : escalaComSinal(l.dcl * fator).curto}</td>
+                  <td>{fator === null ? "—" : reais.numero(l.dcl * fator)}</td>
                 </tr>
               );
             })}

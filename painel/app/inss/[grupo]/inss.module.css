@@ -29,6 +29,6 @@
 .lista caption { text-align: left; font-size: var(--texto-xs); color: var(--tinta-fraca); padding-bottom: .5rem; }
 .lista th, .lista td { padding: .5rem .6rem; border-bottom: 1px solid var(--borda); text-align: left; }
 .lista th[scope="col"] { font-size: var(--texto-xs); text-transform: uppercase; letter-spacing: .03em; color: var(--tinta-fraca); }
-.num { text-align: right; }
+.lista .num, .num { text-align: right; }
 
 @media print { .rolagem { overflow-x: visible; } }

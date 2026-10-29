@@ -356,6 +356,8 @@
   background: var(--acento-suave);
 }
 
+/* .tabela .numero vence .tabela td (text-align: left). */
+.tabela .numero,
 .numero {
   text-align: right;
 }

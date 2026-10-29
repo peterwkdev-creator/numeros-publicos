@@ -535,6 +535,10 @@ body:has(#busca-capa) .barra-site [data-busca] {
    (`.linhaDestaque th`, no mapa) tem de vencer. */
 .rola-x {
   overflow-x: auto;
+  /* Contém o `.so-leitor` (absoluto) das células: sem isto ele se posiciona
+     pela página, fora da caixa que rola, e a página inteira rola de lado
+     (/eleicoes-2026/dados/ a 360 px, 28/10/2026). */
+  position: relative;
   background-color: var(--rola-fundo, var(--fundo));
   background-image:
     linear-gradient(to right, var(--rola-fundo, var(--fundo)) 40%, transparent),

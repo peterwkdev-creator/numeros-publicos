@@ -233,6 +233,7 @@
 .rolagem {
   overflow-x: auto;
   margin-bottom: var(--e-12);
+  container-type: inline-size; /* 100cqi da legenda */
 }
 
 /* A lista completa de municipios -- ate 417 linhas. E o motivo desta pagina
@@ -242,6 +243,16 @@
   width: 100%;
   min-width: 34rem;
   font-size: var(--texto-sm);
+}
+
+/* A legenda fica do tamanho da caixa que rola, presa a esquerda: sem isso
+   ela herda a largura da tabela larga, centralizada, e sai cortada. */
+.lista caption {
+  position: sticky;
+  left: 0;
+  max-width: 100cqi;
+  text-align: left;
+  padding-bottom: var(--e-2);
 }
 
 /* Linha compacta, e a conta que decidiu: sao 497 municipios na pagina do Rio
@@ -287,6 +298,14 @@
 .lista .num {
   text-align: right;
   white-space: nowrap;
+}
+
+/* O cabeçalho quebra a linha: com a unidade no `<th>` ("Dívida total (R$
+   bilhões)") e o `nowrap` acima, a tabela da dívida ia a 1.568 px numa caixa
+   de 705 (medido em 28/10); quebrando, cabe em 705, e em 360 cai a 467 px. */
+.lista thead th.num {
+  white-space: normal;
+  vertical-align: bottom;
 }
 
 /* No corpo das duas listas, toda célula de dado é número, menos a situação:

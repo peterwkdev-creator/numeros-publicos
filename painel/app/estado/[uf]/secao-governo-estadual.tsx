@@ -1,6 +1,6 @@
 import ComposicaoBarras from "../../componentes/composicao-barras";
 import Termo from "../../componentes/termo";
-import { br, dataCurta, escala } from "../../../lib/dados";
+import { br, dataCurta, escala, escalaDaTabela } from "../../../lib/dados";
 import { emContracao } from "../../../lib/estado";
 import {
   FUNCOES_DA_SERIE, fatiasDoAno, serieDaFuncao, ultimoAno,
@@ -26,6 +26,8 @@ export default function SecaoGovernoEstadual({ c }: { c: Contexto }) {
   }));
   // As linhas da tabela: os anos do arquivo, do mais velho ao mais novo.
   const anos = [...snap.exercicios].sort((a, b) => a - b);
+  // Uma unidade para a tabela inteira, no cabeçalho (`escalaDaTabela`).
+  const reais = escalaDaTabela(series.flatMap(({ serie }) => serie.map((p) => p?.valor)));
 
   return (
     <section className={estilos.texto} id="governo-estadual">
@@ -90,7 +92,7 @@ export default function SecaoGovernoEstadual({ c }: { c: Contexto }) {
             <tr>
               <th scope="col">Ano</th>
               {series.map(({ nome }) => (
-                <th key={nome} scope="col" className={estilos.num}>{nome}</th>
+                <th key={nome} scope="col" className={estilos.num}>{nome} ({reais.unidade})</th>
               ))}
               <th scope="col" className={estilos.num}>Pessoal (% da receita)</th>
             </tr>
@@ -102,7 +104,7 @@ export default function SecaoGovernoEstadual({ c }: { c: Contexto }) {
                 <tr key={ano}>
                   <th scope="row">{ano}</th>
                   {series.map(({ nome, serie }) => (
-                    <td key={nome}>{escala(serie[i]?.valor).curto}</td>
+                    <td key={nome} title={escala(serie[i]?.valor).exato}>{reais.numero(serie[i]?.valor)}</td>
                   ))}
                   <td>{p ? `${br(p[2], 2)}%` : "—"}</td>
                 </tr>

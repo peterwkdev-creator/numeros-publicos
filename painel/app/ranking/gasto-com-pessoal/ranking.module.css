@@ -26,11 +26,11 @@
 /* `.lista .num`, e não `.num`: sozinha ela perdia para `.lista th, .lista td`
    (0-1-1 contra 0-1-0), e os números saíram à esquerda até 16/10/2026. */
 .lista .num { text-align: right; }
-.posicao { color: var(--tinta-fraca); width: 3rem; }
+.lista .posicao { color: var(--tinta-fraca); width: 3rem; text-align: right; }
 /* No corpo, a posição e os números vão pela coluna, e não por classe em cada
    célula: eram até 1.314 `class` iguais por página. A 3ª coluna é a UF, texto.
    O `_acima` fica na célula, porque é o que o `conferir-numeros` lê. */
-.lista tbody td:first-child { color: var(--tinta-fraca); width: 3rem; }
+.lista tbody td:first-child { color: var(--tinta-fraca); width: 3rem; text-align: right; }
 .lista tbody td:nth-child(n+4) { text-align: right; }
 .lista tbody td:first-child,
 .lista tbody td:nth-child(n+4) {

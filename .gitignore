@@ -39,3 +39,8 @@ motores/*/painel/dados/
 
 # Cache da coleta das eleicoes (numeros_publicos/eleicoes.py)
 .cache/
+
+# Segredos locais (auditoria de 29/10/2026, A5): como nos motores.
+.env
+.env.*
+!.env.example

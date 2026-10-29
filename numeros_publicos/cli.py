@@ -877,6 +877,17 @@ def construir_parser() -> argparse.ArgumentParser:
                     default=os.environ.get("EMENDAS_BANCO", "emendas.db"))
     em.set_defaults(func=emendas_ingerir)
 
+    px = sub.add_parser("pix-ingerir",
+                        help="grava o plano de ação da emenda Pix (Transferegov) "
+                             "e o compara com o pago da CGU")
+    px.add_argument("--snapshot", default="painel/dados/snapshot.json",
+                    help="os municípios do site, para o CNPJ que a CGU não conhece")
+    px.add_argument("--banco-emendas",
+                    default=os.environ.get("EMENDAS_BANCO", "emendas.db"),
+                    help="o mesmo banco das emendas: a ligação lê a tabela pagamento")
+    px.add_argument("--permitir-encolher", action="store_true")
+    px.set_defaults(func=pix_ingerir)
+
     ee = sub.add_parser("emendas-exportar",
                         help="gera o emendas.json que o painel lê, com a soma "
                              "fechada contra o banco")
@@ -1239,6 +1250,31 @@ def emendas_ingerir(args, baixar=None) -> int:
           + " (confere com o CSV ao centavo)")
     print(f"tabela de apelidos: {r['apelidos']} nomes antigos, todos conferidos "
           "contra o snapshot")
+    return 0
+
+
+def pix_ingerir(args, abrir=None) -> int:
+    """Lê as quatro tabelas da emenda Pix no Transferegov, liga o plano ao
+    município pelo CNPJ que a CGU pagou e grava no `emendas.db`; no fim,
+    compara o plano "CIENTE" com o pago da CGU por ano da emenda."""
+    import json as _json
+    from . import pix
+    try:
+        snapshot = _json.loads(Path_(args.snapshot).read_text(encoding="utf-8"))
+        r = pix.ingerir(snapshot, args.banco_emendas, abrir=abrir,
+                        permitir_encolher=args.permitir_encolher)
+    except pix.ErroPix as e:
+        print(f"[!] {e}", file=sys.stderr)
+        return 1
+    c = r["contagens"]
+    print(f"{c['pix_plano']} planos, {c['pix_executor']} executores, "
+          f"{c['pix_area']} áreas ({r['orfas']} de executor inexistente, fora), "
+          f"{c['pix_relatorio']} relatórios; {r['municipios']} municípios "
+          "(cada tabela igual ao total que a API declara)")
+    print("ano  plano CIENTE (R$)   CGU pago (R$)   município-ano iguais")
+    for ano, plano, cgu, iguais, pares in pix.conferir_com_cgu(args.banco_emendas):
+        print(f"{ano} {plano / 100:>17_.2f} {cgu / 100:>15_.2f}   {iguais} de {pares}"
+              .replace(".", ",").replace("_", "."))
     return 0
 
 

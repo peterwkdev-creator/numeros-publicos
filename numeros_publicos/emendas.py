@@ -30,6 +30,13 @@ snapshot do site, com a tabela versionada `emendas_apelidos.csv` para os
 nomes antigos que a fonte ainda usa (Embu, Açu, Augusto Severo...). Nome que
 não casa é ERRO, com a lista: nunca descarte em silêncio.
 
+A UF e o município da fonte também erram: em 10/2026, 33 pagamentos ao
+"MUNICIPIO DE PONTE ALTA" (SC) vinham como RS/PORTO ALEGRE e foram parar em
+Porto Alegre. Por isso o favorecido de natureza Município ("MUNICIPIO DE X")
+tem de ter o nome do município casado; o que difere só entra pela tabela
+versionada `emendas_favorecidos.csv` (CNPJ → código IBGE, com a prova), que
+também corrige o código quando a UF da fonte está errada.
+
 ## O total confere ao centavo
 
 Antes de gravar, a soma do banco é comparada com uma segunda leitura do CSV,
@@ -55,6 +62,10 @@ URL = ("https://portaldatransparencia.gov.br/download-de-dados/"
        "emendas-parlamentares/UNICO")
 ARQUIVO = "EmendasParlamentares_PorFavorecido.csv"
 APELIDOS = Path(__file__).with_name("emendas_apelidos.csv")
+FAVORECIDOS = Path(__file__).with_name("emendas_favorecidos.csv")
+
+#: O prefixo do favorecido de natureza Município; o resto é o nome dele.
+PREFIXO = re.compile(r"(MUNICIPIO D[EAO] |PREFEITURA MUNICIPAL DE |MUNICIPIO )")
 
 #: As naturezas jurídicas que entram. Lista do que é permitido: ver o topo.
 NATUREZAS = frozenset({
@@ -161,22 +172,54 @@ def carregar_apelidos(municipios: dict[tuple[str, str], int],
     return saida
 
 
+def carregar_favorecidos(municipios: dict[tuple[str, str], int],
+                         caminho: str | Path = FAVORECIDOS) -> dict[str, int]:
+    """`{CNPJ: código IBGE}` dos favorecidos cujo nome difere do município
+    casado. O código tem de existir com o nome e a UF escritos ao lado."""
+    por_codigo = {c: k for k, c in municipios.items()}
+    saida = {}
+    with open(caminho, encoding="utf-8", newline="") as fh:
+        for l in csv.DictReader(fh, delimiter=";"):
+            codigo = int(l["ibge"])
+            if por_codigo.get(codigo) != chave(l["uf"], l["nome_ibge"]):
+                raise ErroEmendas(f"favorecido {l['cnpj']}: o código {codigo} "
+                                  f"não é {l['nome_ibge']}-{l['uf']} no snapshot")
+            if l["cnpj"] in saida:
+                raise ErroEmendas(f"favorecido {l['cnpj']} repetido na tabela")
+            saida[l["cnpj"]] = codigo
+    return saida
+
+
 def pagamentos(linhas: Iterable[dict[str, str]],
                municipios: dict[tuple[str, str], int],
-               apelidos: dict[tuple[str, str], int]) -> tuple[list[tuple], int]:
+               apelidos: dict[tuple[str, str], int],
+               favorecidos: dict[str, int] | None = None) -> tuple[list[tuple], int]:
     """Os pagamentos de natureza municipal, casados com o IBGE, e quantas
-    linhas foram lidas. Nome sem casar é erro, com todos os nomes de uma vez."""
-    saida, lidas, sem_casar = [], 0, {}
+    linhas foram lidas. Nome sem casar é erro, com todos os nomes de uma vez;
+    favorecido Município com outro nome que o casado também, e linha da
+    tabela de favorecidos que não serviu (sobra esconde mudança na fonte)."""
+    favorecidos = favorecidos or {}
+    nomes = {c: k for k, c in municipios.items()}
+    saida, lidas, sem_casar, divergentes, usados = [], 0, {}, {}, set()
     for l in linhas:
         lidas += 1
         if l["Natureza Jurídica"] not in NATUREZAS:
             continue
         k = chave(l["UF Favorecido"], l["Município Favorecido"])
         codigo = municipios.get(k) or apelidos.get(k)
-        if codigo is None:
+        cnpj, ano_mes = l["Código do Favorecido"].strip(), l["Ano/Mês"].strip()
+        if cnpj in favorecidos:
+            codigo = favorecidos[cnpj]
+            usados.add(cnpj)
+        elif codigo is None:
             sem_casar[k] = sem_casar.get(k, 0) + 1
             continue
-        cnpj, ano_mes = l["Código do Favorecido"].strip(), l["Ano/Mês"].strip()
+        elif l["Natureza Jurídica"] == "Município":
+            fav = chave("", l["Favorecido"])[1]
+            m = PREFIXO.match(fav)
+            if (fav[m.end():] if m else fav) != nomes[codigo][1]:
+                divergentes[(cnpj, fav)] = nomes[codigo]
+                continue
         if not CNPJ.fullmatch(cnpj):
             raise ErroEmendas(f"favorecido municipal sem CNPJ de 14 dígitos: "
                               f"{l['Favorecido'][:40]!r} ({len(cnpj)} caracteres)")
@@ -193,6 +236,15 @@ def pagamentos(linhas: Iterable[dict[str, str]],
         lista = ", ".join(f"{uf}/{n} ({q})" for (uf, n), q in sorted(sem_casar.items()))
         raise ErroEmendas(f"{len(sem_casar)} nome(s) de município sem casar; "
                           f"acrescentar a {APELIDOS.name} com a prova: {lista}")
+    if divergentes:
+        lista = ", ".join(f"{c} {f} em {uf}/{n}"
+                          for (c, f), (uf, n) in sorted(divergentes.items()))
+        raise ErroEmendas(f"{len(divergentes)} favorecido(s) com nome diferente "
+                          f"do município casado; conferir a UF e acrescentar a "
+                          f"{FAVORECIDOS.name} com a prova: {lista}")
+    if sobra := sorted(set(favorecidos) - usados):
+        raise ErroEmendas(f"{FAVORECIDOS.name}: {len(sobra)} CNPJ sem pagamento "
+                          f"na fonte: {', '.join(sobra)}")
     return saida, lidas
 
 
@@ -284,11 +336,14 @@ class ArmazemEmendas:
 
 
 def ingerir(zip_: str | Path, snapshot: dict, banco: str | Path,
-            origem: str = URL, tabela_apelidos: str | Path = APELIDOS) -> dict:
+            origem: str = URL, tabela_apelidos: str | Path = APELIDOS,
+            tabela_favorecidos: str | Path = FAVORECIDOS) -> dict:
     """Lê o zip, casa com o IBGE, confere o total e grava. Devolve o resumo."""
     municipios = municipios_do_snapshot(snapshot)
     apelidos = carregar_apelidos(municipios, tabela_apelidos)
-    linhas, lidas = pagamentos(linhas_do_zip(zip_), municipios, apelidos)
+    favorecidos = carregar_favorecidos(municipios, tabela_favorecidos)
+    linhas, lidas = pagamentos(linhas_do_zip(zip_), municipios, apelidos,
+                               favorecidos)
     fonte = total_da_fonte(linhas_do_zip(zip_))
     with ArmazemEmendas(banco) as db:
         db.gravar(linhas, fonte, sha=sha256(zip_), bytes_=Path(zip_).stat().st_size,

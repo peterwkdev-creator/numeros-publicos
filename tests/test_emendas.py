@@ -17,7 +17,8 @@ from pathlib import Path
 
 from numeros_publicos import emendas
 from numeros_publicos.emendas import (
-    ArmazemEmendas, ErroEmendas, carregar_apelidos, centavos, ingerir,
+    ArmazemEmendas, ErroEmendas, carregar_apelidos, carregar_favorecidos,
+    centavos, ingerir,
     municipios_do_snapshot, pagamentos,
 )
 
@@ -35,7 +36,8 @@ FUNDO = "Fundo Público da Administração Direta Municipal"
 
 
 def linha(natureza=MUN, uf="BA", municipio="SALVADOR", valor="100,00",
-          codigo="13927801000149", ano_mes="202501", favorecido="MUNICIPIO X"):
+          codigo="13927801000149", ano_mes="202501", favorecido=None):
+    favorecido = favorecido or f"MUNICIPIO DE {municipio}"
     return ["202512340001", "1234", "FULANO", "0001", "Emenda Individual",
             ano_mes, codigo, favorecido, natureza, "Pessoa Juridica", uf,
             municipio, valor]
@@ -53,6 +55,13 @@ def zip_de(pasta: Path, linhas: list[list[str]]) -> Path:
 def apelidos_de(pasta: Path, linhas: list[str]) -> Path:
     caminho = pasta / "apelidos.csv"
     caminho.write_text("uf;nome_na_fonte;ibge;nome_ibge;prova\n"
+                       + "".join(l + "\n" for l in linhas), encoding="utf-8")
+    return caminho
+
+
+def favorecidos_de(pasta: Path, linhas: list[str]) -> Path:
+    caminho = pasta / "favorecidos.csv"
+    caminho.write_text("cnpj;favorecido;ibge;nome_ibge;uf;prova\n"
                        + "".join(l + "\n" for l in linhas), encoding="utf-8")
     return caminho
 
@@ -101,7 +110,8 @@ class TestPagamentos(unittest.TestCase):
         self.assertIn("SP/EMBU (2)", str(e.exception))
 
     def test_apelido_resolve(self):
-        linhas = [dict(zip(emendas.COLUNAS, linha(uf="RN", municipio="AÇU")))]
+        linhas = [dict(zip(emendas.COLUNAS, linha(uf="RN", municipio="AÇU",
+                                                  favorecido="MUNICIPIO DE ASSU")))]
         saida, _ = pagamentos(linhas, self.mun, {("RN", "ACU"): 2400208})
         self.assertEqual(saida[0][6], 2400208)
 
@@ -110,6 +120,65 @@ class TestPagamentos(unittest.TestCase):
         linhas = [dict(zip(emendas.COLUNAS, linha(codigo="12345678901")))]
         with self.assertRaises(ErroEmendas):
             pagamentos(linhas, self.mun, {})
+
+
+#: O caso real de 10/2026: a CGU gravava o Município de Ponte Alta (SC) como
+#: RS/PORTO ALEGRE, e 33 pagamentos foram parar em Porto Alegre.
+PONTE_ALTA = {"municipios": [[4314902, "Porto Alegre", "RS"],
+                             [4213302, "Ponte Alta", "SC"]]}
+
+
+class TestFavorecidos(unittest.TestCase):
+    def setUp(self):
+        self.mun = municipios_do_snapshot(PONTE_ALTA)
+        self.linhas = [dict(zip(emendas.COLUNAS, linha(
+            uf="RS", municipio="PORTO ALEGRE", codigo="83755850000127",
+            favorecido="MUNICIPIO DE PONTE ALTA")))]
+
+    def test_nome_diferente_do_casado_e_erro(self):
+        with self.assertRaises(ErroEmendas) as e:
+            pagamentos(self.linhas, self.mun, {})
+        self.assertIn("83755850000127 MUNICIPIO DE PONTE ALTA em RS/PORTO ALEGRE",
+                      str(e.exception))
+
+    def test_tabela_corrige_o_codigo(self):
+        saida, _ = pagamentos(self.linhas, self.mun, {}, {"83755850000127": 4213302})
+        self.assertEqual(saida[0][6], 4213302)
+
+    def test_prefixos_e_acento_casam(self):
+        linhas = [dict(zip(emendas.COLUNAS, linha(
+            uf="RS", municipio="PORTO ALEGRE", favorecido=f)))
+            for f in ("MUNICÍPIO DE PORTO ALEGRE", "PREFEITURA MUNICIPAL DE PORTO ALEGRE")]
+        saida, _ = pagamentos(linhas, self.mun, {})
+        self.assertEqual([p[6] for p in saida], [4314902, 4314902])
+
+    def test_fundo_nao_confere_o_nome(self):
+        linhas = [dict(zip(emendas.COLUNAS, linha(
+            natureza=FUNDO, uf="RS", municipio="PORTO ALEGRE",
+            favorecido="FUNDO MUNICIPAL DE SAUDE")))]
+        self.assertEqual(pagamentos(linhas, self.mun, {})[0][0][6], 4314902)
+
+    def test_linha_que_sobra_e_erro(self):
+        with self.assertRaises(ErroEmendas) as e:
+            pagamentos(self.linhas, self.mun, {},
+                       {"83755850000127": 4213302, "11111111000111": 4314902})
+        self.assertIn("11111111000111", str(e.exception))
+
+    def test_codigo_tem_de_ser_o_nome_escrito(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            caminho = favorecidos_de(Path(tmp), [
+                "83755850000127;MUNICIPIO DE PONTE ALTA;4314902;Ponte Alta;SC;x"])
+            with self.assertRaises(ErroEmendas):
+                carregar_favorecidos(self.mun, caminho)
+
+    @unittest.skipUnless((SITE / "painel/dados/snapshot.json").exists(),
+                         "sem o snapshot do painel")
+    def test_tabela_real_vale_contra_o_snapshot_real(self):
+        snap = json.loads((SITE / "painel/dados/snapshot.json")
+                          .read_text(encoding="utf-8"))
+        favorecidos = carregar_favorecidos(municipios_do_snapshot(snap))
+        self.assertEqual(len(favorecidos), 30)
+        self.assertEqual(favorecidos["83755850000127"], 4213302)
 
 
 class TestApelidos(unittest.TestCase):
@@ -145,6 +214,7 @@ class TestIngerir(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.pasta = Path(self.tmp.name)
         self.apelidos = apelidos_de(self.pasta, ["RN;AÇU;2400208;Assú;localidade"])
+        self.favorecidos = favorecidos_de(self.pasta, [])
         self.banco = self.pasta / "emendas.db"
 
     def tearDown(self):
@@ -152,7 +222,8 @@ class TestIngerir(unittest.TestCase):
 
     def ingerir(self, linhas):
         return ingerir(zip_de(self.pasta, linhas), SNAPSHOT, self.banco,
-                       origem="teste", tabela_apelidos=self.apelidos)
+                       origem="teste", tabela_apelidos=self.apelidos,
+                       tabela_favorecidos=self.favorecidos)
 
     def test_grava_e_confere_ao_centavo(self):
         r = self.ingerir([
@@ -207,7 +278,8 @@ class TestIngerir(unittest.TestCase):
         with zipfile.ZipFile(caminho, "w") as z:
             z.writestr(emendas.ARQUIVO, "Código;Valor\r\n1;2".encode("latin-1"))
         with self.assertRaises(ErroEmendas):
-            ingerir(caminho, SNAPSHOT, self.banco, tabela_apelidos=self.apelidos)
+            ingerir(caminho, SNAPSHOT, self.banco, tabela_apelidos=self.apelidos,
+                    tabela_favorecidos=self.favorecidos)
         self.assertFalse(self.banco.exists())
 
 

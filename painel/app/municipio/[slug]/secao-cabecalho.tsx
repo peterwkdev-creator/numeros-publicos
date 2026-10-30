@@ -13,7 +13,7 @@ import type { Contexto } from "./contexto";
  * Extraído de `page.tsx` em 15/10/2026 (item 19 da revisão de 11/10/2026): o HTML é o mesmo, byte a byte.
  */
 export default function Cabecalho({ c }: { c: Contexto }) {
-  const { m, atualizado, uf , estilos } = c;
+  const { m, atualizado, uf, abertura, estilos } = c;
   const jsonLd = jsonLdDe(c);
   return (
     <>
@@ -63,7 +63,11 @@ export default function Cabecalho({ c }: { c: Contexto }) {
         <h1 className={estilos.titulo}>
           {m.nome} <span className={estilos.uf}>{m.uf}</span>
         </h1>
+        {/* O primeiro texto que o buscador lê. Até 30/10/2026 era o mesmo nas
+            5.571 páginas; agora abre pelo que distingue o município no estado
+            (`lib/abertura.ts`), e a procedência vem depois. */}
         <p className={estilos.chamada}>
+          {abertura ? <>{abertura}{" "}</> : null}
           Código IBGE {m.codigo}. Os números abaixo vêm de fontes oficiais — o
           IBGE, o Tesouro Nacional, o INEP, os ministérios da Saúde e do
           Trabalho e a Controladoria-Geral da União —, com a fonte ao lado de

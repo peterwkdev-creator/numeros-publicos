@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { br, dataCurta, descricaoDe, periodoDe } from "../../../lib/dados";
 import { aberturaFiscalDe, tituloFiscalDe } from "../../../lib/titulo";
+import { rotuloDe } from "../../../lib/abertura";
 import { funcoesRecentesDe } from "../../../lib/fiscal";
 import { trajetoriaDe } from "../../../lib/ideb";
 import { cartaoSocial, imagemDoEstado, SITE } from "../../../lib/servidor";
@@ -68,9 +69,14 @@ export async function generateMetadata(
   { params }: { params: Promise<{ slug: string }> },
 ): Promise<Metadata> {
   const { slug } = await params;
-  const { municipios, fiscal, ideb } = await carregar();
+  const dados = await carregar();
+  const { municipios, fiscal, ideb } = dados;
   const m = municipios.find((x) => x.slug === slug);
   if (!m) return {};
+  // O fato que mais distingue o município no estado, o mesmo que abre a
+  // página (`lib/abertura.ts`, 30/10/2026): entra logo depois da população.
+  const distinto = montarContexto(dados, m).fatos[0] ?? null;
+  const rotulo = distinto ? rotuloDe(distinto, m.uf) : null;
 
   const pop = m.valores["populacao-censo-2022"] ?? null;
   // O implausível NÃO entra na descrição. A página o exibe marcado e
@@ -85,8 +91,13 @@ export async function generateMetadata(
   // A descrição carrega os NÚMEROS, não adjetivos. É o que aparece no
   // resultado da busca, e número é o que faz alguém clicar num painel de dado.
   const partes = [
-    pop !== null ? `${br(pop, 0)} habitantes` : null,
-    pessoal !== null ? `${br(pessoal, 2)}% da receita em pessoal` : null,
+    pop !== null
+      ? `${br(pop, 0)} habitantes${distinto?.tema === "populacao" ? `, ${rotulo}` : ""}`
+      : null,
+    distinto?.tema === "pib" || distinto?.tema === "emendas" ? rotulo : null,
+    pessoal !== null
+      ? `${br(pessoal, 2)}% da receita em pessoal${distinto?.tema === "pessoal" ? `, ${rotulo}` : ""}`
+      : null,
     // A maior função é o número mais concreto da página inteira, e o único
     // que responde à pergunta que a pessoa realmente digitou na busca.
     maiorFuncao && maiorFuncao.percentual !== null
@@ -108,7 +119,9 @@ export async function generateMetadata(
     legal: fiscal.limites.legal,
     prudencial: m.fiscal?.limitePrudencial ?? fiscal.limites.prudencial,
   });
-  const resto = partes.filter((p) => !String(p).endsWith("da receita em pessoal"));
+  // `includes`, não `endsWith`: a parte do pessoal pode levar o rótulo da
+  // abertura depois ("..., o 3º maior do Ceará"), e sai inteira com ele.
+  const resto = partes.filter((p) => !String(p).includes("da receita em pessoal"));
   const descricao = descricaoDe(
     abertura
       ? `${abertura}.${resto.length ? ` ${resto.join(", ")}.` : ""}`

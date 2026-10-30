@@ -3,6 +3,7 @@ import { atualizadoEm } from "../../../lib/sitemap";
 import { daMesmaRegiao, deEstado, vizinhosDe } from "../../../lib/estado";
 import { MINIMO_MEDIANA, medianasSaudeCache, rankingCache } from "../../../lib/nacional";
 import { posicaoEntre, posicaoNoEstado } from "../../../lib/posicao";
+import { aberturaDe, escolherFatos } from "../../../lib/abertura";
 import { compararFuncoes, DESLOCAMENTO_MINIMO, funcoesRecentesDe, INSTALADO_EM, interrupcoes, rclDesmentida, receitaDe, receitaRecenteDe, saltoSobreAHistoria, nomeQuadrimestre, fraseBimestre, fraseDozeMeses, saudeDe, serieDePessoal, variacao, atualDeFuncoes, serieFuncoesDe } from "../../../lib/fiscal";
 import { medianaGeral, trajetoriaDe } from "../../../lib/ideb";
 import { linhasDaUf, medianasCache, medidasDe, taxasCache } from "../../../lib/censo";
@@ -18,6 +19,20 @@ import type Estilos from "./municipio.module.css";
  * Extraído de `page.tsx` em 15/10/2026 (item 19 da revisão de 11/10/2026): o HTML é o mesmo, byte a byte.
  */
 export function montarContexto(dados: Dados, m: Municipio) {
+  // O `generateMetadata` (a abertura na descrição) e a página pedem o mesmo
+  // contexto, um logo depois do outro no mesmo processo. Sem guardar o último,
+  // o build local com `cpus: 4` foi de 8 min 40 s a 14 min 11 s (30/10/2026).
+  // A chave é o snapshot (mesmo objeto enquanto o dado não muda, pelo cache
+  // de `lerSnapshot`) e o código: se a ordem for outra, só se perde o acerto.
+  if (ultimo && ultimo.snapshot === dados.snapshot && ultimo.codigo === m.codigo) return ultimo.c;
+  const c = calcularContexto(dados, m);
+  ultimo = { snapshot: dados.snapshot, codigo: m.codigo, c };
+  return c;
+}
+
+let ultimo: { snapshot: Dados["snapshot"]; codigo: Municipio["codigo"]; c: ReturnType<typeof calcularContexto> } | null = null;
+
+function calcularContexto(dados: Dados, m: Municipio) {
   const { snapshot, fiscal, ideb, idebFinais, caged, cagedAnos, emendas, regioes, simei, municipios } = dados;
   // Os mesmos argumentos de `app/municipio/sitemap.ts`.
   const atualizado = atualizadoEm(snapshot, fiscal, caged.coletadoEm);
@@ -185,6 +200,26 @@ export function montarContexto(dados: Dados, m: Municipio) {
     ? `2º semestre de ${fiscal.exercicio}`
     : quadrimestre;
   const aberturaRgf = fraseDozeMeses(fiscal.exercicio, fiscal.periodo, f?.simplificado === true);
+
+  // A abertura (Fase 1 da visibilidade, 30/10/2026): os dois fatos acima em
+  // que o município fica mais perto de uma ponta do estado. Ver `lib/abertura.ts`.
+  const pessoalComparavel = comparavelNaFaixa(f);
+  const fatos = escolherFatos([
+    posPop && pop !== null
+      ? { tema: "populacao", valor: pop, ...posPop, periodo: null } : null,
+    posPerCapita && perCapita !== null
+      ? { tema: "pib", valor: perCapita, ...posPerCapita,
+          periodo: periodoDe(snapshot, "pib-municipal") } : null,
+    posEmendas && emendasPh !== null && emendasM
+      ? { tema: "emendas", valor: emendasPh, ...posEmendas,
+          periodo: String(emendasM.cheio.ano) } : null,
+    posicao && typeof pessoalComparavel === "number"
+      ? { tema: "pessoal", valor: pessoalComparavel, mediana: posicao.mediana,
+          abaixo: posicao.abaixo,
+          acima: posicao.valores.filter((v) => v > pessoalComparavel).length,
+          de: posicao.base, periodo: periodoRgf } : null,
+  ]);
+  const abertura = aberturaDe(m.nome, m.uf, fatos);
   // `serieDePessoal`, e não a série crua: o ponto que o cartão condena pela
   // RCL desmentida não pode sustentar a variação nem o traço do gráfico.
   const { todos: serie, usaveis, condenado } =
@@ -294,7 +329,7 @@ export function montarContexto(dados: Dados, m: Municipio) {
     .slice(0, 5);
 
   return {
-    snapshot, fiscal, ideb, caged, cagedAnos, emendas, m, atualizado, uf, regiao, pelaRegiao, vizinhos, medidas, medianas, serieFuncoes, taxasPais, medidasTrabalho, medianasTrabalho, taxasTrabalho, renda, medianaRenda, salario, medianaSalario, comUf, medianasUf, medianasTrabalhoUf, medianaRendaUf, medianaSalarioUf, legendaMedianas, anoEmpresas, temCensoTrabalho, temEmpresas, cagedM, cagedAnosM, simei, simeiM, simeiPos, simeiTaxaPais, emendasM, pop, estimada, pibReais, perCapita, emendasPh, posEmendas, posPop, posPerCapita, naoEntregaramNoEstado, consultadosNoEstado, f, instaladoEm, receitaContraRcl, saltoRcl, posicao, quadrimestre, periodoRgf, aberturaRgf, serie, usaveis, condenado, delta, finalCondenado, vazios, semestral, umPeriodo, saude, funcoes, receita, bimestre, aberturaBimestre, exercicioColetado, atrasado, maior, iniciais, finais, medianaIniciais, medianaFinais, educacao, nacional, comparacao, mudancas,
+    snapshot, fiscal, ideb, caged, cagedAnos, emendas, m, atualizado, uf, fatos, abertura, regiao, pelaRegiao, vizinhos, medidas, medianas, serieFuncoes, taxasPais, medidasTrabalho, medianasTrabalho, taxasTrabalho, renda, medianaRenda, salario, medianaSalario, comUf, medianasUf, medianasTrabalhoUf, medianaRendaUf, medianaSalarioUf, legendaMedianas, anoEmpresas, temCensoTrabalho, temEmpresas, cagedM, cagedAnosM, simei, simeiM, simeiPos, simeiTaxaPais, emendasM, pop, estimada, pibReais, perCapita, emendasPh, posEmendas, posPop, posPerCapita, naoEntregaramNoEstado, consultadosNoEstado, f, instaladoEm, receitaContraRcl, saltoRcl, posicao, quadrimestre, periodoRgf, aberturaRgf, serie, usaveis, condenado, delta, finalCondenado, vazios, semestral, umPeriodo, saude, funcoes, receita, bimestre, aberturaBimestre, exercicioColetado, atrasado, maior, iniciais, finais, medianaIniciais, medianaFinais, educacao, nacional, comparacao, mudancas,
   };
 }
 

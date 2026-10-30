@@ -33,6 +33,10 @@ import {
   type PontoSerie, type Receita,
 } from "../lib/fiscal.ts";
 import { posicaoEntre, posicaoNoEstado, rotuloAbaixo } from "../lib/posicao.ts";
+import {
+  aberturaDe, escolherFatos, extremidade, fraseDe, MINIMO_ABERTURA, rotuloDe, TEMAS,
+  type FatoDoEstado, type Tema,
+} from "../lib/abertura.ts";
 import { daMesmaRegiao, deEstado, emContracao, medianaDePessoal, type SnapshotRegioes } from "../lib/estado.ts";
 import { trilha } from "../lib/jsonld.ts";
 import {
@@ -493,7 +497,7 @@ test("a chave do IndexNow no script é EXATAMENTE a do arquivo público", () => 
 
 test("posicaoNoEstado situa sem classificar", () => {
   const p = posicaoNoEstado(30, [10, 20, 30, 40, 50]);
-  assert.deepEqual(p, { abaixo: 2, de: 5, mediana: 30 });
+  assert.deepEqual(p, { abaixo: 2, acima: 2, de: 5, mediana: 30 });
 });
 
 test("quem não tem o valor fica FORA da conta, não no fim", () => {
@@ -3431,4 +3435,75 @@ test("`escalaDaTabela`: uma escala para a coluna inteira, pelo maior valor", () 
   assert.equal(r.unidade, "R$");
   assert.equal(r.numero(28_168.4), "28.168");
   assert.equal(escalaDaTabela([]).unidade, "R$");
+});
+
+// --- A abertura da página de município (`lib/abertura.ts`, 30/10/2026) ---
+
+const fato = (tema: Tema, abaixo: number, acima: number, de: number,
+  extra: Partial<FatoDoEstado> = {}): FatoDoEstado =>
+  ({ tema, valor: 100, mediana: 50, abaixo, acima, de, periodo: null, ...extra });
+
+test("extremidade: 1 nas duas pontas, 0 no meio", () => {
+  assert.equal(extremidade(fato("pib", 20, 0, 21)), 1);
+  assert.equal(extremidade(fato("pib", 0, 20, 21)), 1);
+  assert.equal(extremidade(fato("pib", 10, 10, 21)), 0);
+  assert.equal(extremidade(fato("pib", 0, 0, 1)), 0);
+});
+
+test("escolherFatos fica com os dois mais perto de uma ponta, do mais extremo ao menos", () => {
+  const meio = fato("populacao", 50, 49, 100);
+  const segundo = fato("pib", 98, 1, 100);
+  const ultimo = fato("emendas", 0, 99, 100);
+  const quinto = fato("pessoal", 4, 95, 100);
+  assert.deepEqual(escolherFatos([meio, segundo, ultimo, quinto]).map((f) => f.tema),
+    ["emendas", "pib"]);
+});
+
+test("empate de extremidade segue a ordem de TEMAS, não a da lista", () => {
+  const a = fato("pessoal", 99, 0, 100);
+  const b = fato("populacao", 0, 99, 100);
+  assert.deepEqual(escolherFatos([a, b], 1).map((f) => f.tema), ["populacao"]);
+});
+
+test("abaixo do piso, sem fato, ou com valor não finito, não há frase", () => {
+  const pequeno = fato("populacao", 0, MINIMO_ABERTURA - 2, MINIMO_ABERTURA - 1);
+  const nan = fato("pib", 0, 99, 100, { valor: Number.NaN });
+  assert.deepEqual(escolherFatos([pequeno, nan, null]), []);
+  assert.equal(escolherFatos([fato("pib", 0, 9, MINIMO_ABERTURA)]).length, 1);
+});
+
+test("o Distrito Federal, sozinho no estado, cai no texto antigo", () => {
+  const df = fato("populacao", 0, 0, 1);
+  assert.equal(aberturaDe("Brasília", "DF", escolherFatos([df])), null);
+});
+
+test("o lugar se conta da ponta mais perto, e o 1º não leva número", () => {
+  assert.match(fraseDe(fato("populacao", 852, 0, 853), "MG"), /^é o mais populoso dos 853 municípios de Minas Gerais/);
+  assert.match(fraseDe(fato("populacao", 2, 850, 853), "MG"), /^é o 3º menos populoso dos 853/);
+  assert.match(fraseDe(fato("pib", 840, 4, 853), "MG"), /^tem o 5º maior PIB por habitante/);
+});
+
+test("com empate, o lugar de cima é `acima + 1`, não `de - abaixo`", () => {
+  // 3 municípios empatados no topo de 20: os três são "o maior", não "o 3º maior".
+  const empatado = fato("emendas", 17, 0, 20);
+  assert.match(fraseDe(empatado, "CE"), /^recebeu o maior valor/);
+});
+
+test("a abertura começa pelo nome, e a segunda frase pela maiúscula", () => {
+  const t = aberturaDe("Arapiraca", "AL", [
+    fato("populacao", 100, 1, 102), fato("pib", 3, 98, 102, { periodo: "2023" }),
+  ]);
+  assert.ok(t);
+  assert.match(t, /^Arapiraca é o 2º mais populoso dos 102 municípios de Alagoas/);
+  assert.match(t, /\. Tem o 4º menor PIB por habitante dos 102 municípios de Alagoas, R\$ 100 em 2023/);
+  assert.ok(t.endsWith(")."));
+});
+
+test("a abertura descreve, não julga: sem adjetivo de valor", () => {
+  for (const tema of TEMAS) {
+    for (const f of [fato(tema, 99, 0, 100), fato(tema, 0, 99, 100)]) {
+      const frase = fraseDe(f, "BA") + " " + rotuloDe(f, "BA");
+      assert.doesNotMatch(frase, /\b(demais|alto|baixo|rico|pobre|excessiv|bom|ruim|melhor|pior)/i, frase);
+    }
+  }
 });

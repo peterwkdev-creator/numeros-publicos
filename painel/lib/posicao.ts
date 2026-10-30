@@ -122,6 +122,9 @@ export function posicaoEntre(
 export type PosicaoNoEstado = {
   /** Quantos municípios do estado têm valor MENOR. */
   abaixo: number;
+  /** Quantos têm valor MAIOR. Separado de `abaixo` por causa do empate: o
+   *  lugar contado de cima é `acima + 1`, não `de - abaixo` (abertura, 30/10/2026). */
+  acima: number;
   /** Quantos entraram na comparação — o denominador honesto. */
   de: number;
   /** A mediana do estado, para servir de régua ao lado da posição. */
@@ -143,6 +146,7 @@ export function posicaoNoEstado(
   const meio = Math.floor(ordenados.length / 2);
   return {
     abaixo: vals.filter((v) => v < valor).length,
+    acima: vals.filter((v) => v > valor).length,
     de: vals.length,
     mediana: ordenados.length % 2
       ? ordenados[meio]!

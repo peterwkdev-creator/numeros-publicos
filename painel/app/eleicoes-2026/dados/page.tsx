@@ -13,6 +13,9 @@ import {
   senadoresPorPartido, vagasTotais, type Bancada, type Cargos2026, type Senado,
 } from "../../../lib/eleicoes-cargos";
 import { DADOS } from "../../../lib/eleicoes-macro";
+import {
+  MEDIDO, OFICIAL, TSE_VOTOS_DEPOIS, TSE_VOTOS_DEPOIS_DATA,
+} from "../../../lib/eleicoes-prorrogacao";
 import { catalogoDe, jsonLdHtml, trilha } from "../../../lib/jsonld";
 import { dominio, legendaCom, type CamadaMapa } from "../../../lib/mapa";
 import { cartaoSocial, SITE } from "../../../lib/servidor";
@@ -583,22 +586,69 @@ export default async function Pagina() {
               prorrogação</a>.
             </li>
           </ul>
-          <div className={estilos.nota} role="note">
-            <p>
-              <strong>Quantos votos foram dados depois das 17h ainda não está
-              medido aqui.</strong> A conta nacional depende do horário de
-              encerramento de cada seção, que o TSE publica no boletim de urna
-              do 2º turno (<a href={BWEB} rel="noopener">dados abertos do
-              TSE</a>), ainda não divulgado. Quando sair, esta seção mostra os
-              votos depois das 17h, com o 1º turno da mesma urna como base. O
-              voto é secreto: o registro da urna diz a hora, não o candidato.
-            </p>
-            <p>
-              Enquanto isso, a <a href="#consulta">consulta de seção</a> abaixo
-              mostra, para qualquer urna, os votos registrados por hora nos dois
-              turnos, lidos do arquivo oficial.
-            </p>
-          </div>
+          <h3 className={estilos.subtitulo}>Os votos depois das 17h, segundo o TSE</h3>
+          <p>
+            Fonte: <a href={TSE_VOTOS_DEPOIS} rel="noopener">nota do TSE</a> de{" "}
+            {TSE_VOTOS_DEPOIS_DATA}.
+          </p>
+          <ul>
+            <li>
+              <strong>{br(OFICIAL.votosDepois17h)}</strong> votos depois das 17h
+              no país: {br(OFICIAL.votos17a18)} das 17h às 18h,{" "}
+              {br(OFICIAL.votos18a19)} das 18h às 19h e {br(OFICIAL.votosDepois19h)}{" "}
+              depois das 19h.
+            </li>
+            <li>
+              {br(OFICIAL.secoesEncerradasDepois17h)} seções encerradas depois
+              das 17h; {br(OFICIAL.secoesAbertasDepois17h10)} seguiam abertas
+              depois das 17h10, com {br(OFICIAL.votosNessasSecoes)} votos desde
+              as 17h; {br(OFICIAL.secoesEncerradasDepois19h)} encerraram depois
+              das 19h, com {br(OFICIAL.votosNelas)} votos depois das 17h.
+            </li>
+            <li>
+              Seções abertas depois das 17h10, nos quatro estados com mais delas:{" "}
+              {OFICIAL.porUf.map((x, i) => (
+                <span key={x.uf}>
+                  {i === 0 ? "" : i === OFICIAL.porUf.length - 1 ? " e " : "; "}
+                  {UF_NOME[x.uf]}, {br(x.secoes)} seções e {br(x.votos)} votos
+                </span>
+              ))}.
+            </li>
+          </ul>
+          <h3 className={estilos.subtitulo}>A conferência deste site</h3>
+          <p>
+            Os mesmos números, contados de forma independente nos arquivos
+            abertos do TSE: o boletim de cada urna do 2º turno
+            (<a href={BWEB} rel="noopener">dados abertos do TSE</a>), cujo
+            total é igual ao resultado oficial, e o registro de cada urna, que
+            diz a hora de cada voto. Medição de 29/10/2026.
+          </p>
+          <ul>
+            <li>
+              Nas {br(MEDIDO.urnasDepois17h45)} urnas encerradas depois das
+              17h45, contadas uma a uma: <strong>{br(MEDIDO.votosA)}</strong>{" "}
+              votos depois das 17h.
+            </li>
+            <li>
+              No país, somadas as demais por amostra:{" "}
+              <strong>cerca de {br(MEDIDO.votosB)}</strong> votos depois das 17h
+              (intervalo de confiança de 95%: {br(MEDIDO.icB[0])} a{" "}
+              {br(MEDIDO.icB[1])}). O número do TSE, {br(OFICIAL.votosDepois17h)},
+              cai dentro do intervalo.
+            </li>
+            <li>
+              A base, no 1º turno, sem prorrogação: as mesmas urnas registraram
+              cerca de {br(MEDIDO.turno1B / 1e6, 2)} milhões de votos depois das
+              17h ({br(MEDIDO.icTurno1B[0] / 1e6, 2)} a{" "}
+              {br(MEDIDO.icTurno1B[1] / 1e6, 2)} milhões). Só indicativa: eram 7
+              cargos, e o voto demorava mais.
+            </li>
+          </ul>
+          <p>
+            O voto é secreto: o registro da urna diz a hora, não o candidato. A{" "}
+            <a href="#consulta">consulta de seção</a> abaixo mostra, para
+            qualquer urna, os votos registrados por hora nos dois turnos.
+          </p>
         </div>
       </section>
 

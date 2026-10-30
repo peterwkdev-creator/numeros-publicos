@@ -108,10 +108,33 @@
 .tituloResumo { font-size: var(--texto-lg); margin: 0 0 .5rem; }
 .subResumo { font-weight: 600; margin: 0 0 .4rem; }
 
+/* A prorrogação de 25/10 em destaque: moldura e fundo da marca (o azul
+   --acento deixou de ser cor de candidato em 26/10). */
+.prorrogacao {
+  max-width: 46rem;
+  margin: 1.5rem 0;
+  padding: 1rem 1.25rem;
+  border: 2px solid var(--acento);
+  border-radius: var(--raio);
+  background: var(--acento-suave);
+}
+.tituloProrrogacao { font-size: var(--texto-lg); margin: 0 0 .2rem; }
+.inedita { margin: 0 0 .8rem; font-weight: 600; }
+.numeroProrrogacao { margin: 0 0 .8rem; }
+.numeroProrrogacao strong { display: block; font-size: var(--texto-2xl); line-height: 1.1; font-variant-numeric: tabular-nums; }
+.fatosProrrogacao { margin: 0 0 .5rem; padding-left: 1.25rem; }
+.fatosProrrogacao li { margin-bottom: .4rem; }
+/* A ressalva em --tinta-fraca cai abaixo de 4,5:1 sobre --acento-suave
+   (4,31 no claro, 4,10 no escuro; medido em 29/10): aqui, --tinta-suave. */
+.prorrogacao .ressalvaProrrogacao { color: var(--tinta-suave); }
+
 .verTodos { margin: 1.5rem 0 .5rem; font-size: var(--texto-base); }
 .verTodos a { font-weight: 600; font-size: var(--texto-lg); }
 
 @media print {
   .uf { stroke: #fff; stroke-width: 2; }
   .cargos, .escolha, .instrucao, .dica, .cartao :global(.cartao-fechar) { display: none; }
+  /* No papel o fundo some (o navegador não imprime fundo por padrão); a
+     moldura, preta pelo --acento da impressão, segura o destaque. */
+  .prorrogacao { break-inside: avoid; }
 }

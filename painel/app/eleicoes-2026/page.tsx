@@ -11,6 +11,9 @@ import { cadeirasPorPartido, lerCargos, senadoresPorPartido, vagasTotais } from 
 import {
   governadoresPorPartido, montarMacro, type CargoMacro,
 } from "../../lib/eleicoes-macro";
+import {
+  MEDIDO, OFICIAL, SENADO_INEDITA, STF_DECISAO, TSE_VOTOS_DEPOIS, TSE_VOTOS_DEPOIS_DATA,
+} from "../../lib/eleicoes-prorrogacao";
 import { catalogoDe, jsonLdHtml, trilha } from "../../lib/jsonld";
 import { cartaoSocial, SITE } from "../../lib/servidor";
 import estilos from "./eleicoes.module.css";
@@ -240,6 +243,53 @@ export default async function Pagina() {
           )}
         </section>
       </div>
+
+      {/* A prorrogação em destaque (pedido do Peter, 26/10; desenho de
+          29/10): o número oficial do TSE, a decisão e a base do 1º turno.
+          O detalhe e a medição própria ficam na página de dados. */}
+      <section aria-labelledby="prorrogacao-destaque" className={m.prorrogacao}>
+        <h2 id="prorrogacao-destaque" className={m.tituloProrrogacao}>Votação estendida até as 19h em 25/10</h2>
+        <p className={m.inedita}>
+          Medida inédita no TSE, segundo a{" "}
+          <a href={SENADO_INEDITA} rel="noopener">TV Senado</a>.
+        </p>
+        <p className={m.numeroProrrogacao}>
+          <strong>{br(OFICIAL.votosDepois17h)}</strong> votos depois das 17h no
+          2º turno, em todo o país: {br((OFICIAL.votosDepois17h / dif) * 100, 2)}%
+          da diferença entre os dois candidatos ({br(dif)} votos).
+        </p>
+        <ul className={m.fatosProrrogacao}>
+          <li>
+            <strong>A decisão:</strong> o ministro Cristiano Zanin, do Supremo
+            Tribunal Federal, estendeu a votação até as 19h nas seções ainda
+            abertas às 17h (<a href={STF_DECISAO} rel="noopener">notícia do STF</a>).
+          </li>
+          <li>
+            <strong>As seções:</strong> {br(OFICIAL.secoesAbertasDepois17h10)} seguiram
+            abertas depois das 17h10, com {br(OFICIAL.votosNessasSecoes)} votos
+            desde as 17h. Nos quatro estados com mais delas, os votos foram:{" "}
+            {OFICIAL.porUf.map((x, i) => (
+              <span key={x.uf}>
+                {i === 0 ? "" : i === OFICIAL.porUf.length - 1 ? " e " : ", "}
+                {UF_NOME[x.uf]} ({br(x.votos)})
+              </span>
+            ))}.
+          </li>
+          <li>
+            <strong>A base:</strong> no 1º turno, sem prorrogação, as mesmas
+            urnas registraram cerca de {br(MEDIDO.turno1B / 1e6, 1)} milhões de
+            votos depois das 17h (estimativa deste site, lida dos registros das
+            urnas). Só indicativo: eram 7 cargos, e o voto demorava mais.
+          </li>
+        </ul>
+        <p className={`${estilos.ressalva} ${m.ressalvaProrrogacao}`}>
+          Fonte dos números do 2º turno:{" "}
+          <a href={TSE_VOTOS_DEPOIS} rel="noopener">nota do TSE</a> de{" "}
+          {TSE_VOTOS_DEPOIS_DATA}.{" "}
+          <Link href={`${CAMINHO_DADOS}#prorrogacao`} prefetch={false}>A prorrogação em detalhe</Link>,
+          com a conferência feita por este site.
+        </p>
+      </section>
 
       <p className={m.verTodos}>
         <Link href={CAMINHO_DADOS} prefetch={false}>Ver todos os dados</Link>

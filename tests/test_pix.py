@@ -345,6 +345,13 @@ class TestLigacao(Banco):
             {}, {}, {})
         self.assertEqual((ligacao, sem), ({1: None, 2: None}, []))
 
+    def test_estado_com_nome_da_capital_nao_cai_na_prefeitura(self):
+        # O Tocantins vem como "PALMAS" com o CNPJ do estado (medido em 29/10/2026).
+        ligacao, sem = ligar_municipios(
+            [plano(1, cnpj="01786029000103", nome="PALMAS", uf="TO")],
+            {}, {("TO", "PALMAS"): 1721000}, {})
+        self.assertEqual((ligacao, sem), ({1: None}, []))
+
     def test_municipio_que_nao_casa_e_erro_e_nada_se_grava(self):
         with self.assertRaisesRegex(ErroPix, "MUNICIPIO DE ATLANTIDA"):
             self.ingerir(fonte(planos=[plano(1, cnpj="99999999000199",

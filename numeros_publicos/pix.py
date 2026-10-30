@@ -75,6 +75,11 @@ TABELAS = {
 SITUACAO_VALIDA = "CIENTE"
 
 ESTADO = re.compile(r"^(ESTADO|GOVERNO|DISTRITO FEDERAL)\b")
+#: Estado que a fonte chama pelo nome da capital. Medido em 29/10/2026: os
+#: planos do Tocantins vêm como "PALMAS" com o CNPJ do estado (executores
+#: estaduais: RURALTINS, Fundo Estadual de Saúde); pelo nome, casariam com a
+#: prefeitura de Palmas (R$ 7,86 mi em 6 planos de 2024).
+CNPJ_ESTADO = {"01786029000103": "TO"}
 PREFIXO_MUNICIPIO = re.compile(r"^(MUNICIPIO|PREFEITURA MUNICIPAL)( DE| DO| DA| DOS| DAS)?\s+")
 
 ESQUEMA = """
@@ -172,7 +177,7 @@ def ligar_municipios(planos: Iterable[dict], cnpj_municipio: dict[str, int],
     for p in planos:
         nome = texto(p["nome_beneficiario_plano_acao"]).upper()
         uf = texto(p["uf_beneficiario_plano_acao"])
-        if ESTADO.match(nome):
+        if ESTADO.match(nome) or p["cnpj_beneficiario_plano_acao"] in CNPJ_ESTADO:
             saida[p["id_plano_acao"]] = None
             continue
         m = cnpj_municipio.get(p["cnpj_beneficiario_plano_acao"])

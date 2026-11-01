@@ -1,9 +1,10 @@
 /**
  * Avisa os buscadores que o site mudou, pelo protocolo IndexNow.
  *
- *     node scripts/indexnow.mjs            # só se o dado mudou desde o último
- *     node scripts/indexnow.mjs --forcar   # manda de qualquer jeito
+ *     node scripts/indexnow.mjs            # só as páginas que mudaram desde o último envio
  *     node scripts/indexnow.mjs --seco     # mostra o que faria, sem enviar
+ *     node scripts/indexnow.mjs --marcar   # grava a impressão atual, sem enviar
+ *     node scripts/indexnow.mjs --forcar   # manda todas de qualquer jeito
  *
  * ## Por que isto existe
  *
@@ -22,20 +23,27 @@
  * é resposta factual com fonte ao lado, ser citável por assistente é
  * provavelmente mais valioso do que posição no Bing.
  *
- * ## A trava: só envia quando o DADO muda
+ * ## A trava: só envia a página cujo conteúdo mudou
  *
  * A orientação do protocolo é enviar **quando o conteúdo muda**, e um site
  * estático se reconstrói inteiro a cada deploy — inclusive quando o que mudou
  * foi uma cor de CSS. Mandar 5.600 URLs por causa disso é abusar de uma cota
  * que cada buscador define e não publica.
  *
- * A trava compara a impressão digital dos **arquivos de dados**, e não do
- * HTML gerado: é o que de fato muda a resposta que a página dá. Um ajuste de
- * layout não avisa ninguém; uma coleta nova avisa todo mundo.
+ * Até 01/11/2026 a trava era a impressão digital dos arquivos de `dados/`
+ * inteiros: qualquer mudança neles (a Selic do mês, que só aparece em
+ * `/brasil/`) mandava as ~5.600 URLs de uma vez. Lido em 01/11 no Bing
+ * Webmaster Tools: "IndexNow is in batch mode" (moderado), com a orientação de
+ * mandar só o que mudou, quando mudou.
+ *
+ * Agora a impressão é **por página**, tirada do HTML gerado sem o que é layout
+ * (ver `impressaoDaPagina`), e o `.indexnow.json` guarda a de cada URL no
+ * último envio. Vão só as URLs novas ou cuja impressão mudou. Um texto comum a
+ * todas as páginas (o rodapé) ainda manda todas: é conteúdo, e o buscador deve
+ * saber.
  */
-
 import { createHash } from "node:crypto";
-import { readFileSync, readdirSync, writeFileSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -52,17 +60,55 @@ const ESTADO = path.join(PAINEL, ".indexnow.json");
 const args = new Set(process.argv.slice(2));
 const forcar = args.has("--forcar");
 const seco = args.has("--seco");
+const marcar = args.has("--marcar");
 
-/** A impressão digital do que a página *diz* — os dados, não o HTML. */
-function impressaoDosDados() {
-  const dir = path.join(PAINEL, "dados");
-  const h = createHash("sha256");
-  for (const nome of readdirSync(dir).sort()) {
-    if (!nome.endsWith(".json")) continue;
-    h.update(nome);
-    h.update(readFileSync(path.join(dir, nome)));
+/**
+ * A impressão digital do que a página *diz*: o título, a descrição, o JSON-LD
+ * e o texto visível (os `<title>` dos gráficos entram, com o número de cada
+ * barra). Fica de fora o que muda com o layout — o nome dos arquivos de CSS e
+ * de JS, classes, atributos —, para que um ajuste de estilo não avise ninguém
+ * e uma coleta nova avise só as páginas que ela mudou.
+ */
+export function impressaoDaPagina(html) {
+  const titulo = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+  const meta = html.match(/<meta\s+name="description"\s+content="([^"]*)"/i);
+  const jsonld = [...html.matchAll(
+    /<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/gi,
+  )].map((m) => m[1]);
+  const corpo = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+  const texto = (corpo ? corpo[1] : html)
+    .replace(/<(script|style|template)\b[\s\S]*?<\/\1>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return createHash("sha256")
+    .update([titulo?.[1] ?? "", meta?.[1] ?? "", ...jsonld, texto].join("\u0000"))
+    .digest("hex")
+    .slice(0, 12);
+}
+
+/** O arquivo do `out/` que responde pela URL (`/x/` é `x/index.html`). */
+export function arquivoDaUrl(url, out) {
+  const caminho = decodeURIComponent(new URL(url).pathname);
+  return path.join(out, caminho.endsWith("/") ? `${caminho}index.html` : caminho);
+}
+
+/**
+ * Os caminhos novos ou com impressão diferente da do último envio. Sem estado
+ * por página (primeiro envio, ou o formato de antes de 01/11), todos contam.
+ */
+export function mudadas(atual, anterior) {
+  return Object.keys(atual).filter((c) => anterior?.[c] !== atual[c]);
+}
+
+/** Quantas URLs por seção (`/municipio/`, `/estado/`…), para o `--seco`. */
+export function porSecao(caminhos) {
+  const n = new Map();
+  for (const c of caminhos) {
+    const secao = `/${c.split("/")[1] ?? ""}`;
+    n.set(secao, (n.get(secao) ?? 0) + 1);
   }
-  return h.digest("hex").slice(0, 16);
+  return [...n].sort((a, b) => b[1] - a[1]);
 }
 
 /**
@@ -176,30 +222,70 @@ function diagnostico(status, corpo) {
  * "passou" de uma falha. Sair por `return` deixa o Node fechar os handles.
  */
 async function principal() {
-  const impressao = impressaoDosDados();
+  const out = path.join(PAINEL, "out");
+  const atual = {};
+  for (const url of urlsDoSitemap()) {
+    const arquivo = arquivoDaUrl(url, out);
+    if (!existsSync(arquivo)) {
+      throw new Error(
+        `${url} está no sitemap e ${path.relative(PAINEL, arquivo)} não existe. ` +
+        "Enviar uma URL que o build não produziu pediria ao buscador para " +
+        "rastrear 404.",
+      );
+    }
+    atual[new URL(url).pathname] = impressaoDaPagina(readFileSync(arquivo, "utf-8"));
+  }
+  const total = Object.keys(atual).length;
+
   const anterior = existsSync(ESTADO)
     ? JSON.parse(readFileSync(ESTADO, "utf-8"))
     : null;
-
-  console.log(`impressão dos dados: ${impressao}`);
-  if (anterior) {
-    console.log(`último envio:        ${anterior.impressao} em ${anterior.em}`);
+  if (anterior) console.log(`último envio: ${anterior.em} (${anterior.urls} URLs no sitemap)`);
+  if (anterior && !anterior.paginas) {
+    console.log(
+      "O estado é do formato antigo, sem impressão por página: todas as URLs " +
+      "contam como mudadas.\n  (`--marcar` grava a base sem enviar.)",
+    );
   }
 
-  if (anterior?.impressao === impressao && !forcar) {
-    console.log(
-      "\nO dado não mudou desde o último envio. Nada a avisar.\n" +
-      "  (`--forcar` manda mesmo assim; use só se souber por quê.)",
-    );
+  const caminhos = forcar ? Object.keys(atual) : mudadas(atual, anterior?.paginas);
+  console.log(
+    `\n${total} URLs no sitemap; ${caminhos.length} ` +
+    `${forcar ? "a enviar (--forcar)" : "com conteúdo novo ou mudado desde o último envio"}.`,
+  );
+
+  const gravar = (enviadas) => writeFileSync(
+    ESTADO,
+    `${JSON.stringify({
+      em: new Date().toISOString(),
+      urls: total,
+      enviadas,
+      paginas: Object.fromEntries(Object.entries(atual).sort(([a], [b]) => (a < b ? -1 : 1))),
+    }, null, 2)}\n`,
+    "utf-8",
+  );
+
+  if (marcar) {
+    if (seco) {
+      console.log("\n(--seco: nada gravado.)");
+      return 0;
+    }
+    gravar(0);
+    console.log("\n--marcar: impressão gravada em .indexnow.json, nada enviado.");
     return 0;
   }
 
-  const urls = urlsDoSitemap();
-  console.log(`\n${urls.length} URLs no sitemap.`);
+  if (caminhos.length === 0) {
+    console.log("\nNenhuma página mudou desde o último envio. Nada a avisar.");
+    return 0;
+  }
 
   if (seco) {
-    console.log("--seco: nada foi enviado. Primeiras três:");
-    for (const u of urls.slice(0, 3)) console.log(`  ${u}`);
+    console.log("\nPor seção:");
+    for (const [secao, n] of porSecao(caminhos)) console.log(`  ${secao.padEnd(16)} ${n}`);
+    console.log("\nAmostra:");
+    for (const c of caminhos.slice(0, 5)) console.log(`  ${SITE}${c}`);
+    console.log("\n(--seco: nada enviado, nada gravado.)");
     return 0;
   }
 
@@ -238,6 +324,7 @@ async function principal() {
   }
   console.log(`chave conferida no ar: ${SITE}/${CHAVE}.txt`);
 
+  const urls = caminhos.map((c) => `${SITE}${c}`);
   let falhou = false;
   for (let i = 0; i < urls.length; i += LOTE) {
     const lote = urls.slice(i, i + LOTE);
@@ -254,13 +341,11 @@ async function principal() {
     return 1;
   }
 
-  writeFileSync(
-    ESTADO,
-    `${JSON.stringify({ impressao, em: new Date().toISOString(), urls: urls.length }, null, 2)}\n`,
-    "utf-8",
-  );
+  gravar(urls.length);
   console.log(`\n✓ ${urls.length} URLs avisadas. Estado gravado em .indexnow.json.`);
   return 0;
 }
 
-process.exitCode = await principal();
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  process.exitCode = await principal();
+}

@@ -42,7 +42,7 @@ export type FatoDoEstado = {
   acima: number;
   /** Quantos entraram na comparação. */
   de: number;
-  /** O período do dado, como a seção o escreve ("2023", "3º quadrimestre de 2025"). */
+  /** O período do dado: o ano ("2023"; no pessoal, o exercício do relatório fiscal). */
   periodo: string | null;
 };
 
@@ -64,21 +64,40 @@ function ordinal(ordem: number, palavra: string): string {
   return ordem === 1 ? `o ${palavra}` : `o ${ordem}º ${palavra}`;
 }
 
+/**
+ * Quantos OUTROS municípios têm exatamente o mesmo valor. O lugar é o de
+ * competição (`acima + 1`): com 411 empates no pessoal e 55 na população
+ * (01/11/2026), "o 3º maior" sozinho esconderia que outro também é o 3º.
+ */
+export function empatados(f: FatoDoEstado): number {
+  return Math.max(0, f.de - 1 - f.abaixo - f.acima);
+}
+
+/** ", empatado com outro município": concorda com o lugar ("o 3º maior gasto", "o mais populoso"), sempre masculino. */
+function empate(f: FatoDoEstado): string {
+  const n = empatados(f);
+  if (n === 0) return "";
+  return n === 1 ? ", empatado com outro município" : `, empatado com outros ${br(n)} municípios`;
+}
+
 /** A frase sem sujeito, começando pelo verbo: "é o 3º mais populoso dos...". */
 export function fraseDe(f: FatoDoEstado, uf: string): string {
   const { topo, ordem } = lugar(f);
   const doUf = deEstado(uf);
   const maior = topo ? "maior" : "menor";
   const em = f.periodo ? ` em ${f.periodo}` : "";
+  const emp = empate(f);
   switch (f.tema) {
     case "populacao":
-      return `é ${ordinal(ordem, topo ? "mais populoso" : "menos populoso")} dos ${br(f.de)} municípios ${doUf}, com ${br(f.valor)} habitantes no Censo 2022 (a mediana do estado é ${br(f.mediana)})`;
+      return `é ${ordinal(ordem, topo ? "mais populoso" : "menos populoso")} dos ${br(f.de)} municípios ${doUf}${emp}, com ${br(f.valor)} habitantes no Censo 2022 (a mediana do estado é ${br(f.mediana)})`;
     case "pib":
-      return `tem ${ordinal(ordem, maior)} PIB por habitante dos ${br(f.de)} municípios ${doUf}, R$ ${br(f.valor)}${em} (a mediana é R$ ${br(f.mediana)})`;
+      return `tem ${ordinal(ordem, maior)} PIB por habitante dos ${br(f.de)} municípios ${doUf}${emp}, R$ ${br(f.valor)}${em}, segundo o IBGE (a mediana é R$ ${br(f.mediana)})`;
     case "emendas":
-      return `recebeu ${ordinal(ordem, maior)} valor em emendas parlamentares por habitante entre os ${br(f.de)} municípios ${doUf} com pagamento${em}, R$ ${br(f.valor, 2)} (a mediana é R$ ${br(f.mediana, 2)})`;
+      return `recebeu ${ordinal(ordem, maior)} valor em emendas parlamentares por habitante entre os ${br(f.de)} municípios ${doUf} com pagamento${em}${emp}, R$ ${br(f.valor, 2)}, segundo o Portal da Transparência (a mediana é R$ ${br(f.mediana, 2)})`;
     case "pessoal":
-      return `teve ${ordinal(ordem, maior)} gasto com pessoal, em proporção da receita corrente líquida, entre os ${br(f.de)} municípios ${doUf} que entregaram o relatório fiscal${f.periodo ? ` do ${f.periodo}` : ""}: ${br(f.valor, 2)}% (a mediana é ${br(f.mediana, 2)}%)`;
+      // O período é só o ano: o conjunto mistura o RGF do 3º quadrimestre e o
+      // Simplificado do 2º semestre, e "do 3º quadrimestre" errava para estes.
+      return `teve ${ordinal(ordem, maior)} gasto com pessoal, em proporção da receita corrente líquida, entre os ${br(f.de)} municípios ${doUf} que entregaram o relatório fiscal${f.periodo ? ` de ${f.periodo}` : ""}${emp}: ${br(f.valor, 2)}% (a mediana é ${br(f.mediana, 2)}%)`;
   }
 }
 

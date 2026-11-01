@@ -122,10 +122,12 @@ export async function generateMetadata(
   // `includes`, não `endsWith`: a parte do pessoal pode levar o rótulo da
   // abertura depois ("..., o 3º maior do Ceará"), e sai inteira com ele.
   const resto = partes.filter((p) => !String(p).includes("da receita em pessoal"));
+  // Em itens: quando não cabe, sai o último item inteiro, nunca a metade dele
+  // (`descricaoDe`, 01/11/2026).
   const descricao = descricaoDe(
     abertura
-      ? `${abertura}.${resto.length ? ` ${resto.join(", ")}.` : ""}`
-      : `${m.nome} (${m.uf}): ${partes.join(", ")}.`,
+      ? { abre: `${abertura}. `, itens: resto.map(String), semItens: `${abertura}.` }
+      : { abre: `${m.nome} (${m.uf}): `, itens: partes.map(String) },
     "Dados oficiais do IBGE, do Tesouro Nacional e do INEP.",
   );
 

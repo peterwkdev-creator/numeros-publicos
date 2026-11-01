@@ -34,7 +34,7 @@ import {
 } from "../lib/fiscal.ts";
 import { posicaoEntre, posicaoNoEstado, rotuloAbaixo } from "../lib/posicao.ts";
 import {
-  aberturaDe, escolherFatos, extremidade, fraseDe, MINIMO_ABERTURA, rotuloDe, TEMAS,
+  aberturaDe, empatados, escolherFatos, extremidade, fraseDe, MINIMO_ABERTURA, rotuloDe, TEMAS,
   type FatoDoEstado, type Tema,
 } from "../lib/abertura.ts";
 import { daMesmaRegiao, deEstado, emContracao, medianaDePessoal, type SnapshotRegioes } from "../lib/estado.ts";
@@ -3506,4 +3506,104 @@ test("a abertura descreve, não julga: sem adjetivo de valor", () => {
       assert.doesNotMatch(frase, /\b(demais|alto|baixo|rico|pobre|excessiv|bom|ruim|melhor|pior)/i, frase);
     }
   }
+});
+
+// --- Revisão da abertura e da meta (01/11/2026) ---
+
+test("rotuloDe: o pedaço curto de cada tema, com o lado e o estado", () => {
+  assert.equal(rotuloDe(fato("populacao", 852, 0, 853), "MG"), "o mais populoso de Minas Gerais");
+  assert.equal(rotuloDe(fato("populacao", 2, 850, 853), "MG"), "o 3º menos populoso de Minas Gerais");
+  assert.equal(rotuloDe(fato("pib", 840, 4, 853, { valor: 54321 }), "MG"),
+    "R$ 54.321 de PIB por habitante, o 5º maior de Minas Gerais");
+  assert.equal(rotuloDe(fato("emendas", 0, 99, 100, { valor: 12.5 }), "CE"),
+    "R$ 12,50 por habitante em emendas, o menor do Ceará");
+  assert.equal(rotuloDe(fato("pessoal", 97, 2, 100), "BA"), "o 3º maior da Bahia");
+});
+
+const itensMeta = {
+  abre: "Abaeté (MG): ",
+  itens: ["22.675 habitantes", "R$ 107,49 por habitante em emendas, o 138º menor de Minas Gerais",
+    "41,99% da receita em pessoal", "32,4% do gasto em saúde", "IDEB 6,1"],
+};
+
+test("meta em itens: cabe tudo, a cauda entra", () => {
+  const d = descricaoDe({ abre: "X (AL): ", itens: ["1 habitante", "IDEB 5"] }, "Fonte.", 155);
+  assert.equal(d, "X (AL): 1 habitante, IDEB 5. Fonte.");
+});
+
+test("meta em itens: não cabe, sai o último item INTEIRO, sem reticências", () => {
+  const d = descricaoDe(itensMeta, "Dados oficiais do IBGE, do Tesouro Nacional e do INEP.", 155);
+  assert.equal(d, "Abaeté (MG): 22.675 habitantes, R$ 107,49 por habitante em emendas, o 138º menor de Minas Gerais, 41,99% da receita em pessoal, 32,4% do gasto em saúde.");
+  assert.ok(d.length <= 155);
+});
+
+test("meta em itens: nunca termina no meio de um item, em limite nenhum", () => {
+  const todos = itensMeta.itens;
+  for (let limite = 40; limite <= 200; limite++) {
+    const d = descricaoDe(itensMeta, "Cauda.", limite);
+    assert.ok(d.length <= limite, `limite ${limite}: ${d.length}`);
+    if (d.endsWith("…")) {
+      // Só o corte antigo, quando nem o 1º item cabe.
+      assert.ok(`${itensMeta.abre}${todos[0]}.`.length > limite, `limite ${limite}: ${d}`);
+      continue;
+    }
+    const corpo = d.replace(/ Cauda\.$/, "");
+    assert.ok(corpo.startsWith(itensMeta.abre) && corpo.endsWith("."), d);
+    const usados = corpo.slice(itensMeta.abre.length, -1);
+    const n = todos.findIndex((_, i) => todos.slice(0, i + 1).join(", ") === usados);
+    assert.ok(n >= 0, `limite ${limite}: lista que não é prefixo de itens inteiros: ${d}`);
+  }
+});
+
+test("meta em itens: sem item que caiba, a frase sozinha; sem ela, o corte antigo", () => {
+  const abertura = "Adolfo gastou com pessoal acima do limite prudencial";
+  assert.equal(descricaoDe({ abre: `${abertura}. `, itens: ["x".repeat(200)], semItens: `${abertura}.` }, "C.", 155),
+    `${abertura}.`);
+  const d = descricaoDe({ abre: "Lugar (AL): ", itens: ["palavra ".repeat(30).trim()] }, "C.", 40);
+  assert.ok(d.endsWith("…") && d.length <= 40);
+});
+
+test("empate: 'empatado com outro município' só quando há valor igual", () => {
+  // Pessoal: 2º maior de 100, com mais 1 no mesmo valor (97 abaixo + 1 acima + ele + 1 igual).
+  const p = fato("pessoal", 97, 1, 100, { valor: 54.3, mediana: 48, periodo: "2025" });
+  assert.equal(empatados(p), 1);
+  assert.equal(fraseDe(p, "BA"),
+    "teve o 2º maior gasto com pessoal, em proporção da receita corrente líquida, entre os 100 municípios da Bahia que entregaram o relatório fiscal de 2025, empatado com outro município: 54,30% (a mediana é 48,00%)");
+  const tres = fato("populacao", 0, 96, 100);
+  assert.equal(empatados(tres), 3);
+  assert.match(fraseDe(tres, "MG"), /^é o menos populoso dos 100 municípios de Minas Gerais, empatado com outros 3 municípios, com /);
+  assert.equal(empatados(fato("pessoal", 97, 2, 100)), 0);
+  assert.doesNotMatch(fraseDe(fato("pessoal", 97, 2, 100), "BA"), /empatad/);
+});
+
+test("pessoal: o período é o ano do relatório, não o quadrimestre", () => {
+  const f = fraseDe(fato("pessoal", 0, 99, 100, { periodo: "2025" }), "PI");
+  assert.match(f, /que entregaram o relatório fiscal de 2025: /);
+  assert.doesNotMatch(f, /quadrimestre|semestre/);
+});
+
+test("emendas e PIB citam a fonte na frase", () => {
+  const e = fraseDe(fato("emendas", 0, 99, 100, { valor: 513.29, mediana: 892.73, periodo: "2025" }), "AC");
+  assert.equal(e, "recebeu o menor valor em emendas parlamentares por habitante entre os 100 municípios do Acre com pagamento em 2025, R$ 513,29, segundo o Portal da Transparência (a mediana é R$ 892,73)");
+  const emp = fraseDe(fato("emendas", 0, 98, 100, { periodo: "2025" }), "AC");
+  assert.match(emp, /com pagamento em 2025, empatado com outro município, R\$ /);
+  assert.match(fraseDe(fato("pib", 99, 0, 100, { periodo: "2023" }), "AC"), /, R\$ 100 em 2023, segundo o IBGE \(a mediana/);
+});
+
+test("o contexto do município guarda o último: a mesma chamada devolve o mesmo objeto", async () => {
+  const { carregar } = await import(new URL("../app/municipio/[slug]/apoio.ts", import.meta.url).href);
+  const { montarContexto } = await import(new URL("../app/municipio/[slug]/contexto.ts", import.meta.url).href);
+  const dados = await carregar();
+  const [a, b] = dados.municipios;
+  const ca = montarContexto(dados, a);
+  assert.equal(montarContexto(dados, a), ca, "a 2ª chamada recalculou");
+  const cb = montarContexto(dados, b);
+  assert.notEqual(cb, ca);
+  assert.equal(cb.m.codigo, b.codigo, "devolveu o contexto de outro município");
+  // Guarda só o último: voltar ao primeiro recalcula, com o mesmo resultado.
+  const de_novo = montarContexto(dados, a);
+  assert.notEqual(de_novo, ca);
+  assert.equal(de_novo.abertura, ca.abertura);
+  // Outro snapshot (mesmo conteúdo, outro objeto) não reaproveita.
+  assert.notEqual(montarContexto({ ...dados, snapshot: { ...dados.snapshot } }, a), de_novo);
 });

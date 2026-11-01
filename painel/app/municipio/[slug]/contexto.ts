@@ -217,7 +217,7 @@ function calcularContexto(dados: Dados, m: Municipio) {
       ? { tema: "pessoal", valor: pessoalComparavel, mediana: posicao.mediana,
           abaixo: posicao.abaixo,
           acima: posicao.valores.filter((v) => v > pessoalComparavel).length,
-          de: posicao.base, periodo: periodoRgf } : null,
+          de: posicao.base, periodo: String(fiscal.exercicio) } : null,
   ]);
   const abertura = aberturaDe(m.nome, m.uf, fatos);
   // `serieDePessoal`, e não a série crua: o ponto que o cartão condena pela

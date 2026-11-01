@@ -493,12 +493,41 @@ export function milReaisParaReais(v: number | null | undefined): number | null {
  * Mora aqui, e não na página, porque a de estado precisa dela pelo mesmo
  * motivo — e enquanto esteve numa só, a outra cortava no meio da palavra.
  */
-export function descricaoDe(principal: string, cauda: string, limite = 155): string {
-  const inteira = `${principal} ${cauda}`;
+export function descricaoDe(principal: string | ItensDaDescricao, cauda: string, limite = 155): string {
+  const texto = typeof principal === "string"
+    ? principal : juntarItens(principal, principal.itens.length);
+  const inteira = `${texto} ${cauda}`;
   if (inteira.length <= limite) return inteira;
-  if (principal.length <= limite) return principal;
-  const corte = principal.lastIndexOf(" ", limite - 1);
-  return `${principal.slice(0, corte > 0 ? corte : limite - 1)}…`;
+  if (texto.length <= limite) return texto;
+  // Em itens, solta-se o ÚLTIMO item inteiro até caber. Até 01/11/2026 o
+  // principal se cortava no espaço, e 2.417 das 5.571 metas terminavam no
+  // meio de um item ("…32,4% do gasto em…", ",…").
+  if (typeof principal !== "string") {
+    for (let n = principal.itens.length - 1; n >= 1; n--) {
+      const t = juntarItens(principal, n);
+      if (t.length <= limite) return t;
+    }
+    if (principal.semItens !== undefined && principal.semItens.length <= limite) {
+      return principal.semItens;
+    }
+  }
+  // Nem o primeiro item cabe: o corte antigo, no espaço.
+  const corte = texto.lastIndexOf(" ", limite - 1);
+  return `${texto.slice(0, corte > 0 ? corte : limite - 1)}…`;
+}
+
+/** O principal da descrição em itens: `abre` + itens separados por vírgula + ".". */
+export type ItensDaDescricao = {
+  /** O que vem antes do 1º item, com o espaço: "Arapiraca (AL): ". */
+  abre: string;
+  itens: readonly string[];
+  /** O texto quando nenhum item cabe (uma frase completa sem lista); sem ele, o corte antigo. */
+  semItens?: string;
+};
+
+function juntarItens(p: ItensDaDescricao, n: number): string {
+  if (n === 0 && p.semItens !== undefined) return p.semItens;
+  return `${p.abre}${p.itens.slice(0, n).join(", ")}.`;
 }
 
 /**

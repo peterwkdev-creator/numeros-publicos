@@ -127,6 +127,22 @@ export function pixDe(e: SnapshotPix, codigo: number, anos: number[]): PixMunici
   return { todos, planos, areas: areasDe(planos), anos: anos.filter((a) => planos.some((p) => p.ano === a)) };
 }
 
+/**
+ * O resumo de um município para a base nacional (`municipios.xlsx`): por ano
+ * de `anos`, o número de planos e a soma em reais. Ano sem plano dá 0 planos
+ * e soma `null` — a fonte não tem valor a declarar, e a célula vazia diz isso.
+ */
+export function resumoPixDe(e: SnapshotPix, codigo: number, anos: number[]):
+  { planos: number; reais: number | null }[] {
+  const todos = pixDe(e, codigo, anos)?.planos ?? [];
+  return anos.map((ano) => {
+    const doAno = todos.filter((p) => p.ano === ano);
+    // Soma em centavos: em reais, 0,1 + 0,2 não fecha.
+    const centavos = doAno.reduce((s, p) => s + Math.round(p.reais * 100), 0);
+    return { planos: doAno.length, reais: doAno.length ? centavos / 100 : null };
+  });
+}
+
 /** "1 plano", "3 planos". */
 export function planosEmTexto(n: number): string {
   return n === 1 ? "1 plano" : `${n} planos`;

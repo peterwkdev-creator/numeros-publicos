@@ -3,8 +3,9 @@ import { cabecalhosCsv, paraCsv } from "../../../lib/csv";
 import {
   CODIGO_FAIXA, funcoesDe, indexarFiscal, receitaDe,
 } from "../../../lib/fiscal";
-import { lerCaged, lerEmendas, lerFiscal, lerSnapshot } from "../../../lib/servidor";
+import { lerCaged, lerEmendas, lerFiscal, lerPix, lerSnapshot } from "../../../lib/servidor";
 import { emendasDe } from "../../../lib/emendas";
+import { resumoPixDe } from "../../../lib/pix";
 import { cagedDe } from "../../../lib/caged";
 import { atualDeFuncoes, atualDeReceita } from "@/lib/fiscal";
 
@@ -21,9 +22,13 @@ import { atualDeFuncoes, atualDeReceita } from "@/lib/fiscal";
 export const dynamic = "force-static";
 
 export async function GET() {
-  const [snapshot, fiscal, caged, emendas] = await Promise.all([
-    lerSnapshot(), lerFiscal(), lerCaged(), lerEmendas(),
+  const [snapshot, fiscal, caged, emendas, pix] = await Promise.all([
+    lerSnapshot(), lerFiscal(), lerCaged(), lerEmendas(), lerPix(),
   ]);
+  // A emenda Pix com os anos da página: o último cheio e o corrente.
+  const ultimoEmendas = Number(emendas.ultimoMes.slice(0, 4));
+  const anosPix = [emendas.anoTipos,
+    ...(ultimoEmendas > emendas.anoTipos ? [ultimoEmendas] : [])];
   const porCodigo = indexarFiscal(fiscal);
 
   const indicadores = snapshot.indicadores;
@@ -71,6 +76,14 @@ export async function GET() {
     // Simplificado o número é do 2º semestre (os mesmos 12 meses até
     // dezembro). Vazio é quem não entregou nenhum dos dois.
     "pessoal_relatorio",
+    // A emenda Pix, pela mesma razão antes das emendas pagas: sempre cinco
+    // colunas (os anos andam, a quantidade não). Planos de ação do
+    // Transferegov com o ciente, pelo ano da emenda; `pix_coletado_em` diz
+    // até quando vai o ano corrente. Planos 0 é nenhum plano no ano, e o
+    // valor então fica vazio. NÃO se soma às emendas pagas: o Pix pago já
+    // está nelas, pelo mês do pagamento.
+    "pix_coletado_em",
+    ...anosPix.flatMap((ano) => [`pix_planos_${ano}`, `pix_valor_${ano}`]),
     "emendas_periodo",
     ...emendas.anos.map((ano) => `emendas_pagas_${ano}`),
   ];
@@ -135,6 +148,8 @@ export async function GET() {
       cg?.saldo ?? null, cg?.ultimo.saldo ?? null,
       f?.simplificado ? "simplificado_semestral"
         : f?.publicou ? "quadrimestral" : null,
+      pix.coletadoEm.slice(0, 10),
+      ...resumoPixDe(pix, m.codigo, anosPix).flatMap((r) => [r.planos, r.reais]),
       periodoEmendas,
       ...(emendasDe(emendas, m.codigo)?.anos.map((a) => a.reais) ??
         emendas.anos.map(() => null)),

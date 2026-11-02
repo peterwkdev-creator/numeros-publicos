@@ -2,10 +2,11 @@ import { dataCurta, expandir } from "../../../lib/dados";
 import { funcoesDe, indexarFiscal, naoInstaladosEm, nomeQuadrimestre, receitaDe, ROTULO_FAIXA_ARQUIVO } from "../../../lib/fiscal";
 import { trajetoriaDe } from "../../../lib/ideb";
 import {
-  lerCaged, lerEmendas, lerFiscal, lerIdeb, lerSnapshot, SITE,
+  lerCaged, lerEmendas, lerFiscal, lerIdeb, lerPix, lerSnapshot, SITE,
 } from "../../../lib/servidor";
 import { emendasDe, mesDeCorte, ULTIMO_ANO_VIA_BB } from "../../../lib/emendas";
 import { cagedDe, nomeCompetencia } from "../../../lib/caged";
+import { resumoPixDe } from "../../../lib/pix";
 import { cabecalhosXlsx, xlsx, type Aba } from "../../../lib/xlsx";
 import { rotuloDownload } from "../../../lib/censo";
 
@@ -34,9 +35,9 @@ import { rotuloDownload } from "../../../lib/censo";
 export const dynamic = "force-static";
 
 export async function GET() {
-  const [snapshot, fiscal, ideb, idebFinais, caged, emendas] = await Promise.all([
+  const [snapshot, fiscal, ideb, idebFinais, caged, emendas, pix] = await Promise.all([
     lerSnapshot(), lerFiscal(), lerIdeb("anos_iniciais"), lerIdeb("anos_finais"),
-    lerCaged(), lerEmendas(),
+    lerCaged(), lerEmendas(), lerPix(),
   ]);
   // O ano corrente das emendas, se o arquivo não termina em dezembro.
   const anoParcial = Number(emendas.ultimoMes.slice(0, 4)) > emendas.anoTipos
@@ -45,6 +46,14 @@ export async function GET() {
   const rotuloEmendas = (ano: number) => ano === anoParcial
     ? `Emendas pagas em ${ano}, até ${corte} (R$)`
     : `Emendas pagas em ${ano} (R$)`;
+  // A emenda Pix com os MESMOS anos da página: o último cheio e o corrente.
+  // Os planos um a um, e a série desde 2020, ficam no CSV do município.
+  const anosPix = [emendas.anoTipos, ...(anoParcial ? [anoParcial] : [])];
+  const coletaPix = dataCurta(pix.coletadoEm);
+  const rotulosPix = (ano: number) => [
+    `Emenda Pix: planos de ${ano}`,
+    `Emenda Pix: valor dos planos de ${ano} (R$)`,
+  ];
   const janelaCaged = `${nomeCompetencia(caged.competencias[0]!)} a ` +
     nomeCompetencia(caged.competencia);
   const porCodigo = indexarFiscal(fiscal);
@@ -71,6 +80,9 @@ export async function GET() {
     // No fim, como no CSV: coluna nova no meio desloca as de quem já baixou.
     // Antes das emendas, que ganham uma coluna por ano. Ver o CSV.
     "Relatório do pessoal",
+    // A emenda Pix também ANTES das emendas pagas: são sempre quatro colunas
+    // (os anos andam, a quantidade não), e as pagas ganham uma por janeiro.
+    ...anosPix.flatMap(rotulosPix),
     ...emendas.anos.map(rotuloEmendas),
   ];
 
@@ -107,6 +119,7 @@ export async function GET() {
         cagedDe(caged, m.codigo)),
       f?.simplificado ? "RGF Simplificado, 2º semestre"
         : f?.publicou ? "RGF quadrimestral" : null,
+      ...resumoPixDe(pix, m.codigo, anosPix).flatMap((r) => [r.planos, r.reais]),
       ...(emendasDe(emendas, m.codigo)?.anos.map((a) => a.reais) ??
         emendas.anos.map(() => null)),
     ];
@@ -190,6 +203,25 @@ export async function GET() {
           : ""),
         "R$", "CGU — Portal da Transparência",
       ]),
+      ...anosPix.flatMap((ano) => {
+        const [planos, valor] = rotulosPix(ano);
+        const quando = ano === anoParcial
+          ? `de ${ano}, o ano em curso, cadastrados até a coleta de ${coletaPix}`
+          : `de ${ano}`;
+        return [
+          [planos,
+           `Planos de ação das transferências especiais (a "emenda Pix") ${quando}, ` +
+           "com o ciente do beneficiário. 0 quer dizer nenhum plano no ano. " +
+           "O plano é o que a prefeitura DECLAROU que vai fazer com o dinheiro; " +
+           "o que a União pagou está nas colunas de emendas pagas.",
+           "planos", "Transferegov — Ministério da Gestão"],
+          [valor,
+           `A soma do valor desses planos, como a fonte declara. NÃO se soma às ` +
+           "colunas de emendas pagas: a emenda Pix paga já está nelas, pelo mês " +
+           "do pagamento, e o plano é pelo ano da emenda. Vazio: nenhum plano no ano.",
+           "R$", "Transferegov — Ministério da Gestão"],
+        ];
+      }),
       [],
       ["Relatório do pessoal",
        "De qual relatório vêm as quatro colunas de pessoal. Município com menos de 50 mil habitantes pode optar pelo RGF Simplificado, semestral: para ele o número é do 2º semestre, que cobre os mesmos 12 meses até dezembro do 3º quadrimestre. Vazio: não entregou nenhum dos dois.",
@@ -225,6 +257,9 @@ export async function GET() {
        `janeiro de ${emendas.anos[0]} a ${corte} de ${emendas.ultimoMes.slice(0, 4)}; ` +
        `arquivo da CGU de ${dataCurta(emendas.dataArquivo)}`,
        emendas.coletadoEm?.slice(0, 10) ?? "—"],
+      [pix.fonte,
+       `Planos de ação da emenda Pix de ${anosPix.join(" e ")}, com o ciente do beneficiário (${pix.origem})`,
+       pix.coletadoEm?.slice(0, 10) ?? "—"],
       [],
       ["Cobertura", "", ""],
       ["Municípios no IBGE", fiscal.cobertura.municipiosIbge, ""],
@@ -244,7 +279,9 @@ export async function GET() {
        "ODbL 1.0 (opendatacommons.org/licenses/odbl/1-0). Os dados fiscais vêm " +
        "do SICONFI/Tesouro Nacional, publicado sob ODbL; os do IBGE e do INEP, " +
        "de uso livre citando a fonte. Os de emendas parlamentares vêm do " +
-       "download aberto do Portal da Transparência (CGU). Cite as fontes e " +
+       "download aberto do Portal da Transparência (CGU); os da emenda Pix, " +
+       "dos planos de ação do Transferegov (Ministério da Gestão), citados " +
+       "com o endereço e a data da coleta. Cite as fontes e " +
        "mantenha a licença.", ""],
       ["Licença do código do site", "AGPL-3.0", ""],
       ["Site", SITE, ""],

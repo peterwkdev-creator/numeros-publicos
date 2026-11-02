@@ -9,7 +9,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import fs from "node:fs";
 
-import { areasDe, pixDe, planosEmTexto, type SnapshotPix } from "../lib/pix.ts";
+import { areasDe, pixDe, planosEmTexto, resumoPixDe, type SnapshotPix } from "../lib/pix.ts";
 
 const ler = (caminho: string) =>
   fs.readFileSync(new URL(caminho, import.meta.url), "utf-8");
@@ -63,6 +63,17 @@ test("área conta planos, uma vez por plano, e a soma pode passar do total", () 
 test("executor só aparece quando não é o beneficiário", () => {
   const b = pixDe(pequeno, 1, [2025])!.planos.find((x) => x.codigo === "P-B")!;
   assert.deepEqual(b.objetos.map((o) => o.executor), [null, "FUNDO MUNICIPAL DE SAÚDE"]);
+});
+
+test("resumo da base nacional: planos e soma por ano; sem plano, 0 e vazio", () => {
+  assert.deepEqual(resumoPixDe(pequeno, 1, [2025, 2026]), [
+    { planos: 2, reais: 400_000 }, { planos: 1, reais: 50_000 },
+  ]);
+  // Ano fora dos pedidos (2020) não entra; município sem plano dá 0 e null.
+  assert.deepEqual(resumoPixDe(pequeno, 1, [2024]), [{ planos: 0, reais: null }]);
+  assert.deepEqual(resumoPixDe(pequeno, 2, [2025, 2026]), [
+    { planos: 0, reais: null }, { planos: 0, reais: null },
+  ]);
 });
 
 test("planosEmTexto concorda o número", () => {

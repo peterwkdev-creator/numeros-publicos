@@ -11,6 +11,7 @@ import { cagedAnosDe, cagedDe } from "../../../lib/caged";
 import { EMPRESAS, medianaDaColunaCache, PARES_TRABALHO, RENDA_CENSO } from "../../../lib/trabalho";
 import { indiceSimei, simeiDe } from "../../../lib/simei";
 import { emendasDe, porHabitante, porHabitanteDaUf } from "../../../lib/emendas";
+import { pixDe } from "../../../lib/pix";
 import type { Dados, Municipio } from "./apoio";
 import type Estilos from "./municipio.module.css";
 
@@ -33,7 +34,7 @@ export function montarContexto(dados: Dados, m: Municipio) {
 let ultimo: { snapshot: Dados["snapshot"]; codigo: Municipio["codigo"]; c: ReturnType<typeof calcularContexto> } | null = null;
 
 function calcularContexto(dados: Dados, m: Municipio) {
-  const { snapshot, fiscal, ideb, idebFinais, caged, cagedAnos, emendas, regioes, simei, municipios } = dados;
+  const { snapshot, fiscal, ideb, idebFinais, caged, cagedAnos, emendas, regioes, simei, pix, municipios } = dados;
   // Os mesmos argumentos de `app/municipio/sitemap.ts`.
   const atualizado = atualizadoEm(snapshot, fiscal, caged.coletadoEm);
 
@@ -110,6 +111,11 @@ function calcularContexto(dados: Dados, m: Municipio) {
   // As emendas: `null` só se o município não estiver no arquivo (estão os
   // 5.571); sem pagamento, a seção diz isso, e não mostra zero.
   const emendasM = emendasDe(emendas, m.codigo);
+  // Os planos da emenda Pix, nos mesmos anos da seção (o cheio e o
+  // corrente); `null` se o município não tem plano nenhum no arquivo.
+  const pixM = emendasM
+    ? pixDe(pix, m.codigo, [emendasM.cheio.ano, ...(emendasM.parcial ? [emendasM.parcial.ano] : [])])
+    : null;
 
   // `?? null` porque o acesso indexado num Record pode devolver `undefined`
   // quando a coluna não existe no snapshot -- e `undefined` e `null` precisam
@@ -329,7 +335,7 @@ function calcularContexto(dados: Dados, m: Municipio) {
     .slice(0, 5);
 
   return {
-    snapshot, fiscal, ideb, caged, cagedAnos, emendas, m, atualizado, uf, fatos, abertura, regiao, pelaRegiao, vizinhos, medidas, medianas, serieFuncoes, taxasPais, medidasTrabalho, medianasTrabalho, taxasTrabalho, renda, medianaRenda, salario, medianaSalario, comUf, medianasUf, medianasTrabalhoUf, medianaRendaUf, medianaSalarioUf, legendaMedianas, anoEmpresas, temCensoTrabalho, temEmpresas, cagedM, cagedAnosM, simei, simeiM, simeiPos, simeiTaxaPais, emendasM, pop, estimada, pibReais, perCapita, emendasPh, posEmendas, posPop, posPerCapita, naoEntregaramNoEstado, consultadosNoEstado, f, instaladoEm, receitaContraRcl, saltoRcl, posicao, quadrimestre, periodoRgf, aberturaRgf, serie, usaveis, condenado, delta, finalCondenado, vazios, semestral, umPeriodo, saude, funcoes, receita, bimestre, aberturaBimestre, exercicioColetado, atrasado, maior, iniciais, finais, medianaIniciais, medianaFinais, educacao, nacional, comparacao, mudancas,
+    snapshot, fiscal, ideb, caged, cagedAnos, emendas, m, atualizado, uf, fatos, abertura, regiao, pelaRegiao, vizinhos, medidas, medianas, serieFuncoes, taxasPais, medidasTrabalho, medianasTrabalho, taxasTrabalho, renda, medianaRenda, salario, medianaSalario, comUf, medianasUf, medianasTrabalhoUf, medianaRendaUf, medianaSalarioUf, legendaMedianas, anoEmpresas, temCensoTrabalho, temEmpresas, cagedM, cagedAnosM, simei, simeiM, simeiPos, simeiTaxaPais, emendasM, pix, pixM, pop, estimada, pibReais, perCapita, emendasPh, posEmendas, posPop, posPerCapita, naoEntregaramNoEstado, consultadosNoEstado, f, instaladoEm, receitaContraRcl, saltoRcl, posicao, quadrimestre, periodoRgf, aberturaRgf, serie, usaveis, condenado, delta, finalCondenado, vazios, semestral, umPeriodo, saude, funcoes, receita, bimestre, aberturaBimestre, exercicioColetado, atrasado, maior, iniciais, finais, medianaIniciais, medianaFinais, educacao, nacional, comparacao, mudancas,
   };
 }
 

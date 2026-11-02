@@ -1,6 +1,7 @@
-import { br, dataCurta, escalaComSinal } from "../../../lib/dados";
+import { br, dataCurta, escala, escalaComSinal } from "../../../lib/dados";
 import { deEstado } from "../../../lib/estado";
 import { mesDeCorte, SEM_PREFEITURA } from "../../../lib/emendas";
+import { planosEmTexto, type PlanoPix } from "../../../lib/pix";
 import ComposicaoBarras from "../../componentes/composicao-barras";
 import Termo from "../../componentes/termo";
 import type { Contexto } from "./contexto";
@@ -139,6 +140,121 @@ export default function SecaoEmendas({ c }: { c: Contexto }) {
         diretamente à prefeitura e não se compara com {emendasM.cheio.ano}.
         Fonte: {emendas.fonte}, arquivo de {dataCurta(emendas.dataArquivo)}.
       </p>
+      <BlocoPix c={c} />
     </section>
+  );
+}
+
+/** "R$ 1,2 milhão", com o valor exato no `title`. */
+function Reais({ v }: { v: number }) {
+  const e = escala(v);
+  return <span title={e.exato}>{e.curto}</span>;
+}
+
+/** O relatório de gestão de um plano, como a prefeitura declarou, ou a falta dele. */
+function Relatorio({ p }: { p: PlanoPix }) {
+  const r = p.relatorio;
+  if (!r) return <>Sem relatório de gestão.</>;
+  return (
+    <>
+      Relatório de gestão {r.tipo} de {dataCurta(r.data.slice(0, 10))},
+      declarado pela prefeitura: <Reais v={r.executado} /> executados e{" "}
+      <Reais v={r.pendente} /> pendentes
+      {r.executado > p.reais && <>, acima do valor do plano, como foi declarado</>}.
+    </>
+  );
+}
+
+/**
+ * Em que a prefeitura declarou aplicar a emenda Pix: as áreas, com o NÚMERO
+ * de planos que as citam (área não tem valor na fonte), e os planos um a um,
+ * com o objeto literal (espec `especs/numeros-publicos-emendas-pix.md`).
+ */
+function BlocoPix({ c }: { c: Contexto }) {
+  const { m, pix, pixM, estilos } = c;
+  if (!pixM || pixM.planos.length === 0) return null;
+  const porAno = pixM.anos.map((ano) => {
+    const doAno = pixM.planos.filter((p) => p.ano === ano);
+    return { ano, n: doAno.length, reais: doAno.reduce((s, p) => s + p.reais, 0) };
+  });
+  const varias = pixM.planos.some((p) => new Set(p.objetos.flatMap((o) => o.areas)).size > 1);
+  const anos = pixM.anos.join(" e ");
+  return (
+    <>
+      <h3 className={estilos.subtitulo} id="emenda-pix">
+        Em que a prefeitura declarou aplicar a emenda Pix
+      </h3>
+      <p>
+        {porAno.map((a, i) => (
+          <span key={a.ano}>
+            {i === 0 ? "Em " : "; em "}{a.ano}, {i === 0 ? "a prefeitura de " + m.nome + " cadastrou " : ""}
+            <strong>{planosEmTexto(a.n)}</strong>
+            {i === 0 && <>{" "}de ação de{" "}
+              <Termo chave="emenda-transferencia-especial">emenda Pix</Termo></>}
+            {", no valor de "}<strong><Reais v={a.reais} /></strong>
+          </span>
+        ))}
+        . Áreas e objetos como a prefeitura cadastrou no plano de ação do
+        Transferegov.
+      </p>
+      {pixM.areas.length > 0 && (
+        <div className={`${estilos.rolagem} rola-x`}>
+          <table className={estilos.serie}>
+            <caption className={estilos.legenda}>
+              Áreas citadas nos planos de ação da emenda Pix de {m.nome}, em{" "}
+              {anos}, pelo número de planos que citam cada uma.
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">Área</th>
+                <th scope="col" className={estilos.num}>Planos</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pixM.areas.map((a) => (
+                <tr key={a.nome}>
+                  <th scope="row">{a.nome}</th>
+                  <td className={estilos.num}>{br(a.planos)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {varias && (
+        <p className={estilos.ressalva}>
+          Um plano pode citar mais de uma área: por isso a área vem com o
+          número de planos, sem valor em reais, e a coluna soma mais que o
+          total de planos.
+        </p>
+      )}
+      <ul className={estilos.lista}>
+        {pixM.planos.map((p) => (
+          <li key={`${p.ano}-${p.codigo}`}>
+            <strong>
+              {p.ano}, plano {p.codigo}, <Reais v={p.reais} />
+            </strong>
+            {p.objetos.length === 0 && <>: sem objeto cadastrado.</>}
+            {p.objetos.map((o, i) => (
+              <span key={i}>
+                {i === 0 ? ": " : " "}
+                {o.executor && <>executado por {o.executor}: </>}
+                {o.objeto}
+                {o.areas.length > 0 && <> ({o.areas.join(", ")})</>}.
+              </span>
+            ))}{" "}
+            <Relatorio p={p} />
+          </li>
+        ))}
+      </ul>
+      <p className={estilos.ressalva}>
+        O valor é o do plano de ação, e não o que foi pago no ano: por isso
+        não se soma nem se compara com os pagamentos acima. O relatório de
+        gestão é declaração da prefeitura, e recente: plano sem relatório não
+        é plano sem execução. A série desde {pix.anos[0]} está no download
+        desta página. Fonte: {pix.fonte}, coletado em{" "}
+        {dataCurta(pix.coletadoEm)}.
+      </p>
+    </>
   );
 }

@@ -5,11 +5,12 @@ import {
 } from "../../../../lib/fiscal";
 import { trajetoriaDe } from "../../../../lib/ideb";
 import {
-  lerCaged, lerCagedAnos, lerEmendas, lerFiscal, lerIdeb, lerSimei, lerSnapshot,
+  lerCaged, lerCagedAnos, lerEmendas, lerFiscal, lerIdeb, lerPix, lerSimei, lerSnapshot,
 } from "../../../../lib/servidor";
 import { NOTA_AUSENCIA, simeiDe } from "../../../../lib/simei";
 import { cagedAnosDe, cagedDe } from "../../../../lib/caged";
 import { emendasDe, ULTIMO_ANO_VIA_BB } from "../../../../lib/emendas";
+import { pixDe } from "../../../../lib/pix";
 import { rotuloDownload } from "../../../../lib/censo";
 
 /**
@@ -35,9 +36,9 @@ export async function GET(
   { params }: { params: Promise<{ slug: string }> },
 ) {
   const { slug } = await params;
-  const [snapshot, fiscal, ideb, idebFinais, caged, cagedAnos, emendas, simei] = await Promise.all([
+  const [snapshot, fiscal, ideb, idebFinais, caged, cagedAnos, emendas, simei, pix] = await Promise.all([
     lerSnapshot(), lerFiscal(), lerIdeb("anos_iniciais"), lerIdeb("anos_finais"),
-    lerCaged(), lerCagedAnos(), lerEmendas(), lerSimei(),
+    lerCaged(), lerCagedAnos(), lerEmendas(), lerSimei(), lerPix(),
   ]);
   const m = expandir(snapshot).find((x) => slugDe(x.nome, x.uf) === slug);
   if (!m) return new Response("não encontrado", { status: 404 });
@@ -230,6 +231,29 @@ export async function GET(
   for (const t of em?.tipos ?? []) {
     linhas.push([...comum, `Emendas parlamentares pagas — ${t.nome}`,
       String(em!.cheio.ano), t.valor, "R$", "CGU", emendas.coletadoEm ?? ""]);
+  }
+
+  // A emenda Pix, plano a plano desde 2020: a série que a página não mostra
+  // (lá, só os anos da seção). O valor é o do plano, não o pagamento; o
+  // objeto vai literal no nome do indicador, porque o arquivo viaja sem a
+  // página. O relatório de gestão, se houver, em duas linhas (executado e
+  // pendente), como a prefeitura declarou; sem relatório, o plano diz isso.
+  const pm = pixDe(pix, m.codigo, []);
+  for (const p of [...(pm?.todos ?? [])].sort((a, b) => a.ano - b.ano || a.codigo.localeCompare(b.codigo))) {
+    const objeto = p.objetos.map((o) =>
+      `${o.executor ? `executado por ${o.executor}: ` : ""}${o.objeto}` +
+      (o.areas.length ? ` (${o.areas.join(", ")})` : "")).join("; ") || "sem objeto cadastrado";
+    const plano = `Emenda Pix, plano de ação ${p.codigo}`;
+    linhas.push([...comum,
+      `${plano}, valor do plano (${p.relatorio ? "com" : "sem"} relatório de gestão): ${objeto}`,
+      String(p.ano), p.reais, "R$", "Transferegov", pix.coletadoEm]);
+    if (p.relatorio) {
+      const r = `relatório de gestão ${p.relatorio.tipo} de ${p.relatorio.data.slice(0, 10)}, declarado pela prefeitura`;
+      linhas.push([...comum, `${plano}, executado (${r})`,
+        String(p.ano), p.relatorio.executado, "R$", "Transferegov", pix.coletadoEm]);
+      linhas.push([...comum, `${plano}, pendente (${r})`,
+        String(p.ano), p.relatorio.pendente, "R$", "Transferegov", pix.coletadoEm]);
+    }
   }
 
   const csv = paraCsv(

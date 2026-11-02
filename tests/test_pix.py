@@ -410,5 +410,203 @@ class TestComando(Banco):
             "SELECT name FROM sqlite_master WHERE name LIKE 'pix%'"), [])
 
 
+CNPJ_PAU_DARCO = "06554869000164"
+CNPJ_BAHIA = "13937032000160"
+
+
+class TestExportar(unittest.TestCase):
+    """O `pix.json` a partir de um `emendas.db` com poucos planos: um de cada
+    caso que o painel trata (Fase 2 da espec, §5)."""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.banco = Path(self._tmp.name) / "emendas.db"
+        self.saida = Path(self._tmp.name) / "painel" / "dados" / "pix.json"
+        with ArmazemPix(self.banco) as db:
+            con = db.con
+            for t, quando in (("pix_plano", "2026-10-30T13:12:05+00:00"),
+                              ("pix_executor", "2026-10-30T13:12:03+00:00"),
+                              ("pix_area", "2026-10-30T13:12:02+00:00"),
+                              ("pix_relatorio", "2026-10-30T13:12:04+00:00")):
+                con.execute("INSERT INTO pix_coleta VALUES (?,?,?,?,?)",
+                            (t, 1, pix.BASE, pix.LICENCA, quando))
+            ssa = (CNPJ_SALVADOR, "MUNICIPIO DE SALVADOR", "BA", 2927408)
+            con.executemany("INSERT INTO pix_plano VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", [
+                (1, "0903-000001", 2024, "CIENTE", *ssa, "202427070006", "2024", 5000, 10000),
+                (2, "0903-000002", 2023, "CIENTE", *ssa, "202327070006", "2023", 0, 20000),
+                (3, "0903-000003", 2024, "IMPEDIDO", *ssa, "202427070007", "2024", 0, 99900),
+                (4, "0903-000004", 2024, "CIENTE", CNPJ_PAU_DARCO,
+                 "MUNICIPIO DE PAU D'ARCO DO PIAUI", "PI", 2209559, "202427070008",
+                 "2024", 0, 30000),
+                (5, "0903-000005", 2024, "CIENTE", CNPJ_BAHIA, "ESTADO DA BAHIA", "BA",
+                 None, "202427070009", "2024", 0, 50000),
+                (6, "0903-000000", 2024, "CIENTE", *ssa, "202427070010", "2024", 1000, 0),
+            ])
+            con.executemany("INSERT INTO pix_executor VALUES (?,?,?,?,?,?,?)", [
+                (11, 1, "11111111000111", "FUNDO MUNICIPAL DE  SAÚDE ",
+                 "Compra de ambulância", 0, 5000),
+                (10, 1, CNPJ_SALVADOR, "MUNICIPIO DE SALVADOR",
+                 " PAVIMENTAÇÃO  DE Ruas ", 5000, 5000),
+                (20, 4, CNPJ_PAU_DARCO, "MUNICIPIO DE PAU D'ARCO", "REFORMA DA ESCOLA",
+                 0, 30000),
+                (30, 3, CNPJ_SALVADOR, "MUNICIPIO DE SALVADOR", "QUADRA", 0, 99900),
+            ])
+            con.executemany("INSERT INTO pix_area VALUES (?,?,?,?,?)", [
+                (10, 15, "Urbanismo", 451, "Infraestrutura Urbana "),
+                (10, 15, "Urbanismo", 452, "Serviços Urbanos"),
+                (10, 10, "Saúde", 302, "Assistência Hospitalar"),
+                (11, 10, "Saúde", 301, "Atenção Básica"),
+                (20, 12, "Educação", 361, "Ensino Fundamental"),
+                (30, 27, "Desporto e Lazer", 812, "Desporto Comunitário"),
+            ])
+            con.executemany("INSERT INTO pix_relatorio VALUES (?,?,?,?,?,?,?)", [
+                (103, 1, "Final", "2024-12-01T00:00:00.999999", 9000, 6000, "DISPONIBILIZADO"),
+                (100, 1, "Final", "2025-01-10T09:00:00.12", 15000, 0, "DISPONIBILIZADO"),
+                (101, 1, "Parcial", "2025-06-01T08:00:00.5", 7000, 8000, "DISPONIBILIZADO"),
+                (102, 1, "Final", "2026-01-01T00:00:00.000001", 1, 1, "EM_ELABORACAO"),
+                (200, 2, "Final", "2025-03-01T10:00:00.1", 20000, 0, "EM_ELABORACAO"),
+                (401, 4, "Parcial", "2025-02-01T10:00:00.3", 2000, 28000, "DISPONIBILIZADO"),
+                (400, 4, "Parcial", "2025-02-01T10:00:00.25", 1000, 29000, "DISPONIBILIZADO"),
+            ])
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def exportar(self):
+        return pix.exportar_json(self.banco, self.saida)
+
+    def municipio(self, r, codigo):
+        return dict((m, p) for m, p in r["municipios"])[codigo]
+
+    def test_formato_inteiro(self):
+        r = self.exportar()
+        self.assertEqual(list(r), ["fonte", "origem", "licenca", "coletadoEm", "anos",
+                                   "funcoes", "municipios"])
+        self.assertEqual(r["fonte"], "Transferegov (Ministério da Gestão), planos de "
+                                     "ação das transferências especiais")
+        self.assertEqual(r["origem"], pix.BASE)
+        self.assertEqual(r["licenca"], pix.LICENCA)
+        self.assertEqual(r["coletadoEm"], "2026-10-30T13:12:02+00:00")
+        self.assertEqual(r["anos"], [2023, 2024])
+        self.assertEqual(r["municipios"], [
+            [2209559, [
+                [2024, "0903-000004", 30000, [[None, "REFORMA DA ESCOLA", [12]]],
+                 ["Parcial", "2025-02-01T10:00:00.3", 2000, 28000]]]],
+            [2927408, [
+                [2023, "0903-000002", 20000, [], None],
+                [2024, "0903-000000", 1000, [], None],
+                [2024, "0903-000001", 15000, [
+                    [None, "PAVIMENTAÇÃO DE Ruas", [10, 15]],
+                    ["FUNDO MUNICIPAL DE SAÚDE", "Compra de ambulância", [10]]],
+                 ["Final", "2025-01-10T09:00:00.12", 15000, 0]]]],
+        ])
+
+    def test_plano_impedido_e_estado_ficam_fora(self):
+        r = self.exportar()
+        codigos = [p[1] for _, planos in r["municipios"] for p in planos]
+        self.assertNotIn("0903-000003", codigos)
+        self.assertNotIn("0903-000005", codigos)
+        # A função só do executor do plano IMPEDIDO não entra no dicionário.
+        self.assertNotIn("27", r["funcoes"])
+
+    def test_executor_igual_ao_beneficiario_e_null_diferente_e_o_nome(self):
+        itens = self.municipio(self.exportar(), 2927408)[2][3]
+        self.assertIsNone(itens[0][0])
+        self.assertEqual(itens[1][0], "FUNDO MUNICIPAL DE SAÚDE")
+
+    def test_objeto_normaliza_o_espaco_sem_mudar_a_caixa(self):
+        itens = self.municipio(self.exportar(), 2927408)[2][3]
+        self.assertEqual(itens[0][1], "PAVIMENTAÇÃO DE Ruas")
+
+    def test_funcoes_distintas_e_ordenadas_com_o_nome(self):
+        r = self.exportar()
+        itens = self.municipio(r, 2927408)[2][3]
+        self.assertEqual(itens[0][2], [10, 15])  # 15 em duas subfunções conta uma vez
+        self.assertEqual(r["funcoes"], {"10": "Saúde", "12": "Educação", "15": "Urbanismo"})
+        self.assertEqual(list(r["funcoes"]), ["10", "12", "15"])
+
+    def test_relatorio_final_vence_parcial_mais_novo_e_em_elaboracao_nao_conta(self):
+        rel = self.municipio(self.exportar(), 2927408)[2][4]
+        self.assertEqual(rel, ["Final", "2025-01-10T09:00:00.12", 15000, 0])
+
+    def test_sem_final_vale_o_parcial_mais_recente(self):
+        rel = self.municipio(self.exportar(), 2209559)[0][4]
+        self.assertEqual(rel, ["Parcial", "2025-02-01T10:00:00.3", 2000, 28000])
+
+    def test_sem_relatorio_disponibilizado_e_null(self):
+        planos = self.municipio(self.exportar(), 2927408)
+        self.assertIsNone(planos[0][4])  # só EM_ELABORACAO
+        self.assertIsNone(planos[1][4])  # nenhum
+
+    def test_arquivo_compacto_em_utf8(self):
+        r = self.exportar()
+        # write_text, como o emendas.json: no Windows a linha final sai CRLF.
+        texto_ = self.saida.read_text(encoding="utf-8")
+        self.assertTrue(texto_.endswith("}\n"))
+        self.assertIn("SAÚDE", texto_)
+        self.assertEqual(texto_, json.dumps(r, ensure_ascii=False,
+                                            separators=(",", ":")) + "\n")
+        self.assertEqual(json.loads(texto_), r)
+
+    def test_soma_que_nao_fecha_e_erro_e_nada_se_escreve(self):
+        from unittest import mock
+        original = pix.retrato
+
+        def com_um_centavo_a_mais(con):
+            r = original(con)
+            r["municipios"][0][1][0][2] += 1
+            return r
+
+        with mock.patch.object(pix, "retrato", side_effect=com_um_centavo_a_mais):
+            with self.assertRaisesRegex(ErroPix, "não fecham com o banco"):
+                self.exportar()
+        self.assertFalse(self.saida.exists())
+
+    def test_municipio_fora_do_ibge_e_erro_e_nada_se_escreve(self):
+        con = sqlite3.connect(self.banco)
+        con.execute("INSERT INTO pix_plano VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+                    (7, "0903-000007", 2024, "CIENTE", "22222222000122", "X", "BA", 123,
+                     "202427070011", "2024", 0, 100))
+        con.commit()
+        con.close()
+        with self.assertRaisesRegex(ErroPix, "IBGE"):
+            self.exportar()
+        self.assertFalse(self.saida.exists())
+
+    def test_banco_sem_coleta_e_erro(self):
+        vazio = Path(self._tmp.name) / "vazio.db"
+        with ArmazemPix(vazio):
+            pass
+        with self.assertRaisesRegex(ErroPix, "rode pix-ingerir"):
+            pix.exportar_json(vazio, self.saida)
+        self.assertFalse(self.saida.exists())
+
+    def test_pix_exportar_grava_e_imprime(self):
+        import argparse
+        import contextlib
+        from numeros_publicos.cli import pix_exportar
+        args = argparse.Namespace(banco_emendas=str(self.banco), saida=str(self.saida))
+        saida = io.StringIO()
+        with contextlib.redirect_stdout(saida):
+            codigo = pix_exportar(args)
+        self.assertEqual(codigo, 0)
+        self.assertIn("2 municípios, 4 planos CIENTE", saida.getvalue())
+        self.assertIn("2024      3 planos            460,00", saida.getvalue())
+        self.assertTrue(self.saida.exists())
+
+    def test_pix_exportar_sai_1_sem_banco(self):
+        import argparse
+        import contextlib
+        from numeros_publicos.cli import pix_exportar
+        args = argparse.Namespace(banco_emendas=str(Path(self._tmp.name) / "nao.db"),
+                                  saida=str(self.saida))
+        erro = io.StringIO()
+        with contextlib.redirect_stderr(erro):
+            codigo = pix_exportar(args)
+        self.assertEqual(codigo, 1)
+        self.assertIn("não existe", erro.getvalue())
+        self.assertFalse(self.saida.exists())
+
+
 if __name__ == "__main__":
     unittest.main()

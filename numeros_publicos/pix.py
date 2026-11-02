@@ -342,3 +342,164 @@ def conferir_com_cgu(banco: str | Path) -> list[tuple[str, int, int, int, int]]:
                       sum(v for k, v in cgu.items() if k[1] == ano),
                       sum(plano[k] == cgu.get(k, 0) for k in chaves), len(chaves)))
     return saida
+
+
+# ------------------------------------------------------------------ exportação
+
+FONTE = ("Transferegov (Ministério da Gestão), planos de ação das "
+         "transferências especiais")
+
+#: O relatório que vale para o painel: o "Final" disponibilizado mais recente;
+#: sem ele, o "Parcial" mais recente. Em elaboração ou em análise não conta.
+RELATORIO_VALIDO = "DISPONIBILIZADO"
+TIPOS_RELATORIO = ("Final", "Parcial")
+
+
+def codigo_ibge_valido(c) -> bool:
+    """Código de município do IBGE: 7 dígitos, com a UF (11 a 53) na frente."""
+    return (isinstance(c, int) and not isinstance(c, bool)
+            and 1_100_000 <= c <= 5_399_999)
+
+
+def _quando(data: str, id_relatorio: int) -> dt.datetime:
+    """A data do relatório como a fonte grava (ISO com 2 a 6 casas de fração
+    de segundo, medido em 01/11/2026). Ler como `datetime` confere o formato:
+    data fora dele é ERRO, não uma ordem errada em silêncio."""
+    try:
+        return dt.datetime.fromisoformat(data)
+    except ValueError:
+        raise ErroPix(f"relatório {id_relatorio}: data fora do formato: {data!r}") from None
+
+
+def retrato(con: sqlite3.Connection) -> dict:
+    """O `pix.json` que o painel lê, só dos planos "CIENTE" ligados a município.
+
+    Por município (em ordem de código), os planos por ano e código:
+    `[ano, código, centavos, itens, relatório]`. Um item por executor:
+    `[executor ou None, objeto, [cd_funcao, ...]]`; o nome do executor só
+    quando o CNPJ dele não é o do plano (armadilha 2). Objeto com o espaço
+    normalizado, palavra e caixa como a fonte (armadilha 5). Área sem valor
+    (armadilha 1): só o código da função, o nome vai em `funcoes`.
+    Relatório: `[tipo, data, executado, pendente]` ou None (armadilha 4).
+    """
+    coleta = con.execute("SELECT origem, coletado_em FROM pix_coleta").fetchall()
+    licenca = con.execute(
+        "SELECT licenca FROM pix_coleta WHERE tabela = 'pix_plano'").fetchone()
+    if not coleta or licenca is None:
+        raise ErroPix("banco da emenda Pix vazio: rode pix-ingerir")
+    origens = sorted({o for o, _ in coleta})
+    if len(origens) != 1:
+        raise ErroPix(f"as tabelas da emenda Pix vêm de origens diferentes: {origens}")
+    planos = con.execute(
+        "SELECT id_plano, municipio, ano, codigo, cnpj, custeio + investimento"
+        " FROM pix_plano WHERE situacao = ? AND municipio IS NOT NULL"
+        " ORDER BY municipio, ano, codigo, id_plano", (SITUACAO_VALIDA,)).fetchall()
+    if not planos:
+        raise ErroPix(f"nenhum plano {SITUACAO_VALIDA} com município no banco")
+
+    funcoes_do_executor: dict[int, list[int]] = {}
+    for id_executor, cd in con.execute(
+            "SELECT DISTINCT id_executor, cd_funcao FROM pix_area ORDER BY 1, 2"):
+        funcoes_do_executor.setdefault(id_executor, []).append(cd)
+    nome_funcao: dict[int, str] = {}
+    for cd, nome in con.execute("SELECT DISTINCT cd_funcao, funcao FROM pix_area"):
+        if nome_funcao.setdefault(cd, texto(nome)) != texto(nome):
+            raise ErroPix(f"função {cd} com dois nomes: {nome_funcao[cd]!r} e {texto(nome)!r}")
+
+    executores: dict[int, list[tuple]] = {}
+    for id_executor, id_plano, cnpj, nome, objeto in con.execute(
+            "SELECT id_executor, id_plano, cnpj, executor, objeto FROM pix_executor"
+            " ORDER BY id_plano, id_executor"):
+        executores.setdefault(id_plano, []).append((id_executor, cnpj, nome, objeto))
+
+    relatorio: dict[int, dict[str, tuple]] = {}
+    for id_rel, id_plano, tipo, data, executado, pendente in con.execute(
+            "SELECT id_relatorio, id_plano, tipo, data, executado, pendente"
+            " FROM pix_relatorio WHERE situacao = ?", (RELATORIO_VALIDO,)):
+        if tipo not in TIPOS_RELATORIO:
+            raise ErroPix(f"relatório {id_rel}: tipo novo na fonte: {tipo!r}")
+        chave_r = (_quando(data, id_rel), id_rel)
+        atual = relatorio.setdefault(id_plano, {}).get(tipo)
+        if atual is None or chave_r > atual[0]:
+            relatorio[id_plano][tipo] = (chave_r, [tipo, data, executado, pendente])
+
+    usadas: set[int] = set()
+    municipios: list[list] = []
+    for id_plano, municipio, ano, codigo, cnpj, valor in planos:
+        itens = []
+        for id_executor, cnpj_executor, nome, objeto in executores.get(id_plano, []):
+            cds = funcoes_do_executor.get(id_executor, [])
+            usadas.update(cds)
+            itens.append([texto(nome) if cnpj_executor != cnpj else None,
+                          texto(objeto), cds])
+        r = relatorio.get(id_plano, {})
+        escolhido = r.get("Final") or r.get("Parcial")
+        linha = [ano, codigo, valor, itens, escolhido[1] if escolhido else None]
+        if not municipios or municipios[-1][0] != municipio:
+            municipios.append([municipio, []])
+        municipios[-1][1].append(linha)
+
+    return {
+        "fonte": FONTE,
+        "origem": origens[0],
+        "licenca": licenca[0],
+        "coletadoEm": min(c for _, c in coleta),
+        "anos": sorted({p[2] for p in planos}),
+        "funcoes": {str(cd): nome_funcao[cd] for cd in sorted(usadas)},
+        "municipios": municipios,
+    }
+
+
+def conferir_retrato(r: dict, con: sqlite3.Connection) -> None:
+    """Fecha o retrato com o banco por um SELECT à parte: por ano, o número de
+    planos e a soma em centavos; e nenhum município fora do código do IBGE."""
+    banco = {ano: (n, s) for ano, n, s in con.execute(
+        "SELECT ano, COUNT(*), SUM(custeio + investimento) FROM pix_plano"
+        " WHERE situacao = ? AND municipio IS NOT NULL GROUP BY ano",
+        (SITUACAO_VALIDA,))}
+    exportado: dict[int, list[int]] = {}
+    for _, planos in r["municipios"]:
+        for ano, _codigo, valor, _itens, _rel in planos:
+            par = exportado.setdefault(ano, [0, 0])
+            par[0] += 1
+            par[1] += valor
+    exportado_t = {a: tuple(v) for a, v in exportado.items()}
+    if exportado_t != banco:
+        diferentes = {a: (exportado_t.get(a), banco.get(a))
+                      for a in sorted(set(banco) | set(exportado_t))
+                      if exportado_t.get(a) != banco.get(a)}
+        raise ErroPix("planos e centavos por ano não fecham com o banco "
+                      f"(ano: exportado, banco): {diferentes}")
+    if r["anos"] != sorted(banco):
+        raise ErroPix(f"anos {r['anos']} diferentes dos do banco {sorted(banco)}")
+    codigos = [m for m, _ in r["municipios"]]
+    fora = [m for m in codigos if not codigo_ibge_valido(m)]
+    if fora:
+        raise ErroPix(f"município fora do código do IBGE de 7 dígitos: {fora[:10]}")
+    if codigos != sorted(set(codigos)):
+        raise ErroPix("municípios repetidos ou fora de ordem no retrato")
+    sem_nome = {cd for _, planos in r["municipios"] for p in planos
+                for _e, _o, cds in p[3] for cd in cds} - {int(k) for k in r["funcoes"]}
+    if sem_nome:
+        raise ErroPix(f"função sem nome no retrato: {sorted(sem_nome)}")
+
+
+def exportar_json(banco: str | Path, saida: str | Path) -> dict:
+    """Escreve o `pix.json` (compacto, UTF-8, como o `emendas.json`) depois
+    de fechar a conta com o banco; se não fecha, ErroPix e nada se escreve."""
+    banco = Path(banco)
+    if not banco.exists():
+        raise ErroPix(f"{banco} não existe: rode emendas-ingerir e pix-ingerir")
+    con = sqlite3.connect(str(banco))
+    try:
+        r = retrato(con)
+        conferir_retrato(r, con)
+    finally:
+        con.close()
+    saida = Path(saida)
+    saida.parent.mkdir(parents=True, exist_ok=True)
+    provisorio = saida.with_name(saida.name + ".tmp")
+    provisorio.write_text(json.dumps(r, ensure_ascii=False, separators=(",", ":")) + "\n",
+                          encoding="utf-8")
+    provisorio.replace(saida)
+    return r

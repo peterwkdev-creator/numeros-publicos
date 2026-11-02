@@ -9,6 +9,7 @@ import type { SnapshotIdeb } from "./ideb";
 import type { SnapshotInss } from "./inss";
 import type { SnapshotCaged, SnapshotCagedAnos } from "./caged";
 import type { SnapshotEmendas } from "./emendas";
+import type { SnapshotPix } from "./pix";
 import type { SnapshotSimei } from "./simei";
 import type { SnapshotRegioes } from "./estado";
 import type { SnapshotBrasil } from "./brasil";
@@ -185,6 +186,21 @@ export async function lerEmendas(): Promise<SnapshotEmendas> {
   const arquivo = path.join(process.cwd(), "dados", "emendas.json");
   cacheEmendas = JSON.parse(await readFile(arquivo, "utf-8")) as SnapshotEmendas;
   return cacheEmendas;
+}
+
+/**
+ * Os planos de ação da emenda Pix (Transferegov), escritos por `python -m
+ * numeros_publicos pix-exportar` com o número de planos e a soma por ano
+ * fechados contra o banco. Arquivo próprio: outra fonte, outro ritmo, e o
+ * texto dos objetos pesa mais que o resto das emendas inteiro.
+ */
+let cachePix: SnapshotPix | null = null;
+
+export async function lerPix(): Promise<SnapshotPix> {
+  if (cachePix) return cachePix;
+  const arquivo = path.join(process.cwd(), "dados", "pix.json");
+  cachePix = JSON.parse(await readFile(arquivo, "utf-8")) as SnapshotPix;
+  return cachePix;
 }
 
 /**

@@ -69,6 +69,16 @@ export default function SecaoLicenca({ ctx }: { ctx: Contexto }) {
           , sem condição de uso.
         </li>
         <li>
+          <strong>Transferegov/Ministério da Gestão</strong> (planos de ação
+          da emenda Pix): a API não declara licença; o rodapé das páginas do
+          gov.br publica o conteúdo do portal sob a{" "}
+          <a href="https://creativecommons.org/licenses/by-nd/3.0/deed.pt_BR" rel="noopener">
+            CC BY-ND 3.0
+          </a>
+          . Os objetos vão literais, como a prefeitura cadastrou, e a contagem
+          de planos por área é agregado deste site; cite a fonte.
+        </li>
+        <li>
           <strong>Ipea</strong> (salário mínimo real): o Ipeadata declara as
           séries de uso público, com a reprodução permitida desde que o
           Ipeadata seja citado.

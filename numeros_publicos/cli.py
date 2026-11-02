@@ -898,6 +898,14 @@ def construir_parser() -> argparse.ArgumentParser:
                     default=os.environ.get("EMENDAS_BANCO", "emendas.db"))
     ee.add_argument("--permitir-encolher", action="store_true")
     ee.set_defaults(func=emendas_exportar)
+    pe = sub.add_parser("pix-exportar",
+                        help="gera o pix.json que o painel lê (plano de ação da "
+                             "emenda Pix), com planos e soma fechados contra o banco")
+    pe.add_argument("--saida", default="painel/dados/pix.json")
+    pe.add_argument("--banco", "--banco-emendas", dest="banco_emendas",
+                    default=os.environ.get("EMENDAS_BANCO", "emendas.db"))
+    pe.set_defaults(func=pix_exportar)
+
     # --- O Brasil ao longo do tempo (05/10/2026). Banco próprio: séries do
     # país, do IBGE e do Banco Central, cada uma lida por dois caminhos.
     bi = sub.add_parser("brasil-ingerir",
@@ -1297,6 +1305,32 @@ def emendas_exportar(args) -> int:
           f"{r['anos'][0]} a {r['anos'][-1]} (último mês {r['ultimoMes']}) · "
           f"{len(r['municipios'])} municípios, {com} com pagamento · "
           "soma fechada com o banco")
+    return 0
+
+
+def pix_exportar(args) -> int:
+    """Escreve o `pix.json` a partir do `emendas.db`: só o plano "CIENTE"
+    ligado a município, com planos e centavos por ano fechados contra o
+    banco antes de gravar."""
+    from . import pix
+    try:
+        r = pix.exportar_json(args.banco_emendas, args.saida)
+    except pix.ErroPix as e:
+        print(f"[!] {e}", file=sys.stderr)
+        return 1
+    por_ano: dict[int, list[int]] = {}
+    for _, planos in r["municipios"]:
+        for ano, _c, valor, _i, _r in planos:
+            par = por_ano.setdefault(ano, [0, 0])
+            par[0] += 1
+            par[1] += valor
+    n = sum(p[0] for p in por_ano.values())
+    print(f"{args.saida}: {len(r['municipios'])} municípios, {n} planos "
+          f"{pix.SITUACAO_VALIDA} · coleta de {r['coletadoEm']} · "
+          "planos e soma por ano fechados com o banco")
+    for ano in sorted(por_ano):
+        q, s = por_ano[ano]
+        print(f"{ano} {q:>6} planos {s / 100:>17_.2f}".replace(".", ",").replace("_", "."))
     return 0
 
 

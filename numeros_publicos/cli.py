@@ -971,7 +971,23 @@ def construir_parser() -> argparse.ArgumentParser:
                     help="não pede de novo o que já está no cache")
     ec.add_argument("--paralelos", type=int, default=8)
     ec.set_defaults(func=eleicoes_2026_cargos)
+    bl = sub.add_parser("bloqueio-ibge",
+                        help="sai 0 se o log da coleta no CI falhou só por "
+                             "timeout no IBGE (aviso amarelo), 1 se não")
+    bl.add_argument("log", help="o log da coleta, com a saída de erro")
+    bl.set_defaults(func=bloqueio_ibge)
     return p
+
+
+def bloqueio_ibge(args) -> int:
+    """O CI troca o vermelho pelo amarelo só com saída 0 daqui."""
+    from .ibge import so_bloqueio_ibge
+    log = Path_(args.log).read_text(encoding="utf-8", errors="replace")
+    if so_bloqueio_ibge(log):
+        print("só timeout no IBGE: aviso amarelo")
+        return 0
+    print("há falha que não é timeout no IBGE: segue vermelho")
+    return 1
 
 
 def eleicoes_2026(args, pedir=None) -> int:

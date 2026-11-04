@@ -102,10 +102,28 @@ jobs:
       # Com `todos`, a lista sai do registro `INDICADORES` e não pode mais
       # ficar para trás. É a mesma lição da bandeira acima, do outro lado:
       # lá o automático herdava um padrão velho, aqui carregava uma cópia.
+      #
+      # Desde 04/11/2026, quando a única falha é timeout no IBGE (o
+      # servicodados não responde ao runner desde 26/10; a coleta local
+      # passa), o run fica verde com a falha em amarelo e não segue para a
+      # conferência nem para o commit (decisão do Peter). Qualquer outra
+      # falha segue vermelha.
       - name: Ingerir municípios e TODOS os indicadores do registro
+        id: ingerir
         run: |
-          python -m numeros_publicos ingerir-municipios --regiao BR --pausa 2
-          python -m numeros_publicos ingerir-indicador todos --regiao BR --pausa 2
+          set +e
+          { python -m numeros_publicos ingerir-municipios --regiao BR --pausa 2 &&
+            python -m numeros_publicos ingerir-indicador todos --regiao BR --pausa 2
+          } 2>&1 | tee "$RUNNER_TEMP/ingerir.log"
+          codigo=${PIPESTATUS[0]}
+          set -e
+          if [ "$codigo" != 0 ] &&
+             python -m numeros_publicos bloqueio-ibge "$RUNNER_TEMP/ingerir.log"; then
+            grep '^\[!\] interrompido: ' "$RUNNER_TEMP/ingerir.log" | sed 's/^/::warning::/' || true
+            echo "bloqueado=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          exit "$codigo"
 
       # Integridade contra a própria fonte. Sai com código 1 se a soma dos
       # municípios divergir do agregado regional do IBGE — e aí o workflow
@@ -117,12 +135,15 @@ jobs:
       # **Verificação que herda o parâmetro daquilo que deveria verificar não
       # verifica nada** — ela confirma a premissa em vez de testá-la.
       - name: Conferir contra o agregado NACIONAL do IBGE
+        if: steps.ingerir.outputs.bloqueado != 'true'
         run: python -m numeros_publicos conferir --regiao BR
 
       - name: Exportar o snapshot
+        if: steps.ingerir.outputs.bloqueado != 'true'
         run: python -m numeros_publicos exportar
 
       - name: Commitar apenas se o dado mudou
+        if: steps.ingerir.outputs.bloqueado != 'true'
         id: commit
         env:
           GH_TOKEN: ${{ github.token }}

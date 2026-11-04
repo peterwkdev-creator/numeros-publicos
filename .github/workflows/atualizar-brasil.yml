@@ -21,6 +21,11 @@
 # com o motivo, para o GitHub mandar o aviso. Saída 1 (mandatos com defeito,
 # nada lido) e série que encolheria continuam parando tudo.
 #
+# Exceção desde 04/11/2026: quando TODA falha é timeout no IBGE (o
+# servicodados não responde ao runner desde 26/10; a coleta local passa), o
+# run fica verde com as falhas em amarelo (`bloqueio-ibge`), sem o `avisar`.
+# HTTP 500, outra fonte, prazo esgotado ou cancelamento seguem vermelhos.
+#
 # ## Prazos e séries anuais (desde 09/10/2026)
 #
 # Em 09/10 a coleta passou dos 20 min do job e foi cancelada sem uma linha de
@@ -108,6 +113,12 @@ jobs:
           codigo=${PIPESTATUS[0]}
           set -e
           if [ "$codigo" = 3 ]; then
+            # Só timeout no IBGE (o runner bloqueado desde 26/10/2026): amarelo,
+            # sem o vermelho do `avisar` (decisão do Peter, 04/11/2026).
+            if python -m numeros_publicos bloqueio-ibge "$RUNNER_TEMP/ingerir.log"; then
+              grep '^\[falha\]' "$RUNNER_TEMP/ingerir.log" | sed 's/^/::warning::/' || true
+              exit 0
+            fi
             grep '^\[falha\]' "$RUNNER_TEMP/ingerir.log" | sed 's/^/::error::/' || true
             echo "parcial=true" >> "$GITHUB_OUTPUT"
             exit 0

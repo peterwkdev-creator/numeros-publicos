@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import gzip
 import json
+import re
 import time
 import urllib.error
 import urllib.parse
@@ -161,6 +162,31 @@ def buscar_json(
             continue
         raise ErroIBGE(f"HTTP {r.status} em {url}: {r.corpo[:200]}")
     raise AssertionError("inalcançável")
+
+
+#: Timeout de rede no IBGE depois de todas as tentativas, como sai no log.
+_TIMEOUT_IBGE = re.compile(
+    rf"{FALHA_DE_REDE} depois de \d+ tentativas em "
+    r"https://(servicodados|apisidra)\.ibge\.gov\.br/\S* \(URLError: timed out\)")
+#: Série pulada porque a fonte IBGE já tinha dado falha de rede na rodada.
+_PULADA_IBGE = re.compile(r": não coletada, a fonte IBGE não respondeu em \S+")
+
+
+def so_bloqueio_ibge(log: str) -> bool:
+    """O log da coleta no CI falhou só por timeout no IBGE?
+
+    Desde 26/10/2026 o servicodados não responde ao runner do GitHub (a
+    coleta local passa): o vermelho de toda segunda e quarta virou ruído, e
+    o Peter pediu amarelo para esse caso (04/11/2026). Conta como falha cada
+    linha `[falha] ` (O Brasil ao longo do tempo) e `[!] interrompido: `
+    (municípios e indicadores); só é bloqueio se houver ao menos uma e TODAS
+    forem timeout no IBGE ou série pulada por ele. HTTP 500, outra fonte,
+    prazo esgotado, conexão recusada: falso, e o CI segue vermelho."""
+    falhas = [linha for linha in log.splitlines()
+              if linha.startswith(("[falha] ", "[!] interrompido: "))]
+    return bool(falhas) and all(
+        _TIMEOUT_IBGE.search(linha) or _PULADA_IBGE.search(linha)
+        for linha in falhas)
 
 
 def url_municipios_da_uf(uf: int | str) -> str:

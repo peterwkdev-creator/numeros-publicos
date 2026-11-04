@@ -23,6 +23,7 @@ from numeros_publicos.ibge import (
     buscar_json,
     municipios,
     regioes_imediatas,
+    so_bloqueio_ibge,
     transporte_http,
     url_municipios_da_uf,
 )
@@ -223,6 +224,63 @@ class TesteRegioesImediatas(unittest.TestCase):
             **{"regiao-intermediaria": {"UF": uf}})
         with self.assertRaises(ErroIBGE):
             regioes_imediatas(bruto)
+
+
+# As linhas reais dos dois vermelhos do bloqueio (runs 41508398932, de
+# 02/11/2026, e 41895982538, de 04/11/2026), com o andamento em volta.
+_SUFIXO = (". Se for 500 constante, suspeitar de agregado/variável "
+           "inexistente antes de suspeitar da rede.")
+_URL_PIB = ("https://servicodados.ibge.gov.br/api/v3/agregados/5932/periodos/"
+            "all/variaveis/6562?localidades=N1[all]&classificacao=11255[90707]")
+LOG_MUNICIPIOS = (
+    "[!] interrompido: ErroIBGE: 599 depois de 4 tentativas em "
+    "https://servicodados.ibge.gov.br/api/v1/localidades/estados/11/municipios"
+    f" (URLError: timed out){_SUFIXO}\n"
+    "Ingerindo municípios de 27 UF(s) [BR], pausa 2.0s.\n"
+    "0 lidos · 0 novos · 0 já conhecidos\n")
+LOG_BRASIL = (
+    "selic: 1,2 s\n"
+    f"[falha] pib: 599 depois de 4 tentativas em {_URL_PIB} "
+    f"(URLError: timed out){_SUFIXO}; fica o dado anterior\n"
+    + "".join(f"[falha] {s}: não coletada, a fonte IBGE não respondeu em pib; "
+              "fica o dado anterior\n"
+              for s in ("desocupacao", "rendimento", "extrema-pobreza",
+                        "ipca", "ipca-indice")))
+
+
+class TesteBloqueioIbge(unittest.TestCase):
+    def test_os_dois_vermelhos_reais_sao_bloqueio(self):
+        self.assertTrue(so_bloqueio_ibge(LOG_MUNICIPIOS))
+        self.assertTrue(so_bloqueio_ibge(LOG_BRASIL))
+
+    def test_sem_linha_de_falha_nao_e_bloqueio(self):
+        # Saída diferente de zero sem a linha (traceback, conferência que
+        # não bate) não vira amarelo.
+        self.assertFalse(so_bloqueio_ibge(""))
+        self.assertFalse(so_bloqueio_ibge("Traceback (most recent call last):\n"))
+
+    def test_qualquer_outra_falha_segue_vermelha(self):
+        outras = {
+            "HTTP 500 no IBGE": LOG_BRASIL.replace(
+                "599 depois", "500 depois").replace("URLError: timed out",
+                                                    "Internal Server Error"),
+            "conexão recusada": LOG_MUNICIPIOS.replace(
+                "URLError: timed out", "URLError: [Errno 111] Connection refused"),
+            "timeout em outra fonte": LOG_MUNICIPIOS.replace(
+                "servicodados.ibge.gov.br", "api.bcb.gov.br"),
+            "a mesma falha no BCB": LOG_BRASIL
+            + "[falha] selic: não coletada, a fonte BCB não respondeu em "
+              "juros; fica o dado anterior\n",
+            "prazo da coleta": LOG_BRASIL
+            + "[falha] selic: não coletada, a coleta passou do prazo de 15 "
+              "min; fica o dado anterior\n",
+            "HTTP de verdade": LOG_MUNICIPIOS
+            + "[!] interrompido: ErroIBGE: HTTP 404 em https://"
+              "servicodados.ibge.gov.br/x: nada\n",
+        }
+        for nome, log in outras.items():
+            with self.subTest(nome):
+                self.assertFalse(so_bloqueio_ibge(log))
 
 
 if __name__ == "__main__":

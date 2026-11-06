@@ -11,18 +11,17 @@ import Termo from "../../componentes/termo";
 import type { Contexto } from "./contexto";
 import FonteGrafico from "../../componentes/fonte-grafico";
 import SimeiAnosSvg from "../../componentes/simei-anos-svg";
-import { dataBr, milhoes } from "../../../lib/simei";
-
-/**
- * O total de MEI ATIVOS do Mapa de Empresas (gov.br/empresas-e-negocios),
- * que só existe para o país: vem da página do Mapa, e não do `simei.json`.
- * Revisar junto com a coleta do SIMEI (espec do MEI, §6, item 5).
- */
-const MAPA_EMPRESAS = { ativos: "13,7 milhões", em: "31/08/2026" };
+import { dataBr } from "../../../lib/simei";
 
 /**
  * Trabalho e renda: Censo, cadastro de empresas e Novo Caged.
- * Extraído de `page.tsx` em 15/10/2026 (item 19 da revisão de 11/10/2026): o HTML é o mesmo, byte a byte.
+ * Extraído de `page.tsx` em 15/10/2026 (item 19 da revisão de 11/10/2026).
+ *
+ * **As notas de método moram na `/ajuda/`** (05/11/2026): aqui fica uma
+ * linha e o link para `#censo`, `#caged` e `#mei`. Repetidas nas 5.571
+ * páginas, eram ~1,6 mil caracteres idênticos em cada uma (medido com
+ * `.claude/medir-repeticao.py`), e texto igual em escala é o que a busca
+ * lê como página feita em série.
  */
 export default function SecaoTrabalho({ c }: { c: Contexto }) {
   const { caged, m, medidasTrabalho, medianasTrabalho, taxasTrabalho, renda, medianaRenda, salario, medianaSalario, medianasTrabalhoUf, medianaRendaUf, medianaSalarioUf, legendaMedianas, anoEmpresas, temCensoTrabalho, temEmpresas, cagedM, cagedAnos, cagedAnosM, simei, simeiM, simeiPos, simeiTaxaPais, estilos } = c;
@@ -67,9 +66,8 @@ export default function SecaoTrabalho({ c }: { c: Contexto }) {
                   {" "}{"R$ "}{br(medianaRenda)})
                 </>
               )}
-              . É a média que o IBGE publica, e uma média se move com
-              poucos rendimentos altos. A do país, por outra pesquisa (a
-              PNAD Contínua) e descontada a inflação:{" "}
+              . É a <Termo chave="media">média</Termo> que o IBGE publica.
+              A do país, pela PNAD Contínua e descontada a inflação:{" "}
               <Link href="/brasil/rendimento/" prefetch={false}>
                 a renda média do trabalho no Brasil
               </Link>
@@ -89,9 +87,8 @@ export default function SecaoTrabalho({ c }: { c: Contexto }) {
           </h3>
           <p>
             Do <strong><Termo chave="cempre">Cadastro Central de Empresas</Termo></strong> do IBGE, que
-            conta os empregos onde a <strong>empresa</strong> está. Inclui
-            prefeitura, câmara e outros órgãos públicos, e não inclui quem
-            trabalha por conta própria sem CNPJ.
+            conta os empregos onde a <strong>empresa</strong> está, órgãos
+            públicos incluídos.
           </p>
           <TabelaValores
             linhas={EMPRESAS}
@@ -102,16 +99,18 @@ export default function SecaoTrabalho({ c }: { c: Contexto }) {
           />
           {salario !== null && medianaSalario !== null && (
             <p>
-              Pondo os municípios do país em ordem de salário médio, o
-              do meio paga{" "}
-              <strong>{"R$ "}{br(medianaSalario)}</strong>: metade fica
-              abaixo disso, metade acima.
+              O salário médio em {m.nome}, <strong>{"R$ "}{br(salario)}</strong>,
+              fica{" "}
+              {salario === medianaSalario ? "igual à" : salario > medianaSalario ? "acima da" : "abaixo da"}{" "}
+              <Termo chave="mediana">mediana</Termo> dos municípios do país,{" "}
+              <strong>{"R$ "}{br(medianaSalario)}</strong>
               {medianaSalarioUf !== null && (
                 <>
-                  {" "}Entre os municípios {deEstado(m.uf)}, o do meio paga{" "}
-                  <strong>{"R$ "}{br(medianaSalarioUf)}</strong>.
+                  ; entre os municípios {deEstado(m.uf)}, a mediana é{" "}
+                  <strong>{"R$ "}{br(medianaSalarioUf)}</strong>
                 </>
               )}
+              .
             </p>
           )}
         </>
@@ -172,15 +171,9 @@ export default function SecaoTrabalho({ c }: { c: Contexto }) {
             </table>
           </div>
           <p className={estilos.ressalva}>
-            Conta quem está enquadrado no SIMEI (o sistema de valores fixos
-            mensais do Simples Nacional) na data da posição consolidada. O
-            Mapa de Empresas conta só os MEI ativos, e só no total do país:{" "}
-            {MAPA_EMPRESAS.ativos} em {MAPA_EMPRESAS.em}, contra{" "}
-            {/* Do dado, e não do teclado: o total do país na posição atual,
-                que o exportador confere contra as 27 linhas TOTAL. */}
-            {milhoes(simei.totais[simei.totais.length - 1]!)} no SIMEI em{" "}
-            {dataBr(simei.posicao)}. Ano sem barra: nenhum optante registrado
-            na fonte. População: a estimativa do IBGE que a página já usa.
+            Ano sem barra: nenhum optante registrado na fonte. Optante não é
+            o mesmo que ativo:{" "}
+            <Link href="/ajuda/#mei" prefetch={false}>como ler o MEI</Link>.
             Baixar a série:{" "}
             <a href="/dados/mei.csv">CSV</a> ·{" "}
             <a href="/dados/mei.xlsx">XLSX</a> (desde{" "}
@@ -217,18 +210,14 @@ export default function SecaoTrabalho({ c }: { c: Contexto }) {
             legenda={`${m.nome} (${m.uf}) no Novo Caged, mês a mês`}
           />
           <p className={estilos.ressalva}>
-            Só emprego <Termo chave="celetista">celetista</Termo>: servidor{" "}
-            <Termo chave="estatutario">estatutário</Termo> e quem trabalha por
-            conta própria não entram. Os meses já incluem as declarações
-            entregues fora do prazo e as exclusões feitas até{" "}
-            {nomeCompetencia(caged.competencia)}, como o número oficial
-            &ldquo;com ajustes&rdquo;, e o mês mais recente ainda pode mudar.
-            Zero admissões e zero desligamentos num mês querem dizer que
-            nenhuma movimentação foi declarada, e não que falta o dado. No
-            país, os mesmos 12 meses somam{" "}
+            Só emprego <Termo chave="celetista">celetista</Termo>, com as
+            declarações e exclusões feitas até{" "}
+            {nomeCompetencia(caged.competencia)}; o mês mais recente ainda pode
+            mudar (<Link href="/ajuda/#caged" prefetch={false}>como ler o Caged</Link>).
+            No país, os mesmos 12 meses somam{" "}
             <strong>{comSinal(caged.conferencia.doze.saldo)}</strong> empregos com carteira,
-            o número que o Ministério do Trabalho publica e que esta base
-            reproduz exatamente.{" "}
+            o número do Ministério do Trabalho, que esta base reproduz
+            exatamente.{" "}
             {/* Do dado conferido, e não do teclado: `caged-exportar` só
                 grava o arquivo quando o mês, o ano e os 12 meses batem
                 com o sumário executivo, e um teste cobra que a soma dos
@@ -244,10 +233,9 @@ export default function SecaoTrabalho({ c }: { c: Contexto }) {
             {cagedAnos.anos[cagedAnos.anos.length - 1]}
           </h3>
           <p>
-            Cada barra é um ano inteiro, de janeiro a dezembro: admissões
-            menos desligamentos, no mesmo <Termo chave="caged">Novo Caged</Termo>.
-            Todos os anos incluem as declarações entregues fora do prazo e as
-            exclusões feitas até {nomeCompetencia(cagedAnos.ajustesAte)}.
+            Cada barra é o <Termo chave="saldo">saldo</Termo> de um ano
+            inteiro no mesmo <Termo chave="caged">Novo Caged</Termo>, com os
+            ajustes feitos até {nomeCompetencia(cagedAnos.ajustesAte)}.
           </p>
           <div className={estilos.grafico}>
             <CagedAnosSvg anos={cagedAnosM} municipio={`${m.nome} (${m.uf})`} />
@@ -278,18 +266,16 @@ export default function SecaoTrabalho({ c }: { c: Contexto }) {
             </table>
           </div>
           <p className={estilos.ressalva}>
-            O número de um ano muda quando chegam ajustes novos, e
-            pode ser diferente do divulgado no fechamento daquele ano: a cada
-            dezembro fechado, a série inteira é refeita. No país, os mesmos
-            anos vão de{" "}
+            A série se refaz a cada dezembro fechado (
+            <Link href="/ajuda/#caged" prefetch={false}>por quê</Link>). No
+            país, os mesmos anos vão de{" "}
             <strong>{comSinal(cagedAnos.conferencia[String(cagedAnos.anos[0])]!.saldo)}</strong>{" "}
             empregos em {cagedAnos.anos[0]} a{" "}
             <strong>
               {comSinal(cagedAnos.conferencia[String(cagedAnos.anos[cagedAnos.anos.length - 1])]!.saldo)}
             </strong>{" "}
-            em {cagedAnos.anos[cagedAnos.anos.length - 1]}, os números que o
-            Ministério do Trabalho publica com os mesmos ajustes e que esta
-            base reproduz ano a ano.{" "}
+            em {cagedAnos.anos[cagedAnos.anos.length - 1]}, os números do
+            Ministério do Trabalho, que esta base reproduz ano a ano.{" "}
             {/* Do dado conferido, e não do teclado: `caged-anos-exportar` só
                 grava o arquivo quando cada ano bate com a apresentação do
                 MTE, e um teste cobra que a soma dos municípios dá estes
@@ -304,11 +290,10 @@ export default function SecaoTrabalho({ c }: { c: Contexto }) {
         <strong>
           Não existe taxa de desemprego atual por município
         </strong>{" "}
-        em nenhuma fonte oficial. A do Censo é de 2022; a{" "}
-        <Termo chave="pnad">PNAD Contínua</Termo>,
-        que o IBGE publica a cada trimestre, vai só até os estados e as
-        capitais, e mede de outro jeito — as duas não se comparam. A do
-        país, desde 2012:{" "}
+        em nenhuma fonte oficial: a do Censo é de 2022, e a{" "}
+        <Termo chave="pnad">PNAD Contínua</Termo> vai só até os estados e as
+        capitais (<Link href="/ajuda/#censo" prefetch={false}>por que os
+        recortes não batem</Link>). A do país, desde 2012:{" "}
         <Link href="/brasil/desemprego/" prefetch={false}>
           a taxa de desemprego no Brasil
         </Link>
@@ -316,10 +301,7 @@ export default function SecaoTrabalho({ c }: { c: Contexto }) {
         <strong>{br(taxasTrabalho["desocupacao"] ?? 0, 1)}%</strong>.{" "}
         {/* Do dado, e não do teclado: é a regra que o teste de
             percentual literal cobra desta página. */}
-        E os recortes desta seção não precisam bater: o Censo conta quem
-        mora aqui; o cadastro de empresas e o Caged, quem trabalha numa
-        empresa daqui. Numa cidade vizinha de um polo, muita gente
-        trabalha fora. Fontes: IBGE, Censo Demográfico 2022 e Cadastro
+        Fontes: IBGE, Censo Demográfico 2022 e Cadastro
         Central de Empresas, pelas APIs públicas de agregados
         {cagedAnosM
           ? "; a do Novo Caged está junto do gráfico."

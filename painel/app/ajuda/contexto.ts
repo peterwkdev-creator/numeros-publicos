@@ -5,6 +5,7 @@ import type { SnapshotFiscal } from "../../lib/fiscal";
 import type { SnapshotIdeb } from "../../lib/ideb";
 import type { SnapshotInss } from "../../lib/inss";
 import type { SnapshotCagedAnos } from "../../lib/caged";
+import type { SnapshotSimei } from "../../lib/simei";
 import { conjuntoDoSite, siteDe } from "../../lib/jsonld";
 import { rankingCache } from "../../lib/nacional";
 import { SITE } from "../../lib/servidor";
@@ -21,6 +22,7 @@ export type Dados = {
   idebFinais: SnapshotIdeb;
   inss: SnapshotInss;
   cagedAnos: SnapshotCagedAnos;
+  simei: SnapshotSimei;
 };
 
 /**
@@ -29,7 +31,7 @@ export type Dados = {
  * Extraído de `page.tsx` em 16/10/2026 (item 10 da modernização): o HTML é o mesmo, byte a byte.
  */
 export function montarContexto(dados: Dados) {
-  const { snapshot, fiscal, ideb, idebFinais, inss, cagedAnos } = dados;
+  const { snapshot, fiscal, ideb, idebFinais, inss, cagedAnos, simei } = dados;
   const total = expandir(snapshot).length;
   const c = fiscal.cobertura;
   // Quem ainda não estava instalado foi consultado e não tinha relatório, mas
@@ -98,7 +100,7 @@ export function montarContexto(dados: Dados) {
   };
 
   return {
-    c, cagedAnos, declarados, deslocamento, desmentidos, f, fiscal, ideb, idebFinais, implausiveis, inss, jsonLd, medi, naoInstalados, naoPublicaram, obrigados, plausiveis, quadrimestre, simplificados, snapshot, total,
+    c, cagedAnos, declarados, deslocamento, desmentidos, f, fiscal, ideb, idebFinais, implausiveis, inss, jsonLd, medi, naoInstalados, naoPublicaram, obrigados, plausiveis, quadrimestre, simei, simplificados, snapshot, total,
   };
 }
 

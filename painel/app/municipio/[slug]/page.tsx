@@ -94,17 +94,24 @@ export async function generateMetadata(
     pop !== null
       ? `${br(pop, 0)} habitantes${distinto?.tema === "populacao" ? `, ${rotulo}` : ""}`
       : null,
-    distinto?.tema === "pib" || distinto?.tema === "emendas" ? rotulo : null,
+    distinto?.tema === "pib" || distinto?.tema === "emendas" ||
+      distinto?.tema === "mei" || distinto?.tema === "saude" ? rotulo : null,
     pessoal !== null
       ? `${br(pessoal, 2)}% da receita em pessoal${distinto?.tema === "pessoal" ? `, ${rotulo}` : ""}`
       : null,
     // A maior função é o número mais concreto da página inteira, e o único
     // que responde à pergunta que a pessoa realmente digitou na busca.
-    maiorFuncao && maiorFuncao.percentual !== null
+    // Com o rótulo da saúde já na meta, "do gasto em saúde" (a fatia da
+    // despesa) ao lado de "aplicados em saúde" (o percentual da receita do
+    // SIOPS) seriam dois números de saúde que não se comparam (Abaeté, 06/11).
+    maiorFuncao && maiorFuncao.percentual !== null &&
+      !(distinto?.tema === "saude" && maiorFuncao.nome.toLowerCase() === "saúde")
       ? `${br(maiorFuncao.percentual, 1)}% do gasto em ${maiorFuncao.nome.toLowerCase()}`
       : null,
     // "IDEB de <cidade>" é consulta com ciclo próprio, todo ano de divulgação.
-    ultimoIdeb !== null ? `IDEB ${br(ultimoIdeb, 1)}` : null,
+    ultimoIdeb !== null
+      ? `IDEB ${br(ultimoIdeb, 1)}${distinto?.tema === "ideb" ? `, ${rotulo}` : ""}`
+      : null,
   ].filter(Boolean);
 
   // **A descrição cabe em ~155 caracteres, e o corte não é estético.** O Google

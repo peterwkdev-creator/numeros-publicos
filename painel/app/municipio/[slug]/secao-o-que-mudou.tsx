@@ -87,12 +87,11 @@ export default function SecaoOQueMudou({ c }: { c: Contexto }) {
             <h2>A composição ao longo dos anos, em % do gasto</h2>
           )}
           <p>
-            Cada barra soma <strong>100%</strong> — o que muda é a
-            proporção, não o tamanho. É de propósito: reais de{" "}
-            {serieFuncoes[0]!.exercicio} e de{" "}
+            Cada barra soma <strong>100%</strong>: o que muda é a
+            proporção, não o tamanho, e <strong>proporção não infla</strong>
+            {" "}(reais de {serieFuncoes[0]!.exercicio} e de{" "}
             {serieFuncoes[serieFuncoes.length - 1]!.exercicio} não são a
-            mesma coisa, e uma barra proporcional ao total mostraria
-            inflação onde se procura prioridade.
+            mesma coisa).
           </p>
           <SerieFuncoes pontos={serieFuncoes} />
           <FonteGrafico
@@ -156,23 +155,15 @@ export default function SecaoOQueMudou({ c }: { c: Contexto }) {
         {comparacao && (
           <>
             A comparação é entre o <strong>mesmo bimestre</strong> de dois
-            anos, e não entre bimestres do mesmo ano — o RREO é acumulado,
-            então o 6º bimestre já contém o 4º e comparar os dois mediria
-            quase nada.{" "}
+            anos, porque o RREO é acumulado.{" "}
           </>
         )}
-        Os valores são <strong><Termo chave="nominal">nominais</Termo></strong>: parte do crescimento é
-        inflação, e este painel não deflaciona nada (a do país:{" "}
+        Os valores são <strong><Termo chave="nominal">nominais</Termo></strong>, sem
+        desconto da inflação (a do país:{" "}
         <Link href="/brasil/ipca/" prefetch={false}>
           o IPCA em 12 meses
         </Link>
         ).{" "}
-        {serieFuncoes.length >= 3 && (
-          <>
-            É também por isso que a série acima é em porcentagem:{" "}
-            <strong>proporção não infla</strong>.{" "}
-          </>
-        )}
         <Link href="/ajuda/#comparacao">Por quê?</Link>
       </p>
     </section>

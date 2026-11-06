@@ -40,8 +40,22 @@
   color: var(--tinta);
 }
 
+/* O link do município: o mesmo lugar e o mesmo rótulo do quadro fechado. */
+.link {
+  margin: 0 0 var(--e-6);
+  font-size: var(--texto-sm);
+  font-weight: 600;
+}
+
+.link a {
+  display: inline-block;
+  padding: max(var(--e-2), (var(--alvo) - 1lh) / 2) 0;
+  /* WCAG 2.5.8: o alvo de toque chega a `--alvo`, como o do quadro. */
+}
+
 @media print {
-  .comoLer {
+  .comoLer,
+  .link {
     display: none;
   }
 }

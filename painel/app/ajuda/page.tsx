@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { cartaoSocial, lerCagedAnos, lerFiscal, lerIdeb, lerInss, lerSnapshot, SITE } from "../../lib/servidor";
+import { cartaoSocial, lerCagedAnos, lerFiscal, lerIdeb, lerInss, lerSimei, lerSnapshot, SITE } from "../../lib/servidor";
 // A ORDEM destes imports de CSS é a que o `page.tsx` tinha antes da divisão em
 // seções (item 10 da modernização, 16/10/2026): o bundler decide em que chunk
 // cai cada CSS Module pela ordem em que são avaliados. O import sem nome só a
@@ -24,6 +24,7 @@ import SecaoEmendas from "./secao-emendas";
 import SecaoIdeb from "./secao-ideb";
 import SecaoCenso from "./secao-censo";
 import SecaoCaged from "./secao-caged";
+import SecaoMei from "./secao-mei";
 import SecaoBrasil from "./secao-brasil";
 import SecaoRanking from "./secao-ranking";
 import SecaoInss from "./secao-inss";
@@ -78,12 +79,12 @@ export const metadata: Metadata = {
 };
 
 export default async function PaginaAjuda() {
-  const [snapshot, fiscal, ideb, inss, cagedAnos] = await Promise.all([
-    lerSnapshot(), lerFiscal(), lerIdeb("anos_iniciais"), lerInss(), lerCagedAnos(),
+  const [snapshot, fiscal, ideb, inss, cagedAnos, simei] = await Promise.all([
+    lerSnapshot(), lerFiscal(), lerIdeb("anos_iniciais"), lerInss(), lerCagedAnos(), lerSimei(),
   ]);
   const idebFinais = await lerIdeb("anos_finais");
   const ctx: Contexto = {
-    ...montarContexto({ snapshot, fiscal, ideb, idebFinais, inss, cagedAnos }),
+    ...montarContexto({ snapshot, fiscal, ideb, idebFinais, inss, cagedAnos, simei }),
     estilos,
   };
 
@@ -104,6 +105,7 @@ export default async function PaginaAjuda() {
       <SecaoIdeb ctx={ctx} />
       <SecaoCenso ctx={ctx} />
       <SecaoCaged ctx={ctx} />
+      <SecaoMei ctx={ctx} />
       <SecaoBrasil ctx={ctx} />
       <SecaoRanking ctx={ctx} />
       <SecaoInss ctx={ctx} />

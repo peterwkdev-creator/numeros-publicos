@@ -29,6 +29,10 @@ export default function SecaoCaged({ ctx }: { ctx: Contexto }) {
           carteira não entram.
         </li>
         <li>
+          <strong>Zero admissões e zero desligamentos</strong> num mês querem
+          dizer que nenhuma movimentação foi declarada, e não que falta o dado.
+        </li>
+        <li>
           <strong>Um mês sozinho engana.</strong> Safra, comércio de fim de
           ano e obra pública mudam o saldo de um mês para o outro; os 12
           meses juntos dizem mais.
@@ -39,7 +43,9 @@ export default function SecaoCaged({ ctx }: { ctx: Contexto }) {
           meses depois, e cada ano da página leva as que chegaram até{" "}
           {nomeCompetencia(cagedAnos.ajustesAte)}. Por isso o saldo de um ano
           muda a cada dezembro fechado, e pode ser diferente do divulgado no
-          fechamento dele.
+          fechamento dele. Os 12 meses seguem a mesma regra, como o número
+          oficial &ldquo;com ajustes&rdquo;, e o mês mais recente ainda pode
+          mudar.
         </li>
       </ul>
       <p>

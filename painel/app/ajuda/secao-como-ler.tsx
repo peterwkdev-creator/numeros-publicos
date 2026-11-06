@@ -14,10 +14,13 @@ export default function SecaoComoLer({ ctx }: { ctx: Contexto }) {
     <section className={estilos.bloco} id="como-ler">
       <h2>Como ler as páginas</h2>
       <p>
-        Logo abaixo do título de cada página há um quadro fechado, “Como ler
-        esta página”. O que ele diz está reunido aqui.
+        Logo abaixo do título de cada página há um “Como ler esta página”: na
+        de município, um link para cá; nas outras, um quadro fechado. O que
+        eles dizem está reunido aqui.
       </p>
-      <h3 className={estilos.subtitulo}>A página de um município</h3>
+      <h3 className={estilos.subtitulo} id="como-ler-municipio">
+        A página de um município
+      </h3>
       <ListaComoLer tipo="municipio" naAjuda />
       <h3 className={estilos.subtitulo}>A página de um estado</h3>
       <ListaComoLer tipo="estado" naAjuda />

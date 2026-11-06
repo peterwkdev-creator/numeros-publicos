@@ -121,6 +121,8 @@
 .subtitulo {
   font-size: var(--texto-base);
   margin: var(--e-6) 0 var(--e-2);
+  /* Alvo do "Como ler esta página" do município (#como-ler-municipio). */
+  scroll-margin-top: var(--e-6);
 }
 
 /* O glossário: o verbete leva o alvo da âncora, então o deslocamento do

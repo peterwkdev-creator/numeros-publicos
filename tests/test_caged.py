@@ -43,10 +43,12 @@ ARACAJU6, ESTANCIA6 = 280030, 280210        # os códigos do IBGE sem o dígito
 ARACAJU7, ESTANCIA7 = 2800308, 2802106
 
 
-def linha(comp: str, municipio: int, saldo: int) -> str:
-    """Uma linha do arquivo, com os campos que o código lê no lugar certo."""
+def linha(comp: str, municipio: int, saldo: int, tipo: str | None = None) -> str:
+    """Uma linha do arquivo, com os campos que o código lê no lugar certo. O
+    tipo, sem dizer, acompanha o sinal (97 admissão, 98 desligamento)."""
+    tipo = tipo or ("98" if saldo == -1 else "97")
     return (f"{comp};3;28;{municipio};G;4711302;{saldo};521110;101;7;30;44,00;"
-            f"3;1;0;1;97;0;0;0;1600,00;3;0;1;{comp};0;5;1600,00\n")
+            f"3;1;0;1;{tipo};0;0;0;1600,00;3;0;1;{comp};0;5;1600,00\n")
 
 
 def arquivo(*linhas: str) -> list[str]:
@@ -82,6 +84,22 @@ class TestAgregar(unittest.TestCase):
             linhas.append(";".join(c) + "\n")
         ag, _ = agregar([";".join(cab) + "\n", *linhas])
         self.assertEqual(ag[("202607", ARACAJU6)], [0, 1])
+
+    def test_sinal_contrario_ao_tipo_e_estorno_e_nao_troca_de_coluna(self):
+        # O CAGEDFOR202609 trouxe 17 desligamentos com +1 e 1 admissão com
+        # -1; o sumário do MTE os conta como desligamento e admissão a menos.
+        # Pelo sinal, a conta dava 18 admissões e 18 desligamentos a mais.
+        ag, _ = agregar(arquivo(linha("202607", ARACAJU6, 1),
+                                linha("202607", ARACAJU6, -1),
+                                linha("202607", ARACAJU6, -1),
+                                linha("202607", ARACAJU6, 1, tipo="31"),
+                                linha("202607", ARACAJU6, -1, tipo="97")))
+        self.assertEqual(ag[("202607", ARACAJU6)], [0, 1])
+
+    def test_tipo_fora_do_dicionario_segue_o_sinal(self):
+        ag, _ = agregar(arquivo(linha("202607", ARACAJU6, 1, tipo="99"),
+                                linha("202607", ARACAJU6, -1, tipo="99")))
+        self.assertEqual(ag[("202607", ARACAJU6)], [1, 1])
 
     def test_saldo_que_nao_e_um_nem_menos_um_para_a_leitura(self):
         with self.assertRaises(ErroCaged) as c:

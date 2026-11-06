@@ -67,6 +67,17 @@ MESES = ("janeiro", "fevereiro", "marco", "abril", "maio", "junho", "julho",
 COLUNA_COMPETENCIA = "competênciamov"
 COLUNA_MUNICIPIO = "município"
 COLUNA_SALDO = "saldomovimentação"
+COLUNA_TIPO = "tipomovimentação"
+
+#: Os códigos de `tipomovimentação` do dicionário do Novo Caged. O TIPO diz se
+#: a linha é admissão ou desligamento; o saldo é só o sinal. Linha com o sinal
+#: contrário ao tipo é estorno: desligamento com +1 tira um desligamento, não
+#: soma uma admissão. Foi assim que o MTE contou o sumário de setembro/2026
+#: (o CAGEDFOR202609 trouxe 17 desligamentos com +1 e 1 admissão com −1, e a
+#: conta pelo sinal dava 18 admissões e 18 desligamentos a mais, saldo igual).
+TIPOS_ADMISSAO = frozenset({"10", "20", "25", "35", "70", "97"})
+TIPOS_DESLIGAMENTO = frozenset({"31", "32", "33", "40", "43", "45", "50", "60",
+                                "80", "90", "98"})
 
 
 class ErroCaged(RuntimeError):
@@ -228,6 +239,10 @@ def agregar(linhas: Iterable[str],
     O cabeçalho é conferido pelo NOME das colunas, e não pela posição: o MTE
     já mudou o layout uma vez (há um "Layout Não-identificado" no FTP). E um
     saldo que não seja 1 ou −1 para a leitura, em vez de virar zero calado.
+
+    A coluna é escolhida pelo tipo da movimentação, e o saldo dá o sinal:
+    um desligamento com +1 é um desligamento a menos (ver `TIPOS_ADMISSAO`).
+    Tipo fora do dicionário segue o sinal, como antes.
     """
     it = iter(linhas)
     try:
@@ -238,6 +253,7 @@ def agregar(linhas: Iterable[str],
         ic = cabecalho.index(COLUNA_COMPETENCIA)
         im = cabecalho.index(COLUNA_MUNICIPIO)
         is_ = cabecalho.index(COLUNA_SALDO)
+        it_ = cabecalho.index(COLUNA_TIPO)
     except ValueError as e:
         raise ErroCaged(f"{onde}: coluna ausente no cabeçalho ({e}); "
                         f"veio {cabecalho[:8]}") from e
@@ -247,11 +263,20 @@ def agregar(linhas: Iterable[str],
         c = linha.split(";")
         saldo = c[is_].strip()
         if saldo == "1":
-            agregado[(c[ic], int(c[im]))][0] += 1
+            sinal = 1
         elif saldo == "-1":
-            agregado[(c[ic], int(c[im]))][1] += 1
+            sinal = -1
         else:
             raise ErroCaged(f"{onde}, linha {n + 1}: saldo {saldo!r} não é 1 nem -1")
+        tipo = c[it_].strip()
+        if tipo in TIPOS_ADMISSAO:
+            agregado[(c[ic], int(c[im]))][0] += sinal
+        elif tipo in TIPOS_DESLIGAMENTO:
+            agregado[(c[ic], int(c[im]))][1] -= sinal
+        elif sinal == 1:
+            agregado[(c[ic], int(c[im]))][0] += 1
+        else:
+            agregado[(c[ic], int(c[im]))][1] += 1
     return dict(agregado), n
 
 

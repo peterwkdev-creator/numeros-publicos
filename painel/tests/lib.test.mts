@@ -3520,6 +3520,49 @@ test("rotuloDe: o pedaço curto de cada tema, com o lado e o estado", () => {
   assert.equal(rotuloDe(fato("pessoal", 97, 2, 100), "BA"), "o 3º maior da Bahia");
 });
 
+// --- Os três temas novos da abertura (06/11/2026, queda do Google de 02/10) ---
+
+test("abertura do MEI: por mil habitantes, a data da posição e a Receita", () => {
+  const f = fato("mei", 1, 98, 100, { valor: 42.37, mediana: 55.1, periodo: "24/10/2026" });
+  assert.equal(fraseDe(f, "PE"),
+    "tem o 2º menor número de microempreendedores individuais (MEI) por mil habitantes dos 100 municípios de Pernambuco, 42,4 em 24/10/2026, segundo a Receita Federal (a mediana é 55,1)");
+  assert.equal(rotuloDe(f, "PE"), "42,4 MEI por mil habitantes, o 2º menor de Pernambuco");
+});
+
+test("abertura do IDEB: só a rede municipal dos anos iniciais, com a edição", () => {
+  const f = fato("ideb", 99, 0, 100, { valor: 7.4, mediana: 5.85, periodo: "2023" });
+  assert.equal(fraseDe(f, "CE"),
+    "teve o maior IDEB dos anos iniciais na rede municipal entre os 100 municípios do Ceará com nota em 2023, 7,4, segundo o INEP (a mediana é 5,9)");
+  // Na meta o rótulo vai junto do "IDEB x,x": o número já está lá.
+  assert.equal(rotuloDe(f, "CE"), "o maior do Ceará");
+});
+
+test("abertura da saúde: o percentual aplicado, com o mínimo de 15% ao lado", () => {
+  const f = fato("saude", 97, 2, 100, { valor: 38.123, mediana: 22.5, periodo: "2024" });
+  assert.equal(fraseDe(f, "BA"),
+    "aplicou em saúde o 3º maior percentual da receita de impostos e transferências entre os 100 municípios da Bahia com dado em 2024: 38,12% (a mediana é 22,50%; o mínimo constitucional, 15%)");
+  assert.equal(rotuloDe(f, "BA"), "38,12% aplicados em saúde, o 3º maior da Bahia");
+});
+
+test("tema novo entra na escolha como os outros, e perde o empate pela ordem de TEMAS", () => {
+  const meio = fato("populacao", 50, 49, 100);
+  const saude = fato("saude", 99, 0, 100);
+  const mei = fato("mei", 0, 99, 100);
+  const ideb = fato("ideb", 3, 96, 100);
+  assert.deepEqual(escolherFatos([meio, saude, mei, ideb]).map((f) => f.tema), ["mei", "saude"]);
+  // Tão extremo quanto a população, o MEI fica atrás dela.
+  assert.deepEqual(escolherFatos([mei, fato("populacao", 99, 0, 100)], 1).map((f) => f.tema), ["populacao"]);
+});
+
+test("ninguém com nota na última edição: sem posição, sem frase do IDEB", () => {
+  // O contexto passa à posição o valor de CADA município na última edição;
+  // edição sem nota nenhuma no estado (ou sem a do próprio) não vira fato.
+  assert.equal(posicaoNoEstado(null, [null, null, null, null, null, null]), null);
+  assert.equal(posicaoNoEstado(5.1, [null, null, null, null, null, 5.1]), null);
+  assert.equal(posicaoNoEstado(null, [4, 5, 6, 7, 8, 9]), null);
+  assert.deepEqual(escolherFatos([null, fato("pib", 0, 99, 100)]).map((f) => f.tema), ["pib"]);
+});
+
 const itensMeta = {
   abre: "Abaeté (MG): ",
   itens: ["22.675 habitantes", "R$ 107,49 por habitante em emendas, o 138º menor de Minas Gerais",

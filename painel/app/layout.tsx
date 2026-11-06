@@ -168,6 +168,10 @@ export default function RootLayout({
             script que o `enxugar.mjs` mantém nas páginas sem componente de
             cliente, e ele recusa terminar se não o encontrar. */}
         <script type="module" src="/busca.js" />
+        {/* A frase do `<Termo>`, posta na caixa quando a pessoa chega ao
+            termo — ver `public/glossario.js`. Sem termo na página, ele não
+            pede nada. */}
+        <script type="module" src="/glossario.js" />
       </body>
     </html>
   );

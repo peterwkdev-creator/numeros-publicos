@@ -120,6 +120,14 @@ export function milhoes(n: number): string {
   return `${(n / 1e6).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} milhões`;
 }
 
+/**
+ * O total de MEI ATIVOS do Mapa de Empresas (gov.br/empresas-e-negocios),
+ * que só existe para o país: vem da página do Mapa, e não do `simei.json`.
+ * Revisar junto com a coleta do SIMEI (espec do MEI, §6, item 5). Só a
+ * `/ajuda/#mei` o mostra (desde 05/11/2026; antes, cada página de município).
+ */
+export const MAPA_EMPRESAS = { ativos: "13,7 milhões", em: "31/08/2026" };
+
 /** A nota que viaja com o download: o vazio é ausência na fonte, nunca zero. */
 export const NOTA_AUSENCIA =
   "vazio = o município não aparece na tabela da Receita naquela data (nenhum optante registrado), nunca zero";

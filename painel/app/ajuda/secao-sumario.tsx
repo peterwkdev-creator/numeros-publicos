@@ -23,6 +23,7 @@ export default function Sumario({ ctx }: { ctx: Contexto }) {
         <li><a href="#ideb">O que é o IDEB, e por que só a rede municipal</a></li>
         <li><a href="#censo">Censo, PIB e as outras estatísticas do IBGE</a></li>
         <li><a href="#caged">Emprego com carteira: o Novo Caged</a></li>
+        <li><a href="#mei">Os MEI: o SIMEI e o Mapa de Empresas</a></li>
         <li><a href="#brasil">Como ler o Brasil ao longo do tempo</a></li>
         <li><a href="#ranking">Como ler o ranking do gasto com pessoal</a></li>
         <li><a href="#inss">Quanto tempo o INSS está levando</a></li>

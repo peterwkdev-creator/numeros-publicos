@@ -12,8 +12,12 @@
  * ## Como o fato se escolhe
  *
  * Entre os fatos já calculados para a página (posição no estado em população,
- * PIB por habitante, emendas por habitante e gasto com pessoal), entram os
- * DOIS em que o município fica mais perto de uma das pontas do estado. Trocar
+ * PIB por habitante, emendas por habitante, gasto com pessoal e, desde
+ * 06/11/2026, MEI por mil habitantes, IDEB dos anos iniciais e aplicação em
+ * saúde), entram os DOIS em que o município fica mais perto de uma das pontas
+ * do estado. Os três últimos vieram da queda do Google de 02/10: com quatro
+ * temas, metade das páginas abria pelas mesmas duas frases-molde
+ * (`progress/numeros-publicos.md`, "Medição 4" e seguintes). Trocar
  * só o número numa frase fixa continuaria molde; aqui muda o próprio fato, e
  * o lado (maior ou menor). Empate de extremidade fica na ordem de `TEMAS`.
  *
@@ -24,10 +28,10 @@
 import { br } from "./dados";
 import { deEstado } from "./estado";
 
-export type Tema = "populacao" | "pib" | "emendas" | "pessoal";
+export type Tema = "populacao" | "pib" | "emendas" | "pessoal" | "mei" | "ideb" | "saude";
 
 /** A ordem do desempate: quando dois fatos são igualmente extremos. */
-export const TEMAS: readonly Tema[] = ["populacao", "pib", "emendas", "pessoal"];
+export const TEMAS: readonly Tema[] = ["populacao", "pib", "emendas", "pessoal", "mei", "ideb", "saude"];
 
 /** Abaixo disto, "o 3º de 8" descreve vizinhos, não um estado (o mesmo piso de `posicaoEntre`). */
 export const MINIMO_ABERTURA = 10;
@@ -42,7 +46,8 @@ export type FatoDoEstado = {
   acima: number;
   /** Quantos entraram na comparação. */
   de: number;
-  /** O período do dado: o ano ("2023"; no pessoal, o exercício do relatório fiscal). */
+  /** O período do dado: o ano ("2023"; no pessoal, o exercício do relatório fiscal;
+   *  no MEI, a data da posição, "24/10/2026"; no IDEB, a edição). */
   periodo: string | null;
 };
 
@@ -98,6 +103,14 @@ export function fraseDe(f: FatoDoEstado, uf: string): string {
       // O período é só o ano: o conjunto mistura o RGF do 3º quadrimestre e o
       // Simplificado do 2º semestre, e "do 3º quadrimestre" errava para estes.
       return `teve ${ordinal(ordem, maior)} gasto com pessoal, em proporção da receita corrente líquida, entre os ${br(f.de)} municípios ${doUf} que entregaram o relatório fiscal${f.periodo ? ` de ${f.periodo}` : ""}${emp}: ${br(f.valor, 2)}% (a mediana é ${br(f.mediana, 2)}%)`;
+    case "mei":
+      return `tem ${ordinal(ordem, maior)} número de microempreendedores individuais (MEI) por mil habitantes dos ${br(f.de)} municípios ${doUf}${emp}, ${br(f.valor, 1)}${em}, segundo a Receita Federal (a mediana é ${br(f.mediana, 1)})`;
+    case "ideb":
+      // Só a rede municipal dos anos iniciais: a que a seção mostra e a que a
+      // prefeitura administra. "Nota" e não "desempenho": o número, sem juízo.
+      return `teve ${ordinal(ordem, maior)} IDEB dos anos iniciais na rede municipal entre os ${br(f.de)} municípios ${doUf} com nota${em}${emp}, ${br(f.valor, 1)}, segundo o INEP (a mediana é ${br(f.mediana, 1)})`;
+    case "saude":
+      return `aplicou em saúde ${ordinal(ordem, maior)} percentual da receita de impostos e transferências entre os ${br(f.de)} municípios ${doUf} com dado${em}${emp}: ${br(f.valor, 2)}% (a mediana é ${br(f.mediana, 2)}%; o mínimo constitucional, 15%)`;
   }
 }
 
@@ -114,7 +127,12 @@ export function rotuloDe(f: FatoDoEstado, uf: string): string {
     case "emendas":
       return `R$ ${br(f.valor, 2)} por habitante em emendas, ${ordinal(ordem, maior)} ${doUf}`;
     case "pessoal":
+    case "ideb":
       return `${ordinal(ordem, maior)} ${doUf}`;
+    case "mei":
+      return `${br(f.valor, 1)} MEI por mil habitantes, ${ordinal(ordem, maior)} ${doUf}`;
+    case "saude":
+      return `${br(f.valor, 2)}% aplicados em saúde, ${ordinal(ordem, maior)} ${doUf}`;
   }
 }
 

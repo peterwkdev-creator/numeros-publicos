@@ -20,6 +20,23 @@ export default function ComoLer({ tipo }: { tipo: TipoDePagina }) {
 }
 
 /**
+ * Na página de município, só o link para o roteiro na `/ajuda/`.
+ *
+ * O `<details>` repetia os mesmos ~740 caracteres nas 5.571 páginas; desde
+ * 05/11/2026 (texto repetido e a queda do Google em 02/10,
+ * `especs/numeros-publicos-tutorial.md`, 3b) o roteiro do município fica só
+ * na `/ajuda/`. Estado, Brasil e rankings, que são poucas páginas, seguem com
+ * o bloco.
+ */
+export function LinkComoLer() {
+  return (
+    <p className={estilos.link}>
+      <a href="/ajuda/#como-ler-municipio">Como ler esta página</a>
+    </p>
+  );
+}
+
+/**
  * A lista em si. Na `/ajuda/` o link é para a seção da mesma página; fora
  * dela, para a `/ajuda/`.
  */

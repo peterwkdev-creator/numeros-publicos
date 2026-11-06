@@ -9,7 +9,7 @@ import { medianaGeral, trajetoriaDe } from "../../../lib/ideb";
 import { linhasDaUf, medianasCache, medidasDe, taxasCache } from "../../../lib/censo";
 import { cagedAnosDe, cagedDe } from "../../../lib/caged";
 import { EMPRESAS, medianaDaColunaCache, PARES_TRABALHO, RENDA_CENSO } from "../../../lib/trabalho";
-import { indiceSimei, simeiDe } from "../../../lib/simei";
+import { dataBr, indiceSimei, simeiDe } from "../../../lib/simei";
 import { emendasDe, porHabitante, porHabitanteDaUf } from "../../../lib/emendas";
 import { pixDe } from "../../../lib/pix";
 import type { Dados, Municipio } from "./apoio";
@@ -210,6 +210,24 @@ function calcularContexto(dados: Dados, m: Municipio) {
   // A abertura (Fase 1 da visibilidade, 30/10/2026): os dois fatos acima em
   // que o município fica mais perto de uma ponta do estado. Ver `lib/abertura.ts`.
   const pessoalComparavel = comparavelNaFaixa(f);
+  // Os três temas de 06/11/2026, cada um contra o estado NO MESMO PERÍODO:
+  // a posição atual do SIMEI, a última edição do IDEB e o último ano da
+  // saúde. Município sem valor nesse período fica de fora (não entra com o
+  // número de outro ano, o erro que a mediana da saúde já evita abaixo).
+  const posMei = simeiPos
+    ? posicaoNoEstado(simeiPos.porMil,
+        doEstado.map((x) => indiceMei.porCodigo.get(x.codigo)?.porMil ?? null))
+    : null;
+  const ultimaEdicao = ideb.edicoes.length - 1;
+  const idebNaUltima = (codigo: number) =>
+    ideb.serie[String(codigo)]?.find(([i]) => i === ultimaEdicao)?.[1] ?? null;
+  const idebAtual = idebNaUltima(m.codigo);
+  const posIdeb = posicaoNoEstado(idebAtual, doEstado.map((x) => idebNaUltima(x.codigo)));
+  const anosSaude = fiscal.saude?.anos ?? [];
+  const saudeNoUltimo = (codigo: number) =>
+    fiscal.saude?.porMunicipio[String(codigo)]?.[anosSaude.length - 1] ?? null;
+  const saudeAtual = saudeNoUltimo(m.codigo);
+  const posSaude = posicaoNoEstado(saudeAtual, doEstado.map((x) => saudeNoUltimo(x.codigo)));
   const fatos = escolherFatos([
     posPop && pop !== null
       ? { tema: "populacao", valor: pop, ...posPop, periodo: null } : null,
@@ -224,6 +242,15 @@ function calcularContexto(dados: Dados, m: Municipio) {
           abaixo: posicao.abaixo,
           acima: posicao.valores.filter((v) => v > pessoalComparavel).length,
           de: posicao.base, periodo: String(fiscal.exercicio) } : null,
+    posMei && simeiPos && simei.datas.length
+      ? { tema: "mei", valor: simeiPos.porMil, ...posMei,
+          periodo: dataBr(simei.datas[simei.datas.length - 1]!) } : null,
+    posIdeb && idebAtual !== null
+      ? { tema: "ideb", valor: idebAtual, ...posIdeb,
+          periodo: String(ideb.edicoes[ultimaEdicao]) } : null,
+    posSaude && saudeAtual !== null
+      ? { tema: "saude", valor: saudeAtual, ...posSaude,
+          periodo: String(anosSaude[anosSaude.length - 1]) } : null,
   ]);
   const abertura = aberturaDe(m.nome, m.uf, fatos);
   // `serieDePessoal`, e não a série crua: o ponto que o cartão condena pela

@@ -74,6 +74,7 @@ export const GLOSSARIO = {
   simei: {
     termo: "SIMEI (MEI)",
     curta: "O Sistema de Recolhimento em Valores Fixos Mensais do Simples Nacional: o enquadramento em que o microempreendedor individual (MEI) paga um valor fixo por mês. A Receita Federal publica quantos optantes há em cada município, numa data, com a posição consolidada até a data da consulta.",
+    secao: "mei",
   },
   censo: {
     termo: "Censo Demográfico",

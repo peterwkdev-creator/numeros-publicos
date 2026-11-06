@@ -3,7 +3,7 @@ import { dataPorExtenso } from "../../../lib/dados";
 import { slugUf } from "../../../lib/estado";
 import { trilha, jsonLdHtml } from "../../../lib/jsonld";
 import { SITE } from "../../../lib/servidor";
-import ComoLer from "../../componentes/como-ler";
+import { LinkComoLer } from "../../componentes/como-ler";
 import Compartilhar from "../../componentes/compartilhar";
 import { jsonLdDe } from "./json-ld";
 import type { Contexto } from "./contexto";
@@ -82,7 +82,7 @@ export default function Cabecalho({ c }: { c: Contexto }) {
           <time dateTime={atualizado.toISOString()}>{dataPorExtenso(atualizado)}</time>.
         </p>
         <Compartilhar />
-        <ComoLer tipo="municipio" />
+        <LinkComoLer />
       </header>
     </>
   );

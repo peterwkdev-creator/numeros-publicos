@@ -130,6 +130,26 @@ class TestBackoff(unittest.TestCase):
         self.assertEqual(len(dados), 75)
         self.assertEqual(relogio.esperas, [2.0, 4.0])
 
+    def test_522_da_cloudflare_e_repetido_e_vence(self):
+        # 16/11/2026: 8 indicadores caíram em 522 na primeira tentativa.
+        relogio = RelogioFalso()
+        t = TransporteRoteirizado(
+            Resposta(522, "origin connection time-out"),
+            Resposta(522, "origin connection time-out"),
+            Resposta(200, SERGIPE),
+        )
+        dados = buscar_json(t, "https://exemplo/x", dormir=relogio)
+        self.assertEqual(len(dados), 75)
+        self.assertEqual(relogio.esperas, [2.0, 4.0])
+
+    def test_toda_a_faixa_520_524_e_repetivel(self):
+        for status in range(520, 525):
+            with self.subTest(status=status):
+                t = TransporteRoteirizado(Resposta(status, ""),
+                                          Resposta(200, SERGIPE))
+                buscar_json(t, "https://exemplo/x", dormir=RelogioFalso())
+                self.assertEqual(len(t.urls), 2)
+
     def test_desiste_e_a_mensagem_aponta_a_causa_provavel(self):
         # O IBGE devolve 500 para agregado/variável inexistente. A mensagem
         # tem de mandar suspeitar disso antes de suspeitar da rede.

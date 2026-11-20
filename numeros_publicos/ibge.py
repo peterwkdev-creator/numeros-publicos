@@ -39,7 +39,13 @@ REGIAO_NORDESTE = 2
 #: dos 5xx, em vez de escapar por fora.
 FALHA_DE_REDE = 599
 
-REPETIVEIS = frozenset({429, 500, 502, 503, 504, FALHA_DE_REDE})
+#: 520 a 524 são da Cloudflare, que fica na frente do servicodados: em
+#: 16/11/2026 8 de 26 indicadores caíram em 522 (origem não respondeu a
+#: tempo) sem nenhuma repetição, e a run ficou vermelha. Peter: repetir
+#: (20/11/2026).
+CLOUDFLARE_5XX = frozenset({520, 521, 522, 523, 524})
+
+REPETIVEIS = frozenset({429, 500, 502, 503, 504, FALHA_DE_REDE}) | CLOUDFLARE_5XX
 
 PAUSA_PADRAO = 1.0
 TENTATIVAS = 4

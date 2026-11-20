@@ -622,5 +622,70 @@ class TestComandoPontaAPonta(unittest.TestCase):
             self.assertIn("gravado", saida.getvalue())
 
 
+#: Cabeçalho de out/2026, como veio no arquivo do portal (conferido em 20/11/2026).
+CAB_NEG_2026_10 = [
+    "Competência Indeferimento", "Espécie (Código)", "Espécie (Nome)",
+    "Motivo Indeferimento (Código e Nome)", "Data Nascimento Titular",
+    "Sexo Titular (Nome)", "Clientela (Nome)", "Forma Filiação (Nome)", "UF (Nome)",
+    "Data Indeferimento", "Ramo Atividade (Nome)", "APS (Código)", "APS (Nome)",
+    "DER - Data de Entrada do Requerimento"]
+
+
+def linha_negada_2026_10(uf_nome: str, clientela: str = "URBANA",
+                         especie: str = "042", aps: str = "17021150") -> list:
+    return ["202610", especie, "APOSENTADORIA POR TEMPO DE CONTRIBUICAO",
+            "0216 - FALTAM REQUISITOS P/DIREITO REGRAS TRANS",
+            serial(dt.date(1964, 5, 10)), "MASCULINO", clientela, "EMPREGADO",
+            uf_nome, serial(dt.date(2026, 10, 2)), "COMERCIARIO", aps,
+            "AGÊNCIA DA PREVIDÊNCIA SOCIAL SÃO JOÃO DA BARRA",
+            serial(dt.date(2026, 8, 28))]
+
+
+class TestLayoutDeOutubro2026(unittest.TestCase):
+    """Em out/2026 o INSS trocou o cabeçalho dos negados: nomes descritivos,
+    código como texto com zero à esquerda, tudo em maiúsculas sem acento e o
+    código do motivo na frente do texto. Os códigos e as datas são os mesmos."""
+
+    def test_le_o_layout_novo_com_codigo_texto_e_maiusculas(self) -> None:
+        (l,) = inss.ler_indeferidos(
+            [["INDEFERIDOS - DADOS ABERTOS - OUTUBRO DE 2026"], CAB_NEG_2026_10,
+             linha_negada_2026_10("RIO DE JANEIRO")])
+        self.assertEqual((l.competencia, l.especie, l.aps), (202610, 42, 17021150))
+        self.assertEqual((l.clientela, l.uf), ("urbano", "RJ"))
+        self.assertEqual(l.motivo, "0216 - FALTAM REQUISITOS P/DIREITO REGRAS TRANS")
+        self.assertEqual((l.pedido, l.negado), (dt.date(2026, 8, 28), dt.date(2026, 10, 2)))
+
+    def test_rural_e_uf_sem_acento_do_layout_novo(self) -> None:
+        (l,) = inss.ler_indeferidos(
+            [CAB_NEG_2026_10, linha_negada_2026_10("ESPIRITO SANTO", "RURAL")])
+        self.assertEqual((l.clientela, l.uf), ("rural", "ES"))
+
+    def test_mes_inteiro_no_layout_novo_grava(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            db = inss.ArmazemINSS(Path(tmp) / "inss.db")
+            linhas = [linha_negada_2026_10(nome.upper(), c)
+                      for c in ("URBANA", "RURAL") for nome in inss.UF_POR_NOME]
+            r = inss.gravar_indeferidos(db, "2026-10", "x.xlsx", inss.ler_indeferidos(
+                [["t"], CAB_NEG_2026_10, *linhas]))
+            db.con.close()
+        self.assertEqual((r["total"], r["UFs"], r["clientelas"]), (54, 27, 2))
+
+    def test_coluna_que_falta_no_layout_novo_reprova(self) -> None:
+        cab = [c for c in CAB_NEG_2026_10 if c != "Clientela (Nome)"]
+        with self.assertRaises(inss.ErroINSS) as ctx:
+            list(inss.ler_indeferidos([cab]))
+        self.assertIn("Clientela (Nome)", str(ctx.exception))
+
+    def test_cabecalho_desconhecido_reprova(self) -> None:
+        with self.assertRaises(inss.ErroINSS) as ctx:
+            list(inss.ler_indeferidos([["Data do Pedido", "Espécie"]]))
+        self.assertIn("cabeçalho conhecido", str(ctx.exception))
+
+    def test_clientela_fora_da_lista_segue_reprovando(self) -> None:
+        with self.assertRaises(inss.ErroINSS):
+            list(inss.ler_indeferidos(
+                [CAB_NEG_2026_10, linha_negada_2026_10("BAHIA", "URBANO E RURAL")]))
+
+
 if __name__ == "__main__":
     unittest.main()

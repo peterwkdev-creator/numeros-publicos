@@ -252,7 +252,9 @@ def serial_para_data(valor: str | float | None) -> dt.date | None:
 # A clientela é o que separa, nos negados, o urbano do rural da MESMA espécie
 # (aposentadoria por idade urbana e rural são as duas a espécie 41; ver a §10
 # da especificação). Valor fora desta lista é a fonte mudando: recusa.
-CLIENTELA = {"Urbano": "urbano", "Rural": "rural"}
+CLIENTELA = {"Urbano": "urbano", "Rural": "rural",
+             # layout de out/2026 em diante (ver `LAYOUTS_INDEFERIDOS`)
+             "URBANA": "urbano", "RURAL": "rural"}
 
 
 @dataclass(frozen=True, slots=True)
@@ -280,21 +282,57 @@ def _achar(cabecalho: list, nome: str, ocorrencia: int = 1) -> int:
                    f"cabeçalho: {cabecalho}")
 
 
+#: Os dois cabeçalhos conhecidos, campo → (nome da coluna, ocorrência). O
+#: layout se reconhece pela coluna da data do pedido (a última de cada um).
+#: Até set/2026, nomes curtos e repetidos ("Espécie" duas vezes: código e
+#: nome), código como número e texto em caixa mista. A partir de out/2026
+#: (conferido em 20/11/2026 no arquivo de outubro): nomes descritivos, código
+#: como texto com zero à esquerda ("042", "17021150"), tudo em maiúsculas
+#: sem acento ("URBANA", "RIO DE JANEIRO"), motivo com o código na frente
+#: ("0216 - FALTAM REQUISITOS ...") e outros nomes de espécie e de agência.
+#: Os códigos (espécie, agência), a competência e as datas são os mesmos;
+#: os nomes não se comparam entre os dois layouts.
+LAYOUTS_INDEFERIDOS = (
+    {"pedido": ("Dt DER", 1),
+     "competencia": ("Competência indeferimento", 1),
+     "especie": ("Espécie", 1), "especie_nome": ("Espécie", 2),
+     "motivo": ("Motivo Indeferimento", 1), "uf": ("UF", 1),
+     "clientela": ("Clientela", 1),
+     "aps": ("APS", 1), "aps_nome": ("APS", 2),
+     "negado": ("Dt Indeferimento", 1)},
+    {"pedido": ("DER - Data de Entrada do Requerimento", 1),
+     "competencia": ("Competência Indeferimento", 1),
+     "especie": ("Espécie (Código)", 1), "especie_nome": ("Espécie (Nome)", 1),
+     "motivo": ("Motivo Indeferimento (Código e Nome)", 1), "uf": ("UF (Nome)", 1),
+     "clientela": ("Clientela (Nome)", 1),
+     "aps": ("APS (Código)", 1), "aps_nome": ("APS (Nome)", 1),
+     "negado": ("Data Indeferimento", 1)},
+)
+
+
 def ler_indeferidos(linhas: Iterable[list]) -> Iterator[LinhaNegada]:
     """As linhas da planilha, depois do título e do cabeçalho. O cabeçalho é a
-    primeira linha que tem `Dt DER`; o que vem antes é título."""
+    primeira linha que tem a coluna da data do pedido de um dos
+    `LAYOUTS_INDEFERIDOS`; o que vem antes é título. Coluna que falta no
+    layout reconhecido é a fonte mudando: recusa."""
     it = iter(linhas)
+    marcas = {lay["pedido"][0]: lay for lay in LAYOUTS_INDEFERIDOS}
+    layout = None
     for cab in it:
-        if any(isinstance(c, str) and c.strip() == "Dt DER" for c in cab):
+        for c in cab:
+            if isinstance(c, str) and c.strip() in marcas:
+                layout = marcas[c.strip()]
+                break
+        if layout is not None:
             break
     else:
-        raise ErroINSS("planilha de indeferidos sem cabeçalho com 'Dt DER'")
-    i_comp = _achar(cab, "Competência indeferimento")
-    i_esp, i_espn = _achar(cab, "Espécie"), _achar(cab, "Espécie", 2)
-    i_mot, i_uf = _achar(cab, "Motivo Indeferimento"), _achar(cab, "UF")
-    i_cli = _achar(cab, "Clientela")
-    i_aps, i_apsn = _achar(cab, "APS"), _achar(cab, "APS", 2)
-    i_neg, i_der = _achar(cab, "Dt Indeferimento"), _achar(cab, "Dt DER")
+        raise ErroINSS("planilha de indeferidos sem cabeçalho conhecido (coluna "
+                       f"da data do pedido: {sorted(marcas)})")
+    i = {campo: _achar(cab, nome, oc) for campo, (nome, oc) in layout.items()}
+    i_comp, i_esp, i_espn = i["competencia"], i["especie"], i["especie_nome"]
+    i_mot, i_uf, i_cli = i["motivo"], i["uf"], i["clientela"]
+    i_aps, i_apsn = i["aps"], i["aps_nome"]
+    i_neg, i_der = i["negado"], i["pedido"]
     for n, l in enumerate(it, start=1):
         if not l or l[i_comp] in (None, ""):
             continue
@@ -355,7 +393,8 @@ CREATE TABLE IF NOT EXISTS pendente (
 CREATE INDEX IF NOT EXISTS idx_pendente_mes ON pendente (mes, servico);
 
 -- Os negados, agregados: o arquivo tem uma linha por pedido (~900 mil/mês).
--- O motivo NÃO tem código no arquivo; a chave é o texto, como vem.
+-- O motivo NÃO tinha código no arquivo até set/2026; a chave é o texto, como
+-- vem (de out/2026 em diante, "0216 - TEXTO": não se compara com os antigos).
 -- A clientela (urbano/rural) entrou em 26/09/2026: ver `ArmazemINSS`.
 CREATE TABLE IF NOT EXISTS negado (
     mes TEXT NOT NULL, especie INTEGER NOT NULL, clientela TEXT NOT NULL,

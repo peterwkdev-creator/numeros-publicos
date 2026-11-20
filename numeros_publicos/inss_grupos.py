@@ -90,6 +90,10 @@ SEM_PAGINA_ESPECIES = frozenset({
     67,      # pecúlio obrigatório ex-Ipase
     60,      # benefício indenizatório a cargo da União (sem serviço na fila)
     16,      # auxílio União (sem serviço na fila)
+    96,      # pensão especial — hanseníase, Lei 11.520/07 (1 negativa em out/2026)
+    # No layout de out/2026, 60 vem como "SINDROME CONGENITA DO ZICA VIRUS" e
+    # 67 como "PENSAO PARA ORFAOS VITIMAS DE FEMINICIDIO" (os nomes acima são
+    # os de até set/2026); seguem sem página nos dois casos.
 })
 
 _POR_SERVICO = {s: g for g in GRUPOS for s in g.servicos}

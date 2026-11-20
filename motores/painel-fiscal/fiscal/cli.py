@@ -1417,8 +1417,8 @@ def montar() -> argparse.ArgumentParser:
 
     ie = sub.add_parser("ingerir-entes",
                         help="a lista de municípios (1 requisição)")
-    ie.add_argument("--regiao", default="NE", choices=sorted(RECORTES),
-                    help="NE (padrão) ou BR")
+    ie.add_argument("--regiao", default="BR", choices=sorted(RECORTES),
+                    help="BR, os 5.570 do país (padrão); NE, só o Nordeste")
 
     # O RREO e bimestral (1..6); o RGF e quadrimestral (1..3). Sao subcomandos
     # separados de proposito: um `--periodo 6` no comando errado devolve vazio

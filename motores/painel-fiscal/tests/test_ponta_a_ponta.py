@@ -13,7 +13,7 @@ import unittest
 from pathlib import Path
 
 from fiscal.armazem import abrir, gravar_entes
-from fiscal.cli import RECORTES, principal
+from fiscal.cli import RECORTES, montar, principal
 from fiscal.siconfi import FALHA_DE_REDE, Ente, Resposta
 
 FIX = Path(__file__).parent / "fixtures"
@@ -83,6 +83,19 @@ class PontaAPonta(unittest.TestCase):
         with abrir(self.banco) as con:
             self.assertEqual(con.execute("SELECT COUNT(*) FROM pessoal").fetchone()[0], 5)
         self.assertEqual(t.pedidos_rgf, 5)
+
+    def test_regiao_padrao_e_o_pais(self):
+        """Sem `--regiao`, o `ingerir-entes` pede o país inteiro.
+
+        O padrão era `NE`, sobra do site regional, e já derrubou 3.777 páginas
+        quando um passo automático rodou sem a bandeira (o porquê está em
+        `atualizar-dados.yml`). O Nordeste segue disponível, mas só pedido.
+        """
+        self.assertEqual(montar().parse_args(["ingerir-entes"]).regiao, "BR")
+        self.rodar("ingerir-entes", transporte=TransporteFalso())
+        self.assertIn("do Brasil", self.saida)
+        self.assertEqual(
+            montar().parse_args(["ingerir-entes", "--regiao", "NE"]).regiao, "NE")
 
     def test_rodar_de_novo_nao_gasta_requisicao(self):
         """O critério que justifica a tabela de progresso: uma varredura do NE

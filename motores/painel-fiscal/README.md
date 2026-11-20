@@ -35,10 +35,10 @@ dependencies to install.
 python -m fiscal ingerir-entes && python -m fiscal ingerir
 ```
 
-The first command fetches every municipality in a single request — 1,793 for
-the Northeast, 5,570 for the country with `--regiao BR`. The second sweeps
-their Fiscal Management Reports, one request each: roughly **57 minutes** for
-the Northeast and **three hours** for the country. It is **resumable**:
+The first command fetches every municipality in a single request — 5,570 for
+the country (the default), 1,793 with `--regiao NE`. The second sweeps
+their Fiscal Management Reports, one request each: roughly **three hours** for
+the country and **57 minutes** for the Northeast. It is **resumable**:
 interrupt it and run it again, and it continues instead of re-reading.
 
 ```bash

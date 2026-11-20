@@ -77,6 +77,9 @@ SEM_PAGINA_SERVICOS = frozenset({
     5332,    # pensão especial — síndrome congênita do zika
     4614,    # assistencial ao trabalhador portuário avulso
     4633,    # pecúlio
+    2792,    # "Aposentadoria por Tempo de Contribuição -" (nome truncado na
+             # fonte, variante desconhecida): 1 tarefa, em MG, na fila de
+             # 31/10/2026. Sem página até o nome dizer qual aposentadoria é.
 })
 SEM_PAGINA_ESPECIES = frozenset({
     56,      # pensão vitalícia — talidomida

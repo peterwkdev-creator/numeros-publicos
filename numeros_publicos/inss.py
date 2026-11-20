@@ -47,10 +47,15 @@ from xml.etree.ElementTree import iterparse
 from . import inss_grupos
 
 PORTAL = "https://dadosabertos.inss.gov.br/api/3/action/package_show?id="
+#: Os pacotes trocam de nome quando o Plano de Dados Abertos se renova: até
+#: out/2026 eram "...jun-2023-a-jun-2025" e, conferido em 20/11/2026, os
+#: velhos devolvem 404 e os meses novos (até out/2026) estão em
+#: "...jun-2023-a-dez-2027". A coleta que cair em 404 no `package_show`:
+#: procurar o pacote novo com `package_search?q=pendentes` (ou `indeferidos`).
 PACOTE_PENDENTES = ("dados-de-requerimentos-administrativos-pendentes-"
-                    "plano-de-dados-abertos-jun-2023-a-jun-2025")
+                    "plano-de-dados-abertos-jun-2023-a-dez-2027")
 PACOTE_INDEFERIDOS = ("beneficios-indeferidos-plano-de-dados-abertos-"
-                      "jun-2023-a-jun-2025")
+                      "jun-2023-a-dez-2027")
 
 #: As 27 unidades da federação. Os negados escrevem a UF por extenso
 #: ("Alagoas"), os pendentes pela sigla; o banco guarda a sigla.

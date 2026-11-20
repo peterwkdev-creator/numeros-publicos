@@ -1,15 +1,15 @@
 {
- "geradoEm": "2026-10-11T23:00:07+00:00",
+ "geradoEm": "2026-11-20T15:51:35+00:00",
  "fonte": {
   "nome": "INSS — Portal de Dados Abertos",
   "url": "https://dadosabertos.inss.gov.br/dataset/"
  },
  "fila": {
-  "mes": "2026-07",
-  "referencia": "2026-07-31",
-  "mesAnterior": "2026-06",
-  "arquivo": "PEND_202607.csv",
-  "gravadoEm": "2026-09-26T23:50:18+00:00"
+  "mes": "2026-10",
+  "referencia": "2026-10-31",
+  "mesAnterior": "2026-07",
+  "arquivo": "PDA_ITEM_10_PEND_202610.csv",
+  "gravadoEm": "2026-11-20T15:51:32+00:00"
  },
  "negados": {
   "mes": "2026-08",
@@ -29,84 +29,84 @@
    "prazoAcordo": 45,
    "prazoContaDoPedido": false,
    "fila": {
-    "n": 418037,
-    "mediana": 15,
-    "p75": 59,
-    "p90": 233,
-    "acima45": 0.2825,
-    "acima90": 0.2056,
-    "acimaDoPrazo": 0.2825,
+    "n": 351638,
+    "mediana": 16,
+    "p75": 30,
+    "p90": 51,
+    "acima45": 0.1205,
+    "acima90": 0.0465,
+    "acimaDoPrazo": 0.1205,
     "publicavel": true,
-    "medianaAnterior": 22,
+    "medianaAnterior": 15,
     "porServico": [
      {
       "codigo": 17437,
       "nome": "Benefício por Incapacidade",
-      "n": 415992,
-      "mediana": 15,
-      "acima45": 0.2797,
-      "acima90": 0.2028,
+      "n": 349933,
+      "mediana": 16,
+      "acima45": 0.1168,
+      "acima90": 0.0428,
       "publicavel": true
      },
      {
       "codigo": 5852,
       "nome": "Acordo Internacional - Aposentadoria por Incapacidade Permanente",
-      "n": 528,
-      "mediana": 288,
-      "acima45": 0.911,
-      "acima90": 0.8087,
+      "n": 499,
+      "mediana": 279,
+      "acima45": 0.8838,
+      "acima90": 0.8156,
       "publicavel": false
      },
      {
       "codigo": 5832,
       "nome": "Acordo Internacional - Auxílio por Incapacidade Temporária",
-      "n": 488,
-      "mediana": 323,
-      "acima45": 0.8955,
-      "acima90": 0.7828,
+      "n": 407,
+      "mediana": 194,
+      "acima45": 0.8206,
+      "acima90": 0.7199,
       "publicavel": false
      },
      {
       "codigo": 5474,
       "nome": "Auxílio-Doença - Urbano (Acerto Pós-perícia)",
-      "n": 479,
-      "mediana": 127,
-      "acima45": 0.6764,
-      "acima90": 0.5762,
-      "publicavel": false
-     },
-     {
-      "codigo": 13995,
-      "nome": "Auxílio por incapacidade temporária - Análise Documental",
-      "n": 285,
-      "mediana": 1718,
-      "acima45": 1.0,
-      "acima90": 1.0,
+      "n": 369,
+      "mediana": 200,
+      "acima45": 0.8537,
+      "acima90": 0.7425,
       "publicavel": false
      },
      {
       "codigo": 5473,
       "nome": "Auxílio-Doença - Rural (Acerto Pós-perícia)",
-      "n": 214,
-      "mediana": 231,
-      "acima45": 0.8879,
-      "acima90": 0.8084,
+      "n": 201,
+      "mediana": 254,
+      "acima45": 0.8756,
+      "acima90": 0.7662,
+      "publicavel": false
+     },
+     {
+      "codigo": 13995,
+      "nome": "Auxílio por incapacidade temporária - Análise Documental",
+      "n": 196,
+      "mediana": 1810,
+      "acima45": 1.0,
+      "acima90": 1.0,
       "publicavel": false
      },
      {
       "codigo": 4612,
       "nome": "Aeronauta Gestante - Auxílio-Doença",
-      "n": 45,
-      "mediana": 74,
-      "acima45": 0.6444,
-      "acima90": 0.3778,
+      "n": 28,
+      "mediana": 79,
+      "acima45": 0.6071,
+      "acima90": 0.4643,
       "publicavel": false
      },
      {
       "codigo": 6266,
       "nome": "Auxílio-Doença com Documento Médico (Ação Civil Pública)",
-      "n": 6,
-      "mediana": 2124,
+      "n": 5,
+      "mediana": 2231,
       "acima45": 1.0,
       "acima90": 1.0,
       "publicavel": false
@@ -114,220 +114,220 @@
     ],
     "porUf": {
      "AC": {
-      "n": 1120,
+      "n": 915,
       "mediana": 18,
-      "acima45": 0.2911,
-      "acima90": 0.1714,
-      "publicavel": true,
-      "acimaDoPrazo": 0.2911
+      "acima45": 0.1716,
+      "acima90": 0.0492,
+      "publicavel": false,
+      "acimaDoPrazo": 0.1716
      },
      "AL": {
-      "n": 7110,
+      "n": 6219,
       "mediana": 23,
-      "acima45": 0.3944,
-      "acima90": 0.3053,
+      "acima45": 0.2508,
+      "acima90": 0.1619,
       "publicavel": true,
-      "acimaDoPrazo": 0.3944
+      "acimaDoPrazo": 0.2508
      },
      "AM": {
-      "n": 4702,
+      "n": 4254,
       "mediana": 18,
-      "acima45": 0.2805,
-      "acima90": 0.1872,
+      "acima45": 0.1582,
+      "acima90": 0.0581,
       "publicavel": true,
-      "acimaDoPrazo": 0.2805
+      "acimaDoPrazo": 0.1582
      },
      "AP": {
-      "n": 785,
-      "mediana": 22,
-      "acima45": 0.3452,
-      "acima90": 0.2408,
-      "publicavel": false,
-      "acimaDoPrazo": 0.3452
-     },
-     "BA": {
-      "n": 34654,
-      "mediana": 39,
-      "acima45": 0.4745,
-      "acima90": 0.3848,
-      "publicavel": true,
-      "acimaDoPrazo": 0.4745
-     },
-     "CE": {
-      "n": 20401,
-      "mediana": 25,
-      "acima45": 0.4003,
-      "acima90": 0.3149,
-      "publicavel": true,
-      "acimaDoPrazo": 0.4003
-     },
-     "DF": {
-      "n": 6278,
-      "mediana": 16,
-      "acima45": 0.2464,
-      "acima90": 0.15,
-      "publicavel": true,
-      "acimaDoPrazo": 0.2464
-     },
-     "ES": {
-      "n": 8381,
-      "mediana": 15,
-      "acima45": 0.2599,
-      "acima90": 0.1877,
-      "publicavel": true,
-      "acimaDoPrazo": 0.2599
-     },
-     "GO": {
-      "n": 14640,
-      "mediana": 17,
-      "acima45": 0.269,
-      "acima90": 0.1824,
-      "publicavel": true,
-      "acimaDoPrazo": 0.269
-     },
-     "MA": {
-      "n": 15264,
-      "mediana": 60,
-      "acima45": 0.536,
-      "acima90": 0.4498,
-      "publicavel": true,
-      "acimaDoPrazo": 0.536
-     },
-     "MG": {
-      "n": 45007,
-      "mediana": 11,
-      "acima45": 0.2226,
-      "acima90": 0.1507,
-      "publicavel": true,
-      "acimaDoPrazo": 0.2226
-     },
-     "MS": {
-      "n": 5816,
-      "mediana": 14,
-      "acima45": 0.2203,
-      "acima90": 0.1444,
-      "publicavel": true,
-      "acimaDoPrazo": 0.2203
-     },
-     "MT": {
-      "n": 8097,
-      "mediana": 17,
-      "acima45": 0.2655,
-      "acima90": 0.1857,
-      "publicavel": true,
-      "acimaDoPrazo": 0.2655
-     },
-     "PA": {
-      "n": 10832,
-      "mediana": 24,
-      "acima45": 0.3472,
-      "acima90": 0.2485,
-      "publicavel": true,
-      "acimaDoPrazo": 0.3472
-     },
-     "PB": {
-      "n": 9928,
-      "mediana": 17,
-      "acima45": 0.328,
-      "acima90": 0.2282,
-      "publicavel": true,
-      "acimaDoPrazo": 0.328
-     },
-     "PE": {
-      "n": 18482,
-      "mediana": 27,
-      "acima45": 0.4142,
-      "acima90": 0.317,
-      "publicavel": true,
-      "acimaDoPrazo": 0.4142
-     },
-     "PI": {
-      "n": 13551,
-      "mediana": 30,
-      "acima45": 0.415,
-      "acima90": 0.3071,
-      "publicavel": true,
-      "acimaDoPrazo": 0.415
-     },
-     "PR": {
-      "n": 22239,
-      "mediana": 9,
-      "acima45": 0.1966,
-      "acima90": 0.1287,
-      "publicavel": true,
-      "acimaDoPrazo": 0.1966
-     },
-     "RJ": {
-      "n": 22493,
-      "mediana": 9,
-      "acima45": 0.1982,
-      "acima90": 0.1374,
-      "publicavel": true,
-      "acimaDoPrazo": 0.1982
-     },
-     "RN": {
-      "n": 6707,
-      "mediana": 15,
-      "acima45": 0.2939,
-      "acima90": 0.2116,
-      "publicavel": true,
-      "acimaDoPrazo": 0.2939
-     },
-     "RO": {
-      "n": 3980,
-      "mediana": 28,
-      "acima45": 0.4078,
-      "acima90": 0.3284,
-      "publicavel": true,
-      "acimaDoPrazo": 0.4078
-     },
-     "RR": {
-      "n": 730,
+      "n": 607,
       "mediana": 18,
-      "acima45": 0.2904,
-      "acima90": 0.1863,
-      "publicavel": false,
-      "acimaDoPrazo": 0.2904
-     },
-     "RS": {
-      "n": 21329,
-      "mediana": 9,
-      "acima45": 0.1803,
-      "acima90": 0.1209,
-      "publicavel": true,
-      "acimaDoPrazo": 0.1803
-     },
-     "SC": {
-      "n": 19839,
-      "mediana": 10,
-      "acima45": 0.2215,
-      "acima90": 0.1521,
-      "publicavel": true,
-      "acimaDoPrazo": 0.2215
-     },
-     "SE": {
-      "n": 5126,
-      "mediana": 24,
-      "acima45": 0.4046,
-      "acima90": 0.325,
-      "publicavel": true,
-      "acimaDoPrazo": 0.4046
-     },
-     "SP": {
-      "n": 87901,
-      "mediana": 10,
       "acima45": 0.1713,
-      "acima90": 0.109,
-      "publicavel": true,
+      "acima90": 0.056,
+      "publicavel": false,
       "acimaDoPrazo": 0.1713
      },
-     "TO": {
-      "n": 2645,
-      "mediana": 35,
-      "acima45": 0.4495,
-      "acima90": 0.358,
+     "BA": {
+      "n": 22301,
+      "mediana": 17,
+      "acima45": 0.1285,
+      "acima90": 0.0524,
       "publicavel": true,
-      "acimaDoPrazo": 0.4495
+      "acimaDoPrazo": 0.1285
+     },
+     "CE": {
+      "n": 17265,
+      "mediana": 19,
+      "acima45": 0.1851,
+      "acima90": 0.1038,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1851
+     },
+     "DF": {
+      "n": 6600,
+      "mediana": 18,
+      "acima45": 0.1385,
+      "acima90": 0.045,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1385
+     },
+     "ES": {
+      "n": 7129,
+      "mediana": 17,
+      "acima45": 0.126,
+      "acima90": 0.0391,
+      "publicavel": true,
+      "acimaDoPrazo": 0.126
+     },
+     "GO": {
+      "n": 13044,
+      "mediana": 18,
+      "acima45": 0.1551,
+      "acima90": 0.06,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1551
+     },
+     "MA": {
+      "n": 9529,
+      "mediana": 18,
+      "acima45": 0.1806,
+      "acima90": 0.064,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1806
+     },
+     "MG": {
+      "n": 43707,
+      "mediana": 17,
+      "acima45": 0.1146,
+      "acima90": 0.0358,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1146
+     },
+     "MS": {
+      "n": 5455,
+      "mediana": 17,
+      "acima45": 0.1393,
+      "acima90": 0.0506,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1393
+     },
+     "MT": {
+      "n": 6423,
+      "mediana": 18,
+      "acima45": 0.1579,
+      "acima90": 0.0461,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1579
+     },
+     "PA": {
+      "n": 8354,
+      "mediana": 18,
+      "acima45": 0.1665,
+      "acima90": 0.0491,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1665
+     },
+     "PB": {
+      "n": 8379,
+      "mediana": 18,
+      "acima45": 0.1517,
+      "acima90": 0.0649,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1517
+     },
+     "PE": {
+      "n": 13824,
+      "mediana": 17,
+      "acima45": 0.1418,
+      "acima90": 0.0623,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1418
+     },
+     "PI": {
+      "n": 10222,
+      "mediana": 18,
+      "acima45": 0.1532,
+      "acima90": 0.0421,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1532
+     },
+     "PR": {
+      "n": 20500,
+      "mediana": 16,
+      "acima45": 0.0826,
+      "acima90": 0.0254,
+      "publicavel": true,
+      "acimaDoPrazo": 0.0826
+     },
+     "RJ": {
+      "n": 21978,
+      "mediana": 15,
+      "acima45": 0.0934,
+      "acima90": 0.0381,
+      "publicavel": true,
+      "acimaDoPrazo": 0.0934
+     },
+     "RN": {
+      "n": 5664,
+      "mediana": 16,
+      "acima45": 0.1096,
+      "acima90": 0.0376,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1096
+     },
+     "RO": {
+      "n": 2753,
+      "mediana": 18,
+      "acima45": 0.174,
+      "acima90": 0.0516,
+      "publicavel": true,
+      "acimaDoPrazo": 0.174
+     },
+     "RR": {
+      "n": 656,
+      "mediana": 22,
+      "acima45": 0.186,
+      "acima90": 0.0625,
+      "publicavel": false,
+      "acimaDoPrazo": 0.186
+     },
+     "RS": {
+      "n": 18110,
+      "mediana": 13,
+      "acima45": 0.0846,
+      "acima90": 0.03,
+      "publicavel": true,
+      "acimaDoPrazo": 0.0846
+     },
+     "SC": {
+      "n": 18353,
+      "mediana": 16,
+      "acima45": 0.0993,
+      "acima90": 0.0373,
+      "publicavel": true,
+      "acimaDoPrazo": 0.0993
+     },
+     "SE": {
+      "n": 3463,
+      "mediana": 16,
+      "acima45": 0.112,
+      "acima90": 0.0398,
+      "publicavel": true,
+      "acimaDoPrazo": 0.112
+     },
+     "SP": {
+      "n": 73911,
+      "mediana": 14,
+      "acima45": 0.0834,
+      "acima90": 0.0323,
+      "publicavel": true,
+      "acimaDoPrazo": 0.0834
+     },
+     "TO": {
+      "n": 2023,
+      "mediana": 22,
+      "acima45": 0.1977,
+      "acima90": 0.091,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1977
      }
     }
    },
@@ -555,242 +555,242 @@
    "prazoAcordo": 90,
    "prazoContaDoPedido": false,
    "fila": {
-    "n": 414822,
-    "mediana": 50,
-    "p75": 134,
-    "p90": 281,
-    "acima45": 0.5176,
-    "acima90": 0.3508,
-    "acimaDoPrazo": 0.3508,
+    "n": 278963,
+    "mediana": 31,
+    "p75": 61,
+    "p90": 151,
+    "acima45": 0.3405,
+    "acima90": 0.1617,
+    "acimaDoPrazo": 0.1617,
     "publicavel": true,
-    "medianaAnterior": 73,
+    "medianaAnterior": 50,
     "porServico": [
      {
       "codigo": 1655,
       "nome": "Benefício Assistencial à Pessoa com Deficiência",
-      "n": 414822,
-      "mediana": 50,
-      "acima45": 0.5176,
-      "acima90": 0.3508,
+      "n": 278963,
+      "mediana": 31,
+      "acima45": 0.3405,
+      "acima90": 0.1617,
       "publicavel": true
      }
     ],
     "porUf": {
      "AC": {
-      "n": 3857,
-      "mediana": 53,
-      "acima45": 0.5349,
-      "acima90": 0.3679,
+      "n": 2093,
+      "mediana": 30,
+      "acima45": 0.3478,
+      "acima90": 0.1911,
       "publicavel": true,
-      "acimaDoPrazo": 0.3679
+      "acimaDoPrazo": 0.1911
      },
      "AL": {
-      "n": 14996,
-      "mediana": 77,
-      "acima45": 0.6122,
-      "acima90": 0.4636,
+      "n": 10460,
+      "mediana": 38,
+      "acima45": 0.4179,
+      "acima90": 0.244,
       "publicavel": true,
-      "acimaDoPrazo": 0.4636
+      "acimaDoPrazo": 0.244
      },
      "AM": {
-      "n": 10558,
-      "mediana": 50,
-      "acima45": 0.5186,
-      "acima90": 0.3467,
+      "n": 8281,
+      "mediana": 31,
+      "acima45": 0.3137,
+      "acima90": 0.1423,
       "publicavel": true,
-      "acimaDoPrazo": 0.3467
+      "acimaDoPrazo": 0.1423
      },
      "AP": {
-      "n": 3476,
-      "mediana": 49,
-      "acima45": 0.5069,
-      "acima90": 0.3058,
+      "n": 2451,
+      "mediana": 31,
+      "acima45": 0.3341,
+      "acima90": 0.1628,
       "publicavel": true,
-      "acimaDoPrazo": 0.3058
+      "acimaDoPrazo": 0.1628
      },
      "BA": {
-      "n": 41490,
-      "mediana": 66,
-      "acima45": 0.596,
-      "acima90": 0.3973,
+      "n": 23223,
+      "mediana": 32,
+      "acima45": 0.3668,
+      "acima90": 0.1861,
       "publicavel": true,
-      "acimaDoPrazo": 0.3973
+      "acimaDoPrazo": 0.1861
      },
      "CE": {
-      "n": 56020,
-      "mediana": 78,
-      "acima45": 0.6243,
-      "acima90": 0.4668,
+      "n": 37470,
+      "mediana": 36,
+      "acima45": 0.396,
+      "acima90": 0.1881,
       "publicavel": true,
-      "acimaDoPrazo": 0.4668
+      "acimaDoPrazo": 0.1881
      },
      "DF": {
-      "n": 4353,
-      "mediana": 51,
-      "acima45": 0.5199,
-      "acima90": 0.3462,
+      "n": 2945,
+      "mediana": 25,
+      "acima45": 0.2353,
+      "acima90": 0.1178,
       "publicavel": true,
-      "acimaDoPrazo": 0.3462
+      "acimaDoPrazo": 0.1178
      },
      "ES": {
-      "n": 4858,
-      "mediana": 29,
-      "acima45": 0.3394,
-      "acima90": 0.2089,
+      "n": 3846,
+      "mediana": 26,
+      "acima45": 0.2631,
+      "acima90": 0.092,
       "publicavel": true,
-      "acimaDoPrazo": 0.2089
+      "acimaDoPrazo": 0.092
      },
      "GO": {
-      "n": 14413,
-      "mediana": 51,
-      "acima45": 0.5267,
-      "acima90": 0.3713,
+      "n": 8560,
+      "mediana": 30,
+      "acima45": 0.3231,
+      "acima90": 0.1463,
       "publicavel": true,
-      "acimaDoPrazo": 0.3713
+      "acimaDoPrazo": 0.1463
      },
      "MA": {
-      "n": 24958,
-      "mediana": 72,
-      "acima45": 0.6112,
-      "acima90": 0.4294,
+      "n": 16885,
+      "mediana": 39,
+      "acima45": 0.437,
+      "acima90": 0.2348,
       "publicavel": true,
-      "acimaDoPrazo": 0.4294
+      "acimaDoPrazo": 0.2348
      },
      "MG": {
-      "n": 20297,
-      "mediana": 28,
-      "acima45": 0.3091,
-      "acima90": 0.1626,
+      "n": 16309,
+      "mediana": 24,
+      "acima45": 0.2302,
+      "acima90": 0.0804,
       "publicavel": true,
-      "acimaDoPrazo": 0.1626
+      "acimaDoPrazo": 0.0804
      },
      "MS": {
-      "n": 3733,
-      "mediana": 39,
-      "acima45": 0.4637,
-      "acima90": 0.3482,
+      "n": 2661,
+      "mediana": 24,
+      "acima45": 0.2646,
+      "acima90": 0.1372,
       "publicavel": true,
-      "acimaDoPrazo": 0.3482
+      "acimaDoPrazo": 0.1372
      },
      "MT": {
-      "n": 5813,
-      "mediana": 43,
-      "acima45": 0.4636,
-      "acima90": 0.3107,
+      "n": 3645,
+      "mediana": 29,
+      "acima45": 0.2708,
+      "acima90": 0.1226,
       "publicavel": true,
-      "acimaDoPrazo": 0.3107
+      "acimaDoPrazo": 0.1226
      },
      "PA": {
-      "n": 19930,
-      "mediana": 53,
-      "acima45": 0.5387,
-      "acima90": 0.3812,
+      "n": 13326,
+      "mediana": 32,
+      "acima45": 0.3452,
+      "acima90": 0.1513,
       "publicavel": true,
-      "acimaDoPrazo": 0.3812
+      "acimaDoPrazo": 0.1513
      },
      "PB": {
-      "n": 23571,
-      "mediana": 65,
-      "acima45": 0.5842,
-      "acima90": 0.4138,
+      "n": 19209,
+      "mediana": 43,
+      "acima45": 0.4579,
+      "acima90": 0.2301,
       "publicavel": true,
-      "acimaDoPrazo": 0.4138
+      "acimaDoPrazo": 0.2301
      },
      "PE": {
-      "n": 37545,
-      "mediana": 65,
-      "acima45": 0.596,
-      "acima90": 0.4084,
+      "n": 23881,
+      "mediana": 36,
+      "acima45": 0.3893,
+      "acima90": 0.1917,
       "publicavel": true,
-      "acimaDoPrazo": 0.4084
+      "acimaDoPrazo": 0.1917
      },
      "PI": {
-      "n": 14477,
-      "mediana": 67,
-      "acima45": 0.6146,
-      "acima90": 0.4165,
+      "n": 9200,
+      "mediana": 43,
+      "acima45": 0.4666,
+      "acima90": 0.2729,
       "publicavel": true,
-      "acimaDoPrazo": 0.4165
+      "acimaDoPrazo": 0.2729
      },
      "PR": {
-      "n": 10116,
-      "mediana": 30,
-      "acima45": 0.3441,
-      "acima90": 0.196,
+      "n": 6563,
+      "mediana": 22,
+      "acima45": 0.2005,
+      "acima90": 0.0614,
       "publicavel": true,
-      "acimaDoPrazo": 0.196
+      "acimaDoPrazo": 0.0614
      },
      "RJ": {
-      "n": 19979,
-      "mediana": 30,
-      "acima45": 0.3528,
-      "acima90": 0.2105,
+      "n": 15752,
+      "mediana": 24,
+      "acima45": 0.2354,
+      "acima90": 0.0877,
       "publicavel": true,
-      "acimaDoPrazo": 0.2105
+      "acimaDoPrazo": 0.0877
      },
      "RN": {
-      "n": 12985,
-      "mediana": 60,
-      "acima45": 0.5595,
-      "acima90": 0.414,
+      "n": 8866,
+      "mediana": 38,
+      "acima45": 0.4204,
+      "acima90": 0.2355,
       "publicavel": true,
-      "acimaDoPrazo": 0.414
+      "acimaDoPrazo": 0.2355
      },
      "RO": {
-      "n": 3000,
-      "mediana": 67,
-      "acima45": 0.5917,
-      "acima90": 0.4277,
+      "n": 1582,
+      "mediana": 31,
+      "acima45": 0.3312,
+      "acima90": 0.1764,
       "publicavel": true,
-      "acimaDoPrazo": 0.4277
+      "acimaDoPrazo": 0.1764
      },
      "RR": {
-      "n": 1315,
-      "mediana": 44,
-      "acima45": 0.4859,
-      "acima90": 0.3156,
-      "publicavel": true,
-      "acimaDoPrazo": 0.3156
+      "n": 832,
+      "mediana": 29,
+      "acima45": 0.3029,
+      "acima90": 0.1178,
+      "publicavel": false,
+      "acimaDoPrazo": 0.1178
      },
      "RS": {
-      "n": 10769,
-      "mediana": 30,
-      "acima45": 0.3557,
-      "acima90": 0.2009,
+      "n": 7027,
+      "mediana": 21,
+      "acima45": 0.2093,
+      "acima90": 0.0629,
       "publicavel": true,
-      "acimaDoPrazo": 0.2009
+      "acimaDoPrazo": 0.0629
      },
      "SC": {
-      "n": 6458,
-      "mediana": 36,
-      "acima45": 0.4179,
-      "acima90": 0.2544,
+      "n": 4144,
+      "mediana": 24,
+      "acima45": 0.2534,
+      "acima90": 0.0714,
       "publicavel": true,
-      "acimaDoPrazo": 0.2544
+      "acimaDoPrazo": 0.0714
      },
      "SE": {
-      "n": 8281,
-      "mediana": 67,
-      "acima45": 0.6079,
-      "acima90": 0.4095,
+      "n": 3719,
+      "mediana": 29,
+      "acima45": 0.309,
+      "acima90": 0.1595,
       "publicavel": true,
-      "acimaDoPrazo": 0.4095
+      "acimaDoPrazo": 0.1595
      },
      "SP": {
-      "n": 33249,
-      "mediana": 24,
-      "acima45": 0.2606,
-      "acima90": 0.1039,
+      "n": 23331,
+      "mediana": 21,
+      "acima45": 0.1941,
+      "acima90": 0.0645,
       "publicavel": true,
-      "acimaDoPrazo": 0.1039
+      "acimaDoPrazo": 0.0645
      },
      "TO": {
-      "n": 4325,
-      "mediana": 88,
-      "acima45": 0.655,
-      "acima90": 0.4973,
+      "n": 2702,
+      "mediana": 36,
+      "acima45": 0.4049,
+      "acima90": 0.2054,
       "publicavel": true,
-      "acimaDoPrazo": 0.4973
+      "acimaDoPrazo": 0.2054
      }
     }
    },
@@ -1018,242 +1018,242 @@
    "prazoAcordo": 90,
    "prazoContaDoPedido": false,
    "fila": {
-    "n": 54124,
-    "mediana": 29,
-    "p75": 58,
-    "p90": 129,
-    "acima45": 0.3128,
-    "acima90": 0.1485,
-    "acimaDoPrazo": 0.1485,
+    "n": 36842,
+    "mediana": 26,
+    "p75": 46,
+    "p90": 67,
+    "acima45": 0.2559,
+    "acima90": 0.0407,
+    "acimaDoPrazo": 0.0407,
     "publicavel": true,
-    "medianaAnterior": 36,
+    "medianaAnterior": 29,
     "porServico": [
      {
       "codigo": 1657,
       "nome": "Benefício Assistencial ao Idoso",
-      "n": 54124,
-      "mediana": 29,
-      "acima45": 0.3128,
-      "acima90": 0.1485,
+      "n": 36842,
+      "mediana": 26,
+      "acima45": 0.2559,
+      "acima90": 0.0407,
       "publicavel": true
      }
     ],
     "porUf": {
      "AC": {
-      "n": 184,
-      "mediana": 31,
-      "acima45": 0.3641,
-      "acima90": 0.2228,
+      "n": 95,
+      "mediana": 27,
+      "acima45": 0.2526,
+      "acima90": 0.0421,
       "publicavel": false,
-      "acimaDoPrazo": 0.2228
+      "acimaDoPrazo": 0.0421
      },
      "AL": {
-      "n": 503,
-      "mediana": 28,
-      "acima45": 0.3419,
-      "acima90": 0.1889,
+      "n": 345,
+      "mediana": 30,
+      "acima45": 0.2812,
+      "acima90": 0.0406,
       "publicavel": false,
-      "acimaDoPrazo": 0.1889
+      "acimaDoPrazo": 0.0406
      },
      "AM": {
-      "n": 1562,
-      "mediana": 29,
-      "acima45": 0.3406,
-      "acima90": 0.2093,
-      "publicavel": true,
-      "acimaDoPrazo": 0.2093
+      "n": 977,
+      "mediana": 30,
+      "acima45": 0.2456,
+      "acima90": 0.042,
+      "publicavel": false,
+      "acimaDoPrazo": 0.042
      },
      "AP": {
-      "n": 263,
-      "mediana": 32,
-      "acima45": 0.3878,
-      "acima90": 0.2471,
+      "n": 154,
+      "mediana": 28,
+      "acima45": 0.2532,
+      "acima90": 0.0325,
       "publicavel": false,
-      "acimaDoPrazo": 0.2471
+      "acimaDoPrazo": 0.0325
      },
      "BA": {
-      "n": 4367,
-      "mediana": 25,
-      "acima45": 0.3096,
-      "acima90": 0.1356,
+      "n": 2815,
+      "mediana": 30,
+      "acima45": 0.2742,
+      "acima90": 0.0448,
       "publicavel": true,
-      "acimaDoPrazo": 0.1356
+      "acimaDoPrazo": 0.0448
      },
      "CE": {
-      "n": 2663,
-      "mediana": 28,
-      "acima45": 0.3087,
-      "acima90": 0.1314,
+      "n": 1686,
+      "mediana": 29,
+      "acima45": 0.2782,
+      "acima90": 0.0469,
       "publicavel": true,
-      "acimaDoPrazo": 0.1314
+      "acimaDoPrazo": 0.0469
      },
      "DF": {
-      "n": 587,
-      "mediana": 29,
-      "acima45": 0.3424,
-      "acima90": 0.2078,
+      "n": 489,
+      "mediana": 26,
+      "acima45": 0.1943,
+      "acima90": 0.0225,
       "publicavel": false,
-      "acimaDoPrazo": 0.2078
+      "acimaDoPrazo": 0.0225
      },
      "ES": {
-      "n": 996,
-      "mediana": 24,
-      "acima45": 0.24,
-      "acima90": 0.0753,
+      "n": 778,
+      "mediana": 31,
+      "acima45": 0.2918,
+      "acima90": 0.0411,
       "publicavel": false,
-      "acimaDoPrazo": 0.0753
+      "acimaDoPrazo": 0.0411
      },
      "GO": {
-      "n": 1692,
-      "mediana": 30,
-      "acima45": 0.3369,
-      "acima90": 0.1909,
+      "n": 1172,
+      "mediana": 26,
+      "acima45": 0.2056,
+      "acima90": 0.0213,
       "publicavel": true,
-      "acimaDoPrazo": 0.1909
+      "acimaDoPrazo": 0.0213
      },
      "MA": {
-      "n": 737,
-      "mediana": 26,
-      "acima45": 0.3284,
-      "acima90": 0.1682,
+      "n": 805,
+      "mediana": 30,
+      "acima45": 0.2894,
+      "acima90": 0.0348,
       "publicavel": false,
-      "acimaDoPrazo": 0.1682
+      "acimaDoPrazo": 0.0348
      },
      "MG": {
-      "n": 3914,
-      "mediana": 25,
-      "acima45": 0.2384,
-      "acima90": 0.082,
+      "n": 3088,
+      "mediana": 26,
+      "acima45": 0.2438,
+      "acima90": 0.0298,
       "publicavel": true,
-      "acimaDoPrazo": 0.082
+      "acimaDoPrazo": 0.0298
      },
      "MS": {
-      "n": 1121,
-      "mediana": 31,
-      "acima45": 0.3711,
-      "acima90": 0.223,
-      "publicavel": true,
-      "acimaDoPrazo": 0.223
+      "n": 791,
+      "mediana": 28,
+      "acima45": 0.1922,
+      "acima90": 0.0417,
+      "publicavel": false,
+      "acimaDoPrazo": 0.0417
      },
      "MT": {
-      "n": 855,
-      "mediana": 32,
-      "acima45": 0.3789,
-      "acima90": 0.2281,
+      "n": 651,
+      "mediana": 28,
+      "acima45": 0.2135,
+      "acima90": 0.0323,
       "publicavel": false,
-      "acimaDoPrazo": 0.2281
+      "acimaDoPrazo": 0.0323
      },
      "PA": {
-      "n": 2703,
-      "mediana": 29,
-      "acima45": 0.3215,
-      "acima90": 0.1831,
+      "n": 1985,
+      "mediana": 30,
+      "acima45": 0.2599,
+      "acima90": 0.0277,
       "publicavel": true,
-      "acimaDoPrazo": 0.1831
+      "acimaDoPrazo": 0.0277
      },
      "PB": {
-      "n": 1013,
-      "mediana": 29,
-      "acima45": 0.3662,
-      "acima90": 0.1698,
-      "publicavel": true,
-      "acimaDoPrazo": 0.1698
+      "n": 646,
+      "mediana": 30,
+      "acima45": 0.2988,
+      "acima90": 0.0464,
+      "publicavel": false,
+      "acimaDoPrazo": 0.0464
      },
      "PE": {
-      "n": 3649,
-      "mediana": 27,
-      "acima45": 0.2984,
-      "acima90": 0.123,
+      "n": 2280,
+      "mediana": 31,
+      "acima45": 0.2851,
+      "acima90": 0.0421,
       "publicavel": true,
-      "acimaDoPrazo": 0.123
+      "acimaDoPrazo": 0.0421
      },
      "PI": {
-      "n": 399,
-      "mediana": 28,
-      "acima45": 0.3383,
-      "acima90": 0.1629,
+      "n": 303,
+      "mediana": 25,
+      "acima45": 0.2343,
+      "acima90": 0.0297,
       "publicavel": false,
-      "acimaDoPrazo": 0.1629
+      "acimaDoPrazo": 0.0297
      },
      "PR": {
-      "n": 2747,
-      "mediana": 36,
-      "acima45": 0.3921,
-      "acima90": 0.1944,
+      "n": 1561,
+      "mediana": 23,
+      "acima45": 0.2691,
+      "acima90": 0.0532,
       "publicavel": true,
-      "acimaDoPrazo": 0.1944
+      "acimaDoPrazo": 0.0532
      },
      "RJ": {
-      "n": 7214,
-      "mediana": 29,
-      "acima45": 0.2838,
-      "acima90": 0.1347,
+      "n": 5401,
+      "mediana": 26,
+      "acima45": 0.2618,
+      "acima90": 0.0435,
       "publicavel": true,
-      "acimaDoPrazo": 0.1347
+      "acimaDoPrazo": 0.0435
      },
      "RN": {
-      "n": 765,
-      "mediana": 25,
-      "acima45": 0.2824,
-      "acima90": 0.119,
+      "n": 480,
+      "mediana": 29,
+      "acima45": 0.2417,
+      "acima90": 0.0583,
       "publicavel": false,
-      "acimaDoPrazo": 0.119
+      "acimaDoPrazo": 0.0583
      },
      "RO": {
-      "n": 347,
-      "mediana": 31,
-      "acima45": 0.389,
-      "acima90": 0.2392,
+      "n": 235,
+      "mediana": 25,
+      "acima45": 0.1872,
+      "acima90": 0.034,
       "publicavel": false,
-      "acimaDoPrazo": 0.2392
+      "acimaDoPrazo": 0.034
      },
      "RR": {
-      "n": 855,
-      "mediana": 52,
-      "acima45": 0.5392,
-      "acima90": 0.3754,
+      "n": 603,
+      "mediana": 32,
+      "acima45": 0.2819,
+      "acima90": 0.1343,
       "publicavel": false,
-      "acimaDoPrazo": 0.3754
+      "acimaDoPrazo": 0.1343
      },
      "RS": {
-      "n": 2257,
-      "mediana": 35,
-      "acima45": 0.3722,
-      "acima90": 0.2025,
+      "n": 1370,
+      "mediana": 24,
+      "acima45": 0.2569,
+      "acima90": 0.0423,
       "publicavel": true,
-      "acimaDoPrazo": 0.2025
+      "acimaDoPrazo": 0.0423
      },
      "SC": {
-      "n": 1339,
-      "mediana": 38,
-      "acima45": 0.422,
-      "acima90": 0.2203,
-      "publicavel": true,
-      "acimaDoPrazo": 0.2203
+      "n": 824,
+      "mediana": 25,
+      "acima45": 0.2816,
+      "acima90": 0.0522,
+      "publicavel": false,
+      "acimaDoPrazo": 0.0522
      },
      "SE": {
-      "n": 400,
-      "mediana": 32,
-      "acima45": 0.365,
-      "acima90": 0.1725,
+      "n": 261,
+      "mediana": 25,
+      "acima45": 0.2759,
+      "acima90": 0.0498,
       "publicavel": false,
-      "acimaDoPrazo": 0.1725
+      "acimaDoPrazo": 0.0498
      },
      "SP": {
-      "n": 10778,
+      "n": 6862,
       "mediana": 25,
-      "acima45": 0.2719,
-      "acima90": 0.1036,
+      "acima45": 0.2396,
+      "acima90": 0.0353,
       "publicavel": true,
-      "acimaDoPrazo": 0.1036
+      "acimaDoPrazo": 0.0353
      },
      "TO": {
-      "n": 214,
+      "n": 185,
       "mediana": 32,
-      "acima45": 0.3645,
-      "acima90": 0.1729,
+      "acima45": 0.2919,
+      "acima90": 0.0324,
       "publicavel": false,
-      "acimaDoPrazo": 0.1729
+      "acimaDoPrazo": 0.0324
      }
     }
    },
@@ -1481,242 +1481,242 @@
    "prazoAcordo": 60,
    "prazoContaDoPedido": false,
    "fila": {
-    "n": 124382,
-    "mediana": 100,
-    "p75": 261,
-    "p90": 388,
-    "acima45": 0.6422,
-    "acima90": 0.523,
-    "acimaDoPrazo": 0.5936,
+    "n": 53423,
+    "mediana": 25,
+    "p75": 43,
+    "p90": 68,
+    "acima45": 0.2074,
+    "acima90": 0.0742,
+    "acimaDoPrazo": 0.1187,
     "publicavel": true,
-    "medianaAnterior": 125,
+    "medianaAnterior": 100,
     "porServico": [
      {
       "codigo": 4852,
       "nome": "Auxílio-Acidente",
-      "n": 124382,
-      "mediana": 100,
-      "acima45": 0.6422,
-      "acima90": 0.523,
+      "n": 53423,
+      "mediana": 25,
+      "acima45": 0.2074,
+      "acima90": 0.0742,
       "publicavel": true
      }
     ],
     "porUf": {
      "AC": {
-      "n": 297,
-      "mediana": 102,
-      "acima45": 0.6667,
-      "acima90": 0.532,
+      "n": 167,
+      "mediana": 26,
+      "acima45": 0.2275,
+      "acima90": 0.1018,
       "publicavel": false,
-      "acimaDoPrazo": 0.6094
+      "acimaDoPrazo": 0.1138
      },
      "AL": {
-      "n": 1031,
-      "mediana": 157,
-      "acima45": 0.6731,
-      "acima90": 0.5936,
-      "publicavel": true,
-      "acimaDoPrazo": 0.6411
+      "n": 402,
+      "mediana": 29,
+      "acima45": 0.2289,
+      "acima90": 0.0995,
+      "publicavel": false,
+      "acimaDoPrazo": 0.1393
      },
      "AM": {
-      "n": 1244,
-      "mediana": 122,
-      "acima45": 0.6592,
-      "acima90": 0.5587,
-      "publicavel": true,
-      "acimaDoPrazo": 0.615
+      "n": 587,
+      "mediana": 32,
+      "acima45": 0.2845,
+      "acima90": 0.1141,
+      "publicavel": false,
+      "acimaDoPrazo": 0.1721
      },
      "AP": {
-      "n": 386,
-      "mediana": 158,
-      "acima45": 0.7565,
-      "acima90": 0.6451,
+      "n": 110,
+      "mediana": 38,
+      "acima45": 0.3273,
+      "acima90": 0.1636,
       "publicavel": false,
-      "acimaDoPrazo": 0.7202
+      "acimaDoPrazo": 0.2091
      },
      "BA": {
-      "n": 5486,
-      "mediana": 156,
-      "acima45": 0.7357,
-      "acima90": 0.6303,
+      "n": 2292,
+      "mediana": 26,
+      "acima45": 0.2627,
+      "acima90": 0.1283,
       "publicavel": true,
-      "acimaDoPrazo": 0.6949
+      "acimaDoPrazo": 0.1841
      },
      "CE": {
-      "n": 5694,
-      "mediana": 226,
-      "acima45": 0.7733,
-      "acima90": 0.6751,
+      "n": 1907,
+      "mediana": 30,
+      "acima45": 0.2743,
+      "acima90": 0.1117,
       "publicavel": true,
-      "acimaDoPrazo": 0.7383
+      "acimaDoPrazo": 0.1762
      },
      "DF": {
-      "n": 1387,
-      "mediana": 132,
-      "acima45": 0.6943,
-      "acima90": 0.5847,
-      "publicavel": true,
-      "acimaDoPrazo": 0.6489
+      "n": 609,
+      "mediana": 31,
+      "acima45": 0.2759,
+      "acima90": 0.1412,
+      "publicavel": false,
+      "acimaDoPrazo": 0.1856
      },
      "ES": {
-      "n": 2592,
-      "mediana": 135,
-      "acima45": 0.6586,
-      "acima90": 0.5525,
+      "n": 1192,
+      "mediana": 26,
+      "acima45": 0.2785,
+      "acima90": 0.1284,
       "publicavel": true,
-      "acimaDoPrazo": 0.6192
+      "acimaDoPrazo": 0.1703
      },
      "GO": {
-      "n": 9959,
-      "mediana": 147,
-      "acima45": 0.6816,
-      "acima90": 0.6179,
+      "n": 3583,
+      "mediana": 31,
+      "acima45": 0.2997,
+      "acima90": 0.1418,
       "publicavel": true,
-      "acimaDoPrazo": 0.6543
+      "acimaDoPrazo": 0.2037
      },
      "MA": {
-      "n": 3172,
-      "mediana": 186,
-      "acima45": 0.7405,
-      "acima90": 0.6428,
+      "n": 1181,
+      "mediana": 26,
+      "acima45": 0.2752,
+      "acima90": 0.1346,
       "publicavel": true,
-      "acimaDoPrazo": 0.7021
+      "acimaDoPrazo": 0.1948
      },
      "MG": {
-      "n": 7719,
-      "mediana": 42,
-      "acima45": 0.465,
-      "acima90": 0.3332,
+      "n": 5248,
+      "mediana": 23,
+      "acima45": 0.1723,
+      "acima90": 0.0471,
       "publicavel": true,
-      "acimaDoPrazo": 0.4095
+      "acimaDoPrazo": 0.0953
      },
      "MS": {
-      "n": 2432,
-      "mediana": 105,
-      "acima45": 0.5987,
-      "acima90": 0.5181,
+      "n": 1310,
+      "mediana": 24,
+      "acima45": 0.1725,
+      "acima90": 0.071,
       "publicavel": true,
-      "acimaDoPrazo": 0.56
+      "acimaDoPrazo": 0.0939
      },
      "MT": {
-      "n": 5434,
-      "mediana": 155,
-      "acima45": 0.7247,
-      "acima90": 0.6148,
+      "n": 2438,
+      "mediana": 30,
+      "acima45": 0.2555,
+      "acima90": 0.1161,
       "publicavel": true,
-      "acimaDoPrazo": 0.6866
+      "acimaDoPrazo": 0.1797
      },
      "PA": {
-      "n": 3206,
-      "mediana": 149,
-      "acima45": 0.7071,
-      "acima90": 0.6036,
+      "n": 1321,
+      "mediana": 33,
+      "acima45": 0.3134,
+      "acima90": 0.1363,
       "publicavel": true,
-      "acimaDoPrazo": 0.6656
+      "acimaDoPrazo": 0.2051
      },
      "PB": {
-      "n": 2631,
-      "mediana": 135,
-      "acima45": 0.6899,
-      "acima90": 0.5701,
+      "n": 1265,
+      "mediana": 31,
+      "acima45": 0.2854,
+      "acima90": 0.0941,
       "publicavel": true,
-      "acimaDoPrazo": 0.6473
+      "acimaDoPrazo": 0.1597
      },
      "PE": {
-      "n": 4976,
-      "mediana": 205,
-      "acima45": 0.7811,
-      "acima90": 0.6811,
+      "n": 1655,
+      "mediana": 26,
+      "acima45": 0.252,
+      "acima90": 0.1051,
       "publicavel": true,
-      "acimaDoPrazo": 0.7422
+      "acimaDoPrazo": 0.1674
      },
      "PI": {
-      "n": 2582,
-      "mediana": 129,
-      "acima45": 0.7029,
-      "acima90": 0.5724,
+      "n": 1020,
+      "mediana": 26,
+      "acima45": 0.2284,
+      "acima90": 0.0814,
       "publicavel": true,
-      "acimaDoPrazo": 0.6553
+      "acimaDoPrazo": 0.1343
      },
      "PR": {
-      "n": 5296,
-      "mediana": 42,
-      "acima45": 0.4568,
-      "acima90": 0.234,
+      "n": 3100,
+      "mediana": 24,
+      "acima45": 0.1723,
+      "acima90": 0.0306,
       "publicavel": true,
-      "acimaDoPrazo": 0.3627
+      "acimaDoPrazo": 0.0742
      },
      "RJ": {
-      "n": 7336,
-      "mediana": 154,
-      "acima45": 0.6648,
-      "acima90": 0.5796,
+      "n": 2691,
+      "mediana": 23,
+      "acima45": 0.1977,
+      "acima90": 0.0907,
       "publicavel": true,
-      "acimaDoPrazo": 0.6178
+      "acimaDoPrazo": 0.123
      },
      "RN": {
-      "n": 2157,
-      "mediana": 185,
-      "acima45": 0.7668,
-      "acima90": 0.6532,
-      "publicavel": true,
-      "acimaDoPrazo": 0.7172
+      "n": 667,
+      "mediana": 30,
+      "acima45": 0.2489,
+      "acima90": 0.1109,
+      "publicavel": false,
+      "acimaDoPrazo": 0.1559
      },
      "RO": {
-      "n": 1165,
-      "mediana": 140,
-      "acima45": 0.6515,
-      "acima90": 0.5665,
-      "publicavel": true,
-      "acimaDoPrazo": 0.6249
+      "n": 446,
+      "mediana": 30,
+      "acima45": 0.2534,
+      "acima90": 0.1166,
+      "publicavel": false,
+      "acimaDoPrazo": 0.1637
      },
      "RR": {
-      "n": 251,
-      "mediana": 136,
-      "acima45": 0.7331,
-      "acima90": 0.6016,
+      "n": 126,
+      "mediana": 33,
+      "acima45": 0.2857,
+      "acima90": 0.1111,
       "publicavel": false,
-      "acimaDoPrazo": 0.6773
+      "acimaDoPrazo": 0.1667
      },
      "RS": {
-      "n": 7121,
-      "mediana": 38,
-      "acima45": 0.4168,
-      "acima90": 0.1981,
+      "n": 4509,
+      "mediana": 23,
+      "acima45": 0.1608,
+      "acima90": 0.0328,
       "publicavel": true,
-      "acimaDoPrazo": 0.3275
+      "acimaDoPrazo": 0.0679
      },
      "SC": {
-      "n": 8638,
-      "mediana": 41,
-      "acima45": 0.4505,
-      "acima90": 0.2284,
+      "n": 4871,
+      "mediana": 24,
+      "acima45": 0.185,
+      "acima90": 0.0386,
       "publicavel": true,
-      "acimaDoPrazo": 0.3649
+      "acimaDoPrazo": 0.0846
      },
      "SE": {
-      "n": 979,
-      "mediana": 170,
-      "acima45": 0.7794,
-      "acima90": 0.665,
+      "n": 305,
+      "mediana": 18,
+      "acima45": 0.1672,
+      "acima90": 0.0951,
       "publicavel": false,
-      "acimaDoPrazo": 0.7457
+      "acimaDoPrazo": 0.1279
      },
      "SP": {
-      "n": 29897,
-      "mediana": 141,
-      "acima45": 0.6825,
-      "acima90": 0.5885,
+      "n": 9637,
+      "mediana": 22,
+      "acima45": 0.1341,
+      "acima90": 0.0321,
       "publicavel": true,
-      "acimaDoPrazo": 0.6429
+      "acimaDoPrazo": 0.054
      },
      "TO": {
-      "n": 1314,
-      "mediana": 134,
-      "acima45": 0.7123,
-      "acima90": 0.5944,
-      "publicavel": true,
-      "acimaDoPrazo": 0.6689
+      "n": 784,
+      "mediana": 25,
+      "acima45": 0.2513,
+      "acima90": 0.0995,
+      "publicavel": false,
+      "acimaDoPrazo": 0.1607
      }
     }
    },
@@ -1944,66 +1944,66 @@
    "prazoAcordo": 90,
    "prazoContaDoPedido": true,
    "fila": {
-    "n": 190410,
+    "n": 175680,
     "mediana": 24,
-    "p75": 47,
-    "p90": 92,
-    "acima45": 0.2587,
-    "acima90": 0.1009,
-    "acimaDoPrazo": 0.1009,
+    "p75": 41,
+    "p90": 74,
+    "acima45": 0.2176,
+    "acima90": 0.0743,
+    "acimaDoPrazo": 0.0743,
     "publicavel": true,
-    "medianaAnterior": 28,
+    "medianaAnterior": 24,
     "porServico": [
      {
       "codigo": 2772,
       "nome": "Aposentadoria por Idade Urbana",
-      "n": 93207,
+      "n": 88780,
       "mediana": 24,
-      "acima45": 0.2467,
-      "acima90": 0.0691,
+      "acima45": 0.2031,
+      "acima90": 0.0456,
       "publicavel": true
      },
      {
       "codigo": 1671,
       "nome": "Aposentadoria por Idade Rural",
-      "n": 78867,
-      "mediana": 22,
-      "acima45": 0.1611,
-      "acima90": 0.0329,
+      "n": 71062,
+      "mediana": 19,
+      "acima45": 0.1299,
+      "acima90": 0.0175,
       "publicavel": true
      },
      {
       "codigo": 2812,
       "nome": "Aposentadoria da Pessoa com Deficiência por Idade",
-      "n": 15587,
-      "mediana": 98,
-      "acima45": 0.7284,
-      "acima90": 0.5303,
+      "n": 13083,
+      "mediana": 75,
+      "acima45": 0.6609,
+      "acima90": 0.4419,
       "publicavel": true
      },
      {
       "codigo": 3653,
       "nome": "Acordo Internacional - Aposentadoria por Idade",
-      "n": 2676,
-      "mediana": 178,
-      "acima45": 0.8042,
-      "acima90": 0.704,
+      "n": 2678,
+      "mediana": 184,
+      "acima45": 0.8447,
+      "acima90": 0.7222,
       "publicavel": true
      },
      {
       "codigo": 6492,
       "nome": "Acordo Internacional - Aposentadoria da Pessoa com Deficiência por Idade",
-      "n": 71,
-      "mediana": 95,
-      "acima45": 0.7746,
-      "acima90": 0.5352,
+      "n": 75,
+      "mediana": 155,
+      "acima45": 0.8,
+      "acima90": 0.6533,
       "publicavel": false
      },
      {
       "codigo": 3742,
       "nome": "Acordo Internacional - Aposentadoria por Idade Rural",
       "n": 2,
-      "mediana": 1722,
+      "mediana": 1814,
       "acima45": 1.0,
       "acima90": 1.0,
       "publicavel": false
@@ -2011,220 +2011,220 @@
     ],
     "porUf": {
      "AC": {
-      "n": 589,
+      "n": 499,
       "mediana": 25,
-      "acima45": 0.2377,
-      "acima90": 0.0764,
+      "acima45": 0.2265,
+      "acima90": 0.0441,
       "publicavel": false,
-      "acimaDoPrazo": 0.0764
+      "acimaDoPrazo": 0.0441
      },
      "AL": {
-      "n": 2809,
-      "mediana": 23,
-      "acima45": 0.2289,
-      "acima90": 0.0716,
+      "n": 2336,
+      "mediana": 24,
+      "acima45": 0.2213,
+      "acima90": 0.0715,
       "publicavel": true,
-      "acimaDoPrazo": 0.0716
+      "acimaDoPrazo": 0.0715
      },
      "AM": {
-      "n": 2859,
-      "mediana": 27,
-      "acima45": 0.2837,
-      "acima90": 0.0986,
+      "n": 2497,
+      "mediana": 26,
+      "acima45": 0.2451,
+      "acima90": 0.0713,
       "publicavel": true,
-      "acimaDoPrazo": 0.0986
+      "acimaDoPrazo": 0.0713
      },
      "AP": {
-      "n": 491,
+      "n": 446,
       "mediana": 25,
-      "acima45": 0.2627,
-      "acima90": 0.0957,
+      "acima45": 0.2085,
+      "acima90": 0.0404,
       "publicavel": false,
-      "acimaDoPrazo": 0.0957
+      "acimaDoPrazo": 0.0404
      },
      "BA": {
-      "n": 15148,
+      "n": 13740,
       "mediana": 22,
-      "acima45": 0.219,
-      "acima90": 0.0771,
+      "acima45": 0.191,
+      "acima90": 0.0574,
       "publicavel": true,
-      "acimaDoPrazo": 0.0771
+      "acimaDoPrazo": 0.0574
      },
      "CE": {
-      "n": 9164,
-      "mediana": 24,
-      "acima45": 0.2268,
-      "acima90": 0.0841,
+      "n": 7888,
+      "mediana": 22,
+      "acima45": 0.1995,
+      "acima90": 0.0729,
       "publicavel": true,
-      "acimaDoPrazo": 0.0841
+      "acimaDoPrazo": 0.0729
      },
      "DF": {
-      "n": 1694,
-      "mediana": 35,
-      "acima45": 0.4132,
-      "acima90": 0.219,
+      "n": 1734,
+      "mediana": 31,
+      "acima45": 0.3403,
+      "acima90": 0.1603,
       "publicavel": true,
-      "acimaDoPrazo": 0.219
+      "acimaDoPrazo": 0.1603
      },
      "ES": {
-      "n": 4240,
+      "n": 3671,
       "mediana": 25,
-      "acima45": 0.2844,
-      "acima90": 0.1094,
-      "publicavel": true,
-      "acimaDoPrazo": 0.1094
-     },
-     "GO": {
-      "n": 6326,
-      "mediana": 30,
-      "acima45": 0.3263,
-      "acima90": 0.1454,
-      "publicavel": true,
-      "acimaDoPrazo": 0.1454
-     },
-     "MA": {
-      "n": 11640,
-      "mediana": 21,
-      "acima45": 0.1454,
-      "acima90": 0.0363,
-      "publicavel": true,
-      "acimaDoPrazo": 0.0363
-     },
-     "MG": {
-      "n": 22748,
-      "mediana": 25,
-      "acima45": 0.2669,
-      "acima90": 0.0908,
-      "publicavel": true,
-      "acimaDoPrazo": 0.0908
-     },
-     "MS": {
-      "n": 2572,
-      "mediana": 29,
-      "acima45": 0.3165,
-      "acima90": 0.1271,
-      "publicavel": true,
-      "acimaDoPrazo": 0.1271
-     },
-     "MT": {
-      "n": 3424,
-      "mediana": 29,
-      "acima45": 0.2944,
-      "acima90": 0.1054,
-      "publicavel": true,
-      "acimaDoPrazo": 0.1054
-     },
-     "PA": {
-      "n": 8865,
-      "mediana": 25,
-      "acima45": 0.2359,
-      "acima90": 0.0734,
-      "publicavel": true,
-      "acimaDoPrazo": 0.0734
-     },
-     "PB": {
-      "n": 4137,
-      "mediana": 22,
-      "acima45": 0.2386,
-      "acima90": 0.0933,
-      "publicavel": true,
-      "acimaDoPrazo": 0.0933
-     },
-     "PE": {
-      "n": 9659,
-      "mediana": 23,
-      "acima45": 0.223,
-      "acima90": 0.0761,
-      "publicavel": true,
-      "acimaDoPrazo": 0.0761
-     },
-     "PI": {
-      "n": 3783,
-      "mediana": 22,
-      "acima45": 0.1975,
-      "acima90": 0.06,
-      "publicavel": true,
-      "acimaDoPrazo": 0.06
-     },
-     "PR": {
-      "n": 11902,
-      "mediana": 25,
-      "acima45": 0.2855,
-      "acima90": 0.12,
-      "publicavel": true,
-      "acimaDoPrazo": 0.12
-     },
-     "RJ": {
-      "n": 10937,
-      "mediana": 24,
-      "acima45": 0.2699,
-      "acima90": 0.1053,
-      "publicavel": true,
-      "acimaDoPrazo": 0.1053
-     },
-     "RN": {
-      "n": 3581,
-      "mediana": 23,
-      "acima45": 0.2248,
+      "acima45": 0.2479,
       "acima90": 0.0787,
       "publicavel": true,
       "acimaDoPrazo": 0.0787
      },
-     "RO": {
-      "n": 1409,
-      "mediana": 26,
-      "acima45": 0.2661,
-      "acima90": 0.0951,
+     "GO": {
+      "n": 6113,
+      "mediana": 29,
+      "acima45": 0.2627,
+      "acima90": 0.0968,
       "publicavel": true,
-      "acimaDoPrazo": 0.0951
+      "acimaDoPrazo": 0.0968
+     },
+     "MA": {
+      "n": 11119,
+      "mediana": 17,
+      "acima45": 0.1104,
+      "acima90": 0.0263,
+      "publicavel": true,
+      "acimaDoPrazo": 0.0263
+     },
+     "MG": {
+      "n": 20801,
+      "mediana": 25,
+      "acima45": 0.2199,
+      "acima90": 0.0599,
+      "publicavel": true,
+      "acimaDoPrazo": 0.0599
+     },
+     "MS": {
+      "n": 2435,
+      "mediana": 26,
+      "acima45": 0.253,
+      "acima90": 0.0903,
+      "publicavel": true,
+      "acimaDoPrazo": 0.0903
+     },
+     "MT": {
+      "n": 3108,
+      "mediana": 26,
+      "acima45": 0.2397,
+      "acima90": 0.0753,
+      "publicavel": true,
+      "acimaDoPrazo": 0.0753
+     },
+     "PA": {
+      "n": 8020,
+      "mediana": 24,
+      "acima45": 0.1894,
+      "acima90": 0.044,
+      "publicavel": true,
+      "acimaDoPrazo": 0.044
+     },
+     "PB": {
+      "n": 3749,
+      "mediana": 22,
+      "acima45": 0.2166,
+      "acima90": 0.0856,
+      "publicavel": true,
+      "acimaDoPrazo": 0.0856
+     },
+     "PE": {
+      "n": 8658,
+      "mediana": 22,
+      "acima45": 0.1878,
+      "acima90": 0.0618,
+      "publicavel": true,
+      "acimaDoPrazo": 0.0618
+     },
+     "PI": {
+      "n": 3363,
+      "mediana": 21,
+      "acima45": 0.1775,
+      "acima90": 0.0523,
+      "publicavel": true,
+      "acimaDoPrazo": 0.0523
+     },
+     "PR": {
+      "n": 10889,
+      "mediana": 25,
+      "acima45": 0.2504,
+      "acima90": 0.0905,
+      "publicavel": true,
+      "acimaDoPrazo": 0.0905
+     },
+     "RJ": {
+      "n": 10118,
+      "mediana": 24,
+      "acima45": 0.2536,
+      "acima90": 0.0871,
+      "publicavel": true,
+      "acimaDoPrazo": 0.0871
+     },
+     "RN": {
+      "n": 3125,
+      "mediana": 22,
+      "acima45": 0.1891,
+      "acima90": 0.0666,
+      "publicavel": true,
+      "acimaDoPrazo": 0.0666
+     },
+     "RO": {
+      "n": 1235,
+      "mediana": 24,
+      "acima45": 0.2024,
+      "acima90": 0.0615,
+      "publicavel": true,
+      "acimaDoPrazo": 0.0615
      },
      "RR": {
-      "n": 344,
-      "mediana": 29,
-      "acima45": 0.3256,
-      "acima90": 0.125,
+      "n": 323,
+      "mediana": 26,
+      "acima45": 0.2601,
+      "acima90": 0.0557,
       "publicavel": false,
-      "acimaDoPrazo": 0.125
+      "acimaDoPrazo": 0.0557
      },
      "RS": {
-      "n": 9498,
-      "mediana": 25,
-      "acima45": 0.2688,
-      "acima90": 0.1078,
+      "n": 8557,
+      "mediana": 24,
+      "acima45": 0.2432,
+      "acima90": 0.083,
       "publicavel": true,
-      "acimaDoPrazo": 0.1078
+      "acimaDoPrazo": 0.083
      },
      "SC": {
-      "n": 6345,
-      "mediana": 27,
-      "acima45": 0.2925,
-      "acima90": 0.1371,
+      "n": 5770,
+      "mediana": 25,
+      "acima45": 0.2747,
+      "acima90": 0.1083,
       "publicavel": true,
-      "acimaDoPrazo": 0.1371
+      "acimaDoPrazo": 0.1083
      },
      "SE": {
-      "n": 2229,
+      "n": 1849,
       "mediana": 23,
-      "acima45": 0.2355,
-      "acima90": 0.0843,
+      "acima45": 0.2044,
+      "acima90": 0.0681,
       "publicavel": true,
-      "acimaDoPrazo": 0.0843
+      "acimaDoPrazo": 0.0681
      },
      "SP": {
-      "n": 32476,
-      "mediana": 25,
-      "acima45": 0.2961,
-      "acima90": 0.1399,
+      "n": 32046,
+      "mediana": 24,
+      "acima45": 0.2262,
+      "acima90": 0.096,
       "publicavel": true,
-      "acimaDoPrazo": 0.1399
+      "acimaDoPrazo": 0.096
      },
      "TO": {
-      "n": 1541,
-      "mediana": 29,
-      "acima45": 0.2706,
-      "acima90": 0.072,
+      "n": 1591,
+      "mediana": 25,
+      "acima45": 0.2256,
+      "acima90": 0.0415,
       "publicavel": true,
-      "acimaDoPrazo": 0.072
+      "acimaDoPrazo": 0.0415
      }
     }
    },
@@ -2452,269 +2452,269 @@
    "prazoAcordo": 90,
    "prazoContaDoPedido": true,
    "fila": {
-    "n": 107730,
-    "mediana": 46,
-    "p75": 113,
-    "p90": 233,
-    "acima45": 0.5078,
-    "acima90": 0.3092,
-    "acimaDoPrazo": 0.3092,
+    "n": 105273,
+    "mediana": 39,
+    "p75": 85,
+    "p90": 185,
+    "acima45": 0.4453,
+    "acima90": 0.2342,
+    "acimaDoPrazo": 0.2342,
     "publicavel": true,
-    "medianaAnterior": 54,
+    "medianaAnterior": 46,
     "porServico": [
      {
       "codigo": 3372,
       "nome": "Aposentadoria por Tempo de Contribuição",
-      "n": 66109,
+      "n": 69077,
       "mediana": 31,
-      "acima45": 0.3634,
-      "acima90": 0.1583,
+      "acima45": 0.3329,
+      "acima90": 0.1235,
       "publicavel": true
      },
      {
       "codigo": 2773,
       "nome": "Aposentadoria da Pessoa com Deficiência por Tempo de Contribuição",
-      "n": 40494,
-      "mediana": 102,
-      "acima45": 0.7341,
-      "acima90": 0.5428,
+      "n": 35012,
+      "mediana": 74,
+      "acima45": 0.6519,
+      "acima90": 0.4343,
       "publicavel": true
      },
      {
       "codigo": 3743,
       "nome": "Acordo Internacional - Aposentadoria por Tempo de Contribuição",
-      "n": 1040,
-      "mediana": 289,
-      "acima45": 0.8558,
-      "acima90": 0.7731,
+      "n": 1088,
+      "mediana": 247,
+      "acima45": 0.9044,
+      "acima90": 0.7785,
       "publicavel": true
      },
      {
       "codigo": 6452,
       "nome": "Acordo Internacional - Aposentadoria da Pessoa com Deficiência por Tempo de Contribuição",
-      "n": 87,
-      "mediana": 200,
-      "acima45": 0.8276,
-      "acima90": 0.7126,
+      "n": 96,
+      "mediana": 202,
+      "acima45": 0.7917,
+      "acima90": 0.7396,
       "publicavel": false
      }
     ],
     "porUf": {
      "AC": {
-      "n": 91,
-      "mediana": 52,
-      "acima45": 0.5604,
-      "acima90": 0.3407,
+      "n": 100,
+      "mediana": 40,
+      "acima45": 0.45,
+      "acima90": 0.32,
       "publicavel": false,
-      "acimaDoPrazo": 0.3407
+      "acimaDoPrazo": 0.32
      },
      "AL": {
-      "n": 765,
-      "mediana": 49,
-      "acima45": 0.519,
-      "acima90": 0.3373,
+      "n": 821,
+      "mediana": 46,
+      "acima45": 0.5043,
+      "acima90": 0.285,
       "publicavel": false,
-      "acimaDoPrazo": 0.3373
+      "acimaDoPrazo": 0.285
      },
      "AM": {
-      "n": 850,
-      "mediana": 65,
-      "acima45": 0.6141,
-      "acima90": 0.4071,
+      "n": 776,
+      "mediana": 53,
+      "acima45": 0.558,
+      "acima90": 0.3647,
       "publicavel": false,
-      "acimaDoPrazo": 0.4071
+      "acimaDoPrazo": 0.3647
      },
      "AP": {
-      "n": 96,
-      "mediana": 63,
-      "acima45": 0.5729,
-      "acima90": 0.3854,
+      "n": 92,
+      "mediana": 60,
+      "acima45": 0.6304,
+      "acima90": 0.4239,
       "publicavel": false,
-      "acimaDoPrazo": 0.3854
+      "acimaDoPrazo": 0.4239
      },
      "BA": {
-      "n": 3903,
-      "mediana": 46,
-      "acima45": 0.5058,
-      "acima90": 0.3031,
+      "n": 4073,
+      "mediana": 43,
+      "acima45": 0.4761,
+      "acima90": 0.2684,
       "publicavel": true,
-      "acimaDoPrazo": 0.3031
+      "acimaDoPrazo": 0.2684
      },
      "CE": {
-      "n": 2172,
-      "mediana": 54,
-      "acima45": 0.5571,
-      "acima90": 0.3762,
-      "publicavel": true,
-      "acimaDoPrazo": 0.3762
-     },
-     "DF": {
-      "n": 1502,
-      "mediana": 66,
-      "acima45": 0.5992,
-      "acima90": 0.4234,
-      "publicavel": true,
-      "acimaDoPrazo": 0.4234
-     },
-     "ES": {
-      "n": 2279,
-      "mediana": 50,
-      "acima45": 0.5327,
-      "acima90": 0.3054,
-      "publicavel": true,
-      "acimaDoPrazo": 0.3054
-     },
-     "GO": {
-      "n": 2134,
-      "mediana": 65,
-      "acima45": 0.5904,
-      "acima90": 0.4072,
-      "publicavel": true,
-      "acimaDoPrazo": 0.4072
-     },
-     "MA": {
-      "n": 824,
-      "mediana": 55,
-      "acima45": 0.5692,
-      "acima90": 0.3362,
-      "publicavel": false,
-      "acimaDoPrazo": 0.3362
-     },
-     "MG": {
-      "n": 12645,
-      "mediana": 42,
-      "acima45": 0.4539,
-      "acima90": 0.2426,
-      "publicavel": true,
-      "acimaDoPrazo": 0.2426
-     },
-     "MS": {
-      "n": 944,
-      "mediana": 59,
-      "acima45": 0.5572,
-      "acima90": 0.3877,
-      "publicavel": false,
-      "acimaDoPrazo": 0.3877
-     },
-     "MT": {
-      "n": 1258,
-      "mediana": 67,
-      "acima45": 0.6097,
-      "acima90": 0.399,
-      "publicavel": true,
-      "acimaDoPrazo": 0.399
-     },
-     "PA": {
-      "n": 1450,
-      "mediana": 58,
-      "acima45": 0.5593,
-      "acima90": 0.351,
-      "publicavel": true,
-      "acimaDoPrazo": 0.351
-     },
-     "PB": {
-      "n": 1073,
-      "mediana": 63,
-      "acima45": 0.5909,
-      "acima90": 0.3868,
-      "publicavel": true,
-      "acimaDoPrazo": 0.3868
-     },
-     "PE": {
-      "n": 2523,
-      "mediana": 51,
-      "acima45": 0.5252,
+      "n": 2343,
+      "mediana": 48,
+      "acima45": 0.5198,
       "acima90": 0.3282,
       "publicavel": true,
       "acimaDoPrazo": 0.3282
      },
+     "DF": {
+      "n": 1518,
+      "mediana": 60,
+      "acima45": 0.5698,
+      "acima90": 0.3979,
+      "publicavel": true,
+      "acimaDoPrazo": 0.3979
+     },
+     "ES": {
+      "n": 2227,
+      "mediana": 39,
+      "acima45": 0.4513,
+      "acima90": 0.2241,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2241
+     },
+     "GO": {
+      "n": 2130,
+      "mediana": 53,
+      "acima45": 0.5493,
+      "acima90": 0.346,
+      "publicavel": true,
+      "acimaDoPrazo": 0.346
+     },
+     "MA": {
+      "n": 827,
+      "mediana": 44,
+      "acima45": 0.4825,
+      "acima90": 0.2467,
+      "publicavel": false,
+      "acimaDoPrazo": 0.2467
+     },
+     "MG": {
+      "n": 12384,
+      "mediana": 36,
+      "acima45": 0.4062,
+      "acima90": 0.175,
+      "publicavel": true,
+      "acimaDoPrazo": 0.175
+     },
+     "MS": {
+      "n": 962,
+      "mediana": 45,
+      "acima45": 0.4917,
+      "acima90": 0.2911,
+      "publicavel": false,
+      "acimaDoPrazo": 0.2911
+     },
+     "MT": {
+      "n": 1106,
+      "mediana": 52,
+      "acima45": 0.5642,
+      "acima90": 0.3291,
+      "publicavel": true,
+      "acimaDoPrazo": 0.3291
+     },
+     "PA": {
+      "n": 1352,
+      "mediana": 46,
+      "acima45": 0.5059,
+      "acima90": 0.301,
+      "publicavel": true,
+      "acimaDoPrazo": 0.301
+     },
+     "PB": {
+      "n": 1137,
+      "mediana": 48,
+      "acima45": 0.5198,
+      "acima90": 0.3184,
+      "publicavel": true,
+      "acimaDoPrazo": 0.3184
+     },
+     "PE": {
+      "n": 2569,
+      "mediana": 44,
+      "acima45": 0.4846,
+      "acima90": 0.2916,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2916
+     },
      "PI": {
-      "n": 544,
-      "mediana": 49,
-      "acima45": 0.5092,
+      "n": 512,
+      "mediana": 50,
+      "acima45": 0.5312,
+      "acima90": 0.3027,
+      "publicavel": false,
+      "acimaDoPrazo": 0.3027
+     },
+     "PR": {
+      "n": 8534,
+      "mediana": 39,
+      "acima45": 0.4429,
+      "acima90": 0.2092,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2092
+     },
+     "RJ": {
+      "n": 6518,
+      "mediana": 32,
+      "acima45": 0.3832,
+      "acima90": 0.1878,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1878
+     },
+     "RN": {
+      "n": 1053,
+      "mediana": 46,
+      "acima45": 0.5109,
+      "acima90": 0.2792,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2792
+     },
+     "RO": {
+      "n": 268,
+      "mediana": 46,
+      "acima45": 0.5037,
+      "acima90": 0.2836,
+      "publicavel": false,
+      "acimaDoPrazo": 0.2836
+     },
+     "RR": {
+      "n": 57,
+      "mediana": 72,
+      "acima45": 0.5789,
+      "acima90": 0.4035,
+      "publicavel": false,
+      "acimaDoPrazo": 0.4035
+     },
+     "RS": {
+      "n": 10160,
+      "mediana": 40,
+      "acima45": 0.4481,
+      "acima90": 0.1955,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1955
+     },
+     "SC": {
+      "n": 9344,
+      "mediana": 45,
+      "acima45": 0.4967,
+      "acima90": 0.2516,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2516
+     },
+     "SE": {
+      "n": 763,
+      "mediana": 46,
+      "acima45": 0.5033,
       "acima90": 0.2831,
       "publicavel": false,
       "acimaDoPrazo": 0.2831
      },
-     "PR": {
-      "n": 8918,
-      "mediana": 45,
-      "acima45": 0.4919,
-      "acima90": 0.2809,
-      "publicavel": true,
-      "acimaDoPrazo": 0.2809
-     },
-     "RJ": {
-      "n": 6557,
-      "mediana": 36,
-      "acima45": 0.418,
-      "acima90": 0.2356,
-      "publicavel": true,
-      "acimaDoPrazo": 0.2356
-     },
-     "RN": {
-      "n": 981,
-      "mediana": 49,
-      "acima45": 0.5148,
-      "acima90": 0.3231,
-      "publicavel": false,
-      "acimaDoPrazo": 0.3231
-     },
-     "RO": {
-      "n": 312,
-      "mediana": 65,
-      "acima45": 0.5673,
-      "acima90": 0.4071,
-      "publicavel": false,
-      "acimaDoPrazo": 0.4071
-     },
-     "RR": {
-      "n": 70,
-      "mediana": 50,
-      "acima45": 0.5286,
-      "acima90": 0.3286,
-      "publicavel": false,
-      "acimaDoPrazo": 0.3286
-     },
-     "RS": {
-      "n": 9898,
-      "mediana": 44,
-      "acima45": 0.4869,
-      "acima90": 0.2746,
-      "publicavel": true,
-      "acimaDoPrazo": 0.2746
-     },
-     "SC": {
-      "n": 9271,
-      "mediana": 50,
-      "acima45": 0.5211,
-      "acima90": 0.3293,
-      "publicavel": true,
-      "acimaDoPrazo": 0.3293
-     },
-     "SE": {
-      "n": 709,
-      "mediana": 58,
-      "acima45": 0.5571,
-      "acima90": 0.3724,
-      "publicavel": false,
-      "acimaDoPrazo": 0.3724
-     },
      "SP": {
-      "n": 35712,
-      "mediana": 50,
-      "acima45": 0.5191,
-      "acima90": 0.3271,
+      "n": 33428,
+      "mediana": 37,
+      "acima45": 0.4114,
+      "acima90": 0.2293,
       "publicavel": true,
-      "acimaDoPrazo": 0.3271
+      "acimaDoPrazo": 0.2293
      },
      "TO": {
-      "n": 249,
-      "mediana": 58,
-      "acima45": 0.5904,
-      "acima90": 0.3614,
+      "n": 219,
+      "mediana": 38,
+      "acima45": 0.4566,
+      "acima90": 0.2648,
       "publicavel": false,
-      "acimaDoPrazo": 0.3614
+      "acimaDoPrazo": 0.2648
      }
     }
    },
@@ -2942,48 +2942,48 @@
    "prazoAcordo": 60,
    "prazoContaDoPedido": true,
    "fila": {
-    "n": 103089,
-    "mediana": 27,
-    "p75": 58,
-    "p90": 122,
-    "acima45": 0.3118,
-    "acima90": 0.143,
-    "acimaDoPrazo": 0.232,
+    "n": 94172,
+    "mediana": 29,
+    "p75": 51,
+    "p90": 108,
+    "acima45": 0.2946,
+    "acima90": 0.1185,
+    "acimaDoPrazo": 0.1943,
     "publicavel": true,
-    "medianaAnterior": 32,
+    "medianaAnterior": 27,
     "porServico": [
      {
       "codigo": 1659,
       "nome": "Pensão por Morte Urbana",
-      "n": 76832,
-      "mediana": 25,
-      "acima45": 0.2978,
-      "acima90": 0.1351,
+      "n": 73215,
+      "mediana": 29,
+      "acima45": 0.2892,
+      "acima90": 0.1079,
       "publicavel": true
      },
      {
       "codigo": 1658,
       "nome": "Pensão por Morte Rural",
-      "n": 25303,
-      "mediana": 28,
-      "acima45": 0.3345,
-      "acima90": 0.1448,
+      "n": 19980,
+      "mediana": 26,
+      "acima45": 0.2884,
+      "acima90": 0.1281,
       "publicavel": true
      },
      {
       "codigo": 3770,
       "nome": "Acordo Internacional - Pensão por Morte",
-      "n": 946,
-      "mediana": 224,
-      "acima45": 0.8404,
-      "acima90": 0.7262,
+      "n": 969,
+      "mediana": 214,
+      "acima45": 0.8225,
+      "acima90": 0.711,
       "publicavel": false
      },
      {
       "codigo": 3769,
       "nome": "Acordo Internacional - Pensão por Morte Rural",
       "n": 8,
-      "mediana": 1880,
+      "mediana": 1972,
       "acima45": 1.0,
       "acima90": 1.0,
       "publicavel": false
@@ -2991,220 +2991,220 @@
     ],
     "porUf": {
      "AC": {
-      "n": 399,
-      "mediana": 37,
-      "acima45": 0.4085,
-      "acima90": 0.188,
+      "n": 423,
+      "mediana": 38,
+      "acima45": 0.3806,
+      "acima90": 0.1395,
       "publicavel": false,
-      "acimaDoPrazo": 0.3008
+      "acimaDoPrazo": 0.234
      },
      "AL": {
-      "n": 1764,
-      "mediana": 32,
-      "acima45": 0.3804,
-      "acima90": 0.1689,
+      "n": 1645,
+      "mediana": 31,
+      "acima45": 0.3161,
+      "acima90": 0.1295,
       "publicavel": true,
-      "acimaDoPrazo": 0.2778
+      "acimaDoPrazo": 0.2103
      },
      "AM": {
-      "n": 1409,
-      "mediana": 30,
-      "acima45": 0.3542,
-      "acima90": 0.1405,
+      "n": 1358,
+      "mediana": 38,
+      "acima45": 0.408,
+      "acima90": 0.1311,
       "publicavel": true,
-      "acimaDoPrazo": 0.2534
+      "acimaDoPrazo": 0.2415
      },
      "AP": {
-      "n": 250,
+      "n": 252,
       "mediana": 37,
-      "acima45": 0.38,
-      "acima90": 0.168,
+      "acima45": 0.4008,
+      "acima90": 0.123,
       "publicavel": false,
-      "acimaDoPrazo": 0.268
+      "acimaDoPrazo": 0.2341
      },
      "BA": {
-      "n": 8114,
-      "mediana": 28,
-      "acima45": 0.3567,
-      "acima90": 0.1576,
+      "n": 6737,
+      "mediana": 31,
+      "acima45": 0.307,
+      "acima90": 0.1244,
       "publicavel": true,
-      "acimaDoPrazo": 0.256
+      "acimaDoPrazo": 0.2083
      },
      "CE": {
-      "n": 4606,
-      "mediana": 31,
-      "acima45": 0.365,
-      "acima90": 0.1711,
+      "n": 3681,
+      "mediana": 30,
+      "acima45": 0.3056,
+      "acima90": 0.1318,
       "publicavel": true,
-      "acimaDoPrazo": 0.269
+      "acimaDoPrazo": 0.2122
      },
      "DF": {
-      "n": 1102,
-      "mediana": 32,
-      "acima45": 0.3893,
-      "acima90": 0.1978,
+      "n": 1244,
+      "mediana": 38,
+      "acima45": 0.4124,
+      "acima90": 0.1535,
       "publicavel": true,
-      "acimaDoPrazo": 0.3249
+      "acimaDoPrazo": 0.2267
      },
      "ES": {
-      "n": 2059,
-      "mediana": 27,
-      "acima45": 0.2817,
-      "acima90": 0.1088,
+      "n": 1973,
+      "mediana": 25,
+      "acima45": 0.2757,
+      "acima90": 0.0998,
       "publicavel": true,
-      "acimaDoPrazo": 0.1938
+      "acimaDoPrazo": 0.185
      },
      "GO": {
-      "n": 3842,
-      "mediana": 32,
-      "acima45": 0.3688,
-      "acima90": 0.1861,
+      "n": 4034,
+      "mediana": 38,
+      "acima45": 0.3966,
+      "acima90": 0.144,
       "publicavel": true,
-      "acimaDoPrazo": 0.2858
+      "acimaDoPrazo": 0.2256
      },
      "MA": {
-      "n": 4022,
-      "mediana": 29,
-      "acima45": 0.3389,
-      "acima90": 0.1198,
+      "n": 3222,
+      "mediana": 25,
+      "acima45": 0.2629,
+      "acima90": 0.1037,
       "publicavel": true,
-      "acimaDoPrazo": 0.225
+      "acimaDoPrazo": 0.1738
      },
      "MG": {
-      "n": 11665,
-      "mediana": 25,
-      "acima45": 0.2802,
-      "acima90": 0.127,
+      "n": 10295,
+      "mediana": 26,
+      "acima45": 0.2849,
+      "acima90": 0.1189,
       "publicavel": true,
-      "acimaDoPrazo": 0.2061
+      "acimaDoPrazo": 0.1997
      },
      "MS": {
-      "n": 1491,
-      "mediana": 31,
-      "acima45": 0.3722,
-      "acima90": 0.1751,
+      "n": 1512,
+      "mediana": 37,
+      "acima45": 0.3677,
+      "acima90": 0.1204,
       "publicavel": true,
-      "acimaDoPrazo": 0.2817
+      "acimaDoPrazo": 0.2077
      },
      "MT": {
-      "n": 1918,
-      "mediana": 30,
-      "acima45": 0.3368,
-      "acima90": 0.1486,
+      "n": 1944,
+      "mediana": 36,
+      "acima45": 0.3472,
+      "acima90": 0.106,
       "publicavel": true,
-      "acimaDoPrazo": 0.2518
+      "acimaDoPrazo": 0.1754
      },
      "PA": {
-      "n": 3694,
-      "mediana": 32,
-      "acima45": 0.359,
-      "acima90": 0.1478,
+      "n": 3945,
+      "mediana": 34,
+      "acima45": 0.3534,
+      "acima90": 0.1019,
       "publicavel": true,
-      "acimaDoPrazo": 0.2634
+      "acimaDoPrazo": 0.1934
      },
      "PB": {
-      "n": 2195,
-      "mediana": 29,
-      "acima45": 0.369,
-      "acima90": 0.1658,
+      "n": 1773,
+      "mediana": 31,
+      "acima45": 0.3012,
+      "acima90": 0.1151,
       "publicavel": true,
-      "acimaDoPrazo": 0.2556
+      "acimaDoPrazo": 0.2064
      },
      "PE": {
-      "n": 4793,
+      "n": 4136,
       "mediana": 30,
-      "acima45": 0.3468,
-      "acima90": 0.1544,
+      "acima45": 0.295,
+      "acima90": 0.1235,
       "publicavel": true,
-      "acimaDoPrazo": 0.2514
+      "acimaDoPrazo": 0.1995
      },
      "PI": {
-      "n": 2175,
-      "mediana": 34,
-      "acima45": 0.3811,
-      "acima90": 0.1641,
+      "n": 1706,
+      "mediana": 29,
+      "acima45": 0.2884,
+      "acima90": 0.1331,
       "publicavel": true,
-      "acimaDoPrazo": 0.2676
+      "acimaDoPrazo": 0.2063
      },
      "PR": {
-      "n": 6054,
-      "mediana": 23,
-      "acima45": 0.2775,
-      "acima90": 0.1472,
+      "n": 5411,
+      "mediana": 26,
+      "acima45": 0.2988,
+      "acima90": 0.1451,
       "publicavel": true,
-      "acimaDoPrazo": 0.2134
+      "acimaDoPrazo": 0.2177
      },
      "RJ": {
-      "n": 8148,
-      "mediana": 29,
-      "acima45": 0.3208,
-      "acima90": 0.1429,
+      "n": 7737,
+      "mediana": 28,
+      "acima45": 0.3172,
+      "acima90": 0.1343,
       "publicavel": true,
-      "acimaDoPrazo": 0.2482
+      "acimaDoPrazo": 0.227
      },
      "RN": {
-      "n": 1882,
+      "n": 1531,
       "mediana": 31,
-      "acima45": 0.3799,
-      "acima90": 0.1918,
+      "acima45": 0.3168,
+      "acima90": 0.1594,
       "publicavel": true,
-      "acimaDoPrazo": 0.2885
+      "acimaDoPrazo": 0.2273
      },
      "RO": {
-      "n": 741,
-      "mediana": 35,
-      "acima45": 0.3873,
-      "acima90": 0.1808,
+      "n": 820,
+      "mediana": 32,
+      "acima45": 0.3024,
+      "acima90": 0.1171,
       "publicavel": false,
-      "acimaDoPrazo": 0.2996
+      "acimaDoPrazo": 0.1963
      },
      "RR": {
-      "n": 185,
-      "mediana": 31,
-      "acima45": 0.3459,
-      "acima90": 0.1405,
+      "n": 214,
+      "mediana": 38,
+      "acima45": 0.3645,
+      "acima90": 0.1028,
       "publicavel": false,
-      "acimaDoPrazo": 0.2486
+      "acimaDoPrazo": 0.2056
      },
      "RS": {
-      "n": 6058,
-      "mediana": 23,
-      "acima45": 0.2694,
-      "acima90": 0.1322,
+      "n": 5782,
+      "mediana": 24,
+      "acima45": 0.2753,
+      "acima90": 0.1287,
       "publicavel": true,
-      "acimaDoPrazo": 0.2049
+      "acimaDoPrazo": 0.1885
      },
      "SC": {
-      "n": 3831,
-      "mediana": 23,
-      "acima45": 0.2681,
-      "acima90": 0.143,
+      "n": 3661,
+      "mediana": 25,
+      "acima45": 0.2843,
+      "acima90": 0.1379,
       "publicavel": true,
-      "acimaDoPrazo": 0.2127
+      "acimaDoPrazo": 0.2057
      },
      "SE": {
-      "n": 1118,
-      "mediana": 35,
-      "acima45": 0.3891,
-      "acima90": 0.1789,
-      "publicavel": true,
-      "acimaDoPrazo": 0.3032
+      "n": 967,
+      "mediana": 31,
+      "acima45": 0.3144,
+      "acima90": 0.121,
+      "publicavel": false,
+      "acimaDoPrazo": 0.212
      },
      "SP": {
-      "n": 18560,
-      "mediana": 22,
-      "acima45": 0.2372,
-      "acima90": 0.1124,
+      "n": 17156,
+      "mediana": 24,
+      "acima45": 0.2162,
+      "acima90": 0.0832,
       "publicavel": true,
-      "acimaDoPrazo": 0.1806
+      "acimaDoPrazo": 0.1395
      },
      "TO": {
-      "n": 1014,
-      "mediana": 37,
-      "acima45": 0.3945,
-      "acima90": 0.1736,
+      "n": 1013,
+      "mediana": 36,
+      "acima45": 0.3702,
+      "acima90": 0.1115,
       "publicavel": true,
-      "acimaDoPrazo": 0.3028
+      "acimaDoPrazo": 0.2122
      }
     }
    },
@@ -3432,260 +3432,260 @@
    "prazoAcordo": 30,
    "prazoContaDoPedido": true,
    "fila": {
-    "n": 122117,
-    "mediana": 14,
-    "p75": 29,
-    "p90": 49,
-    "acima45": 0.1094,
-    "acima90": 0.0215,
-    "acimaDoPrazo": 0.222,
+    "n": 112210,
+    "mediana": 12,
+    "p75": 25,
+    "p90": 39,
+    "acima45": 0.0682,
+    "acima90": 0.0136,
+    "acimaDoPrazo": 0.1739,
     "publicavel": true,
-    "medianaAnterior": 18,
+    "medianaAnterior": 14,
     "porServico": [
      {
       "codigo": 1675,
       "nome": "Salário-Maternidade Urbano",
-      "n": 76787,
-      "mediana": 11,
-      "acima45": 0.093,
-      "acima90": 0.0143,
+      "n": 72324,
+      "mediana": 10,
+      "acima45": 0.0491,
+      "acima90": 0.0046,
       "publicavel": true
      },
      {
       "codigo": 1674,
       "nome": "Salário-Maternidade Rural",
-      "n": 43890,
-      "mediana": 18,
-      "acima45": 0.1164,
-      "acima90": 0.0133,
+      "n": 38440,
+      "mediana": 16,
+      "acima45": 0.0761,
+      "acima90": 0.0055,
       "publicavel": true
      },
      {
       "codigo": 3746,
       "nome": "Acordo Internacional - Salário-Maternidade",
-      "n": 1440,
+      "n": 1446,
       "mediana": 169,
-      "acima45": 0.7715,
-      "acima90": 0.6542,
+      "acima45": 0.814,
+      "acima90": 0.6777,
       "publicavel": true
      }
     ],
     "porUf": {
      "AC": {
-      "n": 1716,
+      "n": 1326,
       "mediana": 17,
-      "acima45": 0.1189,
-      "acima90": 0.0192,
+      "acima45": 0.0799,
+      "acima90": 0.0068,
       "publicavel": true,
-      "acimaDoPrazo": 0.2547
+      "acimaDoPrazo": 0.1991
      },
      "AL": {
-      "n": 2122,
-      "mediana": 10,
-      "acima45": 0.1037,
-      "acima90": 0.0193,
-      "publicavel": true,
-      "acimaDoPrazo": 0.2059
-     },
-     "AM": {
-      "n": 6680,
-      "mediana": 18,
-      "acima45": 0.1344,
-      "acima90": 0.0234,
-      "publicavel": true,
-      "acimaDoPrazo": 0.2653
-     },
-     "AP": {
-      "n": 1696,
-      "mediana": 18,
-      "acima45": 0.1179,
-      "acima90": 0.0189,
-      "publicavel": true,
-      "acimaDoPrazo": 0.2777
-     },
-     "BA": {
-      "n": 8032,
-      "mediana": 11,
-      "acima45": 0.1168,
-      "acima90": 0.02,
-      "publicavel": true,
-      "acimaDoPrazo": 0.2103
-     },
-     "CE": {
-      "n": 4655,
-      "mediana": 10,
-      "acima45": 0.0995,
-      "acima90": 0.0215,
-      "publicavel": true,
-      "acimaDoPrazo": 0.2241
-     },
-     "DF": {
-      "n": 2057,
-      "mediana": 20,
-      "acima45": 0.2115,
-      "acima90": 0.018,
-      "publicavel": true,
-      "acimaDoPrazo": 0.3223
-     },
-     "ES": {
-      "n": 2505,
-      "mediana": 15,
-      "acima45": 0.1301,
-      "acima90": 0.0299,
-      "publicavel": true,
-      "acimaDoPrazo": 0.2399
-     },
-     "GO": {
-      "n": 5632,
-      "mediana": 17,
-      "acima45": 0.1076,
-      "acima90": 0.0197,
-      "publicavel": true,
-      "acimaDoPrazo": 0.2312
-     },
-     "MA": {
-      "n": 6179,
-      "mediana": 14,
-      "acima45": 0.0942,
-      "acima90": 0.012,
-      "publicavel": true,
-      "acimaDoPrazo": 0.234
-     },
-     "MG": {
-      "n": 11060,
-      "mediana": 15,
-      "acima45": 0.1299,
-      "acima90": 0.0249,
-      "publicavel": true,
-      "acimaDoPrazo": 0.2468
-     },
-     "MS": {
-      "n": 2189,
-      "mediana": 17,
-      "acima45": 0.106,
-      "acima90": 0.0146,
-      "publicavel": true,
-      "acimaDoPrazo": 0.2275
-     },
-     "MT": {
-      "n": 3818,
-      "mediana": 17,
-      "acima45": 0.1328,
-      "acima90": 0.0236,
-      "publicavel": true,
-      "acimaDoPrazo": 0.2528
-     },
-     "PA": {
-      "n": 14123,
-      "mediana": 18,
-      "acima45": 0.1113,
-      "acima90": 0.0159,
-      "publicavel": true,
-      "acimaDoPrazo": 0.2551
-     },
-     "PB": {
-      "n": 2232,
-      "mediana": 10,
-      "acima45": 0.1156,
-      "acima90": 0.0242,
-      "publicavel": true,
-      "acimaDoPrazo": 0.2025
-     },
-     "PE": {
-      "n": 5273,
-      "mediana": 11,
-      "acima45": 0.1075,
-      "acima90": 0.0241,
-      "publicavel": true,
-      "acimaDoPrazo": 0.219
-     },
-     "PI": {
-      "n": 2101,
-      "mediana": 14,
-      "acima45": 0.0976,
-      "acima90": 0.0171,
-      "publicavel": true,
-      "acimaDoPrazo": 0.2399
-     },
-     "PR": {
-      "n": 5589,
-      "mediana": 14,
-      "acima45": 0.0696,
-      "acima90": 0.0174,
-      "publicavel": true,
-      "acimaDoPrazo": 0.1528
-     },
-     "RJ": {
-      "n": 4538,
-      "mediana": 10,
-      "acima45": 0.1401,
-      "acima90": 0.0355,
-      "publicavel": true,
-      "acimaDoPrazo": 0.2439
-     },
-     "RN": {
-      "n": 1516,
-      "mediana": 13,
-      "acima45": 0.1108,
-      "acima90": 0.0303,
-      "publicavel": true,
-      "acimaDoPrazo": 0.2408
-     },
-     "RO": {
-      "n": 1696,
-      "mediana": 17,
-      "acima45": 0.0955,
-      "acima90": 0.0153,
-      "publicavel": true,
-      "acimaDoPrazo": 0.2282
-     },
-     "RR": {
-      "n": 779,
-      "mediana": 17,
-      "acima45": 0.1014,
-      "acima90": 0.0193,
-      "publicavel": false,
-      "acimaDoPrazo": 0.2542
-     },
-     "RS": {
-      "n": 4214,
-      "mediana": 14,
-      "acima45": 0.0738,
-      "acima90": 0.0154,
-      "publicavel": true,
-      "acimaDoPrazo": 0.1519
-     },
-     "SC": {
-      "n": 3882,
-      "mediana": 14,
-      "acima45": 0.0724,
+      "n": 1939,
+      "mediana": 8,
+      "acima45": 0.0516,
       "acima90": 0.016,
       "publicavel": true,
-      "acimaDoPrazo": 0.1641
+      "acimaDoPrazo": 0.1496
+     },
+     "AM": {
+      "n": 5514,
+      "mediana": 17,
+      "acima45": 0.097,
+      "acima90": 0.0112,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2367
+     },
+     "AP": {
+      "n": 1469,
+      "mediana": 17,
+      "acima45": 0.0885,
+      "acima90": 0.0109,
+      "publicavel": true,
+      "acimaDoPrazo": 0.211
+     },
+     "BA": {
+      "n": 7779,
+      "mediana": 10,
+      "acima45": 0.0549,
+      "acima90": 0.0085,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1675
+     },
+     "CE": {
+      "n": 4877,
+      "mediana": 9,
+      "acima45": 0.0429,
+      "acima90": 0.0117,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1405
+     },
+     "DF": {
+      "n": 1580,
+      "mediana": 15,
+      "acima45": 0.0778,
+      "acima90": 0.0133,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1601
+     },
+     "ES": {
+      "n": 2466,
+      "mediana": 15,
+      "acima45": 0.0815,
+      "acima90": 0.0158,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2011
+     },
+     "GO": {
+      "n": 4975,
+      "mediana": 15,
+      "acima45": 0.0681,
+      "acima90": 0.0121,
+      "publicavel": true,
+      "acimaDoPrazo": 0.166
+     },
+     "MA": {
+      "n": 6318,
+      "mediana": 9,
+      "acima45": 0.0364,
+      "acima90": 0.0051,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1402
+     },
+     "MG": {
+      "n": 10613,
+      "mediana": 15,
+      "acima45": 0.0836,
+      "acima90": 0.0146,
+      "publicavel": true,
+      "acimaDoPrazo": 0.2079
+     },
+     "MS": {
+      "n": 1764,
+      "mediana": 16,
+      "acima45": 0.072,
+      "acima90": 0.0125,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1689
+     },
+     "MT": {
+      "n": 3307,
+      "mediana": 16,
+      "acima45": 0.078,
+      "acima90": 0.0172,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1963
+     },
+     "PA": {
+      "n": 11435,
+      "mediana": 16,
+      "acima45": 0.0787,
+      "acima90": 0.0083,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1867
+     },
+     "PB": {
+      "n": 2322,
+      "mediana": 9,
+      "acima45": 0.0487,
+      "acima90": 0.0108,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1619
+     },
+     "PE": {
+      "n": 5960,
+      "mediana": 9,
+      "acima45": 0.0456,
+      "acima90": 0.0102,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1497
+     },
+     "PI": {
+      "n": 2041,
+      "mediana": 9,
+      "acima45": 0.0456,
+      "acima90": 0.0054,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1602
+     },
+     "PR": {
+      "n": 5433,
+      "mediana": 15,
+      "acima45": 0.0777,
+      "acima90": 0.0121,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1662
+     },
+     "RJ": {
+      "n": 4832,
+      "mediana": 10,
+      "acima45": 0.0917,
+      "acima90": 0.0325,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1825
+     },
+     "RN": {
+      "n": 1617,
+      "mediana": 8,
+      "acima45": 0.0396,
+      "acima90": 0.013,
+      "publicavel": true,
+      "acimaDoPrazo": 0.141
+     },
+     "RO": {
+      "n": 1330,
+      "mediana": 15,
+      "acima45": 0.0571,
+      "acima90": 0.0135,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1398
+     },
+     "RR": {
+      "n": 905,
+      "mediana": 15,
+      "acima45": 0.0619,
+      "acima90": 0.011,
+      "publicavel": false,
+      "acimaDoPrazo": 0.2011
+     },
+     "RS": {
+      "n": 4241,
+      "mediana": 15,
+      "acima45": 0.0806,
+      "acima90": 0.0104,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1615
+     },
+     "SC": {
+      "n": 4047,
+      "mediana": 14,
+      "acima45": 0.0692,
+      "acima90": 0.0114,
+      "publicavel": true,
+      "acimaDoPrazo": 0.1492
      },
      "SE": {
-      "n": 1214,
-      "mediana": 11,
-      "acima45": 0.0964,
-      "acima90": 0.014,
+      "n": 1186,
+      "mediana": 9,
+      "acima45": 0.0489,
+      "acima90": 0.0143,
       "publicavel": true,
-      "acimaDoPrazo": 0.2125
+      "acimaDoPrazo": 0.161
      },
      "SP": {
-      "n": 14503,
-      "mediana": 9,
-      "acima45": 0.0839,
-      "acima90": 0.0292,
+      "n": 10985,
+      "mediana": 8,
+      "acima45": 0.0672,
+      "acima90": 0.0286,
       "publicavel": true,
-      "acimaDoPrazo": 0.1551
+      "acimaDoPrazo": 0.1619
      },
      "TO": {
-      "n": 2116,
-      "mediana": 18,
-      "acima45": 0.1664,
-      "acima90": 0.0246,
+      "n": 1949,
+      "mediana": 16,
+      "acima45": 0.0631,
+      "acima90": 0.0072,
       "publicavel": true,
-      "acimaDoPrazo": 0.3053
+      "acimaDoPrazo": 0.1924
      }
     }
    },
@@ -3913,251 +3913,251 @@
    "prazoAcordo": 60,
    "prazoContaDoPedido": true,
    "fila": {
-    "n": 8438,
-    "mediana": 28,
-    "p75": 51,
-    "p90": 80,
-    "acima45": 0.2917,
-    "acima90": 0.0717,
-    "acimaDoPrazo": 0.1927,
+    "n": 7994,
+    "mediana": 29,
+    "p75": 46,
+    "p90": 67,
+    "acima45": 0.2628,
+    "acima90": 0.0333,
+    "acimaDoPrazo": 0.1372,
     "publicavel": true,
-    "medianaAnterior": 33,
+    "medianaAnterior": 28,
     "porServico": [
      {
       "codigo": 4613,
       "nome": "Auxílio-Reclusão Urbano",
-      "n": 7601,
-      "mediana": 25,
-      "acima45": 0.2817,
-      "acima90": 0.0651,
+      "n": 7202,
+      "mediana": 28,
+      "acima45": 0.2572,
+      "acima90": 0.0304,
       "publicavel": true
      },
      {
       "codigo": 4632,
       "nome": "Auxílio-Reclusão Rural",
-      "n": 837,
-      "mediana": 35,
-      "acima45": 0.3823,
-      "acima90": 0.1314,
+      "n": 792,
+      "mediana": 32,
+      "acima45": 0.3144,
+      "acima90": 0.0593,
       "publicavel": false
      }
     ],
     "porUf": {
      "AC": {
-      "n": 55,
-      "mediana": 37,
-      "acima45": 0.4182,
-      "acima90": 0.0545,
+      "n": 59,
+      "mediana": 38,
+      "acima45": 0.4237,
+      "acima90": 0.0508,
       "publicavel": false,
-      "acimaDoPrazo": 0.2909
+      "acimaDoPrazo": 0.1864
      },
      "AL": {
-      "n": 92,
-      "mediana": 38,
-      "acima45": 0.4348,
-      "acima90": 0.1848,
+      "n": 62,
+      "mediana": 32,
+      "acima45": 0.4194,
+      "acima90": 0.0645,
       "publicavel": false,
-      "acimaDoPrazo": 0.3043
+      "acimaDoPrazo": 0.2581
      },
      "AM": {
-      "n": 65,
-      "mediana": 23,
-      "acima45": 0.2923,
-      "acima90": 0.0769,
+      "n": 63,
+      "mediana": 31,
+      "acima45": 0.3016,
+      "acima90": 0.0476,
       "publicavel": false,
-      "acimaDoPrazo": 0.1538
+      "acimaDoPrazo": 0.1746
      },
      "AP": {
-      "n": 17,
-      "mediana": 56,
-      "acima45": 0.5294,
-      "acima90": 0.2353,
+      "n": 13,
+      "mediana": 47,
+      "acima45": 0.6154,
+      "acima90": 0.1538,
       "publicavel": false,
-      "acimaDoPrazo": 0.4118
+      "acimaDoPrazo": 0.4615
      },
      "BA": {
-      "n": 247,
-      "mediana": 31,
-      "acima45": 0.4008,
-      "acima90": 0.1498,
+      "n": 255,
+      "mediana": 36,
+      "acima45": 0.3412,
+      "acima90": 0.0549,
       "publicavel": false,
-      "acimaDoPrazo": 0.2996
+      "acimaDoPrazo": 0.1608
      },
      "CE": {
-      "n": 208,
-      "mediana": 39,
-      "acima45": 0.4038,
-      "acima90": 0.1779,
+      "n": 163,
+      "mediana": 36,
+      "acima45": 0.3742,
+      "acima90": 0.1104,
       "publicavel": false,
-      "acimaDoPrazo": 0.2837
+      "acimaDoPrazo": 0.2086
      },
      "DF": {
-      "n": 151,
-      "mediana": 29,
-      "acima45": 0.3444,
-      "acima90": 0.0861,
+      "n": 129,
+      "mediana": 37,
+      "acima45": 0.3953,
+      "acima90": 0.0775,
       "publicavel": false,
-      "acimaDoPrazo": 0.2185
+      "acimaDoPrazo": 0.2326
      },
      "ES": {
-      "n": 294,
-      "mediana": 30,
-      "acima45": 0.2959,
-      "acima90": 0.051,
+      "n": 250,
+      "mediana": 32,
+      "acima45": 0.304,
+      "acima90": 0.028,
       "publicavel": false,
-      "acimaDoPrazo": 0.1905
+      "acimaDoPrazo": 0.136
      },
      "GO": {
-      "n": 280,
-      "mediana": 28,
-      "acima45": 0.3036,
-      "acima90": 0.05,
+      "n": 261,
+      "mediana": 31,
+      "acima45": 0.3065,
+      "acima90": 0.0498,
       "publicavel": false,
-      "acimaDoPrazo": 0.2036
+      "acimaDoPrazo": 0.1916
      },
      "MA": {
-      "n": 71,
-      "mediana": 43,
-      "acima45": 0.4507,
-      "acima90": 0.1549,
+      "n": 76,
+      "mediana": 29,
+      "acima45": 0.2632,
+      "acima90": 0.0132,
       "publicavel": false,
-      "acimaDoPrazo": 0.3803
+      "acimaDoPrazo": 0.1711
      },
      "MG": {
-      "n": 1301,
-      "mediana": 27,
-      "acima45": 0.2767,
-      "acima90": 0.0469,
+      "n": 1249,
+      "mediana": 29,
+      "acima45": 0.2666,
+      "acima90": 0.0232,
       "publicavel": true,
-      "acimaDoPrazo": 0.1852
+      "acimaDoPrazo": 0.1377
      },
      "MS": {
-      "n": 264,
-      "mediana": 31,
-      "acima45": 0.3295,
-      "acima90": 0.0682,
+      "n": 242,
+      "mediana": 26,
+      "acima45": 0.2397,
+      "acima90": 0.0331,
       "publicavel": false,
-      "acimaDoPrazo": 0.2197
+      "acimaDoPrazo": 0.1488
      },
      "MT": {
-      "n": 237,
-      "mediana": 28,
-      "acima45": 0.3038,
-      "acima90": 0.0633,
+      "n": 219,
+      "mediana": 30,
+      "acima45": 0.2283,
+      "acima90": 0.0274,
       "publicavel": false,
-      "acimaDoPrazo": 0.1899
+      "acimaDoPrazo": 0.1324
      },
      "PA": {
+      "n": 105,
+      "mediana": 33,
+      "acima45": 0.3238,
+      "acima90": 0.0667,
+      "publicavel": false,
+      "acimaDoPrazo": 0.2
+     },
+     "PB": {
       "n": 119,
-      "mediana": 31,
-      "acima45": 0.3109,
-      "acima90": 0.0756,
+      "mediana": 36,
+      "acima45": 0.2941,
+      "acima90": 0.0504,
       "publicavel": false,
       "acimaDoPrazo": 0.1933
      },
-     "PB": {
-      "n": 138,
-      "mediana": 43,
-      "acima45": 0.4783,
-      "acima90": 0.1739,
-      "publicavel": false,
-      "acimaDoPrazo": 0.3551
-     },
      "PE": {
-      "n": 395,
-      "mediana": 35,
-      "acima45": 0.4177,
-      "acima90": 0.1797,
+      "n": 348,
+      "mediana": 32,
+      "acima45": 0.3305,
+      "acima90": 0.0632,
       "publicavel": false,
-      "acimaDoPrazo": 0.2962
+      "acimaDoPrazo": 0.1925
      },
      "PI": {
-      "n": 63,
-      "mediana": 44,
-      "acima45": 0.4921,
-      "acima90": 0.127,
+      "n": 77,
+      "mediana": 26,
+      "acima45": 0.2987,
+      "acima90": 0.039,
       "publicavel": false,
-      "acimaDoPrazo": 0.3492
+      "acimaDoPrazo": 0.1299
      },
      "PR": {
-      "n": 703,
-      "mediana": 23,
-      "acima45": 0.2276,
-      "acima90": 0.0555,
+      "n": 681,
+      "mediana": 25,
+      "acima45": 0.2261,
+      "acima90": 0.0264,
       "publicavel": false,
-      "acimaDoPrazo": 0.138
+      "acimaDoPrazo": 0.1219
      },
      "RJ": {
-      "n": 385,
+      "n": 376,
       "mediana": 30,
-      "acima45": 0.3247,
-      "acima90": 0.0831,
+      "acima45": 0.2713,
+      "acima90": 0.0479,
       "publicavel": false,
-      "acimaDoPrazo": 0.2208
+      "acimaDoPrazo": 0.1649
      },
      "RN": {
-      "n": 86,
-      "mediana": 34,
-      "acima45": 0.3372,
-      "acima90": 0.0814,
+      "n": 74,
+      "mediana": 35,
+      "acima45": 0.3378,
+      "acima90": 0.0541,
       "publicavel": false,
-      "acimaDoPrazo": 0.2093
+      "acimaDoPrazo": 0.1622
      },
      "RO": {
-      "n": 106,
-      "mediana": 32,
-      "acima45": 0.3774,
-      "acima90": 0.1038,
+      "n": 98,
+      "mediana": 31,
+      "acima45": 0.2551,
+      "acima90": 0.0408,
       "publicavel": false,
-      "acimaDoPrazo": 0.1981
+      "acimaDoPrazo": 0.1429
      },
      "RR": {
-      "n": 32,
-      "mediana": 32,
-      "acima45": 0.375,
-      "acima90": 0.0625,
+      "n": 20,
+      "mediana": 40,
+      "acima45": 0.45,
+      "acima90": 0.1,
       "publicavel": false,
-      "acimaDoPrazo": 0.1875
+      "acimaDoPrazo": 0.25
      },
      "RS": {
-      "n": 653,
-      "mediana": 24,
-      "acima45": 0.2343,
-      "acima90": 0.0521,
+      "n": 673,
+      "mediana": 25,
+      "acima45": 0.2422,
+      "acima90": 0.0297,
       "publicavel": false,
-      "acimaDoPrazo": 0.1501
+      "acimaDoPrazo": 0.1263
      },
      "SC": {
-      "n": 479,
-      "mediana": 23,
-      "acima45": 0.2067,
-      "acima90": 0.0313,
+      "n": 480,
+      "mediana": 25,
+      "acima45": 0.2417,
+      "acima90": 0.0187,
       "publicavel": false,
-      "acimaDoPrazo": 0.1211
+      "acimaDoPrazo": 0.1021
      },
      "SE": {
-      "n": 60,
-      "mediana": 38,
-      "acima45": 0.4167,
-      "acima90": 0.1333,
+      "n": 76,
+      "mediana": 28,
+      "acima45": 0.2895,
+      "acima90": 0.0,
       "publicavel": false,
-      "acimaDoPrazo": 0.3167
+      "acimaDoPrazo": 0.1842
      },
      "SP": {
-      "n": 1859,
+      "n": 1775,
       "mediana": 23,
-      "acima45": 0.2335,
-      "acima90": 0.0473,
+      "acima45": 0.2073,
+      "acima90": 0.018,
       "publicavel": true,
-      "acimaDoPrazo": 0.1495
+      "acimaDoPrazo": 0.0913
      },
      "TO": {
-      "n": 78,
-      "mediana": 38,
-      "acima45": 0.4615,
-      "acima90": 0.0897,
+      "n": 51,
+      "mediana": 32,
+      "acima45": 0.3137,
+      "acima90": 0.0588,
       "publicavel": false,
-      "acimaDoPrazo": 0.3077
+      "acimaDoPrazo": 0.1373
      }
     }
    },
@@ -4385,249 +4385,249 @@
    "prazoAcordo": null,
    "prazoContaDoPedido": null,
    "fila": {
-    "n": 2575,
-    "mediana": 186,
-    "p75": 579,
-    "p90": 1607,
-    "acima45": 0.8555,
-    "acima90": 0.727,
+    "n": 2189,
+    "mediana": 235,
+    "p75": 543,
+    "p90": 1733,
+    "acima45": 0.8497,
+    "acima90": 0.7483,
     "acimaDoPrazo": null,
     "publicavel": true,
-    "medianaAnterior": 207,
+    "medianaAnterior": 186,
     "porServico": [
      {
       "codigo": 14835,
       "nome": "Auxílio-Inclusão à Pessoa com Deficiência",
-      "n": 2428,
-      "mediana": 178,
-      "acima45": 0.8517,
-      "acima90": 0.7236,
+      "n": 2050,
+      "mediana": 231,
+      "acima45": 0.8454,
+      "acima90": 0.7415,
       "publicavel": true
      },
      {
       "codigo": 14836,
       "nome": "Auxílio-Inclusão à Pessoa com Deficiência - AI",
-      "n": 147,
-      "mediana": 249,
-      "acima45": 0.9184,
-      "acima90": 0.7823,
+      "n": 139,
+      "mediana": 326,
+      "acima45": 0.9137,
+      "acima90": 0.8489,
       "publicavel": false
      }
     ],
     "porUf": {
      "AC": {
-      "n": 6,
-      "mediana": 77,
-      "acima45": 0.8333,
-      "acima90": 0.3333,
+      "n": 8,
+      "mediana": 103,
+      "acima45": 0.75,
+      "acima90": 0.625,
       "publicavel": false,
       "acimaDoPrazo": null
      },
      "AL": {
-      "n": 46,
-      "mediana": 659,
-      "acima45": 0.8913,
-      "acima90": 0.7826,
+      "n": 40,
+      "mediana": 1421,
+      "acima45": 0.925,
+      "acima90": 0.9,
       "publicavel": false,
       "acimaDoPrazo": null
      },
      "AM": {
-      "n": 37,
-      "mediana": 94,
-      "acima45": 0.8378,
-      "acima90": 0.5405,
+      "n": 43,
+      "mediana": 91,
+      "acima45": 0.7674,
+      "acima90": 0.5116,
       "publicavel": false,
       "acimaDoPrazo": null
      },
      "AP": {
-      "n": 8,
-      "mediana": 69,
-      "acima45": 0.875,
-      "acima90": 0.5,
+      "n": 4,
+      "mediana": 152,
+      "acima45": 0.75,
+      "acima90": 0.75,
       "publicavel": false,
       "acimaDoPrazo": null
      },
      "BA": {
-      "n": 189,
-      "mediana": 318,
-      "acima45": 0.9101,
-      "acima90": 0.7725,
+      "n": 152,
+      "mediana": 384,
+      "acima45": 0.8882,
+      "acima90": 0.8026,
       "publicavel": false,
       "acimaDoPrazo": null
      },
      "CE": {
-      "n": 118,
-      "mediana": 326,
-      "acima45": 0.9068,
-      "acima90": 0.8136,
+      "n": 101,
+      "mediana": 467,
+      "acima45": 0.8713,
+      "acima90": 0.8119,
       "publicavel": false,
       "acimaDoPrazo": null
      },
      "DF": {
-      "n": 54,
-      "mediana": 121,
-      "acima45": 0.8148,
-      "acima90": 0.6111,
+      "n": 48,
+      "mediana": 136,
+      "acima45": 0.8125,
+      "acima90": 0.6875,
       "publicavel": false,
       "acimaDoPrazo": null
      },
      "ES": {
-      "n": 50,
-      "mediana": 281,
-      "acima45": 0.82,
-      "acima90": 0.78,
+      "n": 43,
+      "mediana": 373,
+      "acima45": 0.814,
+      "acima90": 0.7209,
       "publicavel": false,
       "acimaDoPrazo": null
      },
      "GO": {
-      "n": 85,
-      "mediana": 110,
-      "acima45": 0.8,
-      "acima90": 0.5647,
+      "n": 78,
+      "mediana": 120,
+      "acima45": 0.8846,
+      "acima90": 0.6026,
       "publicavel": false,
       "acimaDoPrazo": null
      },
      "MA": {
-      "n": 77,
-      "mediana": 262,
-      "acima45": 0.8831,
-      "acima90": 0.7662,
+      "n": 70,
+      "mediana": 346,
+      "acima45": 0.9286,
+      "acima90": 0.8429,
       "publicavel": false,
       "acimaDoPrazo": null
      },
      "MG": {
-      "n": 283,
-      "mediana": 430,
-      "acima45": 0.8905,
-      "acima90": 0.7986,
+      "n": 273,
+      "mediana": 429,
+      "acima45": 0.8205,
+      "acima90": 0.7692,
       "publicavel": false,
       "acimaDoPrazo": null
      },
      "MS": {
-      "n": 34,
-      "mediana": 76,
-      "acima45": 0.7353,
-      "acima90": 0.5,
+      "n": 35,
+      "mediana": 124,
+      "acima45": 0.8286,
+      "acima90": 0.6857,
       "publicavel": false,
       "acimaDoPrazo": null
      },
      "MT": {
-      "n": 34,
-      "mediana": 121,
-      "acima45": 0.7647,
-      "acima90": 0.6176,
+      "n": 46,
+      "mediana": 107,
+      "acima45": 0.7174,
+      "acima90": 0.5435,
       "publicavel": false,
       "acimaDoPrazo": null
      },
      "PA": {
-      "n": 71,
-      "mediana": 107,
-      "acima45": 0.8873,
-      "acima90": 0.6197,
+      "n": 81,
+      "mediana": 136,
+      "acima45": 0.7407,
+      "acima90": 0.5926,
       "publicavel": false,
       "acimaDoPrazo": null
      },
      "PB": {
-      "n": 57,
-      "mediana": 275,
-      "acima45": 0.8947,
-      "acima90": 0.7895,
+      "n": 48,
+      "mediana": 367,
+      "acima45": 0.875,
+      "acima90": 0.8333,
       "publicavel": false,
       "acimaDoPrazo": null
      },
      "PE": {
-      "n": 127,
-      "mediana": 335,
-      "acima45": 0.9213,
-      "acima90": 0.811,
+      "n": 102,
+      "mediana": 451,
+      "acima45": 0.8824,
+      "acima90": 0.8431,
       "publicavel": false,
       "acimaDoPrazo": null
      },
      "PI": {
-      "n": 38,
-      "mediana": 463,
-      "acima45": 0.9211,
-      "acima90": 0.7895,
+      "n": 33,
+      "mediana": 555,
+      "acima45": 0.8485,
+      "acima90": 0.7273,
       "publicavel": false,
       "acimaDoPrazo": null
      },
      "PR": {
-      "n": 143,
-      "mediana": 158,
-      "acima45": 0.8252,
-      "acima90": 0.7133,
+      "n": 86,
+      "mediana": 191,
+      "acima45": 0.814,
+      "acima90": 0.6279,
       "publicavel": false,
       "acimaDoPrazo": null
      },
      "RJ": {
-      "n": 262,
-      "mediana": 248,
-      "acima45": 0.9008,
-      "acima90": 0.7863,
+      "n": 267,
+      "mediana": 278,
+      "acima45": 0.8951,
+      "acima90": 0.824,
       "publicavel": false,
       "acimaDoPrazo": null
      },
      "RN": {
-      "n": 33,
-      "mediana": 322,
-      "acima45": 0.8485,
-      "acima90": 0.7576,
+      "n": 31,
+      "mediana": 403,
+      "acima45": 0.8387,
+      "acima90": 0.7097,
       "publicavel": false,
       "acimaDoPrazo": null
      },
      "RO": {
-      "n": 21,
-      "mediana": 134,
-      "acima45": 0.8095,
-      "acima90": 0.619,
+      "n": 20,
+      "mediana": 103,
+      "acima45": 0.85,
+      "acima90": 0.6,
       "publicavel": false,
       "acimaDoPrazo": null
      },
      "RR": {
-      "n": 7,
-      "mediana": 131,
-      "acima45": 0.8571,
-      "acima90": 0.7143,
+      "n": 6,
+      "mediana": 122,
+      "acima45": 0.8333,
+      "acima90": 0.6667,
       "publicavel": false,
       "acimaDoPrazo": null
      },
      "RS": {
-      "n": 173,
-      "mediana": 150,
-      "acima45": 0.815,
-      "acima90": 0.6763,
+      "n": 107,
+      "mediana": 201,
+      "acima45": 0.8411,
+      "acima90": 0.7009,
       "publicavel": false,
       "acimaDoPrazo": null
      },
      "SC": {
-      "n": 123,
-      "mediana": 149,
-      "acima45": 0.8211,
-      "acima90": 0.6829,
+      "n": 75,
+      "mediana": 158,
+      "acima45": 0.7333,
+      "acima90": 0.6,
       "publicavel": false,
       "acimaDoPrazo": null
      },
      "SE": {
-      "n": 31,
-      "mediana": 289,
-      "acima45": 0.9677,
-      "acima90": 0.8387,
+      "n": 25,
+      "mediana": 407,
+      "acima45": 1.0,
+      "acima90": 0.84,
       "publicavel": false,
       "acimaDoPrazo": null
      },
      "SP": {
-      "n": 456,
-      "mediana": 198,
-      "acima45": 0.7961,
-      "acima90": 0.6952,
+      "n": 357,
+      "mediana": 268,
+      "acima45": 0.8655,
+      "acima90": 0.7871,
       "publicavel": false,
       "acimaDoPrazo": null
      },
      "TO": {
-      "n": 12,
-      "mediana": 112,
-      "acima45": 0.8333,
-      "acima90": 0.6667,
+      "n": 10,
+      "mediana": 122,
+      "acima45": 0.8,
+      "acima90": 0.7,
       "publicavel": false,
       "acimaDoPrazo": null
      }

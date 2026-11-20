@@ -21,7 +21,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return ["", ...gruposComPagina(inss).map((g) => `${g.chave}/`)].map((resto) => ({
     url: `${SITE}/inss/${resto}`,
     ...(quando ? { lastModified: new Date(quando) } : {}),
-    changeFrequency: "monthly" as const,
-    priority: 0.8,
   }));
 }

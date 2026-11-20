@@ -33,7 +33,10 @@ export const metadata = {
   description:
     "Este endereço não existe no Números Públicos. A busca da capa encontra " +
     "qualquer um dos municípios cobertos.",
-  robots: { index: false, follow: true },
+  // `null`, e não `{ index: false }` (20/11/2026): o Next já põe `noindex` na
+  // página não encontrada, e declarar de novo dava duas metas robots no HTML.
+  // Omitir o campo herda o "index, follow" do layout raiz; `null` o anula.
+  robots: null,
 };
 
 export default async function NaoEncontrado() {

@@ -32,6 +32,9 @@ export function jsonLdDe(c: Contexto) {
     identifier: identificadorIbge(m.codigo),
     keywords: palavrasChave([m.nome, uf?.nome ?? m.uf, "IDEB", "IBGE", "SICONFI"]),
     temporalCoverage: coberturaTemporal(snapshot, fiscal, ideb),
+    // A mesma data do `lastModified` do sitemap e do "Dados atualizados em"
+    // da página (20/11/2026).
+    dateModified: c.atualizado.toISOString(),
     variableMeasured: VARIAVEIS_DA_BASE,
     includedInDataCatalog: catalogoDe(SITE),
     spatialCoverage: {

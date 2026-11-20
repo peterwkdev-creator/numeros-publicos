@@ -55,7 +55,5 @@ export default async function sitemap(
     .map((m) => ({
       url: `${SITE}/municipio/${slugDe(m.nome, m.uf)}/`,
       lastModified: atualizado,
-      changeFrequency: "monthly" as const,
-      priority: 0.7,
     }));
 }

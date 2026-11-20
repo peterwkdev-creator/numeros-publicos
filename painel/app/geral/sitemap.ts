@@ -33,12 +33,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // do snapshot dos municípios.
   const coletaBrasil = brasil.series.map((s) => s.coletadoEm).sort().at(-1)!;
 
+  // Sem `priority` nem `changeFrequency` desde 20/11/2026: o Google ignora os
+  // dois; o que ele le e o `lastModified`, que aqui e a data real da fonte.
   const inicio: MetadataRoute.Sitemap = [
     {
       url: `${SITE}/`,
       lastModified: atualizado,
-      changeFrequency: "weekly",
-      priority: 1,
     },
     {
       // A ajuda responde as duvidas que as buscas trazem literalmente
@@ -46,81 +46,57 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       // pagina de destino, nao so pagina de apoio.
       url: `${SITE}/ajuda/`,
       lastModified: atualizado,
-      changeFrequency: "monthly",
-      priority: 0.8,
     },
     {
       // A UNICA pagina do site que disputa consulta de CABECA. As 5.571 de
       // municipio disputam cauda longa, onde a Wikipedia ja responde no
       // snippet; "ranking municipios gasto com pessoal LRF" nao tem dono
       // nacional -- so Tribunais de Contas, um por estado. Medido em 07/09.
-      //
-      // Prioridade 0.9, igual a de estado: e uma pagina so, e o dado dela muda
-      // a cada coleta.
       url: `${SITE}/ranking/gasto-com-pessoal/`,
       lastModified: atualizado,
-      changeFrequency: "weekly",
-      priority: 0.9,
     },
     {
       // Os dois índices de 17/10/2026: até ali `/ranking/` e `/estado/` davam
-      // 404. Prioridade baixa: são páginas de passagem, e o que disputa busca
-      // é o ranking e o estado.
+      // 404.
       url: `${SITE}/ranking/`,
       lastModified: atualizadoEm(snapshot, fiscal, caged.coletadoEm),
-      changeFrequency: "monthly",
-      priority: 0.5,
     },
     {
       url: `${SITE}/estado/`,
       lastModified: new Date(snapshot.geradoEm),
-      changeFrequency: "monthly",
-      priority: 0.5,
     },
     {
       // "Comparar municípios" (Fase 3 do Explorar, espec §7, passo 4). Junta
       // o fiscal, o Caged, o Ideb e as emendas: a data é a do ranking.
       url: `${SITE}/explorar/`,
       lastModified: atualizadoEm(snapshot, fiscal, caged.coletadoEm),
-      changeFrequency: "monthly",
-      priority: 0.7,
     },
     {
       // A segunda página de cabeça: "cidades que mais geraram empregos". O
       // dado muda uma vez por mês, com a competência nova do Caged.
       url: `${SITE}/ranking/emprego-com-carteira/`,
       lastModified: new Date(caged.coletadoEm ?? atualizado),
-      changeFrequency: "monthly",
-      priority: 0.9,
     },
     {
       url: `${SITE}/brasil/`,
       lastModified: new Date(coletaBrasil),
-      changeFrequency: "monthly",
-      priority: 0.8,
     },
     {
       url: `${SITE}/eleicoes-2026/`,
       lastModified: new Date(eleicoes.fonte.coletadoEm),
-      changeFrequency: "daily",
-      priority: 0.9,
     },
     {
       url: `${SITE}/eleicoes-2026/dados/`,
       lastModified: new Date(eleicoes.fonte.coletadoEm),
-      changeFrequency: "daily",
-      priority: 0.8,
     },
   ];
 
-  // Prioridade acima da do municipio: sao 27 paginas que concentram o link
+  // As 27 paginas de estado concentram o link
   // interno de 5.571. No grafo do site elas sao o unico caminho da home ate a
   // maioria das paginas -- ver `lib/estado.ts`.
   const estados: MetadataRoute.Sitemap = snapshot.ufs.map((u) => ({
     url: `${SITE}/estado/${slugUf(u.sigla)}/`,
     lastModified: atualizado,
-    changeFrequency: "weekly" as const,
-    priority: 0.9,
   }));
 
   // Uma página por série do país desde 16/10/2026, cada uma com a data da
@@ -128,8 +104,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const series: MetadataRoute.Sitemap = brasil.series.map((s) => ({
     url: `${SITE}${caminhoDaSerie(s.codigo)}`,
     lastModified: new Date(s.coletadoEm),
-    changeFrequency: "monthly" as const,
-    priority: 0.7,
   }));
 
   return [...inicio, ...series, ...estados];

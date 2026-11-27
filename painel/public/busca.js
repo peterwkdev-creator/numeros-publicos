@@ -66,6 +66,25 @@ function chaves(indice) {
   return nomes;
 }
 
+/**
+ * A chave do nome que o IBGE dava antes (4º campo, desde 26/11/2026), ou
+ * `null`: quem digita "governador edison lobao" acha Ribeirãozinho do
+ * Maranhão, na mesma faixa em que acharia pelo nome atual.
+ */
+const anterioresNormalizados = new WeakMap();
+
+function anteriores(indice) {
+  let lista = anterioresNormalizados.get(indice);
+  if (!lista) {
+    lista = indice.map((x) => (x[3] ? chave(x[3]) : null));
+    anterioresNormalizados.set(indice, lista);
+  }
+  return lista;
+}
+
+/** O nome como a lista mostra: o antigo entre parênteses, se houver. */
+export const rotulo = (x) => (x[3] ? `${x[0]} (antigo ${x[3]})` : x[0]);
+
 const LIGACOES = new Set(["de", "da", "do", "das", "dos", "e"]);
 
 /**
@@ -132,6 +151,7 @@ export const onde = (x) => (x[2] ? "estado" : x[1]);
 export function procurar(indice, alvo) {
   const nomes = chaves(indice);
   const abreviaturas = iniciaisDe(indice);
+  const antigos = anteriores(indice);
   const exato = [];
   const prefixo = [];
   const sigla = [];
@@ -139,16 +159,17 @@ export function procurar(indice, alvo) {
   let total = 0;
   indice.forEach((x, i) => {
     const n = nomes[i];
-    if (n === alvo || (x[2] && x[1].toLowerCase() === alvo)) {
+    const a = antigos[i];
+    if (n === alvo || a === alvo || (x[2] && x[1].toLowerCase() === alvo)) {
       total += 1;
       if (exato.length < MAXIMO) exato.push(x);
-    } else if (n.startsWith(alvo)) {
+    } else if (n.startsWith(alvo) || (a && a.startsWith(alvo))) {
       total += 1;
       if (prefixo.length < MAXIMO) prefixo.push(x);
     } else if (abreviaturas[i] === alvo) {
       total += 1;
       if (sigla.length < MAXIMO) sigla.push(x);
-    } else if (n.includes(alvo)) {
+    } else if (n.includes(alvo) || (a && a.includes(alvo))) {
       total += 1;
       if (meio.length < MAXIMO) meio.push(x);
     }
@@ -357,7 +378,7 @@ function iniciar() {
       if (i === ativo && c.classeAtiva) li.className = c.classeAtiva;
       const nome = document.createElement("span");
       nome.className = c.classeNome ?? "";
-      nome.textContent = x[0];
+      nome.textContent = rotulo(x);
       const uf = document.createElement("span");
       uf.className = c.classeUf ?? "";
       uf.textContent = onde(x);

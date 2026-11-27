@@ -1,5 +1,6 @@
 import { br } from "../../../lib/dados";
 import { FONTES_DA_BASE, VARIAVEIS_DA_BASE, catalogoDe, coberturaTemporal, identificadorIbge, LICENCA_DADOS, palavrasChave } from "../../../lib/jsonld";
+import { nomeAnteriorDe } from "../../../lib/nomes-anteriores";
 import { SITE } from "../../../lib/servidor";
 import type { Contexto } from "./contexto";
 
@@ -41,6 +42,11 @@ export function jsonLdDe(c: Contexto) {
       "@type": "Place",
       name: `${m.nome}, ${m.uf}, Brasil`,
       identifier: String(m.codigo),
+      // Município que o IBGE renomeou: o nome antigo como `alternateName`
+      // (26/11/2026, `lib/nomes-anteriores.ts`).
+      ...(nomeAnteriorDe(m.codigo)
+        ? { alternateName: `${nomeAnteriorDe(m.codigo)!.anterior}, ${m.uf}, Brasil` }
+        : {}),
     },
     // `distribution` e o campo que separa "pagina que fala de dados" de
     // "dataset". Sem um arquivo baixavel apontado aqui, o schema.org/Dataset e

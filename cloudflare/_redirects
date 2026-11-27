@@ -4,3 +4,7 @@
 /brasil/desocupacao /brasil/desemprego/ 301
 /brasil/desocupacao/ /brasil/desemprego/ 301
 /brasil/desocupacao/dados.csv /brasil/desemprego/dados.csv 301
+# 23/11/2026: o IBGE renomeou 2104552 (MA), Governador Edison Lobão
+# virou Ribeirãozinho do Maranhão (plebiscito de outubro de 2024).
+/municipio/governador-edison-lobao-ma /municipio/ribeiraozinho-do-maranhao-ma/ 301
+/municipio/governador-edison-lobao-ma/* /municipio/ribeiraozinho-do-maranhao-ma/:splat 301

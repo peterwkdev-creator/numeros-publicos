@@ -2,6 +2,7 @@ import Link from "next/link";
 import { dataPorExtenso } from "../../../lib/dados";
 import { slugUf } from "../../../lib/estado";
 import { trilha, jsonLdHtml } from "../../../lib/jsonld";
+import { nomeAnteriorDe } from "../../../lib/nomes-anteriores";
 import { SITE } from "../../../lib/servidor";
 import { LinkComoLer } from "../../componentes/como-ler";
 import Compartilhar from "../../componentes/compartilhar";
@@ -15,6 +16,7 @@ import type { Contexto } from "./contexto";
 export default function Cabecalho({ c }: { c: Contexto }) {
   const { m, atualizado, uf, abertura, estilos } = c;
   const jsonLd = jsonLdDe(c);
+  const antes = nomeAnteriorDe(m.codigo);
   return (
     <>
       <script
@@ -63,6 +65,14 @@ export default function Cabecalho({ c }: { c: Contexto }) {
         <h1 className={estilos.titulo}>
           {m.nome} <span className={estilos.uf}>{m.uf}</span>
         </h1>
+        {/* Município que o IBGE renomeou (26/11/2026): quem chega pelo nome
+            ou pelo endereço antigo (301) vê que é o mesmo lugar. */}
+        {antes ? (
+          <p className={estilos.atualizado}>
+            Antigo {antes.anterior}: o nome atual entrou no cadastro do IBGE em{" "}
+            {antes.desde} (fonte: {antes.fonte}).
+          </p>
+        ) : null}
         {/* O primeiro texto que o buscador lê. Até 30/10/2026 era o mesmo nas
             5.571 páginas; agora abre pelo que distingue o município no estado
             (`lib/abertura.ts`), e a procedência vem depois. */}

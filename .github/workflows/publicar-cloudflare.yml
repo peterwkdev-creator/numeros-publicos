@@ -84,6 +84,12 @@ jobs:
       - name: Links internos do out/
         run: npm run conferir-links
 
+      # Município renomeado pelo IBGE muda o endereço (2104552/MA, 23/11/2026,
+      # publicou sozinho e o velho deu 404): todo endereço já publicado em
+      # cloudflare/enderecos-de-municipio.txt tem página ou 301 no _redirects.
+      - name: Endereços de município já publicados
+        run: npm run conferir-enderecos
+
       # O conferir-xlsx abre a planilha no LibreOffice, que é quem prova que
       # ela abre fora do nosso gerador. O runner não o traz instalado.
       - name: LibreOffice para abrir a planilha

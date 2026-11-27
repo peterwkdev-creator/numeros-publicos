@@ -2288,6 +2288,23 @@ test("busca.js: apóstrofo, hífen e espaço não separam o nome", async () => {
   assert.deepEqual(nomes("olho dagua"), ["Olho d'Água"]);
 });
 
+test("busca.js: o nome anterior do IBGE acha o município e aparece no rótulo", async () => {
+  // 26/11/2026: o IBGE renomeou 2104552 (MA); quem digitava o nome antigo
+  // não achava nada. O 4º campo do índice traz o antigo.
+  const { chave, procurar, rotulo } = await import("../public/busca.js");
+  const indice = [
+    ["Maranhão", "MA", 1],
+    ["Ribeirãozinho do Maranhão", "MA", 0, "Governador Edison Lobão"],
+    ["Governador Archer", "MA"],
+  ];
+  const nomes = (alvo: string) => procurar(indice, chave(alvo)).achados.map((x: string[]) => x[0]);
+  assert.deepEqual(nomes("governador edison lobao"), ["Ribeirãozinho do Maranhão"]);
+  assert.deepEqual(nomes("governador"), ["Ribeirãozinho do Maranhão", "Governador Archer"]);
+  assert.deepEqual(nomes("ribeiraozinho"), ["Ribeirãozinho do Maranhão"]);
+  assert.equal(rotulo(indice[1]), "Ribeirãozinho do Maranhão (antigo Governador Edison Lobão)");
+  assert.equal(rotulo(indice[2]), "Governador Archer");
+});
+
 test("busca.js: sem resultado, sugere pela distância de edição", async () => {
   const { sugerir, chave, SUGESTOES } = await import("../public/busca.js");
   // Na ordem do índice, que é a da população.

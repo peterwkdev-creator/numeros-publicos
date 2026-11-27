@@ -1,4 +1,5 @@
 import { entradasDoIndice } from "@/lib/explorar";
+import { nomeAnteriorDe } from "@/lib/nomes-anteriores";
 import { lerSnapshot } from "@/lib/servidor";
 
 /**
@@ -58,8 +59,15 @@ export async function GET() {
   // A ordenação mora em `entradasDoIndice` desde 19/10/2026: os arquivos do
   // /explorar seguem esta mesma ordem, linha a linha, e uma cópia da regra
   // divergiria em silêncio.
-  const indice = entradasDoIndice(snapshot)
-    .map((x) => (x.estado ? [x.nome, x.uf, 1] : [x.nome, x.uf]));
+  //
+  // Município que o IBGE renomeou leva o nome antigo no 4º campo (o 3º é 0,
+  // não estado), desde 26/11/2026: a busca casa os dois e mostra o antigo
+  // entre parênteses (`lib/nomes-anteriores.ts`).
+  const indice = entradasDoIndice(snapshot).map((x) => {
+    if (x.estado) return [x.nome, x.uf, 1];
+    const antes = x.codigo === null ? null : nomeAnteriorDe(x.codigo);
+    return antes ? [x.nome, x.uf, 0, antes.anterior] : [x.nome, x.uf];
+  });
 
   return new Response(JSON.stringify(indice), {
     headers: {
